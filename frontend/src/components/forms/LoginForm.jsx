@@ -17,6 +17,8 @@ export default function LoginForm() {
       email,
       senha,
     });
+
+    window.location.href = "/dashboard";
   }
 
   return (

@@ -1,13 +1,225 @@
 from django.db import models
 
 
-class Cliente(models.Model):
-    nome = models.CharField(max_length=100)
-    documento = models.CharField(max_length=20)
-    email = models.EmailField(max_length=100)
-    telefone = models.CharField(max_length=20)
-    endereco = models.CharField(max_length=200)
-    dataCadastro = models.DateTimeField(auto_now_add=True)
+
+# USUÁRIOS
+
+
+class Usuario(models.Model):
+
+    TIPOS_USUARIO = (
+        ('admin', 'Administrador'),
+        ('advogado', 'Advogado'),
+        ('cliente', 'Cliente'),
+    )
+
+    nome = models.CharField(max_length=255)
+
+    email = models.EmailField(unique=True)
+
+    senha = models.CharField(max_length=255)
+
+    tipo_usuario = models.CharField(
+        max_length=20,
+        choices=TIPOS_USUARIO
+    )
+
+    ativo = models.BooleanField(default=True)
+
+    criado_em = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.nome
+
+
+
+# CLIENTES
+
+
+class Cliente(models.Model):
+
+    usuario = models.OneToOneField(
+        Usuario,
+        on_delete=models.CASCADE
+    )
+
+    cpf = models.CharField(
+        max_length=14,
+        unique=True
+    )
+
+    telefone = models.CharField(
+        max_length=20
+    )
+
+    endereco = models.CharField(
+        max_length=255
+    )
+
+    data_nascimento = models.DateField(
+        null=True,
+        blank=True
+    )
+
+    def __str__(self):
+        return self.usuario.nome
+
+
+
+# ADVOGADOS
+
+
+class Advogado(models.Model):
+
+    usuario = models.OneToOneField(
+        Usuario,
+        on_delete=models.CASCADE
+    )
+
+    oab = models.CharField(
+        max_length=30,
+        unique=True
+    )
+
+    especialidade = models.CharField(
+        max_length=255
+    )
+
+    def __str__(self):
+        return self.usuario.nome
+
+
+
+# PROCESSOS
+
+
+class Processo(models.Model):
+
+    STATUS_PROCESSO = (
+        ('Em andamento', 'Em andamento'),
+        ('Concluido', 'Concluído'),
+        ('Suspenso', 'Suspenso'),
+        ('Arquivado', 'Arquivado'),
+    )
+
+    numero_processo = models.CharField(
+        max_length=100,
+        unique=True
+    )
+
+    titulo = models.CharField(
+        max_length=255
+    )
+
+    descricao = models.TextField()
+
+    status = models.CharField(
+        max_length=50,
+        choices=STATUS_PROCESSO,
+        default='Em andamento'
+    )
+
+    cliente = models.ForeignKey(
+        Cliente,
+        on_delete=models.CASCADE
+    )
+
+    advogado = models.ForeignKey(
+        Advogado,
+        on_delete=models.CASCADE
+    )
+
+    data_inicio = models.DateField(
+        null=True,
+        blank=True
+    )
+
+    data_fim = models.DateField(
+        null=True,
+        blank=True
+    )
+
+    criado_em = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    def __str__(self):
+        return self.titulo
+
+
+
+# MOVIMENTAÇÕES
+
+
+class Movimentacao(models.Model):
+
+    processo = models.ForeignKey(
+        Processo,
+        on_delete=models.CASCADE
+    )
+
+    descricao = models.TextField()
+
+    data_movimentacao = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    def __str__(self):
+        return f"Movimentação - {self.processo.titulo}"
+
+
+
+# DOCUMENTOS
+
+
+class Documento(models.Model):
+
+    processo = models.ForeignKey(
+        Processo,
+        on_delete=models.CASCADE
+    )
+
+    nome_arquivo = models.CharField(
+        max_length=255
+    )
+
+    arquivo = models.FileField(
+        upload_to='documentos/'
+    )
+
+    enviado_em = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    def __str__(self):
+        return self.nome_arquivo
+
+
+
+# AGENDA
+
+class Agenda(models.Model):
+
+    processo = models.ForeignKey(
+        Processo,
+        on_delete=models.CASCADE
+    )
+
+    titulo = models.CharField(
+        max_length=255
+    )
+
+    descricao = models.TextField()
+
+    data_evento = models.DateTimeField()
+
+    local_evento = models.CharField(
+        max_length=255
+    )
+
+    criado_em = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    def __str__(self):
+        return self.titulo

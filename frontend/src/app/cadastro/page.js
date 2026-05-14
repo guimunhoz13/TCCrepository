@@ -1,10 +1,10 @@
 import AuthLayout from "@/components/layout/AuthLayout";
-import ClienteForm from "@/components/forms/ClienteForm";
+import RegisterForm from "@/components/forms/RegisterForm";
 
 export default function CadastroPage() {
   return (
     <AuthLayout>
-      <ClienteForm />
+      <RegisterForm />
     </AuthLayout>
   );
 }
