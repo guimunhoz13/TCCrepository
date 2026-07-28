@@ -1,52 +1,61 @@
 from django.db import models
 
 
-
-# USUÁRIOS
-
+# USUÁRIOS INTERNOS
+# Somente administradores e advogados acessam o sistema.
 
 class Usuario(models.Model):
 
     TIPOS_USUARIO = (
         ('admin', 'Administrador'),
         ('advogado', 'Advogado'),
-        ('cliente', 'Cliente'),
     )
 
-    nome = models.CharField(max_length=255)
+    nome = models.CharField(
+        max_length=255
+    )
 
-    email = models.EmailField(unique=True)
+    email = models.EmailField(
+        unique=True
+    )
 
-    senha = models.CharField(max_length=255)
+    senha = models.CharField(
+        max_length=255
+    )
 
     tipo_usuario = models.CharField(
         max_length=20,
         choices=TIPOS_USUARIO
     )
 
-    ativo = models.BooleanField(default=True)
+    ativo = models.BooleanField(
+        default=True
+    )
 
-    criado_em = models.DateTimeField(auto_now_add=True)
+    criado_em = models.DateTimeField(
+        auto_now_add=True
+    )
 
     def __str__(self):
         return self.nome
 
 
-
 # CLIENTES
-
+# Clientes são apenas cadastrados internamente.
+# Eles não possuem login nem acesso ao sistema.
 
 class Cliente(models.Model):
 
-    usuario = models.OneToOneField(
-        Usuario,
-        on_delete=models.CASCADE
+    nome = models.CharField(
+        max_length=255
     )
 
     cpf = models.CharField(
         max_length=14,
         unique=True
     )
+
+    email = models.EmailField()
 
     telefone = models.CharField(
         max_length=20
@@ -61,19 +70,27 @@ class Cliente(models.Model):
         blank=True
     )
 
-    def __str__(self):
-        return self.usuario.nome
+    ativo = models.BooleanField(
+        default=True
+    )
 
+    criado_em = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    def __str__(self):
+        return self.nome
 
 
 # ADVOGADOS
-
+# O advogado possui um usuário porque acessará o sistema.
 
 class Advogado(models.Model):
 
     usuario = models.OneToOneField(
         Usuario,
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
+        related_name='advogado'
     )
 
     oab = models.CharField(
@@ -89,9 +106,7 @@ class Advogado(models.Model):
         return self.usuario.nome
 
 
-
 # PROCESSOS
-
 
 class Processo(models.Model):
 
@@ -121,12 +136,14 @@ class Processo(models.Model):
 
     cliente = models.ForeignKey(
         Cliente,
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
+        related_name='processos'
     )
 
     advogado = models.ForeignKey(
         Advogado,
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
+        related_name='processos'
     )
 
     data_inicio = models.DateField(
@@ -147,15 +164,14 @@ class Processo(models.Model):
         return self.titulo
 
 
-
 # MOVIMENTAÇÕES
-
 
 class Movimentacao(models.Model):
 
     processo = models.ForeignKey(
         Processo,
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
+        related_name='movimentacoes'
     )
 
     descricao = models.TextField()
@@ -165,18 +181,17 @@ class Movimentacao(models.Model):
     )
 
     def __str__(self):
-        return f"Movimentação - {self.processo.titulo}"
-
+        return f'Movimentação - {self.processo.titulo}'
 
 
 # DOCUMENTOS
-
 
 class Documento(models.Model):
 
     processo = models.ForeignKey(
         Processo,
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
+        related_name='documentos'
     )
 
     nome_arquivo = models.CharField(
@@ -195,14 +210,14 @@ class Documento(models.Model):
         return self.nome_arquivo
 
 
-
 # AGENDA
 
 class Agenda(models.Model):
 
     processo = models.ForeignKey(
         Processo,
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
+        related_name='eventos_agenda'
     )
 
     titulo = models.CharField(

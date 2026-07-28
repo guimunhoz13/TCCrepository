@@ -10,11 +10,9 @@ export default function RegisterForm() {
 
   const [nome, setNome] = useState("");
   const [cpf, setCpf] = useState("");
-  const [oab, setOab] = useState("");
   const [email, setEmail] = useState("");
   const [telefone, setTelefone] = useState("");
-  const [senha, setSenha] = useState("");
-  const [confirmarSenha, setConfirmarSenha] = useState("");
+  const [endereco, setEndereco] = useState("");
 
   function formatarCPF(valor) {
 
@@ -53,49 +51,72 @@ export default function RegisterForm() {
     return `+55 (${numeros.slice(0, 2)}) ${numeros.slice(2, 7)}-${numeros.slice(7)}`;
   }
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
 
     event.preventDefault();
 
-    if (senha !== confirmarSenha) {
+    try {
 
-      alert("As senhas não coincidem");
+      // CRIA USUÁRIO
 
-      return;
+      const usuarioResponse = await fetch(
+        "http://127.0.0.1:8000/api/usuarios/",
+        {
+
+          method: "POST",
+
+          headers: {
+            "Content-Type": "application/json",
+          },
+
+          body: JSON.stringify({
+
+            nome,
+            email,
+            senha: "123456",
+            tipo_usuario: "cliente",
+          }),
+        }
+      );
+
+      const usuarioData = await usuarioResponse.json();
+
+      // CRIA CLIENTE
+
+      const clienteResponse = await fetch(
+        "http://127.0.0.1:8000/api/clientes/",
+        {
+
+          method: "POST",
+
+          headers: {
+            "Content-Type": "application/json",
+          },
+
+          body: JSON.stringify({
+
+            usuario: usuarioData.id,
+            cpf,
+            telefone,
+            endereco,
+          }),
+        }
+      );
+
+      if (!clienteResponse.ok) {
+        throw new Error("Erro ao cadastrar cliente");
+      }
+
+      alert("Cliente cadastrado com sucesso!");
+
+      window.location.href = "/dashboard";
+
+    } catch (error) {
+
+      console.error(error);
+
+      alert("Erro ao cadastrar");
     }
-
-    fetch("http://127.0.0.1:8000/api/clientes/", {
-
-      method: "POST",
-
-      headers: {
-        "Content-Type": "application/json",
-      },
-
-      body: JSON.stringify({
-        nome,
-        cpf,
-        oab,
-        email,
-        telefone,
-        senha,
-      }),
-
-    })
-      .then((response) => response.json())
-      .then(() => {
-
-        alert("Advogado cadastrado com sucesso!");
-
-        window.location.href = "/";
-      })
-
-      .catch((error) => {
-
-        console.error(error);
-
-        alert("Erro ao cadastrar advogado");
-      });
   }
 
   return (
@@ -108,7 +129,7 @@ export default function RegisterForm() {
           color: "var(--color-primary)",
         }}
       >
-        Cadastro de Advogado
+        Cadastro de Cliente
       </h2>
 
       <p
@@ -117,12 +138,12 @@ export default function RegisterForm() {
           color: "var(--color-muted)",
         }}
       >
-        Crie sua conta para acessar o sistema jurídico
+        Cadastre um novo cliente no sistema
       </p>
 
       <Input
         label="Nome completo"
-        placeholder="Digite seu nome"
+        placeholder="Digite o nome"
         value={nome}
         onChange={(e) => setNome(e.target.value)}
       />
@@ -137,16 +158,9 @@ export default function RegisterForm() {
       />
 
       <Input
-        label="Número OAB"
-        placeholder="000000/SP"
-        value={oab}
-        onChange={(e) => setOab(e.target.value)}
-      />
-
-      <Input
         label="E-mail"
         type="email"
-        placeholder="Digite seu e-mail"
+        placeholder="Digite o e-mail"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
       />
@@ -162,43 +176,26 @@ export default function RegisterForm() {
       />
 
       <Input
-        label="Senha"
-        type="password"
-        placeholder="Digite sua senha"
-        value={senha}
-        onChange={(e) => setSenha(e.target.value)}
-      />
-
-      <Input
-        label="Confirmar senha"
-        type="password"
-        placeholder="Digite novamente sua senha"
-        value={confirmarSenha}
-        onChange={(e) => setConfirmarSenha(e.target.value)}
+        label="Endereço"
+        placeholder="Digite o endereço"
+        value={endereco}
+        onChange={(e) => setEndereco(e.target.value)}
       />
 
       <Button type="submit">
-        Criar Conta
+        Cadastrar Cliente
       </Button>
 
       <div className="text-center mt-4">
 
-        <span
-          style={{
-            color: "var(--color-muted)",
-          }}
-        >
-          Já possui conta?{" "}
-        </span>
-
         <Link
-          href="/"
+          href="/dashboard"
           className="fw-semibold text-decoration-none"
           style={{
             color: "var(--color-primary)",
           }}
         >
-          Voltar para login
+          Voltar ao dashboard
         </Link>
 
       </div>

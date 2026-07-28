@@ -28,7 +28,7 @@ INSTALLED_APPS = [
     'corsheaders',
 
     # apps do projeto
-    'api',
+    'advocacia.apps.AdvocaciaConfig',
 ]
 
 

@@ -1,21 +1,87 @@
-const API_URL = "http://127.0.0.1:8000/api";
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api";
+
+
+async function request(endpoint, options = {}) {
+  const response = await fetch(`${API_URL}${endpoint}`, {
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+  let data = null;
+
+  try {
+    data = await response.json();
+  } catch {
+    data = null;
+  }
+
+  if (!response.ok) {
+    const mensagem =
+      data?.detail ||
+      data?.message ||
+      "Não foi possível concluir a requisição.";
+
+    throw new Error(mensagem);
+  }
+
+  return data;
+}
+
+
+// CLIENTES
 
 export async function getClientes() {
-
-  const response = await fetch(`${API_URL}/clientes/`);
-
-  return response.json();
+  return request("/clientes/");
 }
 
 export async function createCliente(data) {
-
-  const response = await fetch(`${API_URL}/clientes/`, {
+  return request("/clientes/", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
     body: JSON.stringify(data),
   });
+}
 
-  return response.json();
+export async function updateCliente(id, data) {
+  return request(`/clientes/${id}/`, {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function deleteCliente(id) {
+  return request(`/clientes/${id}/`, {
+    method: "DELETE",
+  });
+}
+
+
+// PROCESSOS
+
+export async function getProcessos() {
+  return request("/processos/");
+}
+
+
+// AGENDA / AUDIÊNCIAS
+
+export async function getAgenda() {
+  return request("/agenda/");
+}
+
+
+// DOCUMENTOS
+
+export async function getDocumentos() {
+  return request("/documentos/");
+}
+
+
+// ADVOGADOS
+
+export async function getAdvogados() {
+  return request("/advogados/");
 }
