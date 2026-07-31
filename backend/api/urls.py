@@ -7,8 +7,15 @@ from .views import ClienteViewSet
 
 router = DefaultRouter()
 
-router.register(r'clientes', ClienteViewSet)
+router.register(
+    r'clientes',
+    ClienteViewSet
+)
+
 
 urlpatterns = [
-    path('', include(router.urls)),
+    path(
+        '',
+        include(router.urls)
+    ),
 ]
