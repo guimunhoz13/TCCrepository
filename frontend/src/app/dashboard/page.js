@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 import Sidebar from "@/components/dashboard/Sidebar";
 import Header from "@/components/layout/Header";
@@ -37,6 +38,9 @@ function formatarStatus(status) {
 
 
 export default function Dashboard() {
+
+  const router = useRouter();
+
   const [clientes, setClientes] = useState([]);
   const [processos, setProcessos] = useState([]);
   const [agenda, setAgenda] = useState([]);
@@ -47,8 +51,19 @@ export default function Dashboard() {
 
 
   useEffect(() => {
+
+    // Verifica se existe o token do Django
+    const token = localStorage.getItem("access");
+
+    if (!token) {
+      router.replace("/");
+      return;
+    }
+
     async function carregarDashboard() {
+
       try {
+
         setCarregando(true);
         setErro("");
 
@@ -68,25 +83,50 @@ export default function Dashboard() {
         setProcessos(normalizarLista(dadosProcessos));
         setAgenda(normalizarLista(dadosAgenda));
         setDocumentos(normalizarLista(dadosDocumentos));
-      } catch (error) {
-        console.error("Erro ao carregar dashboard:", error);
 
-        setErro(
-          "Não foi possível carregar os dados da dashboard."
-        );
+      } catch (error) {
+
+        console.error(error);
+
+        // Se o token for inválido ou expirou
+        if (error?.response?.status === 401) {
+
+          localStorage.removeItem("access");
+          localStorage.removeItem("refresh");
+
+          router.replace("/");
+          return;
+        }
+
+        setErro("Não foi possível carregar os dados da dashboard.");
+
       } finally {
+
         setCarregando(false);
+
       }
+
     }
 
     carregarDashboard();
-  }, []);
+
+  }, [router]);
+
+
+  function logout() {
+
+    localStorage.removeItem("access");
+    localStorage.removeItem("refresh");
+
+    router.replace("/");
+
+  }
 
 
   const processosRecentes = processos.slice(0, 5);
 
-
   return (
+
     <div
       className="d-flex"
       style={{
@@ -94,17 +134,22 @@ export default function Dashboard() {
         minHeight: "100vh",
       }}
     >
+
       <Sidebar />
 
       <div className="flex-grow-1 p-4">
 
         <Header title="Dashboard" />
 
+        <button
+          className="btn btn-danger mb-4"
+          onClick={logout}
+        >
+          Sair
+        </button>
+
         {erro && (
-          <div
-            className="alert alert-danger"
-            role="alert"
-          >
+          <div className="alert alert-danger">
             {erro}
           </div>
         )}
@@ -143,15 +188,12 @@ export default function Dashboard() {
 
         <div
           className="mt-5 p-4 rounded-4 shadow-sm"
-          style={{
-            background: "white",
-          }}
+          style={{ background: "white" }}
         >
+
           <h4
             className="fw-bold mb-4"
-            style={{
-              color: "var(--color-primary)",
-            }}
+            style={{ color: "var(--color-primary)" }}
           >
             Processos Recentes
           </h4>
@@ -178,19 +220,13 @@ export default function Dashboard() {
 
               {!carregando &&
                 processosRecentes.map((processo) => (
+
                   <tr key={processo.id}>
-                    <td>
-                      {processo.numero_processo}
-                    </td>
-
-                    <td>
-                      {processo.cliente_nome}
-                    </td>
-
-                    <td>
-                      {formatarStatus(processo.status)}
-                    </td>
+                    <td>{processo.numero_processo}</td>
+                    <td>{processo.cliente_nome}</td>
+                    <td>{formatarStatus(processo.status)}</td>
                   </tr>
+
                 ))}
 
               {!carregando &&
@@ -205,9 +241,13 @@ export default function Dashboard() {
             </tbody>
 
           </table>
+
         </div>
 
       </div>
+
     </div>
+
   );
+
 }

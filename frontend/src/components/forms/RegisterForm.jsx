@@ -57,46 +57,46 @@ export default function RegisterForm() {
 
     try {
 
-      // CRIA USUÁRIO
-
       const usuarioResponse = await fetch(
         "http://127.0.0.1:8000/api/usuarios/",
         {
-
           method: "POST",
-
           headers: {
             "Content-Type": "application/json",
           },
-
           body: JSON.stringify({
-
             nome,
             email,
             senha: "123456",
-            tipo_usuario: "cliente",
+            tipo_usuario: "advogado",
           }),
         }
       );
 
-      const usuarioData = await usuarioResponse.json();
+      // ======= ALTERAÇÃO PARA DESCOBRIR O ERRO =======
+      const texto = await usuarioResponse.text();
 
-      // CRIA CLIENTE
+      console.log(texto);
+      alert(texto);
+
+      return;
+      // ==============================================
+
+      // ESTE CÓDIGO FICARÁ DESABILITADO POR ENQUANTO
+      /*
+      const usuarioData = await usuarioResponse.json();
 
       const clienteResponse = await fetch(
         "http://127.0.0.1:8000/api/clientes/",
         {
-
           method: "POST",
-
           headers: {
             "Content-Type": "application/json",
           },
-
           body: JSON.stringify({
-
-            usuario: usuarioData.id,
+            nome,
             cpf,
+            email,
             telefone,
             endereco,
           }),
@@ -107,15 +107,16 @@ export default function RegisterForm() {
         throw new Error("Erro ao cadastrar cliente");
       }
 
-      alert("Cliente cadastrado com sucesso!");
-
-      window.location.href = "/dashboard";
+      alert("Advogado cadastrado com sucesso!");
+      window.location.href = "/";
+      */
 
     } catch (error) {
 
       console.error(error);
 
       alert("Erro ao cadastrar");
+
     }
   }
 
@@ -129,7 +130,7 @@ export default function RegisterForm() {
           color: "var(--color-primary)",
         }}
       >
-        Cadastro de Cliente
+        Cadastro de Advogado
       </h2>
 
       <p
@@ -138,7 +139,7 @@ export default function RegisterForm() {
           color: "var(--color-muted)",
         }}
       >
-        Cadastre um novo cliente no sistema
+        Cadastre um novo advogado no sistema
       </p>
 
       <Input
@@ -152,9 +153,7 @@ export default function RegisterForm() {
         label="CPF"
         placeholder="000.000.000-00"
         value={cpf}
-        onChange={(e) =>
-          setCpf(formatarCPF(e.target.value))
-        }
+        onChange={(e) => setCpf(formatarCPF(e.target.value))}
       />
 
       <Input
@@ -170,9 +169,7 @@ export default function RegisterForm() {
         type="tel"
         placeholder="+55 (18) 99999-9999"
         value={telefone}
-        onChange={(e) =>
-          setTelefone(formatarTelefone(e.target.value))
-        }
+        onChange={(e) => setTelefone(formatarTelefone(e.target.value))}
       />
 
       <Input
@@ -183,23 +180,25 @@ export default function RegisterForm() {
       />
 
       <Button type="submit">
-        Cadastrar Cliente
+        Cadastrar Advogado
       </Button>
 
       <div className="text-center mt-4">
 
         <Link
-          href="/dashboard"
+          href="/"
           className="fw-semibold text-decoration-none"
           style={{
             color: "var(--color-primary)",
           }}
         >
-          Voltar ao dashboard
+          Voltar ao Login
         </Link>
 
       </div>
 
     </form>
+
   );
+
 }
