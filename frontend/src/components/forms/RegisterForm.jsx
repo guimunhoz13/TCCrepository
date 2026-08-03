@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 import Input from "../ui/Input";
@@ -8,11 +9,14 @@ import Button from "../ui/Button";
 
 export default function RegisterForm() {
 
+  const router = useRouter();
+
   const [nome, setNome] = useState("");
   const [cpf, setCpf] = useState("");
   const [email, setEmail] = useState("");
   const [telefone, setTelefone] = useState("");
   const [endereco, setEndereco] = useState("");
+  const [senha, setSenha] = useState("");
 
   function formatarCPF(valor) {
 
@@ -36,9 +40,7 @@ export default function RegisterForm() {
 
     numeros = numeros.slice(0, 11);
 
-    if (numeros.length === 0) {
-      return "";
-    }
+    if (numeros.length === 0) return "";
 
     if (numeros.length <= 2) {
       return `+55 (${numeros}`;
@@ -57,6 +59,7 @@ export default function RegisterForm() {
 
     try {
 
+      // Cadastro do usuário
       const usuarioResponse = await fetch(
         "http://127.0.0.1:8000/api/usuarios/",
         {
@@ -67,25 +70,18 @@ export default function RegisterForm() {
           body: JSON.stringify({
             nome,
             email,
-            senha: "123456",
+            senha,
             tipo_usuario: "advogado",
           }),
         }
       );
 
-      // ======= ALTERAÇÃO PARA DESCOBRIR O ERRO =======
-      const texto = await usuarioResponse.text();
+      if (!usuarioResponse.ok) {
+        const erro = await usuarioResponse.text();
+        throw new Error(erro);
+      }
 
-      console.log(texto);
-      alert(texto);
-
-      return;
-      // ==============================================
-
-      // ESTE CÓDIGO FICARÁ DESABILITADO POR ENQUANTO
-      /*
-      const usuarioData = await usuarioResponse.json();
-
+      // Cadastro do cliente
       const clienteResponse = await fetch(
         "http://127.0.0.1:8000/api/clientes/",
         {
@@ -104,18 +100,22 @@ export default function RegisterForm() {
       );
 
       if (!clienteResponse.ok) {
-        throw new Error("Erro ao cadastrar cliente");
+        const erro = await clienteResponse.text();
+        throw new Error(erro);
       }
 
-      alert("Advogado cadastrado com sucesso!");
-      window.location.href = "/";
-      */
+      // Salva a mensagem para aparecer no login
+      sessionStorage.setItem(
+        "sucessoCadastro",
+        "Seu cadastro foi concluído com sucesso!"
+      );
+
+      router.push("/");
 
     } catch (error) {
 
       console.error(error);
-
-      alert("Erro ao cadastrar");
+      alert("Erro ao cadastrar:\n" + error.message);
 
     }
   }
@@ -126,18 +126,14 @@ export default function RegisterForm() {
 
       <h2
         className="mb-2 fw-bold"
-        style={{
-          color: "var(--color-primary)",
-        }}
+        style={{ color: "var(--color-primary)" }}
       >
         Cadastro de Advogado
       </h2>
 
       <p
         className="mb-4"
-        style={{
-          color: "var(--color-muted)",
-        }}
+        style={{ color: "var(--color-muted)" }}
       >
         Cadastre um novo advogado no sistema
       </p>
@@ -179,12 +175,19 @@ export default function RegisterForm() {
         onChange={(e) => setEndereco(e.target.value)}
       />
 
+      <Input
+        label="Senha"
+        type="password"
+        placeholder="Digite uma senha"
+        value={senha}
+        onChange={(e) => setSenha(e.target.value)}
+      />
+
       <Button type="submit">
         Cadastrar Advogado
       </Button>
 
       <div className="text-center mt-4">
-
         <Link
           href="/"
           className="fw-semibold text-decoration-none"
@@ -194,7 +197,6 @@ export default function RegisterForm() {
         >
           Voltar ao Login
         </Link>
-
       </div>
 
     </form>

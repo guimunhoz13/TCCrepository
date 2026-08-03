@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 
 import Input from "../ui/Input";
@@ -10,6 +10,18 @@ export default function LoginForm() {
 
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
+  const [mensagem, setMensagem] = useState("");
+
+  useEffect(() => {
+
+    const msg = sessionStorage.getItem("sucessoCadastro");
+
+    if (msg) {
+      setMensagem(msg);
+      sessionStorage.removeItem("sucessoCadastro");
+    }
+
+  }, []);
 
   async function handleLogin(event) {
 
@@ -71,6 +83,18 @@ export default function LoginForm() {
       >
         Informe suas credenciais para acessar o sistema
       </p>
+
+      {mensagem && (
+        <div
+          className="alert alert-success"
+          style={{
+            marginBottom: "20px",
+            borderRadius: "8px",
+          }}
+        >
+          {mensagem}
+        </div>
+      )}
 
       <Input
         label="E-mail"
