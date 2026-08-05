@@ -1,16 +1,17 @@
-import 'bootstrap/dist/css/bootstrap.min.css'
+import Providers from "@/components/Providers";
 import "./globals.css";
-import "../styles/theme.css";
 
 export const metadata = {
-  title: "TCC Advocacia",
-  description: "Sistema Web para Advocacia",
+  title: "LexOffice — ERP Jurídico",
+  description: "Sistema ERP multi-escritório para advocacia",
 };
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="pt-br">
-      <body>{children}</body>
+    <html lang="pt-br" suppressHydrationWarning>
+      <body>
+        <Providers>{children}</Providers>
+      </body>
     </html>
   );
 }

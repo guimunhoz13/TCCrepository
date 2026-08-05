@@ -2,252 +2,158 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-
-import Sidebar from "@/components/dashboard/Sidebar";
-import Header from "@/components/layout/Header";
-import DashboardCard from "@/components/dashboard/DashboardCard";
-
+import AppSidebar from "@/components/shell/AppSidebar";
+import TopBar from "@/components/shell/TopBar";
+import ChartsSection from "@/components/dashboard/ChartsSection";
+import MiniCalendar from "@/components/dashboard/MiniCalendar";
+import ClientesPanel from "@/components/panels/ClientesPanel";
+import ProcessosPanel from "@/components/panels/ProcessosPanel";
+import AgendaPanel from "@/components/panels/AgendaPanel";
+import DocumentosPanel from "@/components/panels/DocumentosPanel";
+import ContatoPanel from "@/components/panels/ContatoPanel";
+import ConfigPanel from "@/components/panels/ConfigPanel";
+import { PanelProvider } from "@/contexts/PanelContext";
 import {
-  getClientes,
+  getDashboardStats,
   getProcessos,
   getAgenda,
-  getDocumentos,
+  normalizarLista,
 } from "@/services/api";
 
-
-function normalizarLista(dados) {
-  if (Array.isArray(dados)) {
-    return dados;
-  }
-
-  if (Array.isArray(dados?.results)) {
-    return dados.results;
-  }
-
-  return [];
-}
-
-
-function formatarStatus(status) {
-  if (status === "Concluido") {
-    return "Concluído";
-  }
-
-  return status || "-";
-}
-
-
-export default function Dashboard() {
-
+function DashboardContent() {
   const router = useRouter();
-
-  const [clientes, setClientes] = useState([]);
+  const [stats, setStats] = useState(null);
   const [processos, setProcessos] = useState([]);
   const [agenda, setAgenda] = useState([]);
-  const [documentos, setDocumentos] = useState([]);
-
-  const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState("");
-
+  const [carregando, setCarregando] = useState(true);
 
   useEffect(() => {
-
-    // Verifica se existe o token do Django
     const token = localStorage.getItem("access");
-
     if (!token) {
       router.replace("/");
       return;
     }
 
-    async function carregarDashboard() {
-
+    async function carregar() {
       try {
-
-        setCarregando(true);
-        setErro("");
-
-        const [
-          dadosClientes,
-          dadosProcessos,
-          dadosAgenda,
-          dadosDocumentos,
-        ] = await Promise.all([
-          getClientes(),
+        const [dadosStats, dadosProcessos, dadosAgenda] = await Promise.all([
+          getDashboardStats(),
           getProcessos(),
           getAgenda(),
-          getDocumentos(),
         ]);
 
-        setClientes(normalizarLista(dadosClientes));
+        setStats(dadosStats);
         setProcessos(normalizarLista(dadosProcessos));
         setAgenda(normalizarLista(dadosAgenda));
-        setDocumentos(normalizarLista(dadosDocumentos));
-
       } catch (error) {
-
-        console.error(error);
-
-        // Se o token for inválido ou expirou
-        if (error?.response?.status === 401) {
-
-          localStorage.removeItem("access");
-          localStorage.removeItem("refresh");
-
+        if (error.message.includes("401") || error.message.includes("token")) {
           router.replace("/");
           return;
         }
-
-        setErro("Não foi possível carregar os dados da dashboard.");
-
+        setErro(error.message);
       } finally {
-
         setCarregando(false);
-
       }
-
     }
 
-    carregarDashboard();
-
+    carregar();
   }, [router]);
 
-
-  function logout() {
-
-    localStorage.removeItem("access");
-    localStorage.removeItem("refresh");
-
-    router.replace("/");
-
-  }
-
-
-  const processosRecentes = processos.slice(0, 5);
+  const totais = stats?.totais || {};
 
   return (
+    <div className="app-shell">
+      <AppSidebar />
 
-    <div
-      className="d-flex"
-      style={{
-        background: "#F8FAFC",
-        minHeight: "100vh",
-      }}
-    >
+      <main className="app-main">
+        <TopBar
+          title="Dashboard"
+          subtitle={
+            stats?.escritorio?.nome
+              ? `Visão geral — ${stats.escritorio.nome}`
+              : "Visão geral do escritório"
+          }
+        />
 
-      <Sidebar />
+        {erro && <div className="alert alert-error">{erro}</div>}
 
-      <div className="flex-grow-1 p-4">
-
-        <Header title="Dashboard" />
-
-        <button
-          className="btn btn-danger mb-4"
-          onClick={logout}
-        >
-          Sair
-        </button>
-
-        {erro && (
-          <div className="alert alert-danger">
-            {erro}
-          </div>
-        )}
-
-        <div className="row g-4">
-
-          <div className="col-md-3">
-            <DashboardCard
-              titulo="Clientes"
-              valor={carregando ? "..." : clientes.length}
-            />
-          </div>
-
-          <div className="col-md-3">
-            <DashboardCard
-              titulo="Processos"
-              valor={carregando ? "..." : processos.length}
-            />
-          </div>
-
-          <div className="col-md-3">
-            <DashboardCard
-              titulo="Audiências"
-              valor={carregando ? "..." : agenda.length}
-            />
-          </div>
-
-          <div className="col-md-3">
-            <DashboardCard
-              titulo="Documentos"
-              valor={carregando ? "..." : documentos.length}
-            />
-          </div>
-
+        <div className="stats-grid">
+          {[
+            ["Clientes", totais.clientes],
+            ["Processos", totais.processos],
+            ["Audiências", totais.agenda],
+            ["Documentos", totais.documentos],
+          ].map(([label, valor]) => (
+            <div key={label} className="stat-card">
+              <div className="stat-card-label">{label}</div>
+              <div className="stat-card-value">
+                {carregando ? "..." : valor ?? 0}
+              </div>
+            </div>
+          ))}
         </div>
 
-        <div
-          className="mt-5 p-4 rounded-4 shadow-sm"
-          style={{ background: "white" }}
-        >
+        <ChartsSection
+          processosPorStatus={stats?.processos_por_status || []}
+          totais={totais}
+        />
 
-          <h4
-            className="fw-bold mb-4"
-            style={{ color: "var(--color-primary)" }}
-          >
-            Processos Recentes
-          </h4>
-
-          <table className="table">
-
-            <thead>
-              <tr>
-                <th>Processo</th>
-                <th>Cliente</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-
-            <tbody>
-
-              {carregando && (
-                <tr>
-                  <td colSpan="3">
-                    Carregando processos...
-                  </td>
-                </tr>
-              )}
-
-              {!carregando &&
-                processosRecentes.map((processo) => (
-
-                  <tr key={processo.id}>
-                    <td>{processo.numero_processo}</td>
-                    <td>{processo.cliente_nome}</td>
-                    <td>{formatarStatus(processo.status)}</td>
-                  </tr>
-
-                ))}
-
-              {!carregando &&
-                processosRecentes.length === 0 && (
+        <div className="dashboard-grid" style={{ marginTop: 18 }}>
+          <div className="panel-card">
+            <h3>Processos recentes</h3>
+            <div className="table-wrap">
+              <table>
+                <thead>
                   <tr>
-                    <td colSpan="3">
-                      Nenhum processo cadastrado.
-                    </td>
+                    <th>Processo</th>
+                    <th>Cliente</th>
+                    <th>Status</th>
                   </tr>
-                )}
+                </thead>
+                <tbody>
+                  {!carregando &&
+                    processos.slice(0, 5).map((processo) => (
+                      <tr key={processo.id}>
+                        <td>{processo.numero_processo}</td>
+                        <td>{processo.cliente_nome}</td>
+                        <td>
+                          <span className="badge badge-muted">
+                            {processo.status === "Concluido"
+                              ? "Concluído"
+                              : processo.status}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  {!carregando && processos.length === 0 && (
+                    <tr>
+                      <td colSpan="3">Nenhum processo cadastrado.</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
 
-            </tbody>
-
-          </table>
-
+          <MiniCalendar eventos={agenda} />
         </div>
+      </main>
 
-      </div>
-
+      <ClientesPanel />
+      <ProcessosPanel />
+      <AgendaPanel />
+      <DocumentosPanel />
+      <ContatoPanel />
+      <ConfigPanel />
     </div>
-
   );
+}
 
+export default function DashboardPage() {
+  return (
+    <PanelProvider>
+      <DashboardContent />
+    </PanelProvider>
+  );
 }

@@ -1,4 +1,5 @@
 from django.contrib.auth.hashers import check_password
+from django.db.models import Count
 
 from rest_framework import status, viewsets
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -7,7 +8,9 @@ from rest_framework.views import APIView
 
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from .mixins import EscritorioScopedMixin, get_usuario_from_request
 from .models import (
+    Escritorio,
     Usuario,
     Cliente,
     Advogado,
@@ -16,9 +19,11 @@ from .models import (
     Documento,
     Agenda,
 )
-
 from .serializers import (
+    EscritorioSerializer,
+    EscritorioRegistroSerializer,
     UsuarioSerializer,
+    AdvogadoRegistroSerializer,
     ClienteSerializer,
     AdvogadoSerializer,
     ProcessoSerializer,
@@ -40,156 +45,269 @@ class LoginView(APIView):
 
         if not email or not senha:
             return Response(
-                {
-                    "detail": "Informe o e-mail e a senha."
-                },
-                status=status.HTTP_400_BAD_REQUEST
+                {"detail": "Informe o e-mail e a senha."},
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         try:
-            usuario = Usuario.objects.get(
+            usuario = Usuario.objects.select_related("escritorio").get(
                 email__iexact=email
             )
-
         except Usuario.DoesNotExist:
             return Response(
-                {
-                    "detail": "E-mail ou senha inválidos."
-                },
-                status=status.HTTP_401_UNAUTHORIZED
+                {"detail": "E-mail ou senha inválidos."},
+                status=status.HTTP_401_UNAUTHORIZED,
             )
 
         if not usuario.ativo:
             return Response(
-                {
-                    "detail": "Este usuário está desativado."
-                },
-                status=status.HTTP_403_FORBIDDEN
+                {"detail": "Este usuário está desativado."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        if not usuario.escritorio.ativo:
+            return Response(
+                {"detail": "Este escritório está desativado."},
+                status=status.HTTP_403_FORBIDDEN,
             )
 
         if not check_password(senha, usuario.senha):
             return Response(
-                {
-                    "detail": "E-mail ou senha inválidos."
-                },
-                status=status.HTTP_401_UNAUTHORIZED
+                {"detail": "E-mail ou senha inválidos."},
+                status=status.HTTP_401_UNAUTHORIZED,
             )
 
         refresh = RefreshToken()
-
         refresh["user_id"] = usuario.id
         refresh["nome"] = usuario.nome
         refresh["email"] = usuario.email
         refresh["tipo_usuario"] = usuario.tipo_usuario
+        refresh["escritorio_id"] = usuario.escritorio_id
+        refresh["escritorio_nome"] = usuario.escritorio.nome
 
         return Response(
             {
                 "refresh": str(refresh),
                 "access": str(refresh.access_token),
-
                 "usuario": {
                     "id": usuario.id,
                     "nome": usuario.nome,
                     "email": usuario.email,
                     "tipo_usuario": usuario.tipo_usuario,
-                }
+                    "escritorio_id": usuario.escritorio_id,
+                    "escritorio_nome": usuario.escritorio.nome,
+                },
             },
-            status=status.HTTP_200_OK
+            status=status.HTTP_200_OK,
         )
 
 
-class UsuarioViewSet(viewsets.ModelViewSet):
+class EscritorioRegistroView(APIView):
 
-    queryset = Usuario.objects.all().order_by("-criado_em")
+    permission_classes = [AllowAny]
+    authentication_classes = []
+
+    def post(self, request):
+        serializer = EscritorioRegistroSerializer(data=request.data)
+
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        resultado = serializer.save()
+
+        return Response(
+            {
+                "detail": "Escritório cadastrado com sucesso.",
+                "escritorio": EscritorioSerializer(resultado["escritorio"]).data,
+            },
+            status=status.HTTP_201_CREATED,
+        )
+
+
+class DashboardStatsView(APIView):
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        usuario = get_usuario_from_request(request)
+
+        if not usuario:
+            return Response(
+                {"detail": "Usuário não identificado."},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+
+        escritorio = usuario.escritorio
+
+        processos_por_status = (
+            Processo.objects.filter(escritorio=escritorio)
+            .values("status")
+            .annotate(total=Count("id"))
+            .order_by("status")
+        )
+
+        return Response(
+            {
+                "escritorio": EscritorioSerializer(escritorio).data,
+                "totais": {
+                    "clientes": Cliente.objects.filter(escritorio=escritorio).count(),
+                    "processos": Processo.objects.filter(escritorio=escritorio).count(),
+                    "advogados": Advogado.objects.filter(escritorio=escritorio).count(),
+                    "documentos": Documento.objects.filter(
+                        processo__escritorio=escritorio
+                    ).count(),
+                    "agenda": Agenda.objects.filter(
+                        processo__escritorio=escritorio
+                    ).count(),
+                },
+                "processos_por_status": list(processos_por_status),
+            }
+        )
+
+
+class EscritorioViewSet(EscritorioScopedMixin, viewsets.ReadOnlyModelViewSet):
+
+    serializer_class = EscritorioSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        escritorio = self.get_escritorio()
+
+        if not escritorio:
+            return Escritorio.objects.none()
+
+        return Escritorio.objects.filter(id=escritorio.id)
+
+
+class UsuarioViewSet(EscritorioScopedMixin, viewsets.ModelViewSet):
+
     serializer_class = UsuarioSerializer
+    permission_classes = [IsAuthenticated]
 
-    def get_permissions(self):
+    def get_queryset(self):
+        return (
+            super()
+            .get_queryset()
+            .filter(escritorio=self.get_escritorio())
+            .order_by("-criado_em")
+        )
 
-        if self.action == "create":
-            return [AllowAny()]
 
-        return [IsAuthenticated()]
+class AdvogadoRegistroView(APIView):
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        usuario_logado = get_usuario_from_request(request)
+
+        if usuario_logado.tipo_usuario != "admin":
+            return Response(
+                {"detail": "Somente administradores podem cadastrar advogados."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        serializer = AdvogadoRegistroSerializer(data=request.data)
+
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        if Advogado.objects.filter(
+            escritorio=usuario_logado.escritorio,
+            oab=serializer.validated_data["oab"],
+        ).exists():
+            return Response(
+                {"oab": ["OAB já cadastrada neste escritório."]},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        advogado = serializer.create(
+            serializer.validated_data,
+            usuario_logado.escritorio,
+        )
+
+        return Response(
+            AdvogadoSerializer(advogado).data,
+            status=status.HTTP_201_CREATED,
+        )
 
 
-class ClienteViewSet(viewsets.ModelViewSet):
+class ClienteViewSet(EscritorioScopedMixin, viewsets.ModelViewSet):
 
-    queryset = Cliente.objects.all().order_by("-criado_em")
     serializer_class = ClienteSerializer
+    permission_classes = [IsAuthenticated]
 
-    def get_permissions(self):
-
-        if self.action == "create":
-            return [AllowAny()]
-
-        return [IsAuthenticated()]
+    def get_queryset(self):
+        return super().get_queryset().order_by("-criado_em")
 
 
-class AdvogadoViewSet(viewsets.ModelViewSet):
-
-    queryset = (
-        Advogado.objects
-        .select_related("usuario")
-        .all()
-        .order_by("-id")
-    )
+class AdvogadoViewSet(EscritorioScopedMixin, viewsets.ModelViewSet):
 
     serializer_class = AdvogadoSerializer
     permission_classes = [IsAuthenticated]
 
-
-class ProcessoViewSet(viewsets.ModelViewSet):
-
-    queryset = (
-        Processo.objects
-        .select_related(
-            "cliente",
-            "advogado__usuario",
+    def get_queryset(self):
+        return (
+            super()
+            .get_queryset()
+            .select_related("usuario")
+            .order_by("-id")
         )
-        .all()
-        .order_by("-criado_em")
-    )
+
+
+class ProcessoViewSet(EscritorioScopedMixin, viewsets.ModelViewSet):
 
     serializer_class = ProcessoSerializer
     permission_classes = [IsAuthenticated]
 
+    def get_queryset(self):
+        return (
+            super()
+            .get_queryset()
+            .select_related("cliente", "advogado__usuario")
+            .order_by("-criado_em")
+        )
 
-class MovimentacaoViewSet(viewsets.ModelViewSet):
 
-    queryset = (
-        Movimentacao.objects
-        .select_related("processo")
-        .all()
-        .order_by("-data_movimentacao")
-    )
+class MovimentacaoViewSet(EscritorioScopedMixin, viewsets.ModelViewSet):
 
     serializer_class = MovimentacaoSerializer
     permission_classes = [IsAuthenticated]
 
+    def get_queryset(self):
+        return (
+            super()
+            .get_queryset()
+            .select_related("processo")
+            .order_by("-data_movimentacao")
+        )
 
-class DocumentoViewSet(viewsets.ModelViewSet):
 
-    queryset = (
-        Documento.objects
-        .select_related("processo")
-        .all()
-        .order_by("-enviado_em")
-    )
+class DocumentoViewSet(EscritorioScopedMixin, viewsets.ModelViewSet):
 
     serializer_class = DocumentoSerializer
     permission_classes = [IsAuthenticated]
 
-
-class AgendaViewSet(viewsets.ModelViewSet):
-
-    queryset = (
-        Agenda.objects
-        .select_related(
-            "processo__cliente",
-            "processo__advogado__usuario",
+    def get_queryset(self):
+        return (
+            super()
+            .get_queryset()
+            .select_related("processo")
+            .order_by("-enviado_em")
         )
-        .all()
-        .order_by("data_evento")
-    )
+
+
+class AgendaViewSet(EscritorioScopedMixin, viewsets.ModelViewSet):
 
     serializer_class = AgendaSerializer
     permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return (
+            super()
+            .get_queryset()
+            .select_related(
+                "processo__cliente",
+                "processo__advogado__usuario",
+            )
+            .order_by("data_evento")
+        )

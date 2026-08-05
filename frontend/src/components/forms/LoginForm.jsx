@@ -2,11 +2,11 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-
-import Input from "../ui/Input";
-import Button from "../ui/Button";
+import { useRouter } from "next/navigation";
+import { login } from "@/services/api";
 
 export default function LoginForm() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [mensagem, setMensagem] = useState("");
@@ -15,7 +15,6 @@ export default function LoginForm() {
 
   useEffect(() => {
     const msg = sessionStorage.getItem("sucessoCadastro");
-
     if (msg) {
       setMensagem(msg);
       sessionStorage.removeItem("sucessoCadastro");
@@ -24,76 +23,20 @@ export default function LoginForm() {
 
   async function handleLogin(event) {
     event.preventDefault();
-
     setErro("");
     setMensagem("");
 
-    if (!email.trim() || !senha) {
-      setErro("Preencha o e-mail e a senha.");
-      return;
-    }
-
     try {
       setCarregando(true);
-
-      const response = await fetch(
-        "http://127.0.0.1:8000/api/login/",
-        {
-          method: "POST",
-
-          headers: {
-            "Content-Type": "application/json",
-          },
-
-          body: JSON.stringify({
-            email: email.trim(),
-            senha: senha,
-          }),
-        }
-      );
-
-      const contentType =
-        response.headers.get("content-type") || "";
-
-      let data;
-
-      if (contentType.includes("application/json")) {
-        data = await response.json();
-      } else {
-        const texto = await response.text();
-
-        console.error("Resposta do servidor:", texto);
-
-        throw new Error(
-          "O servidor retornou uma resposta inválida."
-        );
-      }
-
-      if (!response.ok) {
-        setErro(
-          data?.detail || "E-mail ou senha inválidos."
-        );
-
-        return;
-      }
+      const data = await login(email.trim(), senha);
 
       localStorage.setItem("access", data.access);
       localStorage.setItem("refresh", data.refresh);
+      localStorage.setItem("usuarioLogado", JSON.stringify(data.usuario));
 
-      localStorage.setItem(
-        "usuarioLogado",
-        JSON.stringify(data.usuario)
-      );
-
-      window.location.href = "/dashboard";
-
+      router.push("/dashboard");
     } catch (error) {
-      console.error("Erro no login:", error);
-
-      setErro(
-        error.message || "Erro ao conectar ao servidor."
-      );
-
+      setErro(error.message);
     } finally {
       setCarregando(false);
     }
@@ -101,85 +44,41 @@ export default function LoginForm() {
 
   return (
     <form onSubmit={handleLogin}>
-      <h2
-        className="mb-2 fw-bold"
-        style={{ color: "var(--color-primary)" }}
-      >
-        Entrar
-      </h2>
+      <h2>Entrar</h2>
+      <p className="subtitle">Acesse o ERP do seu escritório de advocacia</p>
 
-      <p
-        className="mb-4"
-        style={{ color: "var(--color-muted)" }}
-      >
-        Informe suas credenciais para acessar o sistema
-      </p>
+      {mensagem && <div className="alert alert-success">{mensagem}</div>}
+      {erro && <div className="alert alert-error">{erro}</div>}
 
-      {mensagem && (
-        <div
-          className="alert alert-success"
-          role="alert"
-          style={{
-            marginBottom: "20px",
-            borderRadius: "8px",
-          }}
-        >
-          {mensagem}
-        </div>
-      )}
+      <div className="form-field" style={{ marginBottom: 16 }}>
+        <label>E-mail</label>
+        <input
+          type="email"
+          placeholder="seu@email.com"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+        />
+      </div>
 
-      {erro && (
-        <div
-          className="alert alert-danger"
-          role="alert"
-          style={{
-            marginBottom: "20px",
-            borderRadius: "8px",
-          }}
-        >
-          {erro}
-        </div>
-      )}
+      <div className="form-field" style={{ marginBottom: 22 }}>
+        <label>Senha</label>
+        <input
+          type="password"
+          placeholder="••••••••"
+          value={senha}
+          onChange={(e) => setSenha(e.target.value)}
+          required
+        />
+      </div>
 
-      <Input
-        label="E-mail"
-        type="email"
-        placeholder="Digite seu e-mail"
-        value={email}
-        onChange={(event) =>
-          setEmail(event.target.value)
-        }
-      />
+      <button className="btn btn-primary" style={{ width: "100%" }} disabled={carregando}>
+        {carregando ? "Entrando..." : "Entrar no sistema"}
+      </button>
 
-      <Input
-        label="Senha"
-        type="password"
-        placeholder="Digite sua senha"
-        value={senha}
-        onChange={(event) =>
-          setSenha(event.target.value)
-        }
-      />
-
-      <Button
-        type="submit"
-        disabled={carregando}
-      >
-        {carregando ? "Entrando..." : "Entrar"}
-      </Button>
-
-      <div className="text-center mt-4">
-        <span style={{ color: "var(--color-muted)" }}>
-          Ainda não tem conta?{" "}
-        </span>
-
-        <Link
-          href="/cadastro"
-          className="fw-semibold text-decoration-none"
-          style={{ color: "var(--color-primary)" }}
-        >
-          Criar cadastro
-        </Link>
+      <div className="auth-footer">
+        Ainda não tem escritório cadastrado?{" "}
+        <Link href="/cadastro">Criar conta</Link>
       </div>
     </form>
   );

@@ -1,20 +1,19 @@
 const API_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api";
 
-
 async function request(endpoint, options = {}) {
+  const token =
+    typeof window !== "undefined"
+      ? localStorage.getItem("access")
+      : null;
 
-  const token = localStorage.getItem("access");
+  const isFormData = options.body instanceof FormData;
 
   const response = await fetch(`${API_URL}${endpoint}`, {
     ...options,
     headers: {
-      "Content-Type": "application/json",
-
-      ...(token && {
-        Authorization: `Bearer ${token}`,
-      }),
-
+      ...(isFormData ? {} : { "Content-Type": "application/json" }),
+      ...(token && { Authorization: `Bearer ${token}` }),
       ...options.headers,
     },
   });
@@ -28,25 +27,43 @@ async function request(endpoint, options = {}) {
   }
 
   if (!response.ok) {
-
     const mensagem =
       data?.detail ||
-      data?.message ||
+      Object.values(data || {})
+        .flat()
+        .join(" ") ||
       "Não foi possível concluir a requisição.";
 
     throw new Error(mensagem);
-
   }
 
   return data;
-
 }
 
+export async function login(email, senha) {
+  return request("/login/", {
+    method: "POST",
+    body: JSON.stringify({ email, senha }),
+  });
+}
 
+export async function registrarEscritorio(data) {
+  return request("/escritorios/registrar/", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
 
-// =====================
-// CLIENTES
-// =====================
+export async function registrarAdvogado(data) {
+  return request("/advogados/registrar/", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function getDashboardStats() {
+  return request("/dashboard/stats/");
+}
 
 export async function getClientes() {
   return request("/clientes/");
@@ -67,47 +84,79 @@ export async function updateCliente(id, data) {
 }
 
 export async function deleteCliente(id) {
-  return request(`/clientes/${id}/`, {
-    method: "DELETE",
-  });
+  return request(`/clientes/${id}/`, { method: "DELETE" });
 }
-
-
-
-// =====================
-// PROCESSOS
-// =====================
 
 export async function getProcessos() {
   return request("/processos/");
 }
 
+export async function createProcesso(data) {
+  return request("/processos/", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
 
+export async function updateProcesso(id, data) {
+  return request(`/processos/${id}/`, {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  });
+}
 
-// =====================
-// AGENDA
-// =====================
+export async function deleteProcesso(id) {
+  return request(`/processos/${id}/`, { method: "DELETE" });
+}
 
 export async function getAgenda() {
   return request("/agenda/");
 }
 
+export async function createAgenda(data) {
+  return request("/agenda/", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
 
-
-// =====================
-// DOCUMENTOS
-// =====================
+export async function deleteAgenda(id) {
+  return request(`/agenda/${id}/`, { method: "DELETE" });
+}
 
 export async function getDocumentos() {
   return request("/documentos/");
 }
 
+export async function createDocumento(formData) {
+  return request("/documentos/", {
+    method: "POST",
+    body: formData,
+  });
+}
 
-
-// =====================
-// ADVOGADOS
-// =====================
+export async function deleteDocumento(id) {
+  return request(`/documentos/${id}/`, { method: "DELETE" });
+}
 
 export async function getAdvogados() {
   return request("/advogados/");
+}
+
+export function normalizarLista(dados) {
+  if (Array.isArray(dados)) return dados;
+  if (Array.isArray(dados?.results)) return dados.results;
+  return [];
+}
+
+export function getUsuarioLogado() {
+  if (typeof window === "undefined") return null;
+  const raw = localStorage.getItem("usuarioLogado");
+  return raw ? JSON.parse(raw) : null;
+}
+
+export function logout() {
+  localStorage.removeItem("access");
+  localStorage.removeItem("refresh");
+  localStorage.removeItem("usuarioLogado");
 }

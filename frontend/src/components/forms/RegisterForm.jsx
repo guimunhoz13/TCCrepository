@@ -1,206 +1,164 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
-
-import Input from "../ui/Input";
-import Button from "../ui/Button";
+import { useRouter } from "next/navigation";
+import { registrarEscritorio } from "@/services/api";
 
 export default function RegisterForm() {
-
   const router = useRouter();
+  const [form, setForm] = useState({
+    nome_escritorio: "",
+    cnpj: "",
+    email_escritorio: "",
+    telefone_escritorio: "",
+    endereco_escritorio: "",
+    cidade: "",
+    estado: "",
+    nome_admin: "",
+    email_admin: "",
+    senha_admin: "",
+  });
+  const [erro, setErro] = useState("");
+  const [carregando, setCarregando] = useState(false);
 
-  const [nome, setNome] = useState("");
-  const [cpf, setCpf] = useState("");
-  const [email, setEmail] = useState("");
-  const [telefone, setTelefone] = useState("");
-  const [endereco, setEndereco] = useState("");
-  const [senha, setSenha] = useState("");
-
-  function formatarCPF(valor) {
-
-    valor = valor.replace(/\D/g, "");
-    valor = valor.slice(0, 11);
-
-    valor = valor.replace(/(\d{3})(\d)/, "$1.$2");
-    valor = valor.replace(/(\d{3})(\d)/, "$1.$2");
-    valor = valor.replace(/(\d{3})(\d{1,2})$/, "$1-$2");
-
-    return valor;
-  }
-
-  function formatarTelefone(valor) {
-
-    let numeros = valor.replace(/\D/g, "");
-
-    if (numeros.startsWith("55")) {
-      numeros = numeros.slice(2);
-    }
-
-    numeros = numeros.slice(0, 11);
-
-    if (numeros.length === 0) return "";
-
-    if (numeros.length <= 2) {
-      return `+55 (${numeros}`;
-    }
-
-    if (numeros.length <= 7) {
-      return `+55 (${numeros.slice(0, 2)}) ${numeros.slice(2)}`;
-    }
-
-    return `+55 (${numeros.slice(0, 2)}) ${numeros.slice(2, 7)}-${numeros.slice(7)}`;
+  function alterarCampo(campo, valor) {
+    setForm((atual) => ({ ...atual, [campo]: valor }));
   }
 
   async function handleSubmit(event) {
-
     event.preventDefault();
+    setErro("");
 
     try {
+      setCarregando(true);
+      await registrarEscritorio(form);
 
-      // Cadastro do usuário
-      const usuarioResponse = await fetch(
-        "http://127.0.0.1:8000/api/usuarios/",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            nome,
-            email,
-            senha,
-            tipo_usuario: "advogado",
-          }),
-        }
-      );
-
-      if (!usuarioResponse.ok) {
-        const erro = await usuarioResponse.text();
-        throw new Error(erro);
-      }
-
-      // Cadastro do cliente
-      const clienteResponse = await fetch(
-        "http://127.0.0.1:8000/api/clientes/",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            nome,
-            cpf,
-            email,
-            telefone,
-            endereco,
-          }),
-        }
-      );
-
-      if (!clienteResponse.ok) {
-        const erro = await clienteResponse.text();
-        throw new Error(erro);
-      }
-
-      // Salva a mensagem para aparecer no login
       sessionStorage.setItem(
         "sucessoCadastro",
-        "Seu cadastro foi concluído com sucesso!"
+        "Escritório cadastrado! Faça login com o e-mail do administrador."
       );
 
       router.push("/");
-
     } catch (error) {
-
-      console.error(error);
-      alert("Erro ao cadastrar:\n" + error.message);
-
+      setErro(error.message);
+    } finally {
+      setCarregando(false);
     }
   }
 
   return (
-
     <form onSubmit={handleSubmit}>
-
-      <h2
-        className="mb-2 fw-bold"
-        style={{ color: "var(--color-primary)" }}
-      >
-        Cadastro de Advogado
-      </h2>
-
-      <p
-        className="mb-4"
-        style={{ color: "var(--color-muted)" }}
-      >
-        Cadastre um novo advogado no sistema
+      <h2>Criar escritório</h2>
+      <p className="subtitle">
+        Cadastre seu escritório e crie o usuário administrador
       </p>
 
-      <Input
-        label="Nome completo"
-        placeholder="Digite o nome"
-        value={nome}
-        onChange={(e) => setNome(e.target.value)}
-      />
+      {erro && <div className="alert alert-error">{erro}</div>}
 
-      <Input
-        label="CPF"
-        placeholder="000.000.000-00"
-        value={cpf}
-        onChange={(e) => setCpf(formatarCPF(e.target.value))}
-      />
-
-      <Input
-        label="E-mail"
-        type="email"
-        placeholder="Digite o e-mail"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-      />
-
-      <Input
-        label="Telefone"
-        type="tel"
-        placeholder="+55 (18) 99999-9999"
-        value={telefone}
-        onChange={(e) => setTelefone(formatarTelefone(e.target.value))}
-      />
-
-      <Input
-        label="Endereço"
-        placeholder="Digite o endereço"
-        value={endereco}
-        onChange={(e) => setEndereco(e.target.value)}
-      />
-
-      <Input
-        label="Senha"
-        type="password"
-        placeholder="Digite uma senha"
-        value={senha}
-        onChange={(e) => setSenha(e.target.value)}
-      />
-
-      <Button type="submit">
-        Cadastrar Advogado
-      </Button>
-
-      <div className="text-center mt-4">
-        <Link
-          href="/"
-          className="fw-semibold text-decoration-none"
-          style={{
-            color: "var(--color-primary)",
-          }}
-        >
-          Voltar ao Login
-        </Link>
+      <div className="form-grid">
+        <div className="form-field full">
+          <label>Nome do escritório</label>
+          <input
+            value={form.nome_escritorio}
+            onChange={(e) => alterarCampo("nome_escritorio", e.target.value)}
+            required
+          />
+        </div>
+        <div className="form-field">
+          <label>CNPJ</label>
+          <input
+            value={form.cnpj}
+            onChange={(e) => alterarCampo("cnpj", e.target.value)}
+            required
+          />
+        </div>
+        <div className="form-field">
+          <label>Telefone</label>
+          <input
+            value={form.telefone_escritorio}
+            onChange={(e) =>
+              alterarCampo("telefone_escritorio", e.target.value)
+            }
+            required
+          />
+        </div>
+        <div className="form-field">
+          <label>E-mail do escritório</label>
+          <input
+            type="email"
+            value={form.email_escritorio}
+            onChange={(e) => alterarCampo("email_escritorio", e.target.value)}
+            required
+          />
+        </div>
+        <div className="form-field">
+          <label>Cidade</label>
+          <input
+            value={form.cidade}
+            onChange={(e) => alterarCampo("cidade", e.target.value)}
+          />
+        </div>
+        <div className="form-field full">
+          <label>Endereço</label>
+          <input
+            value={form.endereco_escritorio}
+            onChange={(e) =>
+              alterarCampo("endereco_escritorio", e.target.value)
+            }
+            required
+          />
+        </div>
+        <div className="form-field">
+          <label>Estado (UF)</label>
+          <input
+            maxLength={2}
+            value={form.estado}
+            onChange={(e) => alterarCampo("estado", e.target.value.toUpperCase())}
+          />
+        </div>
+        <div className="form-field full">
+          <strong style={{ marginTop: 8 }}>Administrador do escritório</strong>
+        </div>
+        <div className="form-field">
+          <label>Nome do admin</label>
+          <input
+            value={form.nome_admin}
+            onChange={(e) => alterarCampo("nome_admin", e.target.value)}
+            required
+          />
+        </div>
+        <div className="form-field">
+          <label>E-mail do admin</label>
+          <input
+            type="email"
+            value={form.email_admin}
+            onChange={(e) => alterarCampo("email_admin", e.target.value)}
+            required
+          />
+        </div>
+        <div className="form-field full">
+          <label>Senha do admin</label>
+          <input
+            type="password"
+            value={form.senha_admin}
+            onChange={(e) => alterarCampo("senha_admin", e.target.value)}
+            required
+          />
+        </div>
       </div>
 
+      <button
+        className="btn btn-primary"
+        style={{ width: "100%", marginTop: 20 }}
+        disabled={carregando}
+      >
+        {carregando ? "Cadastrando..." : "Criar escritório"}
+      </button>
+
+      <div className="auth-footer">
+        Já possui conta? <Link href="/">Voltar ao login</Link>
+      </div>
     </form>
-
   );
-
 }
