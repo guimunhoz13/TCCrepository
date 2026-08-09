@@ -9,6 +9,7 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from .mixins import EscritorioScopedMixin, get_usuario_from_request
+
 from .models import (
     Escritorio,
     Usuario,
@@ -19,6 +20,7 @@ from .models import (
     Documento,
     Agenda,
 )
+
 from .serializers import (
     EscritorioSerializer,
     EscritorioRegistroSerializer,
@@ -33,6 +35,10 @@ from .serializers import (
 )
 
 
+# =========================================================
+# LOGIN
+# =========================================================
+
 class LoginView(APIView):
 
     permission_classes = [AllowAny]
@@ -45,39 +51,53 @@ class LoginView(APIView):
 
         if not email or not senha:
             return Response(
-                {"detail": "Informe o e-mail e a senha."},
+                {
+                    "detail": "Informe o e-mail e a senha."
+                },
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
         try:
-            usuario = Usuario.objects.select_related("escritorio").get(
-                email__iexact=email
+            usuario = (
+                Usuario.objects
+                .select_related("escritorio")
+                .get(email__iexact=email)
             )
+
         except Usuario.DoesNotExist:
             return Response(
-                {"detail": "E-mail ou senha inválidos."},
+                {
+                    "detail": "E-mail ou senha inválidos."
+                },
                 status=status.HTTP_401_UNAUTHORIZED,
             )
 
         if not usuario.ativo:
             return Response(
-                {"detail": "Este usuário está desativado."},
+                {
+                    "detail": "Este usuário está desativado."
+                },
                 status=status.HTTP_403_FORBIDDEN,
             )
 
         if not usuario.escritorio.ativo:
             return Response(
-                {"detail": "Este escritório está desativado."},
+                {
+                    "detail": "Este escritório está desativado."
+                },
                 status=status.HTTP_403_FORBIDDEN,
             )
 
         if not check_password(senha, usuario.senha):
             return Response(
-                {"detail": "E-mail ou senha inválidos."},
+                {
+                    "detail": "E-mail ou senha inválidos."
+                },
                 status=status.HTTP_401_UNAUTHORIZED,
             )
 
         refresh = RefreshToken()
+
         refresh["user_id"] = usuario.id
         refresh["nome"] = usuario.nome
         refresh["email"] = usuario.email
@@ -88,7 +108,9 @@ class LoginView(APIView):
         return Response(
             {
                 "refresh": str(refresh),
+
                 "access": str(refresh.access_token),
+
                 "usuario": {
                     "id": usuario.id,
                     "nome": usuario.nome,
@@ -102,45 +124,66 @@ class LoginView(APIView):
         )
 
 
+# =========================================================
+# REGISTRO CENTRAL DO ESCRITÓRIO
+# =========================================================
+
 class EscritorioRegistroView(APIView):
 
     permission_classes = [AllowAny]
     authentication_classes = []
 
     def post(self, request):
-        serializer = EscritorioRegistroSerializer(data=request.data)
+
+        serializer = EscritorioRegistroSerializer(
+            data=request.data
+        )
 
         if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                serializer.errors,
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         resultado = serializer.save()
 
         return Response(
             {
                 "detail": "Escritório cadastrado com sucesso.",
-                "escritorio": EscritorioSerializer(resultado["escritorio"]).data,
+
+                "escritorio": EscritorioSerializer(
+                    resultado["escritorio"]
+                ).data,
             },
             status=status.HTTP_201_CREATED,
         )
 
+
+# =========================================================
+# DASHBOARD
+# =========================================================
 
 class DashboardStatsView(APIView):
 
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
+
         usuario = get_usuario_from_request(request)
 
         if not usuario:
             return Response(
-                {"detail": "Usuário não identificado."},
+                {
+                    "detail": "Usuário não identificado."
+                },
                 status=status.HTTP_401_UNAUTHORIZED,
             )
 
         escritorio = usuario.escritorio
 
         processos_por_status = (
-            Processo.objects.filter(escritorio=escritorio)
+            Processo.objects
+            .filter(escritorio=escritorio)
             .values("status")
             .annotate(total=Count("id"))
             .order_by("status")
@@ -148,75 +191,145 @@ class DashboardStatsView(APIView):
 
         return Response(
             {
-                "escritorio": EscritorioSerializer(escritorio).data,
+                "escritorio": EscritorioSerializer(
+                    escritorio
+                ).data,
+
                 "totais": {
-                    "clientes": Cliente.objects.filter(escritorio=escritorio).count(),
-                    "processos": Processo.objects.filter(escritorio=escritorio).count(),
-                    "advogados": Advogado.objects.filter(escritorio=escritorio).count(),
+                    "clientes": Cliente.objects.filter(
+                        escritorio=escritorio
+                    ).count(),
+
+                    "processos": Processo.objects.filter(
+                        escritorio=escritorio
+                    ).count(),
+
+                    "advogados": Advogado.objects.filter(
+                        escritorio=escritorio
+                    ).count(),
+
                     "documentos": Documento.objects.filter(
                         processo__escritorio=escritorio
                     ).count(),
+
                     "agenda": Agenda.objects.filter(
                         processo__escritorio=escritorio
                     ).count(),
                 },
-                "processos_por_status": list(processos_por_status),
+
+                "processos_por_status": list(
+                    processos_por_status
+                ),
             }
         )
 
 
-class EscritorioViewSet(EscritorioScopedMixin, viewsets.ReadOnlyModelViewSet):
+# =========================================================
+# ESCRITÓRIO
+# =========================================================
+
+class EscritorioViewSet(
+    EscritorioScopedMixin,
+    viewsets.ReadOnlyModelViewSet
+):
+
+    queryset = Escritorio.objects.all()
 
     serializer_class = EscritorioSerializer
+
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
+
         escritorio = self.get_escritorio()
 
         if not escritorio:
             return Escritorio.objects.none()
 
-        return Escritorio.objects.filter(id=escritorio.id)
+        return Escritorio.objects.filter(
+            id=escritorio.id
+        )
 
 
-class UsuarioViewSet(EscritorioScopedMixin, viewsets.ModelViewSet):
+# =========================================================
+# USUÁRIOS
+# =========================================================
+
+class UsuarioViewSet(
+    EscritorioScopedMixin,
+    viewsets.ModelViewSet
+):
+
+    queryset = Usuario.objects.all()
 
     serializer_class = UsuarioSerializer
+
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
+
         return (
             super()
             .get_queryset()
-            .filter(escritorio=self.get_escritorio())
+            .filter(
+                escritorio=self.get_escritorio()
+            )
             .order_by("-criado_em")
         )
 
+
+# =========================================================
+# CADASTRO DE ADVOGADO
+# =========================================================
 
 class AdvogadoRegistroView(APIView):
 
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        usuario_logado = get_usuario_from_request(request)
+
+        usuario_logado = get_usuario_from_request(
+            request
+        )
+
+        if not usuario_logado:
+            return Response(
+                {
+                    "detail": "Usuário não identificado."
+                },
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
 
         if usuario_logado.tipo_usuario != "admin":
             return Response(
-                {"detail": "Somente administradores podem cadastrar advogados."},
+                {
+                    "detail":
+                    "Somente administradores podem cadastrar advogados."
+                },
                 status=status.HTTP_403_FORBIDDEN,
             )
 
-        serializer = AdvogadoRegistroSerializer(data=request.data)
+        serializer = AdvogadoRegistroSerializer(
+            data=request.data
+        )
 
         if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                serializer.errors,
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         if Advogado.objects.filter(
             escritorio=usuario_logado.escritorio,
             oab=serializer.validated_data["oab"],
         ).exists():
+
             return Response(
-                {"oab": ["OAB já cadastrada neste escritório."]},
+                {
+                    "oab": [
+                        "OAB já cadastrada neste escritório."
+                    ]
+                },
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -231,77 +344,160 @@ class AdvogadoRegistroView(APIView):
         )
 
 
-class ClienteViewSet(EscritorioScopedMixin, viewsets.ModelViewSet):
+# =========================================================
+# CLIENTES
+# =========================================================
+
+class ClienteViewSet(
+    EscritorioScopedMixin,
+    viewsets.ModelViewSet
+):
+
+    queryset = Cliente.objects.all()
 
     serializer_class = ClienteSerializer
+
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return super().get_queryset().order_by("-criado_em")
 
-
-class AdvogadoViewSet(EscritorioScopedMixin, viewsets.ModelViewSet):
-
-    serializer_class = AdvogadoSerializer
-    permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
         return (
             super()
             .get_queryset()
-            .select_related("usuario")
-            .order_by("-id")
-        )
-
-
-class ProcessoViewSet(EscritorioScopedMixin, viewsets.ModelViewSet):
-
-    serializer_class = ProcessoSerializer
-    permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
-        return (
-            super()
-            .get_queryset()
-            .select_related("cliente", "advogado__usuario")
             .order_by("-criado_em")
         )
 
 
-class MovimentacaoViewSet(EscritorioScopedMixin, viewsets.ModelViewSet):
+# =========================================================
+# ADVOGADOS
+# =========================================================
+
+class AdvogadoViewSet(
+    EscritorioScopedMixin,
+    viewsets.ModelViewSet
+):
+
+    queryset = Advogado.objects.all()
+
+    serializer_class = AdvogadoSerializer
+
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+
+        return (
+            super()
+            .get_queryset()
+            .select_related(
+                "usuario"
+            )
+            .order_by("-id")
+        )
+
+
+# =========================================================
+# PROCESSOS
+# =========================================================
+
+class ProcessoViewSet(
+    EscritorioScopedMixin,
+    viewsets.ModelViewSet
+):
+
+    queryset = Processo.objects.all()
+
+    serializer_class = ProcessoSerializer
+
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+
+        return (
+            super()
+            .get_queryset()
+            .select_related(
+                "cliente",
+                "advogado__usuario",
+            )
+            .order_by("-criado_em")
+        )
+
+
+# =========================================================
+# MOVIMENTAÇÕES
+# =========================================================
+
+class MovimentacaoViewSet(
+    EscritorioScopedMixin,
+    viewsets.ModelViewSet
+):
+
+    queryset = Movimentacao.objects.all()
 
     serializer_class = MovimentacaoSerializer
+
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
+
         return (
             super()
             .get_queryset()
-            .select_related("processo")
-            .order_by("-data_movimentacao")
+            .select_related(
+                "processo"
+            )
+            .order_by(
+                "-data_movimentacao"
+            )
         )
 
 
-class DocumentoViewSet(EscritorioScopedMixin, viewsets.ModelViewSet):
+# =========================================================
+# DOCUMENTOS
+# =========================================================
+
+class DocumentoViewSet(
+    EscritorioScopedMixin,
+    viewsets.ModelViewSet
+):
+
+    queryset = Documento.objects.all()
 
     serializer_class = DocumentoSerializer
+
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
+
         return (
             super()
             .get_queryset()
-            .select_related("processo")
-            .order_by("-enviado_em")
+            .select_related(
+                "processo"
+            )
+            .order_by(
+                "-enviado_em"
+            )
         )
 
 
-class AgendaViewSet(EscritorioScopedMixin, viewsets.ModelViewSet):
+# =========================================================
+# AGENDA
+# =========================================================
+
+class AgendaViewSet(
+    EscritorioScopedMixin,
+    viewsets.ModelViewSet
+):
+
+    queryset = Agenda.objects.all()
 
     serializer_class = AgendaSerializer
+
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
+
         return (
             super()
             .get_queryset()
@@ -309,5 +505,7 @@ class AgendaViewSet(EscritorioScopedMixin, viewsets.ModelViewSet):
                 "processo__cliente",
                 "processo__advogado__usuario",
             )
-            .order_by("data_evento")
+            .order_by(
+                "data_evento"
+            )
         )
