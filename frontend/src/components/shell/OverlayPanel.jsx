@@ -11,6 +11,8 @@ const PANEL_TITLES = {
   agenda: "Agenda",
   contato: "Contato & Informações",
   config: "Configurações",
+  advogados: "Advogados",
+  planos: "Planos de Assinatura",
 };
 
 export default function OverlayPanel({ tabs = [], children }) {

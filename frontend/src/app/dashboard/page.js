@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import AppSidebar from "@/components/shell/AppSidebar";
 import TopBar from "@/components/shell/TopBar";
@@ -12,6 +12,8 @@ import AgendaPanel from "@/components/panels/AgendaPanel";
 import DocumentosPanel from "@/components/panels/DocumentosPanel";
 import ContatoPanel from "@/components/panels/ContatoPanel";
 import ConfigPanel from "@/components/panels/ConfigPanel";
+import AdvogadosPanel from "@/components/panels/AdvogadosPanel";
+import PlanosPanel from "@/components/panels/PlanosPanel";
 import { PanelProvider } from "@/contexts/PanelContext";
 import {
   getDashboardStats,
@@ -27,6 +29,15 @@ function DashboardContent() {
   const [agenda, setAgenda] = useState([]);
   const [erro, setErro] = useState("");
   const [carregando, setCarregando] = useState(true);
+
+  const recarregarAgenda = useCallback(async () => {
+    try {
+      const dadosAgenda = await getAgenda();
+      setAgenda(normalizarLista(dadosAgenda));
+    } catch {
+      /* silencioso */
+    }
+  }, []);
 
   useEffect(() => {
     const token = localStorage.getItem("access");
@@ -68,10 +79,10 @@ function DashboardContent() {
 
       <main className="app-main">
         <TopBar
-          title="Dashboard"
+          showGreeting
           subtitle={
             stats?.escritorio?.nome
-              ? `Visão geral — ${stats.escritorio.nome}`
+              ? `${stats.escritorio.nome} — visão geral`
               : "Visão geral do escritório"
           }
         />
@@ -136,7 +147,7 @@ function DashboardContent() {
             </div>
           </div>
 
-          <MiniCalendar eventos={agenda} />
+          <MiniCalendar eventos={agenda} onEventoCriado={recarregarAgenda} />
         </div>
       </main>
 
@@ -146,6 +157,8 @@ function DashboardContent() {
       <DocumentosPanel />
       <ContatoPanel />
       <ConfigPanel />
+      <AdvogadosPanel />
+      <PlanosPanel />
     </div>
   );
 }

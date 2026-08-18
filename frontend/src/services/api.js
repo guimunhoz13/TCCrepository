@@ -47,6 +47,13 @@ export async function login(email, senha) {
   });
 }
 
+export async function verificarEmail(email) {
+  return request("/login/verificar-email/", {
+    method: "POST",
+    body: JSON.stringify({ email }),
+  });
+}
+
 export async function registrarEscritorio(data) {
   return request("/escritorios/registrar/", {
     method: "POST",

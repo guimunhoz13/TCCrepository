@@ -9,23 +9,48 @@ import {
   Phone,
   Settings,
   Scale,
+  UserPlus,
+  CreditCard,
+  CalendarClock,
 } from "lucide-react";
+import { useRouter, usePathname } from "next/navigation";
 import { PANELS, usePanel } from "@/contexts/PanelContext";
 import { getUsuarioLogado } from "@/services/api";
 
 const NAV_ITEMS = [
-  { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
   { id: PANELS.CLIENTES, label: "Clientes", icon: Users },
   { id: PANELS.PROCESSOS, label: "Processos", icon: Briefcase },
   { id: PANELS.AGENDA, label: "Agenda", icon: CalendarDays },
+  { id: "compromissos", label: "Compromissos", icon: CalendarClock, href: "/dashboard/compromissos" },
   { id: PANELS.DOCUMENTOS, label: "Documentos", icon: FileText },
+  { id: PANELS.ADVOGADOS, label: "Advogados", icon: UserPlus, adminOnly: true },
+  { id: PANELS.PLANOS, label: "Planos", icon: CreditCard },
   { id: PANELS.CONTATO, label: "Contato", icon: Phone },
   { id: PANELS.CONFIG, label: "Configurações", icon: Settings },
 ];
 
 export default function AppSidebar() {
   const { activePanel, openPanel, closePanel } = usePanel();
+  const router = useRouter();
+  const pathname = usePathname();
   const usuario = getUsuarioLogado();
+
+  function handleNav(item) {
+    if (item.href) {
+      closePanel();
+      router.push(item.href);
+      return;
+    }
+
+    if (item.id === "dashboard") {
+      closePanel();
+      router.push("/dashboard");
+      return;
+    }
+
+    openPanel(item.id);
+  }
 
   return (
     <aside className="sidebar">
@@ -40,21 +65,22 @@ export default function AppSidebar() {
       </div>
 
       <nav className="sidebar-nav">
-        {NAV_ITEMS.map(({ id, label, icon: Icon }) => {
+        {NAV_ITEMS.filter(
+          (item) => !item.adminOnly || usuario?.tipo_usuario === "admin"
+        ).map(({ id, label, icon: Icon, href }) => {
           const isDashboard = id === "dashboard";
-          const isActive = !isDashboard && activePanel === id;
+          const isRouteActive = href && pathname === href;
+          const isPanelActive = !href && !isDashboard && activePanel === id;
+          const isActive =
+            isRouteActive ||
+            isPanelActive ||
+            (isDashboard && pathname === "/dashboard" && !activePanel);
 
           return (
             <button
               key={id}
               className={`nav-item ${isActive ? "active" : ""}`}
-              onClick={() => {
-                if (isDashboard) {
-                  closePanel();
-                } else {
-                  openPanel(id);
-                }
-              }}
+              onClick={() => handleNav({ id, href })}
             >
               <Icon size={18} />
               <span>{label}</span>

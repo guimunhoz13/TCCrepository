@@ -4,11 +4,17 @@ import { Moon, Sun, LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTheme } from "@/contexts/ThemeContext";
 import { getUsuarioLogado, logout } from "@/services/api";
+import { getSaudacaoCompleta } from "@/utils/greeting";
 
-export default function TopBar({ title, subtitle }) {
+export default function TopBar({ title, subtitle, showGreeting = false }) {
   const { theme, toggleTheme } = useTheme();
   const router = useRouter();
   const usuario = getUsuarioLogado();
+
+  const displayTitle =
+    showGreeting && usuario?.nome
+      ? getSaudacaoCompleta(usuario.nome)
+      : title;
 
   function handleLogout() {
     logout();
@@ -18,7 +24,12 @@ export default function TopBar({ title, subtitle }) {
   return (
     <header className="topbar">
       <div className="topbar-title">
-        <h2>{title}</h2>
+        {showGreeting && (
+          <div className="greeting-badge">
+            {usuario?.tipo_usuario === "admin" ? "Administrador" : "Advogado"}
+          </div>
+        )}
+        <h2>{displayTitle}</h2>
         {subtitle && <p>{subtitle}</p>}
       </div>
 

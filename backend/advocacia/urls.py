@@ -5,6 +5,7 @@ from .views import (
     EscritorioRegistroView,
     DashboardStatsView,
     AdvogadoRegistroView,
+    VerificarEmailView,
     EscritorioViewSet,
     UsuarioViewSet,
     ClienteViewSet,
@@ -32,4 +33,5 @@ urlpatterns = [
     path("escritorios/registrar/", EscritorioRegistroView.as_view(), name="escritorio-registrar"),
     path("dashboard/stats/", DashboardStatsView.as_view(), name="dashboard-stats"),
     path("advogados/registrar/", AdvogadoRegistroView.as_view(), name="advogado-registrar"),
+    path("login/verificar-email/", VerificarEmailView.as_view(), name="verificar-email"),
 ] + router.urls

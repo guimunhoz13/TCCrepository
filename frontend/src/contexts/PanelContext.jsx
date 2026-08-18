@@ -11,6 +11,8 @@ export const PANELS = {
   AGENDA: "agenda",
   CONTATO: "contato",
   CONFIG: "config",
+  ADVOGADOS: "advogados",
+  PLANOS: "planos",
 };
 
 export function PanelProvider({ children }) {
