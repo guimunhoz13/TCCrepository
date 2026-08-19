@@ -12,6 +12,7 @@ import {
   UserPlus,
   CreditCard,
   CalendarClock,
+  Bot,
 } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
 import { PANELS, usePanel } from "@/contexts/PanelContext";
@@ -23,6 +24,7 @@ const NAV_ITEMS = [
   { id: PANELS.PROCESSOS, label: "Processos", icon: Briefcase },
   { id: PANELS.AGENDA, label: "Agenda", icon: CalendarDays },
   { id: "compromissos", label: "Compromissos", icon: CalendarClock, href: "/dashboard/compromissos" },
+  { id: "assistente-ia", label: "Assistente IA", icon: Bot, href: "/assistente-ia" },
   { id: PANELS.DOCUMENTOS, label: "Documentos", icon: FileText },
   { id: PANELS.ADVOGADOS, label: "Advogados", icon: UserPlus, adminOnly: true },
   { id: PANELS.PLANOS, label: "Planos", icon: CreditCard },

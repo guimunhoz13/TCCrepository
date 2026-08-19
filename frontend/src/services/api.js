@@ -150,6 +150,13 @@ export async function getAdvogados() {
   return request("/advogados/");
 }
 
+export async function enviarMensagemIA({ mensagem, historico = [], contexto = {} }) {
+  return request("/assistente-ia/", {
+    method: "POST",
+    body: JSON.stringify({ mensagem, historico, contexto }),
+  });
+}
+
 export function normalizarLista(dados) {
   if (Array.isArray(dados)) return dados;
   if (Array.isArray(dados?.results)) return dados.results;

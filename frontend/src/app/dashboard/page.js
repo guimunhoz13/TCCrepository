@@ -2,6 +2,8 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { Bot } from "lucide-react";
 import AppSidebar from "@/components/shell/AppSidebar";
 import TopBar from "@/components/shell/TopBar";
 import ChartsSection from "@/components/dashboard/ChartsSection";
@@ -88,6 +90,11 @@ function DashboardContent() {
         />
 
         {erro && <div className="alert alert-error">{erro}</div>}
+
+        <Link href="/assistente-ia" className="btn btn-primary ai-quick-btn">
+          <Bot size={18} />
+          Abrir Assistente IA
+        </Link>
 
         <div className="stats-grid">
           {[

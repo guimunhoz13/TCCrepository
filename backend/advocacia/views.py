@@ -34,6 +34,8 @@ from .serializers import (
     AgendaSerializer,
 )
 
+from .ia_service import montar_contexto_sistema, gerar_resposta_ia
+
 
 # =========================================================
 # LOGIN
@@ -549,3 +551,79 @@ class AgendaViewSet(
                 "data_evento"
             )
         )
+
+
+# =========================================================
+# ASSISTENTE IA
+# =========================================================
+
+class AssistenteIAView(APIView):
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+
+        usuario = get_usuario_from_request(request)
+
+        if not usuario:
+            return Response(
+                {"detail": "Usuário não identificado."},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+
+        mensagem = (request.data.get("mensagem") or "").strip()
+
+        if not mensagem:
+            return Response(
+                {"detail": "Informe uma mensagem."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        historico = request.data.get("historico") or []
+        contexto = request.data.get("contexto") or {}
+
+        cliente_id = contexto.get("cliente_id")
+        processo_id = contexto.get("processo_id")
+
+        if cliente_id is not None:
+            try:
+                cliente_id = int(cliente_id)
+            except (TypeError, ValueError):
+                return Response(
+                    {"detail": "cliente_id inválido."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+        if processo_id is not None:
+            try:
+                processo_id = int(processo_id)
+            except (TypeError, ValueError):
+                return Response(
+                    {"detail": "processo_id inválido."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+        contexto_sistema = montar_contexto_sistema(
+            usuario,
+            cliente_id=cliente_id,
+            processo_id=processo_id,
+        )
+
+        try:
+            resposta = gerar_resposta_ia(
+                mensagem=mensagem,
+                historico=historico,
+                contexto_sistema=contexto_sistema,
+            )
+        except ValueError as exc:
+            return Response(
+                {"detail": str(exc)},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+        except Exception:
+            return Response(
+                {"detail": "Não foi possível obter resposta da IA. Tente novamente."},
+                status=status.HTTP_502_BAD_GATEWAY,
+            )
+
+        return Response({"resposta": resposta})
