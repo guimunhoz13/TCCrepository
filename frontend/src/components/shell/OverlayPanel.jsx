@@ -15,8 +15,16 @@ const PANEL_TITLES = {
   planos: "Planos de Assinatura",
 };
 
-export default function OverlayPanel({ tabs = [], children }) {
-  const { activePanel, panelTab, closePanel, setPanelTab } = usePanel();
+export default function OverlayPanel({
+  tabs = [],
+  children,
+}) {
+  const {
+    activePanel,
+    panelTab,
+    closePanel,
+    setPanelTab,
+  } = usePanel();
 
   useEffect(() => {
     function onKeyDown(event) {
@@ -42,12 +50,29 @@ export default function OverlayPanel({ tabs = [], children }) {
 
   return (
     <>
-      <div className="overlay-backdrop" onClick={closePanel} />
+      <div
+        className="overlay-backdrop"
+        onClick={closePanel}
+        aria-hidden="true"
+      />
 
-      <div className="overlay-panel" role="dialog" aria-modal="true">
+      <div
+        className="overlay-panel"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="overlay-panel-title"
+      >
         <div className="overlay-header">
-          <h3>{PANEL_TITLES[activePanel]}</h3>
-          <button className="icon-btn" onClick={closePanel} aria-label="Fechar">
+          <h3 id="overlay-panel-title">
+            {PANEL_TITLES[activePanel] || activePanel}
+          </h3>
+
+          <button
+            type="button"
+            className="icon-btn"
+            onClick={closePanel}
+            aria-label="Fechar"
+          >
             <X size={18} />
           </button>
         </div>
@@ -56,8 +81,11 @@ export default function OverlayPanel({ tabs = [], children }) {
           <div className="overlay-tabs">
             {tabs.map((tab) => (
               <button
+                type="button"
                 key={tab.id}
-                className={`tab-btn ${panelTab === tab.id ? "active" : ""}`}
+                className={`tab-btn ${
+                  panelTab === tab.id ? "active" : ""
+                }`}
                 onClick={() => setPanelTab(tab.id)}
               >
                 {tab.label}
@@ -66,7 +94,9 @@ export default function OverlayPanel({ tabs = [], children }) {
           </div>
         )}
 
-        <div className="overlay-body">{children}</div>
+        <div className="overlay-body">
+          {children}
+        </div>
       </div>
     </>
   );
