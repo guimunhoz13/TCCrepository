@@ -42,9 +42,10 @@ function formatarTelefone(valor) {
 }
 
 export default function ClientesPanel() {
-  const { activePanel, panelTab } = usePanel();
+  const { activePanel, panelTab, setPanelTab } = usePanel();
   const [clientes, setClientes] = useState([]);
   const [formulario, setFormulario] = useState(formularioInicial);
+  const [clienteEditando, setClienteEditando] = useState(null);
   const [carregando, setCarregando] = useState(true);
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState("");
@@ -68,6 +69,30 @@ export default function ClientesPanel() {
     }
   }, [activePanel]);
 
+  function handleIniciarEdicao(cliente) {
+    setErro("");
+    setSucesso("");
+    setClienteEditando(cliente);
+    setFormulario({
+      nome: cliente.nome || "",
+      cpf: cliente.cpf ? formatarCPF(cliente.cpf) : "",
+      email: cliente.email || "",
+      telefone: cliente.telefone ? formatarTelefone(cliente.telefone) : "",
+      endereco: cliente.endereco || "",
+      data_nascimento: cliente.data_nascimento
+        ? cliente.data_nascimento.slice(0, 10)
+        : "",
+      ativo: cliente.ativo !== undefined ? cliente.ativo : true,
+    });
+    setPanelTab("novo");
+  }
+
+  function handleCancelarEdicao() {
+    setClienteEditando(null);
+    setFormulario(formularioInicial);
+    setPanelTab("lista");
+  }
+
   async function handleSubmit(event) {
     event.preventDefault();
     setErro("");
@@ -75,12 +100,22 @@ export default function ClientesPanel() {
 
     try {
       setSalvando(true);
-      await createCliente({
+      const payload = {
         ...formulario,
         data_nascimento: formulario.data_nascimento || null,
-      });
+      };
+
+      if (clienteEditando) {
+        await updateCliente(clienteEditando.id, payload);
+        setSucesso("Cliente atualizado com sucesso.");
+      } else {
+        await createCliente(payload);
+        setSucesso("Cliente cadastrado com sucesso.");
+      }
+
       setFormulario(formularioInicial);
-      setSucesso("Cliente cadastrado com sucesso.");
+      setClienteEditando(null);
+      setPanelTab("lista");
       await carregarClientes();
     } catch (error) {
       setErro(error.message);
@@ -95,7 +130,10 @@ export default function ClientesPanel() {
     <OverlayPanel
       tabs={[
         { id: "lista", label: "Lista" },
-        { id: "novo", label: "Novo cliente" },
+        {
+          id: "novo",
+          label: clienteEditando ? "Editar cliente" : "Novo cliente",
+        },
       ]}
     >
       {erro && <div className="alert alert-error">{erro}</div>}
@@ -173,10 +211,27 @@ export default function ClientesPanel() {
               }
             />
           </div>
-          <div className="form-field full">
+          <div
+            className="form-field full"
+            style={{ display: "flex", gap: "10px", marginTop: "8px" }}
+          >
             <button className="btn btn-primary" disabled={salvando}>
-              {salvando ? "Salvando..." : "Cadastrar cliente"}
+              {salvando
+                ? "Salvando..."
+                : clienteEditando
+                ? "Salvar alterações"
+                : "Cadastrar cliente"}
             </button>
+            {clienteEditando && (
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={handleCancelarEdicao}
+                disabled={salvando}
+              >
+                Cancelar
+              </button>
+            )}
           </div>
         </form>
       ) : (
@@ -215,6 +270,14 @@ export default function ClientesPanel() {
                     <td>
                       <div style={{ display: "flex", gap: 8 }}>
                         <button
+                          type="button"
+                          className="btn btn-secondary btn-sm"
+                          onClick={() => handleIniciarEdicao(cliente)}
+                        >
+                          Editar
+                        </button>
+                        <button
+                          type="button"
                           className="btn btn-secondary btn-sm"
                           onClick={async () => {
                             await updateCliente(cliente.id, {
@@ -226,12 +289,11 @@ export default function ClientesPanel() {
                           {cliente.ativo ? "Inativar" : "Ativar"}
                         </button>
                         <button
+                          type="button"
                           className="btn btn-danger btn-sm"
                           onClick={async () => {
                             if (
-                              window.confirm(
-                                `Excluir ${cliente.nome}?`
-                              )
+                              window.confirm(`Excluir ${cliente.nome}?`)
                             ) {
                               await deleteCliente(cliente.id);
                               carregarClientes();
