@@ -5,16 +5,17 @@ import { createContext, useContext, useEffect, useState } from "react";
 const ThemeContext = createContext(null);
 
 export function ThemeProvider({ children }) {
-  const [theme, setTheme] = useState("dark");
+  const [theme, setTheme] = useState(null);
 
   useEffect(() => {
     const saved = localStorage.getItem("theme");
-    if (saved === "light" || saved === "dark") {
-      setTheme(saved);
-    }
+    const initial = saved === "light" || saved === "dark" ? saved : "dark";
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setTheme(initial);
   }, []);
 
   useEffect(() => {
+    if (!theme) return;
     document.documentElement.setAttribute("data-theme", theme);
     document.documentElement.style.colorScheme = theme;
     localStorage.setItem("theme", theme);
@@ -25,7 +26,7 @@ export function ThemeProvider({ children }) {
   }
 
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme, setTheme }}>
+    <ThemeContext.Provider value={{ theme: theme || "dark", toggleTheme, setTheme }}>
       {children}
     </ThemeContext.Provider>
   );
@@ -33,8 +34,6 @@ export function ThemeProvider({ children }) {
 
 export function useTheme() {
   const context = useContext(ThemeContext);
-  if (!context) {
-    throw new Error("useTheme deve ser usado dentro de ThemeProvider");
-  }
+  if (!context) throw new Error("useTheme deve ser usado dentro de ThemeProvider");
   return context;
 }

@@ -1,5 +1,7 @@
-from django.contrib.auth.hashers import check_password
+from django.contrib.auth.hashers import check_password, make_password
 from django.db.models import Count
+from django.http import HttpResponse
+import csv
 
 from rest_framework import status, viewsets
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -19,6 +21,8 @@ from .models import (
     Movimentacao,
     Documento,
     Agenda,
+    PreferenciasUsuario,
+    ConfiguracaoEscritorio,
 )
 
 from .serializers import (
@@ -32,6 +36,8 @@ from .serializers import (
     MovimentacaoSerializer,
     DocumentoSerializer,
     AgendaSerializer,
+    PreferenciasUsuarioSerializer,
+    ConfiguracaoEscritorioSerializer,
 )
 
 from .ia_service import montar_contexto_sistema, gerar_resposta_ia
@@ -627,3 +633,181 @@ class AssistenteIAView(APIView):
             )
 
         return Response({"resposta": resposta})
+
+# =========================================================
+# CONFIGURAÇÕES
+# =========================================================
+
+class ConfiguracoesView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        usuario = get_usuario_from_request(request)
+        if not usuario:
+            return Response({"detail": "Usuário não identificado."}, status=status.HTTP_401_UNAUTHORIZED)
+
+        preferencias, _ = PreferenciasUsuario.objects.get_or_create(usuario=usuario)
+        config_escritorio, _ = ConfiguracaoEscritorio.objects.get_or_create(escritorio=usuario.escritorio)
+
+        membros = Usuario.objects.filter(escritorio=usuario.escritorio).order_by("nome")
+
+        return Response({
+            "usuario": UsuarioSerializer(usuario).data,
+            "escritorio": EscritorioSerializer(usuario.escritorio).data,
+            "preferencias": PreferenciasUsuarioSerializer(preferencias).data,
+            "configuracao_escritorio": ConfiguracaoEscritorioSerializer(config_escritorio).data,
+            "membros": UsuarioSerializer(membros, many=True).data,
+        })
+
+
+class ConfiguracoesContaView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request):
+        usuario = get_usuario_from_request(request)
+        if not usuario:
+            return Response({"detail": "Usuário não identificado."}, status=status.HTTP_401_UNAUTHORIZED)
+
+        nome = request.data.get("nome", usuario.nome).strip()
+        email = request.data.get("email", usuario.email).strip()
+        telefone = request.data.get("telefone", usuario.telefone).strip()
+
+        if not nome or not email:
+            return Response({"detail": "Nome e e-mail são obrigatórios."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if Usuario.objects.filter(email__iexact=email).exclude(id=usuario.id).exists():
+            return Response({"email": ["E-mail já cadastrado."]}, status=status.HTTP_400_BAD_REQUEST)
+
+        usuario.nome = nome
+        usuario.email = email
+        usuario.telefone = telefone
+        usuario.save(update_fields=["nome", "email", "telefone"])
+
+        return Response({"detail": "Dados pessoais atualizados com sucesso.", "usuario": UsuarioSerializer(usuario).data})
+
+
+class ConfiguracoesSenhaView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        usuario = get_usuario_from_request(request)
+        if not usuario:
+            return Response({"detail": "Usuário não identificado."}, status=status.HTTP_401_UNAUTHORIZED)
+
+        senha_atual = request.data.get("senha_atual", "")
+        nova_senha = request.data.get("nova_senha", "")
+        confirmar_senha = request.data.get("confirmar_senha", "")
+
+        if not check_password(senha_atual, usuario.senha):
+            return Response({"detail": "Senha atual incorreta."}, status=status.HTTP_400_BAD_REQUEST)
+        if len(nova_senha) < 8:
+            return Response({"detail": "A nova senha deve ter pelo menos 8 caracteres."}, status=status.HTTP_400_BAD_REQUEST)
+        if nova_senha != confirmar_senha:
+            return Response({"detail": "A confirmação da nova senha não confere."}, status=status.HTTP_400_BAD_REQUEST)
+
+        usuario.senha = make_password(nova_senha)
+        usuario.save(update_fields=["senha"])
+        return Response({"detail": "Senha alterada com sucesso."})
+
+
+class ConfiguracoesPreferenciasView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request):
+        usuario = get_usuario_from_request(request)
+        if not usuario:
+            return Response({"detail": "Usuário não identificado."}, status=status.HTTP_401_UNAUTHORIZED)
+
+        preferencias, _ = PreferenciasUsuario.objects.get_or_create(usuario=usuario)
+        serializer = PreferenciasUsuarioSerializer(preferencias, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response({"detail": "Preferências salvas com sucesso.", "preferencias": serializer.data})
+
+
+class ConfiguracoesEscritorioView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request):
+        usuario = get_usuario_from_request(request)
+        if not usuario:
+            return Response({"detail": "Usuário não identificado."}, status=status.HTTP_401_UNAUTHORIZED)
+        if usuario.tipo_usuario != "admin":
+            return Response({"detail": "Somente administradores podem alterar o escritório."}, status=status.HTTP_403_FORBIDDEN)
+
+        campos = ["nome", "email", "telefone", "endereco", "cidade", "estado"]
+        for campo in campos:
+            if campo in request.data:
+                setattr(usuario.escritorio, campo, request.data[campo])
+        usuario.escritorio.save()
+
+        config, _ = ConfiguracaoEscritorio.objects.get_or_create(escritorio=usuario.escritorio)
+        config_data = {k: request.data[k] for k in ["timezone", "formato_data", "retencao_documentos"] if k in request.data}
+        config_serializer = ConfiguracaoEscritorioSerializer(config, data=config_data, partial=True)
+        config_serializer.is_valid(raise_exception=True)
+        config_serializer.save()
+
+        return Response({
+            "detail": "Dados do escritório atualizados com sucesso.",
+            "escritorio": EscritorioSerializer(usuario.escritorio).data,
+            "configuracao_escritorio": config_serializer.data,
+        })
+
+
+class ConfiguracoesDesativarEscritorioView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        usuario = get_usuario_from_request(request)
+        if not usuario:
+            return Response({"detail": "Usuário não identificado."}, status=status.HTTP_401_UNAUTHORIZED)
+        if usuario.tipo_usuario != "admin":
+            return Response({"detail": "Somente o administrador pode desativar o escritório."}, status=status.HTTP_403_FORBIDDEN)
+
+        senha = request.data.get("senha", "")
+        confirmacao = request.data.get("confirmacao", "")
+        if confirmacao != "EXCLUIR":
+            return Response({"detail": 'Digite EXCLUIR para confirmar.'}, status=status.HTTP_400_BAD_REQUEST)
+        if not check_password(senha, usuario.senha):
+            return Response({"detail": "Senha incorreta."}, status=status.HTTP_400_BAD_REQUEST)
+
+        escritorio = usuario.escritorio
+        escritorio.ativo = False
+        escritorio.save(update_fields=["ativo"])
+        Usuario.objects.filter(escritorio=escritorio).update(ativo=False)
+        return Response({"detail": "Escritório desativado com sucesso."})
+
+
+class ExportarClientesCSVView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        usuario = get_usuario_from_request(request)
+        if not usuario:
+            return Response({"detail": "Usuário não identificado."}, status=status.HTTP_401_UNAUTHORIZED)
+        response = HttpResponse(content_type="text/csv; charset=utf-8")
+        response["Content-Disposition"] = 'attachment; filename="clientes.csv"'
+        response.write("\ufeff")
+        writer = csv.writer(response, delimiter=";")
+        writer.writerow(["Nome", "CPF", "E-mail", "Telefone", "Endereço", "Status", "Criado em"])
+        for cliente in Cliente.objects.filter(escritorio=usuario.escritorio).order_by("nome"):
+            writer.writerow([cliente.nome, cliente.cpf, cliente.email, cliente.telefone, cliente.endereco, "Ativo" if cliente.ativo else "Inativo", cliente.criado_em.strftime("%d/%m/%Y %H:%M")])
+        return response
+
+
+class ExportarProcessosCSVView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        usuario = get_usuario_from_request(request)
+        if not usuario:
+            return Response({"detail": "Usuário não identificado."}, status=status.HTTP_401_UNAUTHORIZED)
+        response = HttpResponse(content_type="text/csv; charset=utf-8")
+        response["Content-Disposition"] = 'attachment; filename="processos.csv"'
+        response.write("\ufeff")
+        writer = csv.writer(response, delimiter=";")
+        writer.writerow(["Número", "Título", "Status", "Cliente", "Advogado", "Data início", "Data fim"])
+        queryset = Processo.objects.filter(escritorio=usuario.escritorio).select_related("cliente", "advogado__usuario").order_by("numero_processo")
+        for processo in queryset:
+            writer.writerow([processo.numero_processo, processo.titulo, processo.get_status_display(), processo.cliente.nome, processo.advogado.usuario.nome, processo.data_inicio or "", processo.data_fim or ""])
+        return response

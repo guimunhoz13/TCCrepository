@@ -11,6 +11,8 @@ from .models import (
     Movimentacao,
     Documento,
     Agenda,
+    PreferenciasUsuario,
+    ConfiguracaoEscritorio,
 )
 
 
@@ -96,6 +98,7 @@ class UsuarioSerializer(serializers.ModelSerializer):
             "escritorio_nome",
             "nome",
             "email",
+            "telefone",
             "senha",
             "tipo_usuario",
             "ativo",
@@ -319,3 +322,36 @@ class AgendaSerializer(serializers.ModelSerializer):
             "advogado_nome",
             "criado_em",
         ]
+
+
+class PreferenciasUsuarioSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PreferenciasUsuario
+        fields = [
+            "tema",
+            "densidade_tabela",
+            "idioma",
+            "pagina_inicial",
+            "notificacao_novo_processo",
+            "notificacao_novo_documento",
+            "notificacao_status_processo",
+            "notificacao_novo_cliente",
+            "lembrete_audiencia",
+            "antecedencia_audiencia",
+            "lembrete_prazo",
+            "resumo_semanal",
+            "atualizado_em",
+        ]
+        read_only_fields = ["atualizado_em"]
+
+
+class ConfiguracaoEscritorioSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ConfiguracaoEscritorio
+        fields = [
+            "timezone",
+            "formato_data",
+            "retencao_documentos",
+            "atualizado_em",
+        ]
+        read_only_fields = ["atualizado_em"]

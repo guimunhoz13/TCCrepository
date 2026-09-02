@@ -35,6 +35,7 @@ class Usuario(models.Model):
 
     nome = models.CharField(max_length=255)
     email = models.EmailField(unique=True)
+    telefone = models.CharField(max_length=20, blank=True, default="")
     senha = models.CharField(max_length=255)
     tipo_usuario = models.CharField(max_length=20, choices=TIPOS_USUARIO)
     ativo = models.BooleanField(default=True)
@@ -186,3 +187,42 @@ class Agenda(models.Model):
 
     def __str__(self):
         return self.titulo
+
+
+class PreferenciasUsuario(models.Model):
+    TEMAS = (("light", "Claro"), ("dark", "Escuro"))
+    DENSIDADES = (("comfortable", "Confortável"), ("compact", "Compacta"))
+    IDIOMAS = (("pt-BR", "Português (Brasil)"), ("en-US", "English (US)"), ("es-ES", "Español"))
+    PAGINAS = (("dashboard", "Dashboard"), ("agenda", "Agenda"), ("clientes", "Clientes"), ("processos", "Processos"))
+
+    usuario = models.OneToOneField(Usuario, on_delete=models.CASCADE, related_name="preferencias")
+    tema = models.CharField(max_length=10, choices=TEMAS, default="dark")
+    densidade_tabela = models.CharField(max_length=20, choices=DENSIDADES, default="comfortable")
+    idioma = models.CharField(max_length=10, choices=IDIOMAS, default="pt-BR")
+    pagina_inicial = models.CharField(max_length=30, choices=PAGINAS, default="dashboard")
+    notificacao_novo_processo = models.BooleanField(default=True)
+    notificacao_novo_documento = models.BooleanField(default=True)
+    notificacao_status_processo = models.BooleanField(default=False)
+    notificacao_novo_cliente = models.BooleanField(default=False)
+    lembrete_audiencia = models.BooleanField(default=True)
+    antecedencia_audiencia = models.PositiveSmallIntegerField(default=2)
+    lembrete_prazo = models.BooleanField(default=True)
+    resumo_semanal = models.BooleanField(default=False)
+    atualizado_em = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Preferências de {self.usuario.nome}"
+
+
+class ConfiguracaoEscritorio(models.Model):
+    FORMATOS_DATA = (("dmy", "DD/MM/AAAA"), ("mdy", "MM/DD/AAAA"), ("iso", "AAAA-MM-DD"))
+    RETENCOES = (("1y", "1 ano"), ("5y", "5 anos"), ("indeterminado", "Por tempo indeterminado"))
+
+    escritorio = models.OneToOneField(Escritorio, on_delete=models.CASCADE, related_name="configuracao")
+    timezone = models.CharField(max_length=100, default="America/Sao_Paulo")
+    formato_data = models.CharField(max_length=10, choices=FORMATOS_DATA, default="dmy")
+    retencao_documentos = models.CharField(max_length=30, choices=RETENCOES, default="indeterminado")
+    atualizado_em = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Configurações de {self.escritorio.nome}"

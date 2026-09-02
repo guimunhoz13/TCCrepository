@@ -1,55 +1,23 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
-  X,
-  User,
-  Building2,
-  Bell,
-  Palette,
-  Database,
-  CreditCard,
-  Eye,
-  EyeOff,
-  Trash2,
-  Download,
-  LogOut,
-  ShieldCheck,
-} from "lucide-react"; // npm install lucide-react, se ainda não tiver
+  X, User, Building2, Bell, Palette, Database, CreditCard,
+  Eye, EyeOff, Trash2, Download,
+} from "lucide-react";
 import { usePanel, PANELS } from "@/contexts/PanelContext";
-
-// -----------------------------------------------------------------------
-// MOCK DE DADOS — troque pelos seus hooks reais.
-// Ex: const { user } = useAuth();  /  const { office } = useOffice();
-// Mantive o formato igual ao que já aparece no seu Dashboard/print.
-// -----------------------------------------------------------------------
-const MOCK_USER = {
-  name: "guilhermao",
-  email: "gui@gmail.com",
-  role: "admin",
-  twoFactorEnabled: false,
-};
-
-const MOCK_OFFICE = {
-  name: "DevsAdvogados",
-  cnpj: "00.000.000/0001-00",
-  address: "",
-  timezone: "America/Sao_Paulo",
-};
-
-const MOCK_MEMBERS = [
-  { id: 1, name: "guilhermao", email: "gui@gmail.com", role: "Administrador" },
-  { id: 2, name: "Ana Ribeiro", email: "ana@devsadvogados.com", role: "Advogada" },
-  { id: 3, name: "Marcos Lima", email: "marcos@devsadvogados.com", role: "Assistente" },
-];
-
-const MOCK_PLAN = {
-  name: "Profissional",
-  price: "R$ 199/mês",
-  seatsUsed: 3,
-  seatsLimit: 5,
-  renewsAt: "15 de setembro de 2026",
-};
+import { useTheme } from "@/contexts/ThemeContext";
+import {
+  getConfiguracoes,
+  updateConta,
+  alterarSenha,
+  updatePreferencias,
+  updateEscritorio,
+  desativarEscritorio,
+  exportarClientesCSV,
+  exportarProcessosCSV,
+  logout,
+} from "@/services/api";
 
 const TABS = [
   { id: "conta", label: "Conta", icon: User },
@@ -60,489 +28,257 @@ const TABS = [
   { id: "faturamento", label: "Faturamento", icon: CreditCard },
 ];
 
-export default function ConfigPanel({
-  user = MOCK_USER,
-  office = MOCK_OFFICE,
-  members = MOCK_MEMBERS,
-  plan = MOCK_PLAN,
-  theme = "light", // TODO: vem do seu ThemeContext / Providers.jsx
-  onThemeChange = () => {}, // TODO: setTheme do seu contexto
-}) {
-  const { activePanel, closePanel } = usePanel();
-  const [activeTab, setActiveTab] = useState("conta");
+const PREF_DEFAULT = {
+  tema: "dark",
+  densidade_tabela: "comfortable",
+  idioma: "pt-BR",
+  pagina_inicial: "dashboard",
+  notificacao_novo_processo: true,
+  notificacao_novo_documento: true,
+  notificacao_status_processo: false,
+  notificacao_novo_cliente: false,
+  lembrete_audiencia: true,
+  antecedencia_audiencia: 2,
+  lembrete_prazo: true,
+  resumo_semanal: false,
+};
 
-  // Só renderiza quando este é o painel ativo — mesmo padrão dos outros
-  // panels (ClientesPanel, AgendaPanel etc.) que já leem o PanelContext.
-  if (activePanel !== PANELS.CONFIG) {
-    return null;
+export default function ConfigPanel() {
+  const { activePanel, closePanel } = usePanel();
+  const { theme, setTheme } = useTheme();
+  const [activeTab, setActiveTab] = useState("conta");
+  const [dados, setDados] = useState(null);
+  const [carregando, setCarregando] = useState(false);
+  const [erro, setErro] = useState("");
+  const [sucesso, setSucesso] = useState("");
+
+  useEffect(() => {
+    if (activePanel !== PANELS.CONFIG) return;
+    let ativo = true;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setCarregando(true);
+    setErro("");
+    getConfiguracoes()
+      .then((res) => {
+        if (!ativo) return;
+        setDados(res);
+        if (res?.preferencias?.tema && res.preferencias.tema !== theme) {
+          setTheme(res.preferencias.tema);
+        }
+      })
+      .catch((e) => ativo && setErro(e.message))
+      .finally(() => ativo && setCarregando(false));
+    return () => { ativo = false; };
+  }, [activePanel]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  function feedback(msg, isError = false) {
+    if (isError) { setErro(msg); setSucesso(""); }
+    else { setSucesso(msg); setErro(""); }
   }
 
-  const onClose = closePanel;
+  if (activePanel !== PANELS.CONFIG) return null;
 
   return (
-    <div className="overlay-backdrop" onClick={onClose}>
+    <div className="overlay-backdrop" onClick={closePanel}>
       <div className="overlay-panel" onClick={(e) => e.stopPropagation()}>
         <div className="overlay-header">
           <h3>Configurações</h3>
-          <button className="icon-btn" onClick={onClose} aria-label="Fechar">
-            <X size={18} />
-          </button>
+          <button className="icon-btn" onClick={closePanel} aria-label="Fechar"><X size={18} /></button>
         </div>
 
         <div className="overlay-tabs">
           {TABS.map((tab) => {
             const Icon = tab.icon;
             return (
-              <button
-                key={tab.id}
-                className={`tab-btn ${activeTab === tab.id ? "active" : ""}`}
-                onClick={() => setActiveTab(tab.id)}
-              >
-                <span className="tab-label">
-                  <Icon size={15} />
-                  {tab.label}
-                </span>
+              <button key={tab.id} className={`tab-btn ${activeTab === tab.id ? "active" : ""}`} onClick={() => { setActiveTab(tab.id); setErro(""); setSucesso(""); }}>
+                <span className="tab-label"><Icon size={15} />{tab.label}</span>
               </button>
             );
           })}
         </div>
 
         <div className="overlay-body">
-          {activeTab === "conta" && <ContaTab user={user} />}
-          {activeTab === "escritorio" && (
-            <EscritorioTab office={office} members={members} />
+          {erro && <div className="alert alert-error">{erro}</div>}
+          {sucesso && <div className="alert alert-success">{sucesso}</div>}
+          {carregando && <div className="empty-state">Carregando configurações...</div>}
+
+          {!carregando && dados && activeTab === "conta" && (
+            <ContaTab usuario={dados.usuario} setDados={setDados} feedback={feedback} />
           )}
-          {activeTab === "notificacoes" && <NotificacoesTab />}
-          {activeTab === "aparencia" && (
-            <AparenciaTab theme={theme} onThemeChange={onThemeChange} />
+          {!carregando && dados && activeTab === "escritorio" && (
+            <EscritorioTab dados={dados} setDados={setDados} feedback={feedback} />
           )}
-          {activeTab === "dados" && <DadosTab />}
-          {activeTab === "faturamento" && <FaturamentoTab plan={plan} />}
+          {!carregando && dados && activeTab === "notificacoes" && (
+            <NotificacoesTab preferencias={dados.preferencias || PREF_DEFAULT} setDados={setDados} feedback={feedback} />
+          )}
+          {!carregando && dados && activeTab === "aparencia" && (
+            <AparenciaTab preferencias={dados.preferencias || PREF_DEFAULT} setDados={setDados} feedback={feedback} theme={theme} setTheme={setTheme} />
+          )}
+          {!carregando && dados && activeTab === "dados" && (
+            <DadosTab dados={dados} setDados={setDados} feedback={feedback} />
+          )}
+          {!carregando && activeTab === "faturamento" && <FaturamentoTab />}
         </div>
       </div>
     </div>
   );
 }
 
-// =========================================================================
-// CONTA
-// =========================================================================
-function ContaTab({ user }) {
+function ContaTab({ usuario, setDados, feedback }) {
+  const [form, setForm] = useState({ nome: usuario.nome || "", email: usuario.email || "", telefone: usuario.telefone || "" });
+  const [senha, setSenha] = useState({ senha_atual: "", nova_senha: "", confirmar_senha: "" });
   const [showPassword, setShowPassword] = useState(false);
+  const [salvando, setSalvando] = useState(false);
 
-  return (
-    <div className="settings-stack">
-      <Section
-        title="Dados pessoais"
-        description="Essas informações aparecem para os outros membros do escritório."
-      >
-        <div className="form-grid">
-          <div className="form-field">
-            <label>Nome</label>
-            <input type="text" defaultValue={user.name} />
-          </div>
-          <div className="form-field">
-            <label>E-mail</label>
-            <input type="email" defaultValue={user.email} />
-          </div>
-          <div className="form-field">
-            <label>Telefone</label>
-            <input type="tel" placeholder="(00) 00000-0000" />
-          </div>
-          <div className="form-field">
-            <label>Cargo</label>
-            <input type="text" defaultValue={user.role} disabled />
-          </div>
-        </div>
-        <div className="settings-section-actions">
-          <button className="btn btn-primary btn-sm">Salvar alterações</button>
-        </div>
-      </Section>
+  async function salvarConta() {
+    try {
+      setSalvando(true);
+      const res = await updateConta(form);
+      setDados((d) => ({ ...d, usuario: res.usuario }));
+      const atual = JSON.parse(localStorage.getItem("usuarioLogado") || "{}");
+      localStorage.setItem("usuarioLogado", JSON.stringify({ ...atual, nome: res.usuario.nome, email: res.usuario.email }));
+      feedback(res.detail);
+    } catch (e) { feedback(e.message, true); }
+    finally { setSalvando(false); }
+  }
 
-      <Section
-        title="Senha"
-        description="Recomendamos usar uma senha com pelo menos 8 caracteres."
-      >
-        <div className="form-grid">
-          <div className="form-field full">
-            <label>Senha atual</label>
-            <div className="password-field">
-              <input type={showPassword ? "text" : "password"} placeholder="••••••••" />
-              <button
-                type="button"
-                className="password-toggle"
-                onClick={() => setShowPassword((v) => !v)}
-                aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
-              >
-                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-              </button>
-            </div>
-          </div>
-          <div className="form-field">
-            <label>Nova senha</label>
-            <input type={showPassword ? "text" : "password"} placeholder="••••••••" />
-          </div>
-          <div className="form-field">
-            <label>Confirmar nova senha</label>
-            <input type={showPassword ? "text" : "password"} placeholder="••••••••" />
-          </div>
-        </div>
-        <div className="settings-section-actions">
-          <button className="btn btn-secondary btn-sm">Alterar senha</button>
-        </div>
-      </Section>
+  async function salvarSenha() {
+    try {
+      setSalvando(true);
+      const res = await alterarSenha(senha);
+      setSenha({ senha_atual: "", nova_senha: "", confirmar_senha: "" });
+      feedback(res.detail);
+    } catch (e) { feedback(e.message, true); }
+    finally { setSalvando(false); }
+  }
 
-      <Section
-        title="Autenticação de dois fatores"
-        description="Adiciona uma etapa extra de segurança ao fazer login."
-      >
-        <ToggleRow
-          icon={<ShieldCheck size={17} />}
-          label="Exigir código do app autenticador ao entrar"
-          defaultChecked={user.twoFactorEnabled}
-        />
-      </Section>
-
-      <Section
-        title="Sessões ativas"
-        description="Encerre o acesso em dispositivos que você não reconhece."
-      >
-        <div className="session-row">
-          <div>
-            <strong>Este dispositivo</strong>
-            <span>Chrome · São Paulo, BR · agora</span>
-          </div>
-          <span className="badge badge-success">Ativo</span>
-        </div>
-        <div className="settings-section-actions">
-          <button className="btn btn-secondary btn-sm">
-            <LogOut size={14} />
-            Sair de todos os outros dispositivos
-          </button>
-        </div>
-      </Section>
-    </div>
-  );
-}
-
-// =========================================================================
-// ESCRITÓRIO
-// =========================================================================
-function EscritorioTab({ office, members }) {
-  return (
-    <div className="settings-stack">
-      <Section title="Dados do escritório" description="Usados em documentos e no cabeçalho do sistema.">
-        <div className="form-grid">
-          <div className="form-field">
-            <label>Nome do escritório</label>
-            <input type="text" defaultValue={office.name} />
-          </div>
-          <div className="form-field">
-            <label>CNPJ</label>
-            <input type="text" defaultValue={office.cnpj} />
-          </div>
-          <div className="form-field full">
-            <label>Endereço</label>
-            <input type="text" placeholder="Rua, número, cidade — UF" defaultValue={office.address} />
-          </div>
-          <div className="form-field">
-            <label>Fuso horário</label>
-            <select defaultValue={office.timezone}>
-              <option value="America/Sao_Paulo">Brasília (GMT-3)</option>
-              <option value="America/Manaus">Manaus (GMT-4)</option>
-              <option value="America/Noronha">Fernando de Noronha (GMT-2)</option>
-            </select>
-          </div>
-          <div className="form-field">
-            <label>Formato de data</label>
-            <select defaultValue="dmy">
-              <option value="dmy">31/08/2026</option>
-              <option value="mdy">08/31/2026</option>
-              <option value="iso">2026-08-31</option>
-            </select>
-          </div>
-        </div>
-        <div className="settings-section-actions">
-          <button className="btn btn-primary btn-sm">Salvar alterações</button>
-        </div>
-      </Section>
-
-      <Section
-        title="Equipe"
-        description="Convide advogados e assistentes para o escritório."
-      >
-        <div className="member-list">
-          {members.map((member) => (
-            <div key={member.id} className="member-row">
-              <div className="member-avatar">
-                {member.name.charAt(0).toUpperCase()}
-              </div>
-              <div className="member-info">
-                <strong>{member.name}</strong>
-                <span>{member.email}</span>
-              </div>
-              <select className="member-role-select" defaultValue={member.role}>
-                <option>Administrador</option>
-                <option>Advogado</option>
-                <option>Advogada</option>
-                <option>Assistente</option>
-              </select>
-              <button className="icon-btn" aria-label={`Remover ${member.name}`}>
-                <Trash2 size={15} />
-              </button>
-            </div>
-          ))}
-        </div>
-        <div className="settings-section-actions">
-          <input
-            type="email"
-            placeholder="email@escritorio.com"
-            className="invite-input"
-          />
-          <button className="btn btn-primary btn-sm">Convidar</button>
-        </div>
-      </Section>
-    </div>
-  );
-}
-
-// =========================================================================
-// NOTIFICAÇÕES
-// =========================================================================
-function NotificacoesTab() {
-  return (
-    <div className="settings-stack">
-      <Section title="E-mail" description="Escolha o que você quer receber por e-mail.">
-        <ToggleRow label="Novo processo cadastrado" defaultChecked />
-        <ToggleRow label="Novo documento anexado a um processo" defaultChecked />
-        <ToggleRow label="Alteração de status em um processo" />
-        <ToggleRow label="Novo cliente cadastrado" />
-      </Section>
-
-      <Section title="Prazos e audiências" description="Lembretes para não perder compromissos.">
-        <ToggleRow label="Lembrete de audiência" defaultChecked />
-        <div className="form-field" style={{ maxWidth: 220, marginTop: 4 }}>
-          <label>Avisar com quantos dias de antecedência</label>
-          <select defaultValue="2">
-            <option value="1">1 dia antes</option>
-            <option value="2">2 dias antes</option>
-            <option value="5">5 dias antes</option>
-            <option value="7">7 dias antes</option>
-          </select>
-        </div>
-        <ToggleRow label="Lembrete de prazo processual" defaultChecked />
-      </Section>
-
-      <Section title="Resumo" description="Um panorama periódico da atividade do escritório.">
-        <ToggleRow label="Resumo semanal por e-mail" />
-      </Section>
-    </div>
-  );
-}
-
-// =========================================================================
-// APARÊNCIA
-// =========================================================================
-function AparenciaTab({ theme, onThemeChange }) {
-  return (
-    <div className="settings-stack">
-      <Section title="Tema da interface" description="Escolha entre modo claro ou escuro para a interface.">
-        <div className="theme-toggle">
-          <button
-            className={`btn btn-sm ${theme === "light" ? "btn-primary" : "btn-secondary"}`}
-            onClick={() => onThemeChange("light")}
-          >
-            Claro
-          </button>
-          <button
-            className={`btn btn-sm ${theme === "dark" ? "btn-primary" : "btn-secondary"}`}
-            onClick={() => onThemeChange("dark")}
-          >
-            Escuro
-          </button>
-        </div>
-      </Section>
-
-      <Section title="Densidade das tabelas" description="Controla o espaçamento das linhas em listas e tabelas.">
-        <div className="form-field" style={{ maxWidth: 220 }}>
-          <select defaultValue="comfortable">
-            <option value="comfortable">Confortável</option>
-            <option value="compact">Compacta</option>
-          </select>
-        </div>
-      </Section>
-
-      <Section title="Idioma" description="Idioma usado em toda a interface.">
-        <div className="form-field" style={{ maxWidth: 220 }}>
-          <select defaultValue="pt-BR">
-            <option value="pt-BR">Português (Brasil)</option>
-            <option value="en-US">English (US)</option>
-            <option value="es-ES">Español</option>
-          </select>
-        </div>
-      </Section>
-
-      <Section title="Página inicial" description="Tela exibida logo após o login.">
-        <div className="form-field" style={{ maxWidth: 220 }}>
-          <select defaultValue="dashboard">
-            <option value="dashboard">Dashboard</option>
-            <option value="agenda">Agenda</option>
-            <option value="clientes">Clientes</option>
-            <option value="processos">Processos</option>
-          </select>
-        </div>
-      </Section>
-    </div>
-  );
-}
-
-// =========================================================================
-// DADOS
-// =========================================================================
-function DadosTab() {
-  return (
-    <div className="settings-stack">
-      <Section title="Exportar dados" description="Baixe uma cópia dos dados do seu escritório.">
-        <div className="export-row">
-          <button className="btn btn-secondary btn-sm">
-            <Download size={14} />
-            Exportar clientes (CSV)
-          </button>
-          <button className="btn btn-secondary btn-sm">
-            <Download size={14} />
-            Exportar processos (CSV)
-          </button>
-          <button className="btn btn-secondary btn-sm">
-            <Download size={14} />
-            Exportar tudo (PDF)
-          </button>
-        </div>
-      </Section>
-
-      <Section title="Retenção de documentos" description="Por quanto tempo os documentos ficam armazenados após o arquivamento de um processo.">
-        <div className="form-field" style={{ maxWidth: 260 }}>
-          <select defaultValue="indeterminado">
-            <option value="1y">1 ano</option>
-            <option value="5y">5 anos</option>
-            <option value="indeterminado">Por tempo indeterminado</option>
-          </select>
-        </div>
-      </Section>
-
-      <Section title="Log de atividades" description="Histórico de alterações feitas por membros da equipe.">
-        <div className="activity-log">
-          <div className="activity-item">
-            <span className="activity-dot" />
-            <div className="activity-item-body">
-              <span><strong>Ana Ribeiro</strong> atualizou o status do processo nº 0043/2026</span>
-              <span>Hoje, 14:32</span>
-            </div>
-          </div>
-          <div className="activity-item">
-            <span className="activity-dot" />
-            <div className="activity-item-body">
-              <span><strong>guilhermao</strong> adicionou um novo cliente</span>
-              <span>Ontem, 09:10</span>
-            </div>
-          </div>
-        </div>
-      </Section>
-
-      <Section title="Zona de risco" description="Ações permanentes — não podem ser desfeitas." danger>
-        <button className="btn btn-danger btn-sm">Excluir conta do escritório</button>
-      </Section>
-    </div>
-  );
-}
-
-// =========================================================================
-// FATURAMENTO
-// =========================================================================
-function FaturamentoTab({ plan }) {
-  const usagePercent = Math.round((plan.seatsUsed / plan.seatsLimit) * 100);
-
-  return (
-    <div className="settings-stack">
-      <Section title="Plano atual">
-        <div className="plan-summary">
-          <div>
-            <strong>{plan.name}</strong>
-            <span>{plan.price} · renova em {plan.renewsAt}</span>
-          </div>
-          <button className="btn btn-secondary btn-sm">Ver todos os planos</button>
-        </div>
-
-        <div className="usage-block">
-          <div className="usage-label">
-            <span>Advogados usados</span>
-            <span>{plan.seatsUsed} de {plan.seatsLimit}</span>
-          </div>
-          <div className="usage-bar">
-            <div className="usage-bar-fill" style={{ width: `${usagePercent}%` }} />
-          </div>
-        </div>
-      </Section>
-
-      <Section title="Forma de pagamento">
-        <div className="payment-row">
-          <span>Cartão terminado em 4242</span>
-          <button className="btn btn-secondary btn-sm">Trocar cartão</button>
-        </div>
-      </Section>
-
-      <Section title="Histórico de pagamento">
-        <table>
-          <thead>
-            <tr>
-              <th>Data</th>
-              <th>Valor</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>01 ago 2026</td>
-              <td>R$ 199,00</td>
-              <td><span className="badge badge-success">Pago</span></td>
-            </tr>
-            <tr>
-              <td>01 jul 2026</td>
-              <td>R$ 199,00</td>
-              <td><span className="badge badge-success">Pago</span></td>
-            </tr>
-          </tbody>
-        </table>
-      </Section>
-    </div>
-  );
-}
-
-// =========================================================================
-// PRIMITIVOS REUTILIZÁVEIS
-// =========================================================================
-function Section({ title, description, children, danger }) {
-  return (
-    <div className={`settings-section ${danger ? "danger" : ""}`}>
-      <div className="settings-section-header">
-        <h4>{title}</h4>
-        {description && <p>{description}</p>}
+  return <div className="settings-stack">
+    <Section title="Dados pessoais" description="Atualize seus dados de acesso e contato.">
+      <div className="form-grid">
+        <Field label="Nome"><input value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} /></Field>
+        <Field label="E-mail"><input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></Field>
+        <Field label="Telefone"><input value={form.telefone} onChange={(e) => setForm({ ...form, telefone: e.target.value })} placeholder="(00) 00000-0000" /></Field>
+        <Field label="Cargo"><input value={usuario.tipo_usuario === "admin" ? "Administrador" : "Advogado"} disabled /></Field>
       </div>
-      <div className="settings-section-body">{children}</div>
-    </div>
-  );
+      <Actions><button className="btn btn-primary btn-sm" onClick={salvarConta} disabled={salvando}>Salvar alterações</button></Actions>
+    </Section>
+
+    <Section title="Senha" description="A nova senha deve ter pelo menos 8 caracteres.">
+      <div className="form-grid">
+        <Field label="Senha atual" full><div className="password-field"><input type={showPassword ? "text" : "password"} value={senha.senha_atual} onChange={(e) => setSenha({ ...senha, senha_atual: e.target.value })} /><button type="button" className="password-toggle" onClick={() => setShowPassword(!showPassword)}>{showPassword ? <EyeOff size={16}/> : <Eye size={16}/>}</button></div></Field>
+        <Field label="Nova senha"><input type={showPassword ? "text" : "password"} value={senha.nova_senha} onChange={(e) => setSenha({ ...senha, nova_senha: e.target.value })} /></Field>
+        <Field label="Confirmar nova senha"><input type={showPassword ? "text" : "password"} value={senha.confirmar_senha} onChange={(e) => setSenha({ ...senha, confirmar_senha: e.target.value })} /></Field>
+      </div>
+      <Actions><button className="btn btn-secondary btn-sm" onClick={salvarSenha} disabled={salvando}>Alterar senha</button></Actions>
+    </Section>
+  </div>;
 }
 
-function ToggleRow({ label, icon, defaultChecked = false }) {
-  return (
-    <label className="toggle-row">
-      <span className="toggle-label">
-        {icon}
-        {label}
-      </span>
-      <span className="switch">
-        <input type="checkbox" defaultChecked={defaultChecked} />
-        <span className="switch-track" />
-      </span>
-    </label>
-  );
+function EscritorioTab({ dados, setDados, feedback }) {
+  const admin = dados.usuario.tipo_usuario === "admin";
+  const cfg = dados.configuracao_escritorio || {};
+  const [form, setForm] = useState({ ...dados.escritorio, timezone: cfg.timezone || "America/Sao_Paulo", formato_data: cfg.formato_data || "dmy" });
+
+  async function salvar() {
+    try {
+      const res = await updateEscritorio(form);
+      setDados((d) => ({ ...d, escritorio: res.escritorio, configuracao_escritorio: res.configuracao_escritorio }));
+      const atual = JSON.parse(localStorage.getItem("usuarioLogado") || "{}");
+      localStorage.setItem("usuarioLogado", JSON.stringify({ ...atual, escritorio_nome: res.escritorio.nome }));
+      feedback(res.detail);
+    } catch (e) { feedback(e.message, true); }
+  }
+
+  return <div className="settings-stack">
+    <Section title="Dados do escritório" description={admin ? "Somente administradores podem alterar estes dados." : "Visualização dos dados do escritório."}>
+      <div className="form-grid">
+        <Field label="Nome do escritório"><input value={form.nome || ""} disabled={!admin} onChange={(e) => setForm({ ...form, nome: e.target.value })}/></Field>
+        <Field label="CNPJ"><input value={form.cnpj || ""} disabled /></Field>
+        <Field label="E-mail"><input value={form.email || ""} disabled={!admin} onChange={(e) => setForm({ ...form, email: e.target.value })}/></Field>
+        <Field label="Telefone"><input value={form.telefone || ""} disabled={!admin} onChange={(e) => setForm({ ...form, telefone: e.target.value })}/></Field>
+        <Field label="Endereço" full><input value={form.endereco || ""} disabled={!admin} onChange={(e) => setForm({ ...form, endereco: e.target.value })}/></Field>
+        <Field label="Cidade"><input value={form.cidade || ""} disabled={!admin} onChange={(e) => setForm({ ...form, cidade: e.target.value })}/></Field>
+        <Field label="Estado"><input maxLength={2} value={form.estado || ""} disabled={!admin} onChange={(e) => setForm({ ...form, estado: e.target.value.toUpperCase() })}/></Field>
+        <Field label="Fuso horário"><select value={form.timezone} disabled={!admin} onChange={(e) => setForm({ ...form, timezone: e.target.value })}><option value="America/Sao_Paulo">Brasília (GMT-3)</option><option value="America/Manaus">Manaus (GMT-4)</option><option value="America/Noronha">Fernando de Noronha (GMT-2)</option></select></Field>
+        <Field label="Formato de data"><select value={form.formato_data} disabled={!admin} onChange={(e) => setForm({ ...form, formato_data: e.target.value })}><option value="dmy">31/08/2026</option><option value="mdy">08/31/2026</option><option value="iso">2026-08-31</option></select></Field>
+      </div>
+      {admin && <Actions><button className="btn btn-primary btn-sm" onClick={salvar}>Salvar alterações</button></Actions>}
+    </Section>
+
+    <Section title="Equipe" description="Usuários atualmente cadastrados neste escritório.">
+      <div className="member-list">{dados.membros.map((m) => <div key={m.id} className="member-row"><div className="member-avatar">{m.nome.charAt(0).toUpperCase()}</div><div className="member-info"><strong>{m.nome}</strong><span>{m.email}</span></div><span className="badge badge-muted">{m.tipo_usuario === "admin" ? "Administrador" : "Advogado"}</span></div>)}</div>
+    </Section>
+  </div>;
 }
+
+function NotificacoesTab({ preferencias, setDados, feedback }) {
+  const [p, setP] = useState({ ...PREF_DEFAULT, ...preferencias });
+  async function salvar(novos) {
+    const next = { ...p, ...novos }; setP(next);
+    try { const res = await updatePreferencias(novos); setDados((d) => ({ ...d, preferencias: res.preferencias })); feedback("Preferências de notificação salvas."); }
+    catch (e) { feedback(e.message, true); }
+  }
+  return <div className="settings-stack">
+    <Section title="E-mail" description="Escolha os avisos que deseja receber.">
+      <ToggleRow label="Novo processo cadastrado" checked={p.notificacao_novo_processo} onChange={(v) => salvar({ notificacao_novo_processo: v })}/>
+      <ToggleRow label="Novo documento anexado" checked={p.notificacao_novo_documento} onChange={(v) => salvar({ notificacao_novo_documento: v })}/>
+      <ToggleRow label="Alteração de status em processo" checked={p.notificacao_status_processo} onChange={(v) => salvar({ notificacao_status_processo: v })}/>
+      <ToggleRow label="Novo cliente cadastrado" checked={p.notificacao_novo_cliente} onChange={(v) => salvar({ notificacao_novo_cliente: v })}/>
+    </Section>
+    <Section title="Prazos e audiências">
+      <ToggleRow label="Lembrete de audiência" checked={p.lembrete_audiencia} onChange={(v) => salvar({ lembrete_audiencia: v })}/>
+      <Field label="Antecedência"><select value={p.antecedencia_audiencia} onChange={(e) => salvar({ antecedencia_audiencia: Number(e.target.value) })}><option value="1">1 dia antes</option><option value="2">2 dias antes</option><option value="5">5 dias antes</option><option value="7">7 dias antes</option></select></Field>
+      <ToggleRow label="Lembrete de prazo processual" checked={p.lembrete_prazo} onChange={(v) => salvar({ lembrete_prazo: v })}/>
+      <ToggleRow label="Resumo semanal por e-mail" checked={p.resumo_semanal} onChange={(v) => salvar({ resumo_semanal: v })}/>
+    </Section>
+  </div>;
+}
+
+function AparenciaTab({ preferencias, setDados, feedback, theme, setTheme }) {
+  const [p, setP] = useState({ ...PREF_DEFAULT, ...preferencias });
+  async function salvar(campo, valor) {
+    const next = { ...p, [campo]: valor }; setP(next);
+    if (campo === "tema") setTheme(valor);
+    try { const res = await updatePreferencias({ [campo]: valor }); setDados((d) => ({ ...d, preferencias: res.preferencias })); feedback("Preferência salva."); }
+    catch (e) { feedback(e.message, true); }
+  }
+  return <div className="settings-stack">
+    <Section title="Tema da interface"><div className="theme-toggle"><button className={`btn btn-sm ${theme === "light" ? "btn-primary" : "btn-secondary"}`} onClick={() => salvar("tema", "light")}>Claro</button><button className={`btn btn-sm ${theme === "dark" ? "btn-primary" : "btn-secondary"}`} onClick={() => salvar("tema", "dark")}>Escuro</button></div></Section>
+    <Section title="Densidade das tabelas"><Field><select value={p.densidade_tabela} onChange={(e) => salvar("densidade_tabela", e.target.value)}><option value="comfortable">Confortável</option><option value="compact">Compacta</option></select></Field></Section>
+    <Section title="Idioma"><Field><select value={p.idioma} onChange={(e) => salvar("idioma", e.target.value)}><option value="pt-BR">Português (Brasil)</option><option value="en-US">English (US)</option><option value="es-ES">Español</option></select></Field></Section>
+    <Section title="Página inicial"><Field><select value={p.pagina_inicial} onChange={(e) => salvar("pagina_inicial", e.target.value)}><option value="dashboard">Dashboard</option><option value="agenda">Agenda</option><option value="clientes">Clientes</option><option value="processos">Processos</option></select></Field></Section>
+  </div>;
+}
+
+function DadosTab({ dados, setDados, feedback }) {
+  const admin = dados.usuario.tipo_usuario === "admin";
+  const [retencao, setRetencao] = useState(dados.configuracao_escritorio?.retencao_documentos || "indeterminado");
+  const [senha, setSenha] = useState("");
+  const [confirmacao, setConfirmacao] = useState("");
+
+  async function salvarRetencao(v) {
+    setRetencao(v);
+    try { const res = await updateEscritorio({ retencao_documentos: v }); setDados((d) => ({ ...d, configuracao_escritorio: res.configuracao_escritorio })); feedback("Retenção de documentos atualizada."); }
+    catch (e) { feedback(e.message, true); }
+  }
+  async function excluir() {
+    if (!window.confirm("Isto desativará o escritório e todos os usuários. Deseja continuar?")) return;
+    try { const res = await desativarEscritorio({ senha, confirmacao }); feedback(res.detail); logout(); window.location.href = "/"; }
+    catch (e) { feedback(e.message, true); }
+  }
+
+  return <div className="settings-stack">
+    <Section title="Exportar dados" description="Baixe os dados do escritório em CSV."><div className="export-row"><button className="btn btn-secondary btn-sm" onClick={() => exportarClientesCSV().catch((e) => feedback(e.message, true))}><Download size={14}/>Exportar clientes (CSV)</button><button className="btn btn-secondary btn-sm" onClick={() => exportarProcessosCSV().catch((e) => feedback(e.message, true))}><Download size={14}/>Exportar processos (CSV)</button></div></Section>
+    <Section title="Retenção de documentos" description="Preferência administrativa do escritório."><Field><select value={retencao} disabled={!admin} onChange={(e) => salvarRetencao(e.target.value)}><option value="1y">1 ano</option><option value="5y">5 anos</option><option value="indeterminado">Por tempo indeterminado</option></select></Field></Section>
+    {admin && <Section title="Zona de risco" description="Esta ação desativa o escritório e impede novos logins." danger><div className="form-grid"><Field label="Senha do administrador"><input type="password" value={senha} onChange={(e) => setSenha(e.target.value)}/></Field><Field label='Digite EXCLUIR para confirmar'><input value={confirmacao} onChange={(e) => setConfirmacao(e.target.value)}/></Field></div><Actions><button className="btn btn-danger btn-sm" onClick={excluir} disabled={!senha || confirmacao !== "EXCLUIR"}><Trash2 size={14}/>Desativar escritório</button></Actions></Section>}
+  </div>;
+}
+
+function FaturamentoTab() {
+  return <div className="settings-stack"><Section title="Faturamento"><div className="empty-state">A área de planos já é visual. A cobrança real ainda não está conectada a um gateway de pagamento.</div></Section></div>;
+}
+
+function Section({ title, description, children, danger }) { return <div className={`settings-section ${danger ? "danger" : ""}`}><div className="settings-section-header"><h4>{title}</h4>{description && <p>{description}</p>}</div><div className="settings-section-body">{children}</div></div>; }
+function Field({ label, children, full }) { return <div className={`form-field ${full ? "full" : ""}`}>{label && <label>{label}</label>}{children}</div>; }
+function Actions({ children }) { return <div className="settings-section-actions">{children}</div>; }
+function ToggleRow({ label, checked, onChange }) { return <label className="toggle-row"><span className="toggle-label">{label}</span><span className="switch"><input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)}/><span className="switch-track" /></span></label>; }

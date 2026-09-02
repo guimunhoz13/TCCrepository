@@ -174,3 +174,77 @@ export function logout() {
   localStorage.removeItem("refresh");
   localStorage.removeItem("usuarioLogado");
 }
+
+
+export async function getConfiguracoes() {
+  return request("/configuracoes/");
+}
+
+export async function updateConta(data) {
+  return request("/configuracoes/conta/", {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function alterarSenha(data) {
+  return request("/configuracoes/senha/", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function updatePreferencias(data) {
+  return request("/configuracoes/preferencias/", {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function updateEscritorio(data) {
+  return request("/configuracoes/escritorio/", {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function desativarEscritorio(data) {
+  return request("/configuracoes/desativar-escritorio/", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+async function downloadArquivo(endpoint, nomeArquivo) {
+  const token = typeof window !== "undefined" ? localStorage.getItem("access") : null;
+  const response = await fetch(`${API_URL}${endpoint}`, {
+    headers: { ...(token && { Authorization: `Bearer ${token}` }) },
+  });
+
+  if (!response.ok) {
+    let mensagem = "Não foi possível exportar os dados.";
+    try {
+      const data = await response.json();
+      mensagem = data?.detail || mensagem;
+    } catch {}
+    throw new Error(mensagem);
+  }
+
+  const blob = await response.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = nomeArquivo;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+export function exportarClientesCSV() {
+  return downloadArquivo("/configuracoes/exportar/clientes/", "clientes.csv");
+}
+
+export function exportarProcessosCSV() {
+  return downloadArquivo("/configuracoes/exportar/processos/", "processos.csv");
+}
