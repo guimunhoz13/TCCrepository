@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import {
   X, User, Building2, Bell, Palette, Database, CreditCard,
-  Eye, EyeOff, Trash2, Download, FileBarChart, Mail,
+  Eye, EyeOff, Trash2, Download, FileBarChart, Mail, MessageCircle,
 } from "lucide-react";
 import { usePanel, PANELS } from "@/contexts/PanelContext";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -27,6 +27,7 @@ import {
   logout,
 } from "@/services/api";
 import { gerarHtmlRelatorioCliente, gerarHtmlRelatorioProcesso, abrirRelatorio } from "@/utils/relatorio";
+import { abrirWhatsApp, montarMensagemCliente, montarMensagemProcesso } from "@/utils/whatsapp";
 
 const TABS = [
   { id: "conta", tKey: "config_conta", icon: User },
@@ -300,6 +301,7 @@ function RelatoriosTab({ feedback }) {
   const [gerando, setGerando] = useState(false);
   const [emailDestino, setEmailDestino] = useState("");
   const [enviandoEmail, setEnviandoEmail] = useState(false);
+  const [telefoneDestino, setTelefoneDestino] = useState("");
 
   useEffect(() => {
     let ativo = true;
@@ -319,9 +321,16 @@ function RelatoriosTab({ feedback }) {
   const opcoes = tipo === "cliente" ? clientes : processos;
 
   useEffect(() => {
-    if (!selecionado) { setEmailDestino(""); return; }
+    if (!selecionado) { setEmailDestino(""); setTelefoneDestino(""); return; }
     const item = opcoes.find((o) => String(o.id) === String(selecionado));
-    setEmailDestino((tipo === "cliente" ? item?.email : item?.cliente_email) || "");
+    if (tipo === "cliente") {
+      setEmailDestino(item?.email || "");
+      setTelefoneDestino(item?.telefone || "");
+    } else {
+      setEmailDestino(item?.cliente_email || "");
+      const clienteDoProcesso = clientes.find((c) => c.id === item?.cliente);
+      setTelefoneDestino(clienteDoProcesso?.telefone || "");
+    }
   }, [selecionado, tipo]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function gerar() {
@@ -365,6 +374,25 @@ function RelatoriosTab({ feedback }) {
       feedback(e.message, true);
     } finally {
       setEnviandoEmail(false);
+    }
+  }
+
+  function enviarWhatsApp() {
+    if (!selecionado) {
+      feedback(`Selecione um ${tipo === "cliente" ? "cliente" : "processo"} para enviar pelo WhatsApp.`, true);
+      return;
+    }
+    if (!telefoneDestino) {
+      feedback("Informe o telefone de destino.", true);
+      return;
+    }
+    const item = opcoes.find((o) => String(o.id) === String(selecionado));
+    const mensagem = tipo === "cliente" ? montarMensagemCliente(item) : montarMensagemProcesso(item);
+    const aberto = abrirWhatsApp(telefoneDestino, mensagem);
+    if (aberto) {
+      feedback("WhatsApp aberto em uma nova aba com a mensagem pronta para enviar.");
+    } else {
+      feedback("Telefone inválido.", true);
     }
   }
 
@@ -421,6 +449,25 @@ function RelatoriosTab({ feedback }) {
         <button className="btn btn-secondary btn-sm" onClick={enviarEmail} disabled={enviandoEmail || !selecionado}>
           <Mail size={14} />
           {enviandoEmail ? "Enviando..." : "Enviar por e-mail"}
+        </button>
+      </Actions>
+    </Section>
+
+    <Section title="Enviar por WhatsApp" description="Abre o WhatsApp com os detalhes já preenchidos, prontos para revisar e enviar.">
+      <div className="form-grid">
+        <Field label="Telefone de destino" full>
+          <input
+            value={telefoneDestino}
+            onChange={(e) => setTelefoneDestino(e.target.value)}
+            placeholder="(00) 00000-0000"
+            disabled={!selecionado}
+          />
+        </Field>
+      </div>
+      <Actions>
+        <button className="btn btn-secondary btn-sm" onClick={enviarWhatsApp} disabled={!selecionado}>
+          <MessageCircle size={14} />
+          Enviar por WhatsApp
         </button>
       </Actions>
     </Section>

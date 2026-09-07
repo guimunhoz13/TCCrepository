@@ -5,6 +5,8 @@ import { usePanel } from "@/contexts/PanelContext";
 import { useDashboardData } from "@/contexts/DashboardDataContext";
 import { usePreferences } from "@/contexts/PreferencesContext";
 import OverlayPanel from "@/components/shell/OverlayPanel";
+import { MessageCircle } from "lucide-react";
+import { abrirWhatsApp, montarMensagemCliente } from "@/utils/whatsapp";
 import {
   getClientes,
   createCliente,
@@ -281,6 +283,18 @@ export default function ClientesPanel() {
                         >
                           {t("acao_editar")}
                         </button>
+                        {cliente.telefone && (
+                          <button
+                            type="button"
+                            className="btn btn-secondary btn-sm"
+                            title={t("acao_enviar_whatsapp")}
+                            onClick={() =>
+                              abrirWhatsApp(cliente.telefone, montarMensagemCliente(cliente))
+                            }
+                          >
+                            <MessageCircle size={14} />
+                          </button>
+                        )}
                         <button
                           type="button"
                           className="btn btn-secondary btn-sm"

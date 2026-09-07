@@ -5,6 +5,8 @@ import { usePanel } from "@/contexts/PanelContext";
 import { useDashboardData } from "@/contexts/DashboardDataContext";
 import { usePreferences } from "@/contexts/PreferencesContext";
 import OverlayPanel from "@/components/shell/OverlayPanel";
+import { MessageCircle } from "lucide-react";
+import { abrirWhatsApp, montarMensagemProcesso } from "@/utils/whatsapp";
 import {
   getProcessos,
   createProcesso,
@@ -240,6 +242,22 @@ export default function ProcessosPanel() {
                         >
                           {t("acao_alternar_status")}
                         </button>
+                        {(() => {
+                          const clienteDoProcesso = clientes.find((c) => c.id === processo.cliente);
+                          if (!clienteDoProcesso?.telefone) return null;
+                          return (
+                            <button
+                              type="button"
+                              className="btn btn-secondary btn-sm"
+                              title={t("acao_enviar_whatsapp")}
+                              onClick={() =>
+                                abrirWhatsApp(clienteDoProcesso.telefone, montarMensagemProcesso(processo))
+                              }
+                            >
+                              <MessageCircle size={14} />
+                            </button>
+                          );
+                        })()}
                         <button
                           className="btn btn-danger btn-sm"
                           onClick={async () => {
