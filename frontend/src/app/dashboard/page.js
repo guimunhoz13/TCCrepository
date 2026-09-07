@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Bot } from "lucide-react";
+import { Bot, RefreshCw } from "lucide-react";
 import AppSidebar from "@/components/shell/AppSidebar";
 import TopBar from "@/components/shell/TopBar";
 import ChartsSection from "@/components/dashboard/ChartsSection";
@@ -17,61 +17,37 @@ import ConfigPanel from "@/components/panels/ConfigPanel";
 import AdvogadosPanel from "@/components/panels/AdvogadosPanel";
 import PlanosPanel from "@/components/panels/PlanosPanel";
 import { PanelProvider } from "@/contexts/PanelContext";
-import {
-  getDashboardStats,
-  getProcessos,
-  getAgenda,
-  normalizarLista,
-} from "@/services/api";
+import { DashboardDataProvider, useDashboardData } from "@/contexts/DashboardDataContext";
 
 function DashboardContent() {
   const router = useRouter();
-  const [stats, setStats] = useState(null);
-  const [processos, setProcessos] = useState([]);
-  const [agenda, setAgenda] = useState([]);
-  const [erro, setErro] = useState("");
-  const [carregando, setCarregando] = useState(true);
-
-  const recarregarAgenda = useCallback(async () => {
-    try {
-      const dadosAgenda = await getAgenda();
-      setAgenda(normalizarLista(dadosAgenda));
-    } catch {
-      /* silencioso */
-    }
-  }, []);
+  const { stats, processos, agenda, carregando, erro, atualizadoEm, refresh } = useDashboardData();
+  const [pulsar, setPulsar] = useState(false);
+  const primeiraRenderizacao = useRef(true);
 
   useEffect(() => {
     const token = localStorage.getItem("access");
     if (!token) {
       router.replace("/");
+    }
+  }, [router]);
+
+  useEffect(() => {
+    if (erro && (erro.includes("401") || erro.toLowerCase().includes("token"))) {
+      router.replace("/");
+    }
+  }, [erro, router]);
+
+  useEffect(() => {
+    if (!atualizadoEm) return;
+    if (primeiraRenderizacao.current) {
+      primeiraRenderizacao.current = false;
       return;
     }
-
-    async function carregar() {
-      try {
-        const [dadosStats, dadosProcessos, dadosAgenda] = await Promise.all([
-          getDashboardStats(),
-          getProcessos(),
-          getAgenda(),
-        ]);
-
-        setStats(dadosStats);
-        setProcessos(normalizarLista(dadosProcessos));
-        setAgenda(normalizarLista(dadosAgenda));
-      } catch (error) {
-        if (error.message.includes("401") || error.message.includes("token")) {
-          router.replace("/");
-          return;
-        }
-        setErro(error.message);
-      } finally {
-        setCarregando(false);
-      }
-    }
-
-    carregar();
-  }, [router]);
+    setPulsar(true);
+    const timer = setTimeout(() => setPulsar(false), 1200);
+    return () => clearTimeout(timer);
+  }, [atualizadoEm]);
 
   const totais = stats?.totais || {};
 
@@ -91,10 +67,17 @@ function DashboardContent() {
 
         {erro && <div className="alert alert-error">{erro}</div>}
 
-        <Link href="/assistente-ia" className="btn btn-primary ai-quick-btn">
-          <Bot size={18} />
-          Abrir Assistente IA
-        </Link>
+        <div className="dashboard-toolbar">
+          <Link href="/assistente-ia" className="btn btn-primary ai-quick-btn">
+            <Bot size={18} />
+            Abrir Assistente IA
+          </Link>
+
+          <span className={`sync-indicator ${pulsar ? "pulsing" : ""}`}>
+            <RefreshCw size={13} className={pulsar ? "spin" : ""} />
+            {pulsar ? "Atualizado agora" : "Dados em tempo real"}
+          </span>
+        </div>
 
         <div className="stats-grid">
           {[
@@ -103,7 +86,7 @@ function DashboardContent() {
             ["Audiências", totais.agenda],
             ["Documentos", totais.documentos],
           ].map(([label, valor]) => (
-            <div key={label} className="stat-card">
+            <div key={label} className={`stat-card ${pulsar ? "updated" : ""}`}>
               <div className="stat-card-label">{label}</div>
               <div className="stat-card-value">
                 {carregando ? "..." : valor ?? 0}
@@ -154,7 +137,7 @@ function DashboardContent() {
             </div>
           </div>
 
-          <MiniCalendar eventos={agenda} onEventoCriado={recarregarAgenda} />
+          <MiniCalendar eventos={agenda} onEventoCriado={refresh} />
         </div>
       </main>
 
@@ -172,8 +155,10 @@ function DashboardContent() {
 
 export default function DashboardPage() {
   return (
-    <PanelProvider>
-      <DashboardContent />
-    </PanelProvider>
+    <DashboardDataProvider>
+      <PanelProvider>
+        <DashboardContent />
+      </PanelProvider>
+    </DashboardDataProvider>
   );
 }

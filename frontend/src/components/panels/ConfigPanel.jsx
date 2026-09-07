@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import {
   X, User, Building2, Bell, Palette, Database, CreditCard,
-  Eye, EyeOff, Trash2, Download,
+  Eye, EyeOff, Trash2, Download, FileBarChart,
 } from "lucide-react";
 import { usePanel, PANELS } from "@/contexts/PanelContext";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -16,8 +16,14 @@ import {
   desativarEscritorio,
   exportarClientesCSV,
   exportarProcessosCSV,
+  getClientes,
+  getProcessos,
+  getRelatorioCliente,
+  getRelatorioProcesso,
+  normalizarLista,
   logout,
 } from "@/services/api";
+import { gerarHtmlRelatorioCliente, gerarHtmlRelatorioProcesso, abrirRelatorio } from "@/utils/relatorio";
 
 const TABS = [
   { id: "conta", label: "Conta", icon: User },
@@ -25,6 +31,7 @@ const TABS = [
   { id: "notificacoes", label: "Notificações", icon: Bell },
   { id: "aparencia", label: "Aparência", icon: Palette },
   { id: "dados", label: "Dados", icon: Database },
+  { id: "relatorios", label: "Relatórios", icon: FileBarChart },
   { id: "faturamento", label: "Faturamento", icon: CreditCard },
 ];
 
@@ -116,6 +123,9 @@ export default function ConfigPanel() {
           )}
           {!carregando && dados && activeTab === "dados" && (
             <DadosTab dados={dados} setDados={setDados} feedback={feedback} />
+          )}
+          {!carregando && dados && activeTab === "relatorios" && (
+            <RelatoriosTab feedback={feedback} />
           )}
           {!carregando && activeTab === "faturamento" && <FaturamentoTab />}
         </div>
@@ -271,6 +281,92 @@ function DadosTab({ dados, setDados, feedback }) {
     <Section title="Exportar dados" description="Baixe os dados do escritório em CSV."><div className="export-row"><button className="btn btn-secondary btn-sm" onClick={() => exportarClientesCSV().catch((e) => feedback(e.message, true))}><Download size={14}/>Exportar clientes (CSV)</button><button className="btn btn-secondary btn-sm" onClick={() => exportarProcessosCSV().catch((e) => feedback(e.message, true))}><Download size={14}/>Exportar processos (CSV)</button></div></Section>
     <Section title="Retenção de documentos" description="Preferência administrativa do escritório."><Field><select value={retencao} disabled={!admin} onChange={(e) => salvarRetencao(e.target.value)}><option value="1y">1 ano</option><option value="5y">5 anos</option><option value="indeterminado">Por tempo indeterminado</option></select></Field></Section>
     {admin && <Section title="Zona de risco" description="Esta ação desativa o escritório e impede novos logins." danger><div className="form-grid"><Field label="Senha do administrador"><input type="password" value={senha} onChange={(e) => setSenha(e.target.value)}/></Field><Field label='Digite EXCLUIR para confirmar'><input value={confirmacao} onChange={(e) => setConfirmacao(e.target.value)}/></Field></div><Actions><button className="btn btn-danger btn-sm" onClick={excluir} disabled={!senha || confirmacao !== "EXCLUIR"}><Trash2 size={14}/>Desativar escritório</button></Actions></Section>}
+  </div>;
+}
+
+function RelatoriosTab({ feedback }) {
+  const [tipo, setTipo] = useState("cliente");
+  const [clientes, setClientes] = useState([]);
+  const [processos, setProcessos] = useState([]);
+  const [selecionado, setSelecionado] = useState("");
+  const [carregandoListas, setCarregandoListas] = useState(true);
+  const [gerando, setGerando] = useState(false);
+
+  useEffect(() => {
+    let ativo = true;
+    Promise.all([getClientes(), getProcessos()])
+      .then(([dadosClientes, dadosProcessos]) => {
+        if (!ativo) return;
+        setClientes(normalizarLista(dadosClientes));
+        setProcessos(normalizarLista(dadosProcessos));
+      })
+      .catch((e) => ativo && feedback(e.message, true))
+      .finally(() => ativo && setCarregandoListas(false));
+    return () => { ativo = false; };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => { setSelecionado(""); }, [tipo]);
+
+  async function gerar() {
+    if (!selecionado) {
+      feedback(`Selecione um ${tipo === "cliente" ? "cliente" : "processo"} para gerar o relatório.`, true);
+      return;
+    }
+    try {
+      setGerando(true);
+      if (tipo === "cliente") {
+        const relatorio = await getRelatorioCliente(selecionado);
+        abrirRelatorio(gerarHtmlRelatorioCliente(relatorio));
+      } else {
+        const relatorio = await getRelatorioProcesso(selecionado);
+        abrirRelatorio(gerarHtmlRelatorioProcesso(relatorio));
+      }
+      feedback("Relatório gerado em uma nova aba. Use \"Imprimir / Salvar como PDF\" para exportá-lo.");
+    } catch (e) {
+      feedback(e.message, true);
+    } finally {
+      setGerando(false);
+    }
+  }
+
+  const opcoes = tipo === "cliente" ? clientes : processos;
+
+  return <div className="settings-stack">
+    <Section title="Gerar relatório" description="Selecione um cliente ou processo para gerar um relatório completo, pronto para impressão ou para salvar como PDF.">
+      <div className="form-grid">
+        <Field label="Tipo de relatório">
+          <select value={tipo} onChange={(e) => setTipo(e.target.value)}>
+            <option value="cliente">Cliente</option>
+            <option value="processo">Processo</option>
+          </select>
+        </Field>
+        <Field label={tipo === "cliente" ? "Cliente" : "Processo"}>
+          <select
+            value={selecionado}
+            onChange={(e) => setSelecionado(e.target.value)}
+            disabled={carregandoListas || opcoes.length === 0}
+          >
+            <option value="">{carregandoListas ? "Carregando..." : "Selecione"}</option>
+            {opcoes.map((item) => (
+              <option key={item.id} value={item.id}>
+                {tipo === "cliente" ? item.nome : `${item.numero_processo} — ${item.titulo}`}
+              </option>
+            ))}
+          </select>
+        </Field>
+      </div>
+      {!carregandoListas && opcoes.length === 0 && (
+        <div className="empty-state">
+          {tipo === "cliente" ? "Nenhum cliente cadastrado ainda." : "Nenhum processo cadastrado ainda."}
+        </div>
+      )}
+      <Actions>
+        <button className="btn btn-primary btn-sm" onClick={gerar} disabled={gerando || !selecionado}>
+          <FileBarChart size={14} />
+          {gerando ? "Gerando..." : "Gerar relatório"}
+        </button>
+      </Actions>
+    </Section>
   </div>;
 }
 

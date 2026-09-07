@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { usePanel } from "@/contexts/PanelContext";
+import { useDashboardData } from "@/contexts/DashboardDataContext";
 import OverlayPanel from "@/components/shell/OverlayPanel";
 import {
   getAgenda,
@@ -21,6 +22,7 @@ const formularioInicial = {
 
 export default function AgendaPanel() {
   const { activePanel, panelTab } = usePanel();
+  const { refresh: refreshDashboard } = useDashboardData();
   const [eventos, setEventos] = useState([]);
   const [processos, setProcessos] = useState([]);
   const [formulario, setFormulario] = useState(formularioInicial);
@@ -60,6 +62,7 @@ export default function AgendaPanel() {
       });
       setFormulario(formularioInicial);
       await carregarDados();
+      refreshDashboard().catch(() => {});
     } catch (error) {
       setErro(error.message);
     }
@@ -174,6 +177,7 @@ export default function AgendaPanel() {
                           if (window.confirm("Excluir evento?")) {
                             await deleteAgenda(evento.id);
                             carregarDados();
+                            refreshDashboard().catch(() => {});
                           }
                         }}
                       >

@@ -248,3 +248,11 @@ export function exportarClientesCSV() {
 export function exportarProcessosCSV() {
   return downloadArquivo("/configuracoes/exportar/processos/", "processos.csv");
 }
+
+export async function getRelatorioCliente(clienteId) {
+  return request(`/configuracoes/relatorio/cliente/${clienteId}/`);
+}
+
+export async function getRelatorioProcesso(processoId) {
+  return request(`/configuracoes/relatorio/processo/${processoId}/`);
+}
