@@ -3,6 +3,7 @@
 import { Moon, Sun, LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTheme } from "@/contexts/ThemeContext";
+import { usePreferences } from "@/contexts/PreferencesContext";
 import { getUsuarioLogado, logout } from "@/services/api";
 import { getSaudacaoCompleta } from "@/utils/greeting";
 import { useEffect, useState } from "react";
@@ -13,6 +14,7 @@ export default function TopBar({
   showGreeting = false,
 }) {
   const { theme, toggleTheme } = useTheme();
+  const { t } = usePreferences();
   const router = useRouter();
 
   // O usuário não deve ser carregado durante a renderização inicial,
@@ -43,8 +45,8 @@ export default function TopBar({
         {showGreeting && (
           <div className="greeting-badge">
             {usuario?.tipo_usuario === "admin"
-              ? "Administrador"
-              : "Advogado"}
+              ? t("perfil_admin")
+              : t("perfil_advogado")}
           </div>
         )}
 
@@ -67,7 +69,7 @@ export default function TopBar({
           type="button"
           className="icon-btn"
           onClick={toggleTheme}
-          aria-label="Alternar tema"
+          aria-label={t("acao_alternar_tema")}
         >
           {theme === "dark" ? (
             <Sun size={18} />
@@ -80,7 +82,7 @@ export default function TopBar({
           type="button"
           className="icon-btn"
           onClick={handleLogout}
-          aria-label="Sair"
+          aria-label={t("acao_sair")}
         >
           <LogOut size={18} />
         </button>

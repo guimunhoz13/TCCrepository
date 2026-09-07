@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { usePanel } from "@/contexts/PanelContext";
 import { useDashboardData } from "@/contexts/DashboardDataContext";
+import { usePreferences } from "@/contexts/PreferencesContext";
 import OverlayPanel from "@/components/shell/OverlayPanel";
 import {
   getAgenda,
@@ -23,6 +24,7 @@ const formularioInicial = {
 export default function AgendaPanel() {
   const { activePanel, panelTab } = usePanel();
   const { refresh: refreshDashboard } = useDashboardData();
+  const { t } = usePreferences();
   const [eventos, setEventos] = useState([]);
   const [processos, setProcessos] = useState([]);
   const [formulario, setFormulario] = useState(formularioInicial);
@@ -73,8 +75,8 @@ export default function AgendaPanel() {
   return (
     <OverlayPanel
       tabs={[
-        { id: "lista", label: "Eventos" },
-        { id: "novo", label: "Novo evento" },
+        { id: "lista", label: t("aba_lista") },
+        { id: "novo", label: t("aba_novo") },
       ]}
     >
       {erro && <div className="alert alert-error">{erro}</div>}
@@ -140,7 +142,7 @@ export default function AgendaPanel() {
             />
           </div>
           <div className="form-field full">
-            <button className="btn btn-primary">Agendar evento</button>
+            <button className="btn btn-primary">{t("acao_agendar_evento")}</button>
           </div>
         </form>
       ) : (
@@ -181,7 +183,7 @@ export default function AgendaPanel() {
                           }
                         }}
                       >
-                        Excluir
+                        {t("acao_excluir")}
                       </button>
                     </td>
                   </tr>

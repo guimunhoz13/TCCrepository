@@ -3,16 +3,17 @@
 import { useEffect } from "react";
 import { X } from "lucide-react";
 import { usePanel } from "@/contexts/PanelContext";
+import { usePreferences } from "@/contexts/PreferencesContext";
 
-const PANEL_TITLES = {
-  clientes: "Clientes",
-  processos: "Processos",
-  documentos: "Documentos",
-  agenda: "Agenda",
-  contato: "Contato & Informações",
-  config: "Configurações",
-  advogados: "Advogados",
-  planos: "Planos de Assinatura",
+const PANEL_TITLE_KEYS = {
+  clientes: "painel_clientes",
+  processos: "painel_processos",
+  documentos: "painel_documentos",
+  agenda: "painel_agenda",
+  contato: "painel_contato",
+  config: "painel_config",
+  advogados: "painel_advogados",
+  planos: "painel_planos",
 };
 
 export default function OverlayPanel({
@@ -25,6 +26,7 @@ export default function OverlayPanel({
     closePanel,
     setPanelTab,
   } = usePanel();
+  const { t } = usePreferences();
 
   useEffect(() => {
     function onKeyDown(event) {
@@ -64,14 +66,14 @@ export default function OverlayPanel({
       >
         <div className="overlay-header">
           <h3 id="overlay-panel-title">
-            {PANEL_TITLES[activePanel] || activePanel}
+            {t(PANEL_TITLE_KEYS[activePanel]) || activePanel}
           </h3>
 
           <button
             type="button"
             className="icon-btn"
             onClick={closePanel}
-            aria-label="Fechar"
+            aria-label={t("acao_fechar")}
           >
             <X size={18} />
           </button>

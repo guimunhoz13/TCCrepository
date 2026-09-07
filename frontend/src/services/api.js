@@ -256,3 +256,17 @@ export async function getRelatorioCliente(clienteId) {
 export async function getRelatorioProcesso(processoId) {
   return request(`/configuracoes/relatorio/processo/${processoId}/`);
 }
+
+export async function enviarRelatorioClientePorEmail(clienteId, destinatario) {
+  return request(`/configuracoes/relatorio/cliente/${clienteId}/email/`, {
+    method: "POST",
+    body: JSON.stringify({ destinatario }),
+  });
+}
+
+export async function enviarRelatorioProcessoPorEmail(processoId, destinatario) {
+  return request(`/configuracoes/relatorio/processo/${processoId}/email/`, {
+    method: "POST",
+    body: JSON.stringify({ destinatario }),
+  });
+}

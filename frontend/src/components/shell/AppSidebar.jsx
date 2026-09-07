@@ -16,73 +16,75 @@ import {
 } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
 import { PANELS, usePanel } from "@/contexts/PanelContext";
+import { usePreferences } from "@/contexts/PreferencesContext";
 import { getUsuarioLogado } from "@/services/api";
 import { useEffect, useState } from "react";
 
 const NAV_ITEMS = [
   {
     id: "dashboard",
-    label: "Dashboard",
+    tKey: "nav_dashboard",
     icon: LayoutDashboard,
     href: "/dashboard",
   },
   {
     id: PANELS.CLIENTES,
-    label: "Clientes",
+    tKey: "nav_clientes",
     icon: Users,
   },
   {
     id: PANELS.PROCESSOS,
-    label: "Processos",
+    tKey: "nav_processos",
     icon: Briefcase,
   },
   {
     id: PANELS.AGENDA,
-    label: "Agenda",
+    tKey: "nav_agenda",
     icon: CalendarDays,
   },
   {
     id: "compromissos",
-    label: "Compromissos",
+    tKey: "nav_compromissos",
     icon: CalendarClock,
     href: "/dashboard/compromissos",
   },
   {
     id: "assistente-ia",
-    label: "Assistente IA",
+    tKey: "nav_assistente",
     icon: Bot,
     href: "/assistente-ia",
   },
   {
     id: PANELS.DOCUMENTOS,
-    label: "Documentos",
+    tKey: "nav_documentos",
     icon: FileText,
   },
   {
     id: PANELS.ADVOGADOS,
-    label: "Advogados",
+    tKey: "nav_advogados",
     icon: UserPlus,
     adminOnly: true,
   },
   {
     id: PANELS.PLANOS,
-    label: "Planos",
+    tKey: "nav_planos",
     icon: CreditCard,
   },
   {
     id: PANELS.CONTATO,
-    label: "Contato",
+    tKey: "nav_contato",
     icon: Phone,
   },
   {
     id: PANELS.CONFIG,
-    label: "Configurações",
+    tKey: "nav_config",
     icon: Settings,
   },
 ];
 
 export default function AppSidebar() {
   const { activePanel, openPanel, closePanel } = usePanel();
+  const { t } = usePreferences();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -135,7 +137,7 @@ export default function AppSidebar() {
           (item) =>
             !item.adminOnly ||
             usuario?.tipo_usuario === "admin"
-        ).map(({ id, label, icon: Icon, href }) => {
+        ).map(({ id, tKey, icon: Icon, href }) => {
           const isDashboard = id === "dashboard";
 
           const isRouteActive =
@@ -161,7 +163,7 @@ export default function AppSidebar() {
               onClick={() => handleNav({ id, href })}
             >
               <Icon size={18} />
-              <span>{label}</span>
+              <span>{t(tKey)}</span>
             </button>
           );
         })}

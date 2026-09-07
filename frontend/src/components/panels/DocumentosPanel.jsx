@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { FileDown, Paperclip } from "lucide-react";
 import { usePanel } from "@/contexts/PanelContext";
 import { useDashboardData } from "@/contexts/DashboardDataContext";
+import { usePreferences } from "@/contexts/PreferencesContext";
 import OverlayPanel from "@/components/shell/OverlayPanel";
 import {
   getDocumentos,
@@ -16,6 +17,7 @@ import {
 export default function DocumentosPanel() {
   const { activePanel, panelTab } = usePanel();
   const { refresh: refreshDashboard } = useDashboardData();
+  const { t } = usePreferences();
   const [documentos, setDocumentos] = useState([]);
   const [processos, setProcessos] = useState([]);
   const [processoId, setProcessoId] = useState("");
@@ -77,8 +79,8 @@ export default function DocumentosPanel() {
   return (
     <OverlayPanel
       tabs={[
-        { id: "lista", label: "Arquivos" },
-        { id: "novo", label: "Enviar documento" },
+        { id: "lista", label: t("aba_lista") },
+        { id: "novo", label: t("acao_enviar_documento") },
       ]}
     >
       {erro && <div className="alert alert-error">{erro}</div>}
@@ -117,7 +119,7 @@ export default function DocumentosPanel() {
             />
           </div>
           <div className="form-field full">
-            <button className="btn btn-primary">Enviar documento</button>
+            <button className="btn btn-primary">{t("acao_enviar_documento")}</button>
           </div>
         </form>
       ) : (
@@ -160,7 +162,7 @@ export default function DocumentosPanel() {
                             className="btn btn-secondary btn-sm"
                           >
                             <FileDown size={14} />
-                            Abrir
+                            {t("acao_abrir")}
                           </a>
                         )}
                         <button
@@ -173,7 +175,7 @@ export default function DocumentosPanel() {
                             }
                           }}
                         >
-                          Excluir
+                          {t("acao_excluir")}
                         </button>
                       </div>
                     </td>

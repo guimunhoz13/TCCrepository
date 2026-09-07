@@ -178,6 +178,31 @@ OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
 OPENAI_MODEL = os.environ.get("OPENAI_MODEL", "gpt-4o-mini")
 
 
+# E-MAIL
+# Sem EMAIL_HOST_USER/EMAIL_HOST_PASSWORD configurados (variáveis de
+# ambiente), o sistema usa o backend "console": os e-mails são impressos
+# no terminal do backend em vez de enviados de verdade — útil em
+# desenvolvimento e não quebra nada sem credenciais.
+#
+# Para enviar e-mails de verdade com uma conta Gmail:
+#   1. Ative a verificação em duas etapas na conta Google.
+#   2. Gere uma "senha de app" em https://myaccount.google.com/apppasswords
+#   3. Defina as variáveis de ambiente:
+#      EMAIL_HOST_USER=seuemail@gmail.com
+#      EMAIL_HOST_PASSWORD=<senha de app gerada, sem espaços>
+EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
+EMAIL_HOST = os.environ.get("EMAIL_HOST", "smtp.gmail.com")
+EMAIL_PORT = int(os.environ.get("EMAIL_PORT", "587"))
+EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS", "True") == "True"
+DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", EMAIL_HOST_USER or "no-reply@lexoffice.local")
+
+if EMAIL_HOST_USER and EMAIL_HOST_PASSWORD:
+    EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+else:
+    EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+
+
 
 # CORS
 

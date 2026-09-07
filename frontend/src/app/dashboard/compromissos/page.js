@@ -14,6 +14,7 @@ import AdvogadosPanel from "@/components/panels/AdvogadosPanel";
 import PlanosPanel from "@/components/panels/PlanosPanel";
 import { PanelProvider } from "@/contexts/PanelContext";
 import { DashboardDataProvider } from "@/contexts/DashboardDataContext";
+import { PreferencesProvider } from "@/contexts/PreferencesContext";
 import { getAgenda, normalizarLista } from "@/services/api";
 import { MapPin, Briefcase } from "lucide-react";
 
@@ -26,7 +27,7 @@ function CompromissosContent() {
   useEffect(() => {
     const token = localStorage.getItem("access");
     if (!token) {
-      router.replace("/");
+      router.replace("/login");
       return;
     }
 
@@ -45,7 +46,7 @@ function CompromissosContent() {
         setEventos(futuros);
       } catch (error) {
         if (error.message.includes("401") || error.message.includes("token")) {
-          router.replace("/");
+          router.replace("/login");
           return;
         }
         setErro(error.message);
@@ -161,10 +162,12 @@ function CompromissosContent() {
 
 export default function CompromissosPage() {
   return (
-    <DashboardDataProvider>
-      <PanelProvider>
-        <CompromissosContent />
-      </PanelProvider>
-    </DashboardDataProvider>
+    <PreferencesProvider>
+      <DashboardDataProvider>
+        <PanelProvider>
+          <CompromissosContent />
+        </PanelProvider>
+      </DashboardDataProvider>
+    </PreferencesProvider>
   );
 }

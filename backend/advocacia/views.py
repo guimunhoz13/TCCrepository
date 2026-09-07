@@ -11,7 +11,15 @@ from rest_framework.views import APIView
 
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from django.core.exceptions import ValidationError as DjangoValidationError
+
 from .mixins import EscritorioScopedMixin, get_usuario_from_request
+from .validators import validar_email_real
+from .emails import (
+    enviar_email,
+    montar_email_relatorio_cliente,
+    montar_email_relatorio_processo,
+)
 
 from .models import (
     Escritorio,
@@ -676,6 +684,11 @@ class ConfiguracoesContaView(APIView):
         if not nome or not email:
             return Response({"detail": "Nome e e-mail são obrigatórios."}, status=status.HTTP_400_BAD_REQUEST)
 
+        try:
+            validar_email_real(email)
+        except DjangoValidationError as exc:
+            return Response({"email": list(exc.messages)}, status=status.HTTP_400_BAD_REQUEST)
+
         if Usuario.objects.filter(email__iexact=email).exclude(id=usuario.id).exists():
             return Response({"email": ["E-mail já cadastrado."]}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -736,6 +749,12 @@ class ConfiguracoesEscritorioView(APIView):
         if usuario.tipo_usuario != "admin":
             return Response({"detail": "Somente administradores podem alterar o escritório."}, status=status.HTTP_403_FORBIDDEN)
 
+        if "email" in request.data:
+            try:
+                validar_email_real(request.data["email"])
+            except DjangoValidationError as exc:
+                return Response({"email": list(exc.messages)}, status=status.HTTP_400_BAD_REQUEST)
+
         campos = ["nome", "email", "telefone", "endereco", "cidade", "estado"]
         for campo in campos:
             if campo in request.data:
@@ -779,6 +798,78 @@ class ConfiguracoesDesativarEscritorioView(APIView):
         return Response({"detail": "Escritório desativado com sucesso."})
 
 
+def _montar_dados_relatorio_cliente(usuario, cliente_id, request=None):
+    """Monta o payload de relatório de um cliente. Levanta Cliente.DoesNotExist
+    quando o cliente não existe ou não pertence ao escritório do usuário."""
+
+    cliente = Cliente.objects.get(id=cliente_id, escritorio=usuario.escritorio)
+
+    processos = (
+        Processo.objects
+        .filter(cliente=cliente)
+        .select_related("advogado__usuario")
+        .order_by("-criado_em")
+    )
+    documentos = (
+        Documento.objects
+        .filter(processo__cliente=cliente)
+        .select_related("processo")
+        .order_by("-enviado_em")
+    )
+    agenda = (
+        Agenda.objects
+        .filter(processo__cliente=cliente)
+        .select_related("processo")
+        .order_by("data_evento")
+    )
+
+    contexto = {"request": request} if request else {}
+
+    return {
+        "gerado_em": timezone.now(),
+        "escritorio": EscritorioSerializer(usuario.escritorio).data,
+        "cliente": ClienteSerializer(cliente).data,
+        "processos": ProcessoSerializer(processos, many=True, context=contexto).data,
+        "documentos": DocumentoSerializer(documentos, many=True, context=contexto).data,
+        "agenda": AgendaSerializer(agenda, many=True, context=contexto).data,
+        "resumo": {
+            "total_processos": processos.count(),
+            "total_documentos": documentos.count(),
+            "total_eventos": agenda.count(),
+            "processos_por_status": list(
+                processos.values("status").annotate(total=Count("id")).order_by("status")
+            ),
+        },
+    }
+
+
+def _montar_dados_relatorio_processo(usuario, processo_id, request=None):
+    """Monta o payload de relatório de um processo. Levanta Processo.DoesNotExist
+    quando o processo não existe ou não pertence ao escritório do usuário."""
+
+    processo = (
+        Processo.objects
+        .select_related("cliente", "advogado__usuario")
+        .get(id=processo_id, escritorio=usuario.escritorio)
+    )
+
+    documentos = Documento.objects.filter(processo=processo).order_by("-enviado_em")
+    movimentacoes = Movimentacao.objects.filter(processo=processo).order_by("-data_movimentacao")
+    agenda = Agenda.objects.filter(processo=processo).order_by("data_evento")
+
+    contexto = {"request": request} if request else {}
+
+    return {
+        "gerado_em": timezone.now(),
+        "escritorio": EscritorioSerializer(usuario.escritorio).data,
+        "processo": ProcessoSerializer(processo, context=contexto).data,
+        "cliente": ClienteSerializer(processo.cliente).data,
+        "documentos": DocumentoSerializer(documentos, many=True, context=contexto).data,
+        "movimentacoes": MovimentacaoSerializer(movimentacoes, many=True, context=contexto).data,
+        "agenda": AgendaSerializer(agenda, many=True, context=contexto).data,
+    }
+
+
 class RelatorioClienteView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -788,45 +879,11 @@ class RelatorioClienteView(APIView):
             return Response({"detail": "Usuário não identificado."}, status=status.HTTP_401_UNAUTHORIZED)
 
         try:
-            cliente = Cliente.objects.get(id=cliente_id, escritorio=usuario.escritorio)
+            dados = _montar_dados_relatorio_cliente(usuario, cliente_id, request)
         except Cliente.DoesNotExist:
             return Response({"detail": "Cliente não encontrado."}, status=status.HTTP_404_NOT_FOUND)
 
-        processos = (
-            Processo.objects
-            .filter(cliente=cliente)
-            .select_related("advogado__usuario")
-            .order_by("-criado_em")
-        )
-        documentos = (
-            Documento.objects
-            .filter(processo__cliente=cliente)
-            .select_related("processo")
-            .order_by("-enviado_em")
-        )
-        agenda = (
-            Agenda.objects
-            .filter(processo__cliente=cliente)
-            .select_related("processo")
-            .order_by("data_evento")
-        )
-
-        return Response({
-            "gerado_em": timezone.now(),
-            "escritorio": EscritorioSerializer(usuario.escritorio).data,
-            "cliente": ClienteSerializer(cliente).data,
-            "processos": ProcessoSerializer(processos, many=True, context={"request": request}).data,
-            "documentos": DocumentoSerializer(documentos, many=True, context={"request": request}).data,
-            "agenda": AgendaSerializer(agenda, many=True, context={"request": request}).data,
-            "resumo": {
-                "total_processos": processos.count(),
-                "total_documentos": documentos.count(),
-                "total_eventos": agenda.count(),
-                "processos_por_status": list(
-                    processos.values("status").annotate(total=Count("id")).order_by("status")
-                ),
-            },
-        })
+        return Response(dados)
 
 
 class RelatorioProcessoView(APIView):
@@ -838,27 +895,73 @@ class RelatorioProcessoView(APIView):
             return Response({"detail": "Usuário não identificado."}, status=status.HTTP_401_UNAUTHORIZED)
 
         try:
-            processo = (
-                Processo.objects
-                .select_related("cliente", "advogado__usuario")
-                .get(id=processo_id, escritorio=usuario.escritorio)
-            )
+            dados = _montar_dados_relatorio_processo(usuario, processo_id, request)
         except Processo.DoesNotExist:
             return Response({"detail": "Processo não encontrado."}, status=status.HTTP_404_NOT_FOUND)
 
-        documentos = Documento.objects.filter(processo=processo).order_by("-enviado_em")
-        movimentacoes = Movimentacao.objects.filter(processo=processo).order_by("-data_movimentacao")
-        agenda = Agenda.objects.filter(processo=processo).order_by("data_evento")
+        return Response(dados)
 
-        return Response({
-            "gerado_em": timezone.now(),
-            "escritorio": EscritorioSerializer(usuario.escritorio).data,
-            "processo": ProcessoSerializer(processo, context={"request": request}).data,
-            "cliente": ClienteSerializer(processo.cliente).data,
-            "documentos": DocumentoSerializer(documentos, many=True, context={"request": request}).data,
-            "movimentacoes": MovimentacaoSerializer(movimentacoes, many=True, context={"request": request}).data,
-            "agenda": AgendaSerializer(agenda, many=True, context={"request": request}).data,
-        })
+
+class RelatorioClienteEmailView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, cliente_id):
+        usuario = get_usuario_from_request(request)
+        if not usuario:
+            return Response({"detail": "Usuário não identificado."}, status=status.HTTP_401_UNAUTHORIZED)
+
+        destinatario = (request.data.get("destinatario") or "").strip()
+        try:
+            validar_email_real(destinatario)
+        except DjangoValidationError as exc:
+            return Response({"destinatario": list(exc.messages)}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            dados = _montar_dados_relatorio_cliente(usuario, cliente_id, request)
+        except Cliente.DoesNotExist:
+            return Response({"detail": "Cliente não encontrado."}, status=status.HTTP_404_NOT_FOUND)
+
+        assunto, corpo_html, corpo_texto = montar_email_relatorio_cliente(dados)
+        try:
+            enviar_email(destinatario, assunto, corpo_html, corpo_texto)
+        except Exception:
+            return Response(
+                {"detail": "Não foi possível enviar o e-mail. Verifique a configuração de envio."},
+                status=status.HTTP_502_BAD_GATEWAY,
+            )
+
+        return Response({"detail": f"Relatório enviado para {destinatario}."})
+
+
+class RelatorioProcessoEmailView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, processo_id):
+        usuario = get_usuario_from_request(request)
+        if not usuario:
+            return Response({"detail": "Usuário não identificado."}, status=status.HTTP_401_UNAUTHORIZED)
+
+        destinatario = (request.data.get("destinatario") or "").strip()
+        try:
+            validar_email_real(destinatario)
+        except DjangoValidationError as exc:
+            return Response({"destinatario": list(exc.messages)}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            dados = _montar_dados_relatorio_processo(usuario, processo_id, request)
+        except Processo.DoesNotExist:
+            return Response({"detail": "Processo não encontrado."}, status=status.HTTP_404_NOT_FOUND)
+
+        assunto, corpo_html, corpo_texto = montar_email_relatorio_processo(dados)
+        try:
+            enviar_email(destinatario, assunto, corpo_html, corpo_texto)
+        except Exception:
+            return Response(
+                {"detail": "Não foi possível enviar o e-mail. Verifique a configuração de envio."},
+                status=status.HTTP_502_BAD_GATEWAY,
+            )
+
+        return Response({"detail": f"Relatório enviado para {destinatario}."})
 
 
 class ExportarClientesCSVView(APIView):

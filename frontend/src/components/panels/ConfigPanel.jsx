@@ -3,10 +3,11 @@
 import { useEffect, useState } from "react";
 import {
   X, User, Building2, Bell, Palette, Database, CreditCard,
-  Eye, EyeOff, Trash2, Download, FileBarChart,
+  Eye, EyeOff, Trash2, Download, FileBarChart, Mail, MessageCircle,
 } from "lucide-react";
 import { usePanel, PANELS } from "@/contexts/PanelContext";
 import { useTheme } from "@/contexts/ThemeContext";
+import { usePreferences } from "@/contexts/PreferencesContext";
 import {
   getConfiguracoes,
   updateConta,
@@ -20,19 +21,22 @@ import {
   getProcessos,
   getRelatorioCliente,
   getRelatorioProcesso,
+  enviarRelatorioClientePorEmail,
+  enviarRelatorioProcessoPorEmail,
   normalizarLista,
   logout,
 } from "@/services/api";
 import { gerarHtmlRelatorioCliente, gerarHtmlRelatorioProcesso, abrirRelatorio } from "@/utils/relatorio";
+import { abrirWhatsApp, montarMensagemCliente, montarMensagemProcesso } from "@/utils/whatsapp";
 
 const TABS = [
-  { id: "conta", label: "Conta", icon: User },
-  { id: "escritorio", label: "Escritório", icon: Building2 },
-  { id: "notificacoes", label: "Notificações", icon: Bell },
-  { id: "aparencia", label: "Aparência", icon: Palette },
-  { id: "dados", label: "Dados", icon: Database },
-  { id: "relatorios", label: "Relatórios", icon: FileBarChart },
-  { id: "faturamento", label: "Faturamento", icon: CreditCard },
+  { id: "conta", tKey: "config_conta", icon: User },
+  { id: "escritorio", tKey: "config_escritorio", icon: Building2 },
+  { id: "notificacoes", tKey: "config_notificacoes", icon: Bell },
+  { id: "aparencia", tKey: "config_aparencia", icon: Palette },
+  { id: "dados", tKey: "config_dados", icon: Database },
+  { id: "relatorios", tKey: "config_relatorios", icon: FileBarChart },
+  { id: "faturamento", tKey: "config_faturamento", icon: CreditCard },
 ];
 
 const PREF_DEFAULT = {
@@ -53,6 +57,7 @@ const PREF_DEFAULT = {
 export default function ConfigPanel() {
   const { activePanel, closePanel } = usePanel();
   const { theme, setTheme } = useTheme();
+  const { t, atualizarPreferencias } = usePreferences();
   const [activeTab, setActiveTab] = useState("conta");
   const [dados, setDados] = useState(null);
   const [carregando, setCarregando] = useState(false);
@@ -98,7 +103,7 @@ export default function ConfigPanel() {
             const Icon = tab.icon;
             return (
               <button key={tab.id} className={`tab-btn ${activeTab === tab.id ? "active" : ""}`} onClick={() => { setActiveTab(tab.id); setErro(""); setSucesso(""); }}>
-                <span className="tab-label"><Icon size={15} />{tab.label}</span>
+                <span className="tab-label"><Icon size={15} />{t(tab.tKey)}</span>
               </button>
             );
           })}
@@ -119,7 +124,7 @@ export default function ConfigPanel() {
             <NotificacoesTab preferencias={dados.preferencias || PREF_DEFAULT} setDados={setDados} feedback={feedback} />
           )}
           {!carregando && dados && activeTab === "aparencia" && (
-            <AparenciaTab preferencias={dados.preferencias || PREF_DEFAULT} setDados={setDados} feedback={feedback} theme={theme} setTheme={setTheme} />
+            <AparenciaTab preferencias={dados.preferencias || PREF_DEFAULT} setDados={setDados} feedback={feedback} theme={theme} setTheme={setTheme} atualizarPreferenciasGlobal={atualizarPreferencias} t={t} />
           )}
           {!carregando && dados && activeTab === "dados" && (
             <DadosTab dados={dados} setDados={setDados} feedback={feedback} />
@@ -244,13 +249,16 @@ function NotificacoesTab({ preferencias, setDados, feedback }) {
   </div>;
 }
 
-function AparenciaTab({ preferencias, setDados, feedback, theme, setTheme }) {
+function AparenciaTab({ preferencias, setDados, feedback, theme, setTheme, atualizarPreferenciasGlobal }) {
   const [p, setP] = useState({ ...PREF_DEFAULT, ...preferencias });
   async function salvar(campo, valor) {
     const next = { ...p, [campo]: valor }; setP(next);
     if (campo === "tema") setTheme(valor);
-    try { const res = await updatePreferencias({ [campo]: valor }); setDados((d) => ({ ...d, preferencias: res.preferencias })); feedback("Preferência salva."); }
-    catch (e) { feedback(e.message, true); }
+    try {
+      const res = await atualizarPreferenciasGlobal({ [campo]: valor });
+      setDados((d) => ({ ...d, preferencias: res.preferencias }));
+      feedback("Preferência salva — aplicada imediatamente em todo o sistema.");
+    } catch (e) { feedback(e.message, true); }
   }
   return <div className="settings-stack">
     <Section title="Tema da interface"><div className="theme-toggle"><button className={`btn btn-sm ${theme === "light" ? "btn-primary" : "btn-secondary"}`} onClick={() => salvar("tema", "light")}>Claro</button><button className={`btn btn-sm ${theme === "dark" ? "btn-primary" : "btn-secondary"}`} onClick={() => salvar("tema", "dark")}>Escuro</button></div></Section>
@@ -291,6 +299,9 @@ function RelatoriosTab({ feedback }) {
   const [selecionado, setSelecionado] = useState("");
   const [carregandoListas, setCarregandoListas] = useState(true);
   const [gerando, setGerando] = useState(false);
+  const [emailDestino, setEmailDestino] = useState("");
+  const [enviandoEmail, setEnviandoEmail] = useState(false);
+  const [telefoneDestino, setTelefoneDestino] = useState("");
 
   useEffect(() => {
     let ativo = true;
@@ -306,6 +317,21 @@ function RelatoriosTab({ feedback }) {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => { setSelecionado(""); }, [tipo]);
+
+  const opcoes = tipo === "cliente" ? clientes : processos;
+
+  useEffect(() => {
+    if (!selecionado) { setEmailDestino(""); setTelefoneDestino(""); return; }
+    const item = opcoes.find((o) => String(o.id) === String(selecionado));
+    if (tipo === "cliente") {
+      setEmailDestino(item?.email || "");
+      setTelefoneDestino(item?.telefone || "");
+    } else {
+      setEmailDestino(item?.cliente_email || "");
+      const clienteDoProcesso = clientes.find((c) => c.id === item?.cliente);
+      setTelefoneDestino(clienteDoProcesso?.telefone || "");
+    }
+  }, [selecionado, tipo]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function gerar() {
     if (!selecionado) {
@@ -329,7 +355,46 @@ function RelatoriosTab({ feedback }) {
     }
   }
 
-  const opcoes = tipo === "cliente" ? clientes : processos;
+  async function enviarEmail() {
+    if (!selecionado) {
+      feedback(`Selecione um ${tipo === "cliente" ? "cliente" : "processo"} para enviar o relatório.`, true);
+      return;
+    }
+    if (!emailDestino) {
+      feedback("Informe o e-mail de destino.", true);
+      return;
+    }
+    try {
+      setEnviandoEmail(true);
+      const res = tipo === "cliente"
+        ? await enviarRelatorioClientePorEmail(selecionado, emailDestino)
+        : await enviarRelatorioProcessoPorEmail(selecionado, emailDestino);
+      feedback(res.detail);
+    } catch (e) {
+      feedback(e.message, true);
+    } finally {
+      setEnviandoEmail(false);
+    }
+  }
+
+  function enviarWhatsApp() {
+    if (!selecionado) {
+      feedback(`Selecione um ${tipo === "cliente" ? "cliente" : "processo"} para enviar pelo WhatsApp.`, true);
+      return;
+    }
+    if (!telefoneDestino) {
+      feedback("Informe o telefone de destino.", true);
+      return;
+    }
+    const item = opcoes.find((o) => String(o.id) === String(selecionado));
+    const mensagem = tipo === "cliente" ? montarMensagemCliente(item) : montarMensagemProcesso(item);
+    const aberto = abrirWhatsApp(telefoneDestino, mensagem);
+    if (aberto) {
+      feedback("WhatsApp aberto em uma nova aba com a mensagem pronta para enviar.");
+    } else {
+      feedback("Telefone inválido.", true);
+    }
+  }
 
   return <div className="settings-stack">
     <Section title="Gerar relatório" description="Selecione um cliente ou processo para gerar um relatório completo, pronto para impressão ou para salvar como PDF.">
@@ -364,6 +429,45 @@ function RelatoriosTab({ feedback }) {
         <button className="btn btn-primary btn-sm" onClick={gerar} disabled={gerando || !selecionado}>
           <FileBarChart size={14} />
           {gerando ? "Gerando..." : "Gerar relatório"}
+        </button>
+      </Actions>
+    </Section>
+
+    <Section title="Enviar por e-mail" description="Envie o mesmo relatório diretamente para o e-mail do cliente (ou qualquer outro destinatário).">
+      <div className="form-grid">
+        <Field label="E-mail de destino" full>
+          <input
+            type="email"
+            value={emailDestino}
+            onChange={(e) => setEmailDestino(e.target.value)}
+            placeholder="cliente@exemplo.com"
+            disabled={!selecionado}
+          />
+        </Field>
+      </div>
+      <Actions>
+        <button className="btn btn-secondary btn-sm" onClick={enviarEmail} disabled={enviandoEmail || !selecionado}>
+          <Mail size={14} />
+          {enviandoEmail ? "Enviando..." : "Enviar por e-mail"}
+        </button>
+      </Actions>
+    </Section>
+
+    <Section title="Enviar por WhatsApp" description="Abre o WhatsApp com os detalhes já preenchidos, prontos para revisar e enviar.">
+      <div className="form-grid">
+        <Field label="Telefone de destino" full>
+          <input
+            value={telefoneDestino}
+            onChange={(e) => setTelefoneDestino(e.target.value)}
+            placeholder="(00) 00000-0000"
+            disabled={!selecionado}
+          />
+        </Field>
+      </div>
+      <Actions>
+        <button className="btn btn-secondary btn-sm" onClick={enviarWhatsApp} disabled={!selecionado}>
+          <MessageCircle size={14} />
+          Enviar por WhatsApp
         </button>
       </Actions>
     </Section>

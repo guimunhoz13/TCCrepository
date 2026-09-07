@@ -3,7 +3,10 @@
 import { useEffect, useState } from "react";
 import { usePanel } from "@/contexts/PanelContext";
 import { useDashboardData } from "@/contexts/DashboardDataContext";
+import { usePreferences } from "@/contexts/PreferencesContext";
 import OverlayPanel from "@/components/shell/OverlayPanel";
+import { MessageCircle } from "lucide-react";
+import { abrirWhatsApp, montarMensagemProcesso } from "@/utils/whatsapp";
 import {
   getProcessos,
   createProcesso,
@@ -28,6 +31,7 @@ const formularioInicial = {
 export default function ProcessosPanel() {
   const { activePanel, panelTab } = usePanel();
   const { refresh: refreshDashboard } = useDashboardData();
+  const { t } = usePreferences();
   const [processos, setProcessos] = useState([]);
   const [clientes, setClientes] = useState([]);
   const [advogados, setAdvogados] = useState([]);
@@ -85,8 +89,8 @@ export default function ProcessosPanel() {
   return (
     <OverlayPanel
       tabs={[
-        { id: "lista", label: "Lista" },
-        { id: "novo", label: "Novo processo" },
+        { id: "lista", label: t("aba_lista") },
+        { id: "novo", label: t("aba_novo") },
       ]}
     >
       {erro && <div className="alert alert-error">{erro}</div>}
@@ -186,7 +190,7 @@ export default function ProcessosPanel() {
           </div>
           <div className="form-field full">
             <button className="btn btn-primary" disabled={salvando}>
-              {salvando ? "Salvando..." : "Cadastrar processo"}
+              {salvando ? t("acao_salvando") : t("acao_cadastrar_processo")}
             </button>
           </div>
         </form>
@@ -236,8 +240,24 @@ export default function ProcessosPanel() {
                             refreshDashboard().catch(() => {});
                           }}
                         >
-                          Alternar status
+                          {t("acao_alternar_status")}
                         </button>
+                        {(() => {
+                          const clienteDoProcesso = clientes.find((c) => c.id === processo.cliente);
+                          if (!clienteDoProcesso?.telefone) return null;
+                          return (
+                            <button
+                              type="button"
+                              className="btn btn-secondary btn-sm"
+                              title={t("acao_enviar_whatsapp")}
+                              onClick={() =>
+                                abrirWhatsApp(clienteDoProcesso.telefone, montarMensagemProcesso(processo))
+                              }
+                            >
+                              <MessageCircle size={14} />
+                            </button>
+                          );
+                        })()}
                         <button
                           className="btn btn-danger btn-sm"
                           onClick={async () => {
@@ -248,7 +268,7 @@ export default function ProcessosPanel() {
                             }
                           }}
                         >
-                          Excluir
+                          {t("acao_excluir")}
                         </button>
                       </div>
                     </td>
