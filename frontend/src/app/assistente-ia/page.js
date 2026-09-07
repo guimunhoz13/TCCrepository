@@ -15,6 +15,7 @@ import AdvogadosPanel from "@/components/panels/AdvogadosPanel";
 import PlanosPanel from "@/components/panels/PlanosPanel";
 import { PanelProvider } from "@/contexts/PanelContext";
 import { DashboardDataProvider } from "@/contexts/DashboardDataContext";
+import { PreferencesProvider } from "@/contexts/PreferencesContext";
 
 function AssistenteContent() {
   const router = useRouter();
@@ -53,10 +54,12 @@ function AssistenteContent() {
 
 export default function AssistenteIAPage() {
   return (
-    <DashboardDataProvider>
-      <PanelProvider>
-        <AssistenteContent />
-      </PanelProvider>
-    </DashboardDataProvider>
+    <PreferencesProvider>
+      <DashboardDataProvider>
+        <PanelProvider>
+          <AssistenteContent />
+        </PanelProvider>
+      </DashboardDataProvider>
+    </PreferencesProvider>
   );
 }

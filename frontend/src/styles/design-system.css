@@ -585,6 +585,19 @@ tbody tr:hover {
   background: var(--ink-soft);
 }
 
+/* Densidade das tabelas — controlada pela preferência do usuário
+   (Configurações → Aparência), aplicada como atributo em <html>. */
+[data-density="compact"] th,
+[data-density="compact"] td {
+  padding: 7px 8px;
+  font-size: 0.82rem;
+}
+
+[data-density="compact"] .badge {
+  padding: 2px 8px;
+  font-size: 0.72rem;
+}
+
 .badge {
   display: inline-flex;
   align-items: center;

@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { usePanel, PANELS } from "@/contexts/PanelContext";
 import { useTheme } from "@/contexts/ThemeContext";
+import { usePreferences } from "@/contexts/PreferencesContext";
 import {
   getConfiguracoes,
   updateConta,
@@ -26,13 +27,13 @@ import {
 import { gerarHtmlRelatorioCliente, gerarHtmlRelatorioProcesso, abrirRelatorio } from "@/utils/relatorio";
 
 const TABS = [
-  { id: "conta", label: "Conta", icon: User },
-  { id: "escritorio", label: "Escritório", icon: Building2 },
-  { id: "notificacoes", label: "Notificações", icon: Bell },
-  { id: "aparencia", label: "Aparência", icon: Palette },
-  { id: "dados", label: "Dados", icon: Database },
-  { id: "relatorios", label: "Relatórios", icon: FileBarChart },
-  { id: "faturamento", label: "Faturamento", icon: CreditCard },
+  { id: "conta", tKey: "config_conta", icon: User },
+  { id: "escritorio", tKey: "config_escritorio", icon: Building2 },
+  { id: "notificacoes", tKey: "config_notificacoes", icon: Bell },
+  { id: "aparencia", tKey: "config_aparencia", icon: Palette },
+  { id: "dados", tKey: "config_dados", icon: Database },
+  { id: "relatorios", tKey: "config_relatorios", icon: FileBarChart },
+  { id: "faturamento", tKey: "config_faturamento", icon: CreditCard },
 ];
 
 const PREF_DEFAULT = {
@@ -53,6 +54,7 @@ const PREF_DEFAULT = {
 export default function ConfigPanel() {
   const { activePanel, closePanel } = usePanel();
   const { theme, setTheme } = useTheme();
+  const { t, atualizarPreferencias } = usePreferences();
   const [activeTab, setActiveTab] = useState("conta");
   const [dados, setDados] = useState(null);
   const [carregando, setCarregando] = useState(false);
@@ -98,7 +100,7 @@ export default function ConfigPanel() {
             const Icon = tab.icon;
             return (
               <button key={tab.id} className={`tab-btn ${activeTab === tab.id ? "active" : ""}`} onClick={() => { setActiveTab(tab.id); setErro(""); setSucesso(""); }}>
-                <span className="tab-label"><Icon size={15} />{tab.label}</span>
+                <span className="tab-label"><Icon size={15} />{t(tab.tKey)}</span>
               </button>
             );
           })}
@@ -119,7 +121,7 @@ export default function ConfigPanel() {
             <NotificacoesTab preferencias={dados.preferencias || PREF_DEFAULT} setDados={setDados} feedback={feedback} />
           )}
           {!carregando && dados && activeTab === "aparencia" && (
-            <AparenciaTab preferencias={dados.preferencias || PREF_DEFAULT} setDados={setDados} feedback={feedback} theme={theme} setTheme={setTheme} />
+            <AparenciaTab preferencias={dados.preferencias || PREF_DEFAULT} setDados={setDados} feedback={feedback} theme={theme} setTheme={setTheme} atualizarPreferenciasGlobal={atualizarPreferencias} t={t} />
           )}
           {!carregando && dados && activeTab === "dados" && (
             <DadosTab dados={dados} setDados={setDados} feedback={feedback} />
@@ -244,13 +246,16 @@ function NotificacoesTab({ preferencias, setDados, feedback }) {
   </div>;
 }
 
-function AparenciaTab({ preferencias, setDados, feedback, theme, setTheme }) {
+function AparenciaTab({ preferencias, setDados, feedback, theme, setTheme, atualizarPreferenciasGlobal }) {
   const [p, setP] = useState({ ...PREF_DEFAULT, ...preferencias });
   async function salvar(campo, valor) {
     const next = { ...p, [campo]: valor }; setP(next);
     if (campo === "tema") setTheme(valor);
-    try { const res = await updatePreferencias({ [campo]: valor }); setDados((d) => ({ ...d, preferencias: res.preferencias })); feedback("Preferência salva."); }
-    catch (e) { feedback(e.message, true); }
+    try {
+      const res = await atualizarPreferenciasGlobal({ [campo]: valor });
+      setDados((d) => ({ ...d, preferencias: res.preferencias }));
+      feedback("Preferência salva — aplicada imediatamente em todo o sistema.");
+    } catch (e) { feedback(e.message, true); }
   }
   return <div className="settings-stack">
     <Section title="Tema da interface"><div className="theme-toggle"><button className={`btn btn-sm ${theme === "light" ? "btn-primary" : "btn-secondary"}`} onClick={() => salvar("tema", "light")}>Claro</button><button className={`btn btn-sm ${theme === "dark" ? "btn-primary" : "btn-secondary"}`} onClick={() => salvar("tema", "dark")}>Escuro</button></div></Section>

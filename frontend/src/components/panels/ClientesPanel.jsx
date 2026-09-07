@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { usePanel } from "@/contexts/PanelContext";
 import { useDashboardData } from "@/contexts/DashboardDataContext";
+import { usePreferences } from "@/contexts/PreferencesContext";
 import OverlayPanel from "@/components/shell/OverlayPanel";
 import {
   getClientes,
@@ -45,6 +46,7 @@ function formatarTelefone(valor) {
 export default function ClientesPanel() {
   const { activePanel, panelTab, setPanelTab } = usePanel();
   const { refresh: refreshDashboard } = useDashboardData();
+  const { t } = usePreferences();
   const [clientes, setClientes] = useState([]);
   const [formulario, setFormulario] = useState(formularioInicial);
   const [clienteEditando, setClienteEditando] = useState(null);
@@ -132,10 +134,10 @@ export default function ClientesPanel() {
   return (
     <OverlayPanel
       tabs={[
-        { id: "lista", label: "Lista" },
+        { id: "lista", label: t("aba_lista") },
         {
           id: "novo",
-          label: clienteEditando ? "Editar cliente" : "Novo cliente",
+          label: clienteEditando ? t("acao_editar") : t("aba_novo"),
         },
       ]}
     >
@@ -220,10 +222,10 @@ export default function ClientesPanel() {
           >
             <button className="btn btn-primary" disabled={salvando}>
               {salvando
-                ? "Salvando..."
+                ? t("acao_salvando")
                 : clienteEditando
-                ? "Salvar alterações"
-                : "Cadastrar cliente"}
+                ? t("acao_salvar_alteracoes")
+                : t("acao_cadastrar_cliente")}
             </button>
             {clienteEditando && (
               <button
@@ -232,7 +234,7 @@ export default function ClientesPanel() {
                 onClick={handleCancelarEdicao}
                 disabled={salvando}
               >
-                Cancelar
+                {t("acao_cancelar")}
               </button>
             )}
           </div>
@@ -277,7 +279,7 @@ export default function ClientesPanel() {
                           className="btn btn-secondary btn-sm"
                           onClick={() => handleIniciarEdicao(cliente)}
                         >
-                          Editar
+                          {t("acao_editar")}
                         </button>
                         <button
                           type="button"
@@ -290,7 +292,7 @@ export default function ClientesPanel() {
                             refreshDashboard().catch(() => {});
                           }}
                         >
-                          {cliente.ativo ? "Inativar" : "Ativar"}
+                          {cliente.ativo ? t("acao_inativar") : t("acao_ativar")}
                         </button>
                         <button
                           type="button"
@@ -305,7 +307,7 @@ export default function ClientesPanel() {
                             }
                           }}
                         >
-                          Excluir
+                          {t("acao_excluir")}
                         </button>
                       </div>
                     </td>

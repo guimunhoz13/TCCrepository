@@ -3,12 +3,14 @@
 import { useEffect, useState } from "react";
 import { usePanel, PANELS } from "@/contexts/PanelContext";
 import { useDashboardData } from "@/contexts/DashboardDataContext";
+import { usePreferences } from "@/contexts/PreferencesContext";
 import OverlayPanel from "@/components/shell/OverlayPanel";
 import { getUsuarioLogado, registrarAdvogado, getAdvogados, normalizarLista } from "@/services/api";
 
 export default function AdvogadosPanel() {
   const { activePanel, panelTab } = usePanel();
   const { refresh: refreshDashboard } = useDashboardData();
+  const { t } = usePreferences();
   const usuario = getUsuarioLogado();
   const [advogados, setAdvogados] = useState([]);
   const [formAdvogado, setFormAdvogado] = useState({
@@ -77,8 +79,8 @@ export default function AdvogadosPanel() {
   return (
     <OverlayPanel
       tabs={[
-        { id: "lista", label: "Advogados" },
-        { id: "novo", label: "Cadastrar" },
+        { id: "lista", label: t("nav_advogados") },
+        { id: "novo", label: t("aba_novo") },
       ]}
     >
       {erro && <div className="alert alert-error">{erro}</div>}
@@ -148,7 +150,7 @@ export default function AdvogadosPanel() {
             />
           </div>
           <div className="form-field full">
-            <button className="btn btn-primary">Cadastrar advogado</button>
+            <button className="btn btn-primary">{t("acao_cadastrar_advogado")}</button>
           </div>
         </form>
       ) : (

@@ -18,6 +18,7 @@ import AdvogadosPanel from "@/components/panels/AdvogadosPanel";
 import PlanosPanel from "@/components/panels/PlanosPanel";
 import { PanelProvider } from "@/contexts/PanelContext";
 import { DashboardDataProvider, useDashboardData } from "@/contexts/DashboardDataContext";
+import { PreferencesProvider } from "@/contexts/PreferencesContext";
 
 function DashboardContent() {
   const router = useRouter();
@@ -155,10 +156,12 @@ function DashboardContent() {
 
 export default function DashboardPage() {
   return (
-    <DashboardDataProvider>
-      <PanelProvider>
-        <DashboardContent />
-      </PanelProvider>
-    </DashboardDataProvider>
+    <PreferencesProvider>
+      <DashboardDataProvider>
+        <PanelProvider>
+          <DashboardContent />
+        </PanelProvider>
+      </DashboardDataProvider>
+    </PreferencesProvider>
   );
 }
