@@ -1,7 +1,9 @@
 from django.contrib.auth.hashers import make_password
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
 from rest_framework import serializers
 
+from .validators import validar_email_real
 from .models import (
     Escritorio,
     Usuario,
@@ -39,14 +41,14 @@ class EscritorioRegistroSerializer(serializers.Serializer):
 
     nome_escritorio = serializers.CharField(max_length=255)
     cnpj = serializers.CharField(max_length=18)
-    email_escritorio = serializers.EmailField()
+    email_escritorio = serializers.EmailField(validators=[validar_email_real])
     telefone_escritorio = serializers.CharField(max_length=20)
     endereco_escritorio = serializers.CharField(max_length=255)
     cidade = serializers.CharField(max_length=100, required=False, allow_blank=True)
     estado = serializers.CharField(max_length=2, required=False, allow_blank=True)
 
     nome_admin = serializers.CharField(max_length=255)
-    email_admin = serializers.EmailField()
+    email_admin = serializers.EmailField(validators=[validar_email_real])
     senha_admin = serializers.CharField(write_only=True, min_length=6)
 
     def validate_cnpj(self, value):
@@ -85,6 +87,7 @@ class EscritorioRegistroSerializer(serializers.Serializer):
 class UsuarioSerializer(serializers.ModelSerializer):
 
     senha = serializers.CharField(write_only=True, required=True)
+    email = serializers.EmailField(validators=[validar_email_real])
     escritorio_nome = serializers.CharField(
         source="escritorio.nome",
         read_only=True,
@@ -129,7 +132,7 @@ class UsuarioSerializer(serializers.ModelSerializer):
 class AdvogadoRegistroSerializer(serializers.Serializer):
 
     nome = serializers.CharField(max_length=255)
-    email = serializers.EmailField()
+    email = serializers.EmailField(validators=[validar_email_real])
     senha = serializers.CharField(write_only=True, min_length=6)
     oab = serializers.CharField(max_length=30)
     especialidade = serializers.CharField(max_length=255)
@@ -160,6 +163,8 @@ class AdvogadoRegistroSerializer(serializers.Serializer):
 
 
 class ClienteSerializer(serializers.ModelSerializer):
+
+    email = serializers.EmailField(validators=[validar_email_real])
 
     class Meta:
         model = Cliente

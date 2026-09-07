@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import {
   X, User, Building2, Bell, Palette, Database, CreditCard,
-  Eye, EyeOff, Trash2, Download, FileBarChart,
+  Eye, EyeOff, Trash2, Download, FileBarChart, Mail,
 } from "lucide-react";
 import { usePanel, PANELS } from "@/contexts/PanelContext";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -21,6 +21,8 @@ import {
   getProcessos,
   getRelatorioCliente,
   getRelatorioProcesso,
+  enviarRelatorioClientePorEmail,
+  enviarRelatorioProcessoPorEmail,
   normalizarLista,
   logout,
 } from "@/services/api";
@@ -296,6 +298,8 @@ function RelatoriosTab({ feedback }) {
   const [selecionado, setSelecionado] = useState("");
   const [carregandoListas, setCarregandoListas] = useState(true);
   const [gerando, setGerando] = useState(false);
+  const [emailDestino, setEmailDestino] = useState("");
+  const [enviandoEmail, setEnviandoEmail] = useState(false);
 
   useEffect(() => {
     let ativo = true;
@@ -311,6 +315,14 @@ function RelatoriosTab({ feedback }) {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => { setSelecionado(""); }, [tipo]);
+
+  const opcoes = tipo === "cliente" ? clientes : processos;
+
+  useEffect(() => {
+    if (!selecionado) { setEmailDestino(""); return; }
+    const item = opcoes.find((o) => String(o.id) === String(selecionado));
+    setEmailDestino((tipo === "cliente" ? item?.email : item?.cliente_email) || "");
+  }, [selecionado, tipo]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function gerar() {
     if (!selecionado) {
@@ -334,7 +346,27 @@ function RelatoriosTab({ feedback }) {
     }
   }
 
-  const opcoes = tipo === "cliente" ? clientes : processos;
+  async function enviarEmail() {
+    if (!selecionado) {
+      feedback(`Selecione um ${tipo === "cliente" ? "cliente" : "processo"} para enviar o relatório.`, true);
+      return;
+    }
+    if (!emailDestino) {
+      feedback("Informe o e-mail de destino.", true);
+      return;
+    }
+    try {
+      setEnviandoEmail(true);
+      const res = tipo === "cliente"
+        ? await enviarRelatorioClientePorEmail(selecionado, emailDestino)
+        : await enviarRelatorioProcessoPorEmail(selecionado, emailDestino);
+      feedback(res.detail);
+    } catch (e) {
+      feedback(e.message, true);
+    } finally {
+      setEnviandoEmail(false);
+    }
+  }
 
   return <div className="settings-stack">
     <Section title="Gerar relatório" description="Selecione um cliente ou processo para gerar um relatório completo, pronto para impressão ou para salvar como PDF.">
@@ -369,6 +401,26 @@ function RelatoriosTab({ feedback }) {
         <button className="btn btn-primary btn-sm" onClick={gerar} disabled={gerando || !selecionado}>
           <FileBarChart size={14} />
           {gerando ? "Gerando..." : "Gerar relatório"}
+        </button>
+      </Actions>
+    </Section>
+
+    <Section title="Enviar por e-mail" description="Envie o mesmo relatório diretamente para o e-mail do cliente (ou qualquer outro destinatário).">
+      <div className="form-grid">
+        <Field label="E-mail de destino" full>
+          <input
+            type="email"
+            value={emailDestino}
+            onChange={(e) => setEmailDestino(e.target.value)}
+            placeholder="cliente@exemplo.com"
+            disabled={!selecionado}
+          />
+        </Field>
+      </div>
+      <Actions>
+        <button className="btn btn-secondary btn-sm" onClick={enviarEmail} disabled={enviandoEmail || !selecionado}>
+          <Mail size={14} />
+          {enviandoEmail ? "Enviando..." : "Enviar por e-mail"}
         </button>
       </Actions>
     </Section>
