@@ -24,6 +24,13 @@
   font-size: 0.85rem;
   font-weight: 700;
   font-family: "Fraunces", serif;
+  transition: transform 0.2s ease, background 0.2s ease, color 0.2s ease;
+}
+
+.step:hover .stepNumber {
+  background: var(--accent);
+  color: #10131c;
+  transform: scale(1.08);
 }
 
 .step strong {
