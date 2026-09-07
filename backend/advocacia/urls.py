@@ -23,6 +23,8 @@ from .views import (
     ConfiguracoesDesativarEscritorioView,
     ExportarClientesCSVView,
     ExportarProcessosCSVView,
+    RelatorioClienteView,
+    RelatorioProcessoView,
 )
 
 
@@ -52,4 +54,6 @@ urlpatterns = [
     path("configuracoes/desativar-escritorio/", ConfiguracoesDesativarEscritorioView.as_view(), name="configuracoes-desativar-escritorio"),
     path("configuracoes/exportar/clientes/", ExportarClientesCSVView.as_view(), name="exportar-clientes"),
     path("configuracoes/exportar/processos/", ExportarProcessosCSVView.as_view(), name="exportar-processos"),
+    path("configuracoes/relatorio/cliente/<int:cliente_id>/", RelatorioClienteView.as_view(), name="relatorio-cliente"),
+    path("configuracoes/relatorio/processo/<int:processo_id>/", RelatorioProcessoView.as_view(), name="relatorio-processo"),
 ] + router.urls

@@ -2,11 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { usePanel, PANELS } from "@/contexts/PanelContext";
+import { useDashboardData } from "@/contexts/DashboardDataContext";
 import OverlayPanel from "@/components/shell/OverlayPanel";
 import { getUsuarioLogado, registrarAdvogado, getAdvogados, normalizarLista } from "@/services/api";
 
 export default function AdvogadosPanel() {
   const { activePanel, panelTab } = usePanel();
+  const { refresh: refreshDashboard } = useDashboardData();
   const usuario = getUsuarioLogado();
   const [advogados, setAdvogados] = useState([]);
   const [formAdvogado, setFormAdvogado] = useState({
@@ -54,6 +56,7 @@ export default function AdvogadosPanel() {
         especialidade: "",
       });
       await carregarAdvogados();
+      refreshDashboard().catch(() => {});
     } catch (error) {
       setErro(error.message);
     }

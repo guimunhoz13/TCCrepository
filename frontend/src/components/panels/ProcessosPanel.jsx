@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { usePanel } from "@/contexts/PanelContext";
+import { useDashboardData } from "@/contexts/DashboardDataContext";
 import OverlayPanel from "@/components/shell/OverlayPanel";
 import {
   getProcessos,
@@ -26,6 +27,7 @@ const formularioInicial = {
 
 export default function ProcessosPanel() {
   const { activePanel, panelTab } = usePanel();
+  const { refresh: refreshDashboard } = useDashboardData();
   const [processos, setProcessos] = useState([]);
   const [clientes, setClientes] = useState([]);
   const [advogados, setAdvogados] = useState([]);
@@ -70,6 +72,7 @@ export default function ProcessosPanel() {
       });
       setFormulario(formularioInicial);
       await carregarDados();
+      refreshDashboard().catch(() => {});
     } catch (error) {
       setErro(error.message);
     } finally {
@@ -230,6 +233,7 @@ export default function ProcessosPanel() {
                                   : "Em andamento",
                             });
                             carregarDados();
+                            refreshDashboard().catch(() => {});
                           }}
                         >
                           Alternar status
@@ -240,6 +244,7 @@ export default function ProcessosPanel() {
                             if (window.confirm("Excluir processo?")) {
                               await deleteProcesso(processo.id);
                               carregarDados();
+                              refreshDashboard().catch(() => {});
                             }
                           }}
                         >

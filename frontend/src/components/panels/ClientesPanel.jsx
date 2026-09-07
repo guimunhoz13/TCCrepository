@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { usePanel } from "@/contexts/PanelContext";
+import { useDashboardData } from "@/contexts/DashboardDataContext";
 import OverlayPanel from "@/components/shell/OverlayPanel";
 import {
   getClientes,
@@ -43,6 +44,7 @@ function formatarTelefone(valor) {
 
 export default function ClientesPanel() {
   const { activePanel, panelTab, setPanelTab } = usePanel();
+  const { refresh: refreshDashboard } = useDashboardData();
   const [clientes, setClientes] = useState([]);
   const [formulario, setFormulario] = useState(formularioInicial);
   const [clienteEditando, setClienteEditando] = useState(null);
@@ -117,6 +119,7 @@ export default function ClientesPanel() {
       setClienteEditando(null);
       setPanelTab("lista");
       await carregarClientes();
+      refreshDashboard().catch(() => {});
     } catch (error) {
       setErro(error.message);
     } finally {
@@ -284,6 +287,7 @@ export default function ClientesPanel() {
                               ativo: !cliente.ativo,
                             });
                             carregarClientes();
+                            refreshDashboard().catch(() => {});
                           }}
                         >
                           {cliente.ativo ? "Inativar" : "Ativar"}
@@ -297,6 +301,7 @@ export default function ClientesPanel() {
                             ) {
                               await deleteCliente(cliente.id);
                               carregarClientes();
+                              refreshDashboard().catch(() => {});
                             }
                           }}
                         >

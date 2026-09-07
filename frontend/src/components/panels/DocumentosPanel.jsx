@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { FileDown, Paperclip } from "lucide-react";
 import { usePanel } from "@/contexts/PanelContext";
+import { useDashboardData } from "@/contexts/DashboardDataContext";
 import OverlayPanel from "@/components/shell/OverlayPanel";
 import {
   getDocumentos,
@@ -13,6 +15,7 @@ import {
 
 export default function DocumentosPanel() {
   const { activePanel, panelTab } = usePanel();
+  const { refresh: refreshDashboard } = useDashboardData();
   const [documentos, setDocumentos] = useState([]);
   const [processos, setProcessos] = useState([]);
   const [processoId, setProcessoId] = useState("");
@@ -63,6 +66,7 @@ export default function DocumentosPanel() {
       setNomeArquivo("");
       setArquivo(null);
       await carregarDados();
+      refreshDashboard().catch(() => {});
     } catch (error) {
       setErro(error.message);
     }
@@ -136,26 +140,54 @@ export default function DocumentosPanel() {
               {!carregando &&
                 documentos.map((doc) => (
                   <tr key={doc.id}>
-                    <td>{doc.nome_arquivo}</td>
+                    <td>
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                        <Paperclip size={14} style={{ color: "var(--text-muted)", flexShrink: 0 }} />
+                        {doc.nome_arquivo}
+                      </span>
+                    </td>
                     <td>{doc.numero_processo}</td>
                     <td>
                       {new Date(doc.enviado_em).toLocaleString("pt-BR")}
                     </td>
                     <td>
-                      <button
-                        className="btn btn-danger btn-sm"
-                        onClick={async () => {
-                          if (window.confirm("Excluir documento?")) {
-                            await deleteDocumento(doc.id);
-                            carregarDados();
-                          }
-                        }}
-                      >
-                        Excluir
-                      </button>
+                      <div style={{ display: "flex", gap: 8 }}>
+                        {doc.arquivo && (
+                          <a
+                            href={doc.arquivo}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="btn btn-secondary btn-sm"
+                          >
+                            <FileDown size={14} />
+                            Abrir
+                          </a>
+                        )}
+                        <button
+                          className="btn btn-danger btn-sm"
+                          onClick={async () => {
+                            if (window.confirm("Excluir documento?")) {
+                              await deleteDocumento(doc.id);
+                              carregarDados();
+                              refreshDashboard().catch(() => {});
+                            }
+                          }}
+                        >
+                          Excluir
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
+              {!carregando && documentos.length === 0 && (
+                <tr>
+                  <td colSpan="4">
+                    <div className="empty-state">
+                      Nenhum documento enviado ainda. Use a aba &quot;Enviar documento&quot; para anexar arquivos a um processo.
+                    </div>
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

@@ -1,6 +1,7 @@
 from django.contrib.auth.hashers import check_password, make_password
 from django.db.models import Count
 from django.http import HttpResponse
+from django.utils import timezone
 import csv
 
 from rest_framework import status, viewsets
@@ -776,6 +777,88 @@ class ConfiguracoesDesativarEscritorioView(APIView):
         escritorio.save(update_fields=["ativo"])
         Usuario.objects.filter(escritorio=escritorio).update(ativo=False)
         return Response({"detail": "Escritório desativado com sucesso."})
+
+
+class RelatorioClienteView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, cliente_id):
+        usuario = get_usuario_from_request(request)
+        if not usuario:
+            return Response({"detail": "Usuário não identificado."}, status=status.HTTP_401_UNAUTHORIZED)
+
+        try:
+            cliente = Cliente.objects.get(id=cliente_id, escritorio=usuario.escritorio)
+        except Cliente.DoesNotExist:
+            return Response({"detail": "Cliente não encontrado."}, status=status.HTTP_404_NOT_FOUND)
+
+        processos = (
+            Processo.objects
+            .filter(cliente=cliente)
+            .select_related("advogado__usuario")
+            .order_by("-criado_em")
+        )
+        documentos = (
+            Documento.objects
+            .filter(processo__cliente=cliente)
+            .select_related("processo")
+            .order_by("-enviado_em")
+        )
+        agenda = (
+            Agenda.objects
+            .filter(processo__cliente=cliente)
+            .select_related("processo")
+            .order_by("data_evento")
+        )
+
+        return Response({
+            "gerado_em": timezone.now(),
+            "escritorio": EscritorioSerializer(usuario.escritorio).data,
+            "cliente": ClienteSerializer(cliente).data,
+            "processos": ProcessoSerializer(processos, many=True, context={"request": request}).data,
+            "documentos": DocumentoSerializer(documentos, many=True, context={"request": request}).data,
+            "agenda": AgendaSerializer(agenda, many=True, context={"request": request}).data,
+            "resumo": {
+                "total_processos": processos.count(),
+                "total_documentos": documentos.count(),
+                "total_eventos": agenda.count(),
+                "processos_por_status": list(
+                    processos.values("status").annotate(total=Count("id")).order_by("status")
+                ),
+            },
+        })
+
+
+class RelatorioProcessoView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, processo_id):
+        usuario = get_usuario_from_request(request)
+        if not usuario:
+            return Response({"detail": "Usuário não identificado."}, status=status.HTTP_401_UNAUTHORIZED)
+
+        try:
+            processo = (
+                Processo.objects
+                .select_related("cliente", "advogado__usuario")
+                .get(id=processo_id, escritorio=usuario.escritorio)
+            )
+        except Processo.DoesNotExist:
+            return Response({"detail": "Processo não encontrado."}, status=status.HTTP_404_NOT_FOUND)
+
+        documentos = Documento.objects.filter(processo=processo).order_by("-enviado_em")
+        movimentacoes = Movimentacao.objects.filter(processo=processo).order_by("-data_movimentacao")
+        agenda = Agenda.objects.filter(processo=processo).order_by("data_evento")
+
+        return Response({
+            "gerado_em": timezone.now(),
+            "escritorio": EscritorioSerializer(usuario.escritorio).data,
+            "processo": ProcessoSerializer(processo, context={"request": request}).data,
+            "cliente": ClienteSerializer(processo.cliente).data,
+            "documentos": DocumentoSerializer(documentos, many=True, context={"request": request}).data,
+            "movimentacoes": MovimentacaoSerializer(movimentacoes, many=True, context={"request": request}).data,
+            "agenda": AgendaSerializer(agenda, many=True, context={"request": request}).data,
+        })
 
 
 class ExportarClientesCSVView(APIView):
