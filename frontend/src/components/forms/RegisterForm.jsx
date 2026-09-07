@@ -39,7 +39,7 @@ export default function RegisterForm() {
         "Escritório cadastrado! Faça login com o e-mail do administrador."
       );
 
-      router.push("/");
+      router.push("/login");
     } catch (error) {
       setErro(error.message);
     } finally {
@@ -157,7 +157,7 @@ export default function RegisterForm() {
       </button>
 
       <div className="auth-footer">
-        Já possui conta? <Link href="/">Voltar ao login</Link>
+        Já possui conta? <Link href="/login">Voltar ao login</Link>
       </div>
     </form>
   );

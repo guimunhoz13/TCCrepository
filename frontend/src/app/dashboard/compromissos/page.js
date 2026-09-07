@@ -27,7 +27,7 @@ function CompromissosContent() {
   useEffect(() => {
     const token = localStorage.getItem("access");
     if (!token) {
-      router.replace("/");
+      router.replace("/login");
       return;
     }
 
@@ -46,7 +46,7 @@ function CompromissosContent() {
         setEventos(futuros);
       } catch (error) {
         if (error.message.includes("401") || error.message.includes("token")) {
-          router.replace("/");
+          router.replace("/login");
           return;
         }
         setErro(error.message);

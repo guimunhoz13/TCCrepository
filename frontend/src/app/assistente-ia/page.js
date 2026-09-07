@@ -23,7 +23,7 @@ function AssistenteContent() {
   useEffect(() => {
     const token = localStorage.getItem("access");
     if (!token) {
-      router.replace("/");
+      router.replace("/login");
     }
   }, [router]);
 

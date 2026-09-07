@@ -29,13 +29,13 @@ function DashboardContent() {
   useEffect(() => {
     const token = localStorage.getItem("access");
     if (!token) {
-      router.replace("/");
+      router.replace("/login");
     }
   }, [router]);
 
   useEffect(() => {
     if (erro && (erro.includes("401") || erro.toLowerCase().includes("token"))) {
-      router.replace("/");
+      router.replace("/login");
     }
   }, [erro, router]);
 
