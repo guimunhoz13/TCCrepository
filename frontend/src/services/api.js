@@ -61,10 +61,14 @@ export async function registrarEscritorio(data) {
   });
 }
 
+function corpoRequisicao(data) {
+  return data instanceof FormData ? data : JSON.stringify(data);
+}
+
 export async function registrarAdvogado(data) {
   return request("/advogados/registrar/", {
     method: "POST",
-    body: JSON.stringify(data),
+    body: corpoRequisicao(data),
   });
 }
 
@@ -79,14 +83,14 @@ export async function getClientes() {
 export async function createCliente(data) {
   return request("/clientes/", {
     method: "POST",
-    body: JSON.stringify(data),
+    body: corpoRequisicao(data),
   });
 }
 
 export async function updateCliente(id, data) {
   return request(`/clientes/${id}/`, {
     method: "PATCH",
-    body: JSON.stringify(data),
+    body: corpoRequisicao(data),
   });
 }
 
@@ -183,7 +187,7 @@ export async function getConfiguracoes() {
 export async function updateConta(data) {
   return request("/configuracoes/conta/", {
     method: "PATCH",
-    body: JSON.stringify(data),
+    body: corpoRequisicao(data),
   });
 }
 

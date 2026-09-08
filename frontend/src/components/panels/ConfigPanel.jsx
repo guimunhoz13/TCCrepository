@@ -28,6 +28,7 @@ import {
 } from "@/services/api";
 import { gerarHtmlRelatorioCliente, gerarHtmlRelatorioProcesso, abrirRelatorio } from "@/utils/relatorio";
 import { abrirWhatsApp, montarMensagemCliente, montarMensagemProcesso } from "@/utils/whatsapp";
+import Avatar from "@/components/ui/Avatar";
 
 const TABS = [
   { id: "conta", tKey: "config_conta", icon: User },
@@ -115,7 +116,7 @@ export default function ConfigPanel() {
           {carregando && <div className="empty-state">Carregando configurações...</div>}
 
           {!carregando && dados && activeTab === "conta" && (
-            <ContaTab usuario={dados.usuario} setDados={setDados} feedback={feedback} />
+            <ContaTab usuario={dados.usuario} setDados={setDados} feedback={feedback} t={t} />
           )}
           {!carregando && dados && activeTab === "escritorio" && (
             <EscritorioTab dados={dados} setDados={setDados} feedback={feedback} />
@@ -139,8 +140,9 @@ export default function ConfigPanel() {
   );
 }
 
-function ContaTab({ usuario, setDados, feedback }) {
+function ContaTab({ usuario, setDados, feedback, t }) {
   const [form, setForm] = useState({ nome: usuario.nome || "", email: usuario.email || "", telefone: usuario.telefone || "" });
+  const [foto, setFoto] = useState(null);
   const [senha, setSenha] = useState({ senha_atual: "", nova_senha: "", confirmar_senha: "" });
   const [showPassword, setShowPassword] = useState(false);
   const [salvando, setSalvando] = useState(false);
@@ -148,10 +150,17 @@ function ContaTab({ usuario, setDados, feedback }) {
   async function salvarConta() {
     try {
       setSalvando(true);
-      const res = await updateConta(form);
+      const payload = new FormData();
+      payload.append("nome", form.nome);
+      payload.append("email", form.email);
+      payload.append("telefone", form.telefone);
+      if (foto) payload.append("foto", foto);
+
+      const res = await updateConta(payload);
       setDados((d) => ({ ...d, usuario: res.usuario }));
+      setFoto(null);
       const atual = JSON.parse(localStorage.getItem("usuarioLogado") || "{}");
-      localStorage.setItem("usuarioLogado", JSON.stringify({ ...atual, nome: res.usuario.nome, email: res.usuario.email }));
+      localStorage.setItem("usuarioLogado", JSON.stringify({ ...atual, nome: res.usuario.nome, email: res.usuario.email, foto: res.usuario.foto }));
       feedback(res.detail);
     } catch (e) { feedback(e.message, true); }
     finally { setSalvando(false); }
@@ -168,6 +177,21 @@ function ContaTab({ usuario, setDados, feedback }) {
   }
 
   return <div className="settings-stack">
+    <Section title={t("perfil_foto")} description={t("perfil_foto_desc")}>
+      <div className="avatar-cell">
+        <Avatar src={foto ? URL.createObjectURL(foto) : usuario.foto} nome={usuario.nome} size={56} />
+        <label className="btn btn-secondary btn-sm" style={{ cursor: "pointer" }}>
+          {t("perfil_escolher_foto")}
+          <input
+            type="file"
+            accept="image/*"
+            style={{ display: "none" }}
+            onChange={(e) => setFoto(e.target.files?.[0] || null)}
+          />
+        </label>
+      </div>
+    </Section>
+
     <Section title="Dados pessoais" description="Atualize seus dados de acesso e contato.">
       <div className="form-grid">
         <Field label="Nome"><input value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} /></Field>
@@ -221,7 +245,7 @@ function EscritorioTab({ dados, setDados, feedback }) {
     </Section>
 
     <Section title="Equipe" description="Usuários atualmente cadastrados neste escritório.">
-      <div className="member-list">{dados.membros.map((m) => <div key={m.id} className="member-row"><div className="member-avatar">{m.nome.charAt(0).toUpperCase()}</div><div className="member-info"><strong>{m.nome}</strong><span>{m.email}</span></div><span className="badge badge-muted">{m.tipo_usuario === "admin" ? "Administrador" : "Advogado"}</span></div>)}</div>
+      <div className="member-list">{dados.membros.map((m) => <div key={m.id} className="member-row"><Avatar src={m.foto} nome={m.nome} size={34} /><div className="member-info"><strong>{m.nome}</strong><span>{m.email}</span></div><span className="badge badge-muted">{m.tipo_usuario === "admin" ? "Administrador" : "Advogado"}</span></div>)}</div>
     </Section>
   </div>;
 }

@@ -1908,6 +1908,54 @@ tbody tr:hover {
 }
 
 /* ==========================================================================
+   AVATARES — foto de perfil de clientes/advogados, com iniciais como
+   substituto quando não há foto cadastrada.
+   ========================================================================== */
+
+.avatar-img {
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid var(--border);
+  flex-shrink: 0;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.avatar-fallback {
+  border-radius: 50%;
+  display: inline-grid;
+  place-items: center;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 700;
+  font-family: "Fraunces", serif;
+  flex-shrink: 0;
+  vertical-align: middle;
+}
+
+.avatar-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.avatar-preview {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid var(--border);
+  margin-bottom: 8px;
+  display: block;
+}
+
+.topbar-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* ==========================================================================
    MODERNIZAÇÃO VISUAL
    Camada de refinamento aplicada por cima do sistema "livro-razão" já
    existente: mais profundidade, textura sutil de papel pontilhado, brilho

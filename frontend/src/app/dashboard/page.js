@@ -16,6 +16,7 @@ import ContatoPanel from "@/components/panels/ContatoPanel";
 import ConfigPanel from "@/components/panels/ConfigPanel";
 import AdvogadosPanel from "@/components/panels/AdvogadosPanel";
 import PlanosPanel from "@/components/panels/PlanosPanel";
+import Avatar from "@/components/ui/Avatar";
 import { PanelProvider } from "@/contexts/PanelContext";
 import { DashboardDataProvider, useDashboardData } from "@/contexts/DashboardDataContext";
 import { PreferencesProvider } from "@/contexts/PreferencesContext";
@@ -118,7 +119,12 @@ function DashboardContent() {
                     processos.slice(0, 5).map((processo) => (
                       <tr key={processo.id}>
                         <td>{processo.numero_processo}</td>
-                        <td>{processo.cliente_nome}</td>
+                        <td>
+                          <span className="avatar-cell">
+                            <Avatar src={processo.cliente_foto} nome={processo.cliente_nome} size={24} />
+                            {processo.cliente_nome}
+                          </span>
+                        </td>
                         <td>
                           <span className="badge badge-muted">
                             {processo.status === "Concluido"

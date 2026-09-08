@@ -4,6 +4,7 @@ import { Moon, Sun, LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTheme } from "@/contexts/ThemeContext";
 import { usePreferences } from "@/contexts/PreferencesContext";
+import Avatar from "@/components/ui/Avatar";
 import { getUsuarioLogado, logout } from "@/services/api";
 import { getSaudacaoCompleta } from "@/utils/greeting";
 import { useEffect, useState } from "react";
@@ -56,13 +57,16 @@ export default function TopBar({
       </div>
 
       <div className="topbar-actions">
-        <span
-          style={{
-            color: "var(--text-secondary)",
-            fontSize: "0.9rem",
-          }}
-        >
-          {usuario?.nome || ""}
+        <span className="topbar-user">
+          <span
+            style={{
+              color: "var(--text-secondary)",
+              fontSize: "0.9rem",
+            }}
+          >
+            {usuario?.nome || ""}
+          </span>
+          {usuario && <Avatar src={usuario.foto} nome={usuario.nome} size={30} />}
         </span>
 
         <button
