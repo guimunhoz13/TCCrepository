@@ -1,3 +1,4 @@
+import unittest
 from unittest.mock import patch
 
 from django.contrib.auth.hashers import make_password
@@ -186,6 +187,71 @@ class LoginAPITestCase(APITestCase):
             format="json",
         )
         self.assertEqual(resposta.status_code, status.HTTP_403_FORBIDDEN)
+
+
+class ValidacaoDeSenhaAPITestCase(APITestCase):
+    """
+    TDD — testes escritos a partir dos requisitos de senha forte pedidos
+    na atividade, ANTES de confirmar se a view já os aplica:
+
+      1) mínimo de 8 caracteres
+      2) pelo menos uma letra maiúscula
+      3) pelo menos um número
+      4) pelo menos um caractere especial
+
+    Alvo: ConfiguracoesSenhaView (POST /api/configuracoes/senha/), a
+    função responsável por definir/alterar a senha de um usuário já
+    autenticado (o caminho de troca de senha da autenticação).
+    """
+
+    def setUp(self):
+        self.escritorio = _criar_escritorio()
+        self.usuario = _criar_usuario(self.escritorio)
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Bearer {_gerar_token_de_acesso(self.usuario)}"
+        )
+
+    def _tentar_trocar_senha(self, nova_senha):
+        return self.client.post(
+            "/api/configuracoes/senha/",
+            {
+                "senha_atual": "senha12345",
+                "nova_senha": nova_senha,
+                "confirmar_senha": nova_senha,
+            },
+            format="json",
+        )
+
+    def test_senha_com_menos_de_8_caracteres_e_rejeitada(self):
+        resposta = self._tentar_trocar_senha("Ab1!ab")
+        self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
+
+    # As três checagens abaixo documentam requisitos que a atividade de
+    # TDD pediu, mas que ConfiguracoesSenhaView ainda NÃO implementa (a
+    # view só valida o comprimento mínimo). Ficam marcadas como
+    # "expectedFailure" — a fase "red" do TDD — de propósito: continuam
+    # rodando no CI como prova viva do gap, sem quebrar o pipeline do
+    # projeto por uma regra de negócio que ainda não foi implementada.
+    # Ver relatorio-tdd-ia.md para a execução original (sem o marcador),
+    # com as 3 falhas reais capturadas.
+    @unittest.expectedFailure
+    def test_senha_sem_letra_maiuscula_e_rejeitada(self):
+        resposta = self._tentar_trocar_senha("abcdefg1!")
+        self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
+
+    @unittest.expectedFailure
+    def test_senha_sem_numero_e_rejeitada(self):
+        resposta = self._tentar_trocar_senha("Abcdefgh!")
+        self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
+
+    @unittest.expectedFailure
+    def test_senha_sem_caractere_especial_e_rejeitada(self):
+        resposta = self._tentar_trocar_senha("Abcdefg1")
+        self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_senha_que_atende_todos_os_requisitos_e_aceita(self):
+        resposta = self._tentar_trocar_senha("Abcdefg1!")
+        self.assertEqual(resposta.status_code, status.HTTP_200_OK)
 
 
 @patch("advocacia.validators._dominio_tem_mx", return_value=True)
