@@ -96,12 +96,16 @@
   padding: 0;
 }
 
-html,
-body {
+html {
   min-height: 100%;
   max-width: 100vw;
   overflow-x: hidden;
   scroll-behavior: smooth;
+}
+
+body {
+  min-height: 100%;
+  max-width: 100vw;
 }
 
 body {
