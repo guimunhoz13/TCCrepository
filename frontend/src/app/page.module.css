@@ -1,6 +1,11 @@
 .page {
   position: relative;
-  overflow: hidden;
+  /* clip em vez de hidden: mesmo efeito visual de conter os circulos
+     decorativos de fundo, mas sem criar um container de rolagem para
+     este elemento. hidden aqui quebrava o position: sticky do menu
+     (.nav) porque o menu passava a ficar fixo em relacao a este
+     elemento em vez do viewport, e ele nunca rola de verdade sozinho. */
+  overflow: clip;
   background: var(--bg-primary);
 }
 
