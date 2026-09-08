@@ -3,6 +3,10 @@ html {
   height: 100%;
   max-width: 100vw;
   overflow-x: hidden;
+  /* Compensa o menu fixo (position: sticky) no topo — sem isso, um link
+     âncora (#recursos, #como-funciona) rola a seção até encostar no
+     topo do viewport, ficando parcialmente coberta pelo menu. */
+  scroll-padding-top: 96px;
 }
 
 body {
