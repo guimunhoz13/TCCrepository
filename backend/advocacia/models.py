@@ -38,6 +38,8 @@ class Usuario(models.Model):
     telefone = models.CharField(max_length=20, blank=True, default="")
     senha = models.CharField(max_length=255)
     tipo_usuario = models.CharField(max_length=20, choices=TIPOS_USUARIO)
+    foto = models.ImageField(upload_to="usuarios/fotos/", null=True, blank=True)
+    documento_identidade = models.FileField(upload_to="usuarios/documentos/", null=True, blank=True)
     ativo = models.BooleanField(default=True)
     criado_em = models.DateTimeField(auto_now_add=True)
 
@@ -59,6 +61,8 @@ class Cliente(models.Model):
     telefone = models.CharField(max_length=20)
     endereco = models.CharField(max_length=255)
     data_nascimento = models.DateField(null=True, blank=True)
+    foto = models.ImageField(upload_to="clientes/fotos/", null=True, blank=True)
+    documento_identidade = models.FileField(upload_to="clientes/documentos/", null=True, blank=True)
     ativo = models.BooleanField(default=True)
     criado_em = models.DateTimeField(auto_now_add=True)
 

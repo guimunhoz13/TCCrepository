@@ -69,6 +69,32 @@ const DICIONARIO = {
 
     carregando: "Carregando...",
     nenhum_registro: "Nenhum registro encontrado.",
+
+    aparencia_tema: "Tema da interface",
+    aparencia_claro: "Claro",
+    aparencia_escuro: "Escuro",
+    aparencia_densidade: "Densidade das tabelas",
+    aparencia_confortavel: "Confortável",
+    aparencia_compacta: "Compacta",
+    aparencia_idioma: "Idioma",
+    aparencia_pagina_inicial: "Página inicial",
+
+    relatorios_gerar_titulo: "Gerar relatório",
+    relatorios_gerar_desc: "Selecione um cliente ou processo para gerar um relatório completo, pronto para impressão ou para salvar como PDF.",
+    relatorios_tipo: "Tipo de relatório",
+    relatorios_cliente: "Cliente",
+    relatorios_processo: "Processo",
+    relatorios_selecione: "Selecione",
+    relatorios_email_titulo: "Enviar por e-mail",
+    relatorios_email_desc: "Envie o mesmo relatório diretamente para o e-mail do cliente (ou qualquer outro destinatário).",
+    relatorios_email_label: "E-mail de destino",
+    relatorios_whatsapp_titulo: "Enviar por WhatsApp",
+    relatorios_whatsapp_desc: "Abre o WhatsApp com os detalhes já preenchidos, prontos para revisar e enviar.",
+    relatorios_whatsapp_label: "Telefone de destino",
+
+    perfil_foto: "Foto de perfil",
+    perfil_foto_desc: "Aparece no seu nome no topo do sistema e nas listas do escritório.",
+    perfil_escolher_foto: "Escolher foto",
   },
 
   "en-US": {
@@ -139,6 +165,32 @@ const DICIONARIO = {
 
     carregando: "Loading...",
     nenhum_registro: "No records found.",
+
+    aparencia_tema: "Interface theme",
+    aparencia_claro: "Light",
+    aparencia_escuro: "Dark",
+    aparencia_densidade: "Table density",
+    aparencia_confortavel: "Comfortable",
+    aparencia_compacta: "Compact",
+    aparencia_idioma: "Language",
+    aparencia_pagina_inicial: "Home page",
+
+    relatorios_gerar_titulo: "Generate report",
+    relatorios_gerar_desc: "Select a client or case to generate a full report, ready to print or save as PDF.",
+    relatorios_tipo: "Report type",
+    relatorios_cliente: "Client",
+    relatorios_processo: "Case",
+    relatorios_selecione: "Select",
+    relatorios_email_titulo: "Send by email",
+    relatorios_email_desc: "Send this same report straight to the client's email (or any other recipient).",
+    relatorios_email_label: "Recipient email",
+    relatorios_whatsapp_titulo: "Send via WhatsApp",
+    relatorios_whatsapp_desc: "Opens WhatsApp with the details already filled in, ready to review and send.",
+    relatorios_whatsapp_label: "Recipient phone",
+
+    perfil_foto: "Profile photo",
+    perfil_foto_desc: "Shown next to your name at the top of the system and in the firm's lists.",
+    perfil_escolher_foto: "Choose photo",
   },
 
   "es-ES": {
@@ -209,6 +261,32 @@ const DICIONARIO = {
 
     carregando: "Cargando...",
     nenhum_registro: "No se encontraron registros.",
+
+    aparencia_tema: "Tema de la interfaz",
+    aparencia_claro: "Claro",
+    aparencia_escuro: "Oscuro",
+    aparencia_densidade: "Densidad de las tablas",
+    aparencia_confortavel: "Cómoda",
+    aparencia_compacta: "Compacta",
+    aparencia_idioma: "Idioma",
+    aparencia_pagina_inicial: "Página de inicio",
+
+    relatorios_gerar_titulo: "Generar informe",
+    relatorios_gerar_desc: "Seleccione un cliente o proceso para generar un informe completo, listo para imprimir o guardar como PDF.",
+    relatorios_tipo: "Tipo de informe",
+    relatorios_cliente: "Cliente",
+    relatorios_processo: "Proceso",
+    relatorios_selecione: "Seleccionar",
+    relatorios_email_titulo: "Enviar por correo",
+    relatorios_email_desc: "Envíe este mismo informe directamente al correo del cliente (o a cualquier otro destinatario).",
+    relatorios_email_label: "Correo de destino",
+    relatorios_whatsapp_titulo: "Enviar por WhatsApp",
+    relatorios_whatsapp_desc: "Abre WhatsApp con los detalles ya completados, listos para revisar y enviar.",
+    relatorios_whatsapp_label: "Teléfono de destino",
+
+    perfil_foto: "Foto de perfil",
+    perfil_foto_desc: "Aparece junto a su nombre en la parte superior del sistema y en las listas del despacho.",
+    perfil_escolher_foto: "Elegir foto",
   },
 };
 

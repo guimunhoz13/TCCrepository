@@ -3,11 +3,12 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Bot, RefreshCw } from "lucide-react";
+import { Bot, RefreshCw, Newspaper } from "lucide-react";
 import AppSidebar from "@/components/shell/AppSidebar";
 import TopBar from "@/components/shell/TopBar";
 import ChartsSection from "@/components/dashboard/ChartsSection";
 import MiniCalendar from "@/components/dashboard/MiniCalendar";
+import NoticiasSection from "@/components/dashboard/NoticiasSection";
 import ClientesPanel from "@/components/panels/ClientesPanel";
 import ProcessosPanel from "@/components/panels/ProcessosPanel";
 import AgendaPanel from "@/components/panels/AgendaPanel";
@@ -16,6 +17,7 @@ import ContatoPanel from "@/components/panels/ContatoPanel";
 import ConfigPanel from "@/components/panels/ConfigPanel";
 import AdvogadosPanel from "@/components/panels/AdvogadosPanel";
 import PlanosPanel from "@/components/panels/PlanosPanel";
+import Avatar from "@/components/ui/Avatar";
 import { PanelProvider } from "@/contexts/PanelContext";
 import { DashboardDataProvider, useDashboardData } from "@/contexts/DashboardDataContext";
 import { PreferencesProvider } from "@/contexts/PreferencesContext";
@@ -69,10 +71,17 @@ function DashboardContent() {
         {erro && <div className="alert alert-error">{erro}</div>}
 
         <div className="dashboard-toolbar">
-          <Link href="/assistente-ia" className="btn btn-primary ai-quick-btn">
-            <Bot size={18} />
-            Abrir Assistente IA
-          </Link>
+          <div className="dashboard-toolbar-actions">
+            <Link href="/assistente-ia" className="btn btn-primary ai-quick-btn">
+              <Bot size={18} />
+              Abrir Assistente IA
+            </Link>
+
+            <a href="#noticias" className="btn btn-secondary">
+              <Newspaper size={18} />
+              Conferir notícias
+            </a>
+          </div>
 
           <span className={`sync-indicator ${pulsar ? "pulsing" : ""}`}>
             <RefreshCw size={13} className={pulsar ? "spin" : ""} />
@@ -101,7 +110,7 @@ function DashboardContent() {
           totais={totais}
         />
 
-        <div className="dashboard-grid" style={{ marginTop: 18 }}>
+        <div className="dashboard-grid dashboard-grid-inicio" style={{ marginTop: 18 }}>
           <div className="panel-card">
             <h3>Processos recentes</h3>
             <div className="table-wrap">
@@ -118,7 +127,12 @@ function DashboardContent() {
                     processos.slice(0, 5).map((processo) => (
                       <tr key={processo.id}>
                         <td>{processo.numero_processo}</td>
-                        <td>{processo.cliente_nome}</td>
+                        <td>
+                          <span className="avatar-cell">
+                            <Avatar src={processo.cliente_foto} nome={processo.cliente_nome} size={24} />
+                            {processo.cliente_nome}
+                          </span>
+                        </td>
                         <td>
                           <span className="badge badge-muted">
                             {processo.status === "Concluido"
@@ -140,6 +154,8 @@ function DashboardContent() {
 
           <MiniCalendar eventos={agenda} onEventoCriado={refresh} />
         </div>
+
+        <NoticiasSection />
       </main>
 
       <ClientesPanel />

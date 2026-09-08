@@ -1,6 +1,7 @@
 from django.urls import path
 from rest_framework.routers import DefaultRouter
 
+from .noticias import NoticiasJuridicasView
 from .views import (
     EscritorioRegistroView,
     DashboardStatsView,
@@ -45,6 +46,7 @@ router.register(r"agenda", AgendaViewSet, basename="agenda")
 urlpatterns = [
     path("escritorios/registrar/", EscritorioRegistroView.as_view(), name="escritorio-registrar"),
     path("dashboard/stats/", DashboardStatsView.as_view(), name="dashboard-stats"),
+    path("noticias/", NoticiasJuridicasView.as_view(), name="noticias-juridicas"),
     path("advogados/registrar/", AdvogadoRegistroView.as_view(), name="advogado-registrar"),
     path("login/verificar-email/", VerificarEmailView.as_view(), name="verificar-email"),
     path("assistente-ia/", AssistenteIAView.as_view(), name="assistente-ia"),

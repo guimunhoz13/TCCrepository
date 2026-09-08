@@ -104,6 +104,8 @@ class UsuarioSerializer(serializers.ModelSerializer):
             "telefone",
             "senha",
             "tipo_usuario",
+            "foto",
+            "documento_identidade",
             "ativo",
             "criado_em",
         ]
@@ -136,6 +138,8 @@ class AdvogadoRegistroSerializer(serializers.Serializer):
     senha = serializers.CharField(write_only=True, min_length=6)
     oab = serializers.CharField(max_length=30)
     especialidade = serializers.CharField(max_length=255)
+    foto = serializers.ImageField(required=False, allow_null=True)
+    documento_identidade = serializers.FileField(required=False, allow_null=True)
 
     def validate_email(self, value):
         if Usuario.objects.filter(email__iexact=value).exists():
@@ -150,6 +154,8 @@ class AdvogadoRegistroSerializer(serializers.Serializer):
             email=validated_data["email"],
             senha=make_password(validated_data["senha"]),
             tipo_usuario="advogado",
+            foto=validated_data.get("foto"),
+            documento_identidade=validated_data.get("documento_identidade"),
         )
 
         advogado = Advogado.objects.create(
@@ -176,6 +182,8 @@ class ClienteSerializer(serializers.ModelSerializer):
             "telefone",
             "endereco",
             "data_nascimento",
+            "foto",
+            "documento_identidade",
             "ativo",
             "criado_em",
         ]
@@ -186,6 +194,7 @@ class AdvogadoSerializer(serializers.ModelSerializer):
 
     nome = serializers.CharField(source="usuario.nome", read_only=True)
     email = serializers.EmailField(source="usuario.email", read_only=True)
+    foto = serializers.ImageField(source="usuario.foto", read_only=True)
 
     class Meta:
         model = Advogado
@@ -194,6 +203,7 @@ class AdvogadoSerializer(serializers.ModelSerializer):
             "usuario",
             "nome",
             "email",
+            "foto",
             "oab",
             "especialidade",
         ]
@@ -204,6 +214,7 @@ class ProcessoSerializer(serializers.ModelSerializer):
 
     cliente_nome = serializers.CharField(source="cliente.nome", read_only=True)
     cliente_email = serializers.EmailField(source="cliente.email", read_only=True)
+    cliente_foto = serializers.ImageField(source="cliente.foto", read_only=True)
     advogado_nome = serializers.CharField(
         source="advogado.usuario.nome",
         read_only=True,
@@ -220,6 +231,7 @@ class ProcessoSerializer(serializers.ModelSerializer):
             "cliente",
             "cliente_nome",
             "cliente_email",
+            "cliente_foto",
             "advogado",
             "advogado_nome",
             "data_inicio",
@@ -230,6 +242,7 @@ class ProcessoSerializer(serializers.ModelSerializer):
             "id",
             "cliente_nome",
             "cliente_email",
+            "cliente_foto",
             "advogado_nome",
             "criado_em",
         ]

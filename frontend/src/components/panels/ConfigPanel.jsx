@@ -28,6 +28,7 @@ import {
 } from "@/services/api";
 import { gerarHtmlRelatorioCliente, gerarHtmlRelatorioProcesso, abrirRelatorio } from "@/utils/relatorio";
 import { abrirWhatsApp, montarMensagemCliente, montarMensagemProcesso } from "@/utils/whatsapp";
+import Avatar from "@/components/ui/Avatar";
 
 const TABS = [
   { id: "conta", tKey: "config_conta", icon: User },
@@ -115,7 +116,7 @@ export default function ConfigPanel() {
           {carregando && <div className="empty-state">Carregando configurações...</div>}
 
           {!carregando && dados && activeTab === "conta" && (
-            <ContaTab usuario={dados.usuario} setDados={setDados} feedback={feedback} />
+            <ContaTab usuario={dados.usuario} setDados={setDados} feedback={feedback} t={t} />
           )}
           {!carregando && dados && activeTab === "escritorio" && (
             <EscritorioTab dados={dados} setDados={setDados} feedback={feedback} />
@@ -130,7 +131,7 @@ export default function ConfigPanel() {
             <DadosTab dados={dados} setDados={setDados} feedback={feedback} />
           )}
           {!carregando && dados && activeTab === "relatorios" && (
-            <RelatoriosTab feedback={feedback} />
+            <RelatoriosTab feedback={feedback} t={t} />
           )}
           {!carregando && activeTab === "faturamento" && <FaturamentoTab />}
         </div>
@@ -139,8 +140,9 @@ export default function ConfigPanel() {
   );
 }
 
-function ContaTab({ usuario, setDados, feedback }) {
+function ContaTab({ usuario, setDados, feedback, t }) {
   const [form, setForm] = useState({ nome: usuario.nome || "", email: usuario.email || "", telefone: usuario.telefone || "" });
+  const [foto, setFoto] = useState(null);
   const [senha, setSenha] = useState({ senha_atual: "", nova_senha: "", confirmar_senha: "" });
   const [showPassword, setShowPassword] = useState(false);
   const [salvando, setSalvando] = useState(false);
@@ -148,10 +150,17 @@ function ContaTab({ usuario, setDados, feedback }) {
   async function salvarConta() {
     try {
       setSalvando(true);
-      const res = await updateConta(form);
+      const payload = new FormData();
+      payload.append("nome", form.nome);
+      payload.append("email", form.email);
+      payload.append("telefone", form.telefone);
+      if (foto) payload.append("foto", foto);
+
+      const res = await updateConta(payload);
       setDados((d) => ({ ...d, usuario: res.usuario }));
+      setFoto(null);
       const atual = JSON.parse(localStorage.getItem("usuarioLogado") || "{}");
-      localStorage.setItem("usuarioLogado", JSON.stringify({ ...atual, nome: res.usuario.nome, email: res.usuario.email }));
+      localStorage.setItem("usuarioLogado", JSON.stringify({ ...atual, nome: res.usuario.nome, email: res.usuario.email, foto: res.usuario.foto }));
       feedback(res.detail);
     } catch (e) { feedback(e.message, true); }
     finally { setSalvando(false); }
@@ -168,6 +177,21 @@ function ContaTab({ usuario, setDados, feedback }) {
   }
 
   return <div className="settings-stack">
+    <Section title={t("perfil_foto")} description={t("perfil_foto_desc")}>
+      <div className="avatar-cell">
+        <Avatar src={foto ? URL.createObjectURL(foto) : usuario.foto} nome={usuario.nome} size={56} />
+        <label className="btn btn-secondary btn-sm" style={{ cursor: "pointer" }}>
+          {t("perfil_escolher_foto")}
+          <input
+            type="file"
+            accept="image/*"
+            style={{ display: "none" }}
+            onChange={(e) => setFoto(e.target.files?.[0] || null)}
+          />
+        </label>
+      </div>
+    </Section>
+
     <Section title="Dados pessoais" description="Atualize seus dados de acesso e contato.">
       <div className="form-grid">
         <Field label="Nome"><input value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} /></Field>
@@ -221,7 +245,7 @@ function EscritorioTab({ dados, setDados, feedback }) {
     </Section>
 
     <Section title="Equipe" description="Usuários atualmente cadastrados neste escritório.">
-      <div className="member-list">{dados.membros.map((m) => <div key={m.id} className="member-row"><div className="member-avatar">{m.nome.charAt(0).toUpperCase()}</div><div className="member-info"><strong>{m.nome}</strong><span>{m.email}</span></div><span className="badge badge-muted">{m.tipo_usuario === "admin" ? "Administrador" : "Advogado"}</span></div>)}</div>
+      <div className="member-list">{dados.membros.map((m) => <div key={m.id} className="member-row"><Avatar src={m.foto} nome={m.nome} size={34} /><div className="member-info"><strong>{m.nome}</strong><span>{m.email}</span></div><span className="badge badge-muted">{m.tipo_usuario === "admin" ? "Administrador" : "Advogado"}</span></div>)}</div>
     </Section>
   </div>;
 }
@@ -249,7 +273,7 @@ function NotificacoesTab({ preferencias, setDados, feedback }) {
   </div>;
 }
 
-function AparenciaTab({ preferencias, setDados, feedback, theme, setTheme, atualizarPreferenciasGlobal }) {
+function AparenciaTab({ preferencias, setDados, feedback, theme, setTheme, atualizarPreferenciasGlobal, t }) {
   const [p, setP] = useState({ ...PREF_DEFAULT, ...preferencias });
   async function salvar(campo, valor) {
     const next = { ...p, [campo]: valor }; setP(next);
@@ -261,10 +285,10 @@ function AparenciaTab({ preferencias, setDados, feedback, theme, setTheme, atual
     } catch (e) { feedback(e.message, true); }
   }
   return <div className="settings-stack">
-    <Section title="Tema da interface"><div className="theme-toggle"><button className={`btn btn-sm ${theme === "light" ? "btn-primary" : "btn-secondary"}`} onClick={() => salvar("tema", "light")}>Claro</button><button className={`btn btn-sm ${theme === "dark" ? "btn-primary" : "btn-secondary"}`} onClick={() => salvar("tema", "dark")}>Escuro</button></div></Section>
-    <Section title="Densidade das tabelas"><Field><select value={p.densidade_tabela} onChange={(e) => salvar("densidade_tabela", e.target.value)}><option value="comfortable">Confortável</option><option value="compact">Compacta</option></select></Field></Section>
-    <Section title="Idioma"><Field><select value={p.idioma} onChange={(e) => salvar("idioma", e.target.value)}><option value="pt-BR">Português (Brasil)</option><option value="en-US">English (US)</option><option value="es-ES">Español</option></select></Field></Section>
-    <Section title="Página inicial"><Field><select value={p.pagina_inicial} onChange={(e) => salvar("pagina_inicial", e.target.value)}><option value="dashboard">Dashboard</option><option value="agenda">Agenda</option><option value="clientes">Clientes</option><option value="processos">Processos</option></select></Field></Section>
+    <Section title={t("aparencia_tema")}><div className="theme-toggle"><button className={`btn btn-sm ${theme === "light" ? "btn-primary" : "btn-secondary"}`} onClick={() => salvar("tema", "light")}>{t("aparencia_claro")}</button><button className={`btn btn-sm ${theme === "dark" ? "btn-primary" : "btn-secondary"}`} onClick={() => salvar("tema", "dark")}>{t("aparencia_escuro")}</button></div></Section>
+    <Section title={t("aparencia_densidade")}><Field><select value={p.densidade_tabela} onChange={(e) => salvar("densidade_tabela", e.target.value)}><option value="comfortable">{t("aparencia_confortavel")}</option><option value="compact">{t("aparencia_compacta")}</option></select></Field></Section>
+    <Section title={t("aparencia_idioma")}><Field><select value={p.idioma} onChange={(e) => salvar("idioma", e.target.value)}><option value="pt-BR">Português (Brasil)</option><option value="en-US">English (US)</option><option value="es-ES">Español</option></select></Field></Section>
+    <Section title={t("aparencia_pagina_inicial")}><Field><select value={p.pagina_inicial} onChange={(e) => salvar("pagina_inicial", e.target.value)}><option value="dashboard">{t("nav_dashboard")}</option><option value="agenda">{t("nav_agenda")}</option><option value="clientes">{t("nav_clientes")}</option><option value="processos">{t("nav_processos")}</option></select></Field></Section>
   </div>;
 }
 
@@ -292,7 +316,7 @@ function DadosTab({ dados, setDados, feedback }) {
   </div>;
 }
 
-function RelatoriosTab({ feedback }) {
+function RelatoriosTab({ feedback, t }) {
   const [tipo, setTipo] = useState("cliente");
   const [clientes, setClientes] = useState([]);
   const [processos, setProcessos] = useState([]);
@@ -397,21 +421,21 @@ function RelatoriosTab({ feedback }) {
   }
 
   return <div className="settings-stack">
-    <Section title="Gerar relatório" description="Selecione um cliente ou processo para gerar um relatório completo, pronto para impressão ou para salvar como PDF.">
+    <Section title={t("relatorios_gerar_titulo")} description={t("relatorios_gerar_desc")}>
       <div className="form-grid">
-        <Field label="Tipo de relatório">
+        <Field label={t("relatorios_tipo")}>
           <select value={tipo} onChange={(e) => setTipo(e.target.value)}>
-            <option value="cliente">Cliente</option>
-            <option value="processo">Processo</option>
+            <option value="cliente">{t("relatorios_cliente")}</option>
+            <option value="processo">{t("relatorios_processo")}</option>
           </select>
         </Field>
-        <Field label={tipo === "cliente" ? "Cliente" : "Processo"}>
+        <Field label={tipo === "cliente" ? t("relatorios_cliente") : t("relatorios_processo")}>
           <select
             value={selecionado}
             onChange={(e) => setSelecionado(e.target.value)}
             disabled={carregandoListas || opcoes.length === 0}
           >
-            <option value="">{carregandoListas ? "Carregando..." : "Selecione"}</option>
+            <option value="">{carregandoListas ? t("carregando") : t("relatorios_selecione")}</option>
             {opcoes.map((item) => (
               <option key={item.id} value={item.id}>
                 {tipo === "cliente" ? item.nome : `${item.numero_processo} — ${item.titulo}`}
@@ -421,53 +445,49 @@ function RelatoriosTab({ feedback }) {
         </Field>
       </div>
       {!carregandoListas && opcoes.length === 0 && (
-        <div className="empty-state">
-          {tipo === "cliente" ? "Nenhum cliente cadastrado ainda." : "Nenhum processo cadastrado ainda."}
-        </div>
+        <div className="empty-state">{t("nenhum_registro")}</div>
       )}
       <Actions>
         <button className="btn btn-primary btn-sm" onClick={gerar} disabled={gerando || !selecionado}>
           <FileBarChart size={14} />
-          {gerando ? "Gerando..." : "Gerar relatório"}
+          {gerando ? t("acao_gerando") : t("acao_gerar_relatorio")}
         </button>
       </Actions>
     </Section>
 
-    <Section title="Enviar por e-mail" description="Envie o mesmo relatório diretamente para o e-mail do cliente (ou qualquer outro destinatário).">
+    <Section title={t("relatorios_email_titulo")} description={t("relatorios_email_desc")}>
       <div className="form-grid">
-        <Field label="E-mail de destino" full>
+        <Field label={t("relatorios_email_label")} full>
           <input
             type="email"
             value={emailDestino}
             onChange={(e) => setEmailDestino(e.target.value)}
             placeholder="cliente@exemplo.com"
-            disabled={!selecionado}
           />
         </Field>
       </div>
       <Actions>
         <button className="btn btn-secondary btn-sm" onClick={enviarEmail} disabled={enviandoEmail || !selecionado}>
           <Mail size={14} />
-          {enviandoEmail ? "Enviando..." : "Enviar por e-mail"}
+          {enviandoEmail ? t("acao_salvando") : t("acao_enviar_email")}
         </button>
       </Actions>
     </Section>
 
-    <Section title="Enviar por WhatsApp" description="Abre o WhatsApp com os detalhes já preenchidos, prontos para revisar e enviar.">
+    <Section title={t("relatorios_whatsapp_titulo")} description={t("relatorios_whatsapp_desc")}>
       <div className="form-grid">
-        <Field label="Telefone de destino" full>
+        <Field label={t("relatorios_whatsapp_label")} full>
           <input
             value={telefoneDestino}
             onChange={(e) => setTelefoneDestino(e.target.value)}
             placeholder="(00) 00000-0000"
-            disabled={!selecionado}
           />
         </Field>
       </div>
       <Actions>
         <button className="btn btn-secondary btn-sm" onClick={enviarWhatsApp} disabled={!selecionado}>
           <MessageCircle size={14} />
-          Enviar por WhatsApp
+          {t("acao_enviar_whatsapp")}
         </button>
       </Actions>
     </Section>

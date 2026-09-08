@@ -5,7 +5,16 @@ import { usePanel, PANELS } from "@/contexts/PanelContext";
 import { useDashboardData } from "@/contexts/DashboardDataContext";
 import { usePreferences } from "@/contexts/PreferencesContext";
 import OverlayPanel from "@/components/shell/OverlayPanel";
+import Avatar from "@/components/ui/Avatar";
 import { getUsuarioLogado, registrarAdvogado, getAdvogados, normalizarLista } from "@/services/api";
+
+const FORM_ADVOGADO_INICIAL = {
+  nome: "",
+  email: "",
+  senha: "",
+  oab: "",
+  especialidade: "",
+};
 
 export default function AdvogadosPanel() {
   const { activePanel, panelTab } = usePanel();
@@ -13,13 +22,9 @@ export default function AdvogadosPanel() {
   const { t } = usePreferences();
   const usuario = getUsuarioLogado();
   const [advogados, setAdvogados] = useState([]);
-  const [formAdvogado, setFormAdvogado] = useState({
-    nome: "",
-    email: "",
-    senha: "",
-    oab: "",
-    especialidade: "",
-  });
+  const [formAdvogado, setFormAdvogado] = useState(FORM_ADVOGADO_INICIAL);
+  const [foto, setFoto] = useState(null);
+  const [documentoIdentidade, setDocumentoIdentidade] = useState(null);
   const [mensagem, setMensagem] = useState("");
   const [erro, setErro] = useState("");
   const [carregando, setCarregando] = useState(false);
@@ -48,15 +53,16 @@ export default function AdvogadosPanel() {
     setMensagem("");
 
     try {
-      await registrarAdvogado(formAdvogado);
+      const payload = new FormData();
+      Object.entries(formAdvogado).forEach(([campo, valor]) => payload.append(campo, valor));
+      if (foto) payload.append("foto", foto);
+      if (documentoIdentidade) payload.append("documento_identidade", documentoIdentidade);
+
+      await registrarAdvogado(payload);
       setMensagem("Advogado cadastrado com sucesso.");
-      setFormAdvogado({
-        nome: "",
-        email: "",
-        senha: "",
-        oab: "",
-        especialidade: "",
-      });
+      setFormAdvogado(FORM_ADVOGADO_INICIAL);
+      setFoto(null);
+      setDocumentoIdentidade(null);
       await carregarAdvogados();
       refreshDashboard().catch(() => {});
     } catch (error) {
@@ -149,6 +155,22 @@ export default function AdvogadosPanel() {
               required
             />
           </div>
+          <div className="form-field">
+            <label>Foto (opcional)</label>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => setFoto(e.target.files?.[0] || null)}
+            />
+          </div>
+          <div className="form-field">
+            <label>Documento (RG/CPF/CNH) — opcional</label>
+            <input
+              type="file"
+              accept="image/*,.pdf"
+              onChange={(e) => setDocumentoIdentidade(e.target.files?.[0] || null)}
+            />
+          </div>
           <div className="form-field full">
             <button className="btn btn-primary">{t("acao_cadastrar_advogado")}</button>
           </div>
@@ -158,6 +180,7 @@ export default function AdvogadosPanel() {
           <table>
             <thead>
               <tr>
+                <th></th>
                 <th>Nome</th>
                 <th>E-mail</th>
                 <th>OAB</th>
@@ -167,12 +190,13 @@ export default function AdvogadosPanel() {
             <tbody>
               {carregando && (
                 <tr>
-                  <td colSpan="4">Carregando...</td>
+                  <td colSpan="5">Carregando...</td>
                 </tr>
               )}
               {!carregando &&
                 advogados.map((adv) => (
                   <tr key={adv.id}>
+                    <td><Avatar src={adv.foto} nome={adv.nome} /></td>
                     <td>{adv.nome}</td>
                     <td>{adv.email}</td>
                     <td>{adv.oab}</td>
@@ -181,7 +205,7 @@ export default function AdvogadosPanel() {
                 ))}
               {!carregando && advogados.length === 0 && (
                 <tr>
-                  <td colSpan="4">Nenhum advogado cadastrado ainda.</td>
+                  <td colSpan="5">Nenhum advogado cadastrado ainda.</td>
                 </tr>
               )}
             </tbody>

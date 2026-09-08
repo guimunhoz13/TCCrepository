@@ -1,9 +1,17 @@
+import Link from "next/link";
+import { Scale } from "lucide-react";
 import RegisterForm from "@/components/forms/RegisterForm";
+import styles from "../login/page.module.css";
 
 export default function CadastroPage() {
   return (
     <main className="auth-page">
       <section className="auth-hero">
+        <Link href="/" className={styles.backBrand}>
+          <Scale size={18} />
+          LexOffice
+        </Link>
+
         <h1>Cada escritório, seu próprio ambiente.</h1>
         <p>
           Ao se cadastrar, você cria um escritório isolado no sistema. Outros

@@ -6,6 +6,7 @@ import { useDashboardData } from "@/contexts/DashboardDataContext";
 import { usePreferences } from "@/contexts/PreferencesContext";
 import OverlayPanel from "@/components/shell/OverlayPanel";
 import { MessageCircle } from "lucide-react";
+import Avatar from "@/components/ui/Avatar";
 import { abrirWhatsApp, montarMensagemCliente } from "@/utils/whatsapp";
 import {
   getClientes,
@@ -51,6 +52,8 @@ export default function ClientesPanel() {
   const { t } = usePreferences();
   const [clientes, setClientes] = useState([]);
   const [formulario, setFormulario] = useState(formularioInicial);
+  const [foto, setFoto] = useState(null);
+  const [documentoIdentidade, setDocumentoIdentidade] = useState(null);
   const [clienteEditando, setClienteEditando] = useState(null);
   const [carregando, setCarregando] = useState(true);
   const [salvando, setSalvando] = useState(false);
@@ -90,12 +93,16 @@ export default function ClientesPanel() {
         : "",
       ativo: cliente.ativo !== undefined ? cliente.ativo : true,
     });
+    setFoto(null);
+    setDocumentoIdentidade(null);
     setPanelTab("novo");
   }
 
   function handleCancelarEdicao() {
     setClienteEditando(null);
     setFormulario(formularioInicial);
+    setFoto(null);
+    setDocumentoIdentidade(null);
     setPanelTab("lista");
   }
 
@@ -106,10 +113,18 @@ export default function ClientesPanel() {
 
     try {
       setSalvando(true);
-      const payload = {
-        ...formulario,
-        data_nascimento: formulario.data_nascimento || null,
-      };
+      const payload = new FormData();
+      payload.append("nome", formulario.nome);
+      payload.append("cpf", formulario.cpf);
+      payload.append("email", formulario.email);
+      payload.append("telefone", formulario.telefone);
+      payload.append("endereco", formulario.endereco);
+      if (formulario.data_nascimento) {
+        payload.append("data_nascimento", formulario.data_nascimento);
+      }
+      payload.append("ativo", formulario.ativo);
+      if (foto) payload.append("foto", foto);
+      if (documentoIdentidade) payload.append("documento_identidade", documentoIdentidade);
 
       if (clienteEditando) {
         await updateCliente(clienteEditando.id, payload);
@@ -120,6 +135,8 @@ export default function ClientesPanel() {
       }
 
       setFormulario(formularioInicial);
+      setFoto(null);
+      setDocumentoIdentidade(null);
       setClienteEditando(null);
       setPanelTab("lista");
       await carregarClientes();
@@ -218,6 +235,36 @@ export default function ClientesPanel() {
               }
             />
           </div>
+          <div className="form-field">
+            <label>Foto (opcional)</label>
+            {clienteEditando?.foto && !foto && (
+              <img src={clienteEditando.foto} alt="" className="avatar-preview" />
+            )}
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => setFoto(e.target.files?.[0] || null)}
+            />
+          </div>
+          <div className="form-field">
+            <label>Documento (RG/CPF/CNH) — opcional</label>
+            {clienteEditando?.documento_identidade && !documentoIdentidade && (
+              <a
+                href={clienteEditando.documento_identidade}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn btn-secondary btn-sm"
+                style={{ marginBottom: 8, alignSelf: "flex-start" }}
+              >
+                Ver documento atual
+              </a>
+            )}
+            <input
+              type="file"
+              accept="image/*,.pdf"
+              onChange={(e) => setDocumentoIdentidade(e.target.files?.[0] || null)}
+            />
+          </div>
           <div
             className="form-field full"
             style={{ display: "flex", gap: "10px", marginTop: "8px" }}
@@ -246,6 +293,7 @@ export default function ClientesPanel() {
           <table>
             <thead>
               <tr>
+                <th></th>
                 <th>Nome</th>
                 <th>CPF</th>
                 <th>E-mail</th>
@@ -256,12 +304,13 @@ export default function ClientesPanel() {
             <tbody>
               {carregando && (
                 <tr>
-                  <td colSpan="5">Carregando...</td>
+                  <td colSpan="6">Carregando...</td>
                 </tr>
               )}
               {!carregando &&
                 clientes.map((cliente) => (
                   <tr key={cliente.id}>
+                    <td><Avatar src={cliente.foto} nome={cliente.nome} /></td>
                     <td>{cliente.nome}</td>
                     <td>{cliente.cpf}</td>
                     <td>{cliente.email}</td>
