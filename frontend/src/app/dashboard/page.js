@@ -8,6 +8,7 @@ import AppSidebar from "@/components/shell/AppSidebar";
 import TopBar from "@/components/shell/TopBar";
 import ChartsSection from "@/components/dashboard/ChartsSection";
 import MiniCalendar from "@/components/dashboard/MiniCalendar";
+import NoticiasSection from "@/components/dashboard/NoticiasSection";
 import ClientesPanel from "@/components/panels/ClientesPanel";
 import ProcessosPanel from "@/components/panels/ProcessosPanel";
 import AgendaPanel from "@/components/panels/AgendaPanel";
@@ -146,6 +147,8 @@ function DashboardContent() {
 
           <MiniCalendar eventos={agenda} onEventoCriado={refresh} />
         </div>
+
+        <NoticiasSection />
       </main>
 
       <ClientesPanel />

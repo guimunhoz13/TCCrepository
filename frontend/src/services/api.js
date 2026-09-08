@@ -76,6 +76,10 @@ export async function getDashboardStats() {
   return request("/dashboard/stats/");
 }
 
+export async function getNoticiasJuridicas() {
+  return request("/noticias/");
+}
+
 export async function getClientes() {
   return request("/clientes/");
 }
