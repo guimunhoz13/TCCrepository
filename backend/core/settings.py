@@ -5,8 +5,12 @@ Django settings for core project.
 from pathlib import Path
 import os
 
+from dotenv import load_dotenv
+
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+load_dotenv(BASE_DIR / ".env")
 
 
 SECRET_KEY = 'django-insecure-=eb#qqbxlkt$51anhk95b6t0d0b0fa-29kugu#7^8+axaztbv+'
@@ -103,22 +107,28 @@ WSGI_APPLICATION = 'core.wsgi.application'
 
 
 # DATABASE
+#
+# Banco compartilhado (Supabase/Postgres) — as credenciais reais vêm de
+# variáveis de ambiente (arquivo .env local, não versionado; ou variáveis
+# de ambiente reais em CI/produção), nunca ficam fixas no código. Copie
+# backend/.env.example para backend/.env e preencha com os dados do
+# projeto Supabase (Project Settings → Database).
 
 DATABASES = {
 
     'default': {
 
-        'ENGINE': 'django.db.backends.mysql',
+        'ENGINE': 'django.db.backends.postgresql',
 
-        'NAME': 'advocacia',
+        'NAME': os.environ.get('DB_NAME', 'postgres'),
 
-        'USER': 'root',
+        'USER': os.environ.get('DB_USER', 'postgres'),
 
-        'PASSWORD': 'root',
+        'PASSWORD': os.environ.get('DB_PASSWORD', ''),
 
-        'HOST': 'localhost',
+        'HOST': os.environ.get('DB_HOST', 'localhost'),
 
-        'PORT': '3306',
+        'PORT': os.environ.get('DB_PORT', '5432'),
 
     }
 
