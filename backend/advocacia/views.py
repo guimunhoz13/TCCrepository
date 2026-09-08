@@ -135,6 +135,7 @@ class LoginView(APIView):
                     "tipo_usuario": usuario.tipo_usuario,
                     "escritorio_id": usuario.escritorio_id,
                     "escritorio_nome": usuario.escritorio.nome,
+                    "foto": request.build_absolute_uri(usuario.foto.url) if usuario.foto else None,
                 },
             },
             status=status.HTTP_200_OK,
@@ -396,7 +397,7 @@ class AdvogadoRegistroView(APIView):
         )
 
         return Response(
-            AdvogadoSerializer(advogado).data,
+            AdvogadoSerializer(advogado, context={"request": request}).data,
             status=status.HTTP_201_CREATED,
         )
 
@@ -660,12 +661,14 @@ class ConfiguracoesView(APIView):
 
         membros = Usuario.objects.filter(escritorio=usuario.escritorio).order_by("nome")
 
+        contexto = {"request": request}
+
         return Response({
-            "usuario": UsuarioSerializer(usuario).data,
+            "usuario": UsuarioSerializer(usuario, context=contexto).data,
             "escritorio": EscritorioSerializer(usuario.escritorio).data,
             "preferencias": PreferenciasUsuarioSerializer(preferencias).data,
             "configuracao_escritorio": ConfiguracaoEscritorioSerializer(config_escritorio).data,
-            "membros": UsuarioSerializer(membros, many=True).data,
+            "membros": UsuarioSerializer(membros, many=True, context=contexto).data,
         })
 
 
@@ -695,9 +698,22 @@ class ConfiguracoesContaView(APIView):
         usuario.nome = nome
         usuario.email = email
         usuario.telefone = telefone
-        usuario.save(update_fields=["nome", "email", "telefone"])
+        campos_alterados = ["nome", "email", "telefone"]
 
-        return Response({"detail": "Dados pessoais atualizados com sucesso.", "usuario": UsuarioSerializer(usuario).data})
+        if "foto" in request.FILES:
+            usuario.foto = request.FILES["foto"]
+            campos_alterados.append("foto")
+
+        if "documento_identidade" in request.FILES:
+            usuario.documento_identidade = request.FILES["documento_identidade"]
+            campos_alterados.append("documento_identidade")
+
+        usuario.save(update_fields=campos_alterados)
+
+        return Response({
+            "detail": "Dados pessoais atualizados com sucesso.",
+            "usuario": UsuarioSerializer(usuario, context={"request": request}).data,
+        })
 
 
 class ConfiguracoesSenhaView(APIView):
@@ -828,7 +844,7 @@ def _montar_dados_relatorio_cliente(usuario, cliente_id, request=None):
     return {
         "gerado_em": timezone.now(),
         "escritorio": EscritorioSerializer(usuario.escritorio).data,
-        "cliente": ClienteSerializer(cliente).data,
+        "cliente": ClienteSerializer(cliente, context=contexto).data,
         "processos": ProcessoSerializer(processos, many=True, context=contexto).data,
         "documentos": DocumentoSerializer(documentos, many=True, context=contexto).data,
         "agenda": AgendaSerializer(agenda, many=True, context=contexto).data,
@@ -863,7 +879,7 @@ def _montar_dados_relatorio_processo(usuario, processo_id, request=None):
         "gerado_em": timezone.now(),
         "escritorio": EscritorioSerializer(usuario.escritorio).data,
         "processo": ProcessoSerializer(processo, context=contexto).data,
-        "cliente": ClienteSerializer(processo.cliente).data,
+        "cliente": ClienteSerializer(processo.cliente, context=contexto).data,
         "documentos": DocumentoSerializer(documentos, many=True, context=contexto).data,
         "movimentacoes": MovimentacaoSerializer(movimentacoes, many=True, context=contexto).data,
         "agenda": AgendaSerializer(agenda, many=True, context=contexto).data,
