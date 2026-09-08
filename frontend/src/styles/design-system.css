@@ -652,10 +652,10 @@ tbody tr:hover {
 .overlay-panel {
   position: fixed;
   top: 24px;
+  bottom: 24px;
   right: 24px;
   left: 300px;
   width: auto;
-  max-height: calc(100vh - 48px);
   background: var(--bg-glass);
   backdrop-filter: blur(18px);
   border: 1px solid var(--border-strong);
