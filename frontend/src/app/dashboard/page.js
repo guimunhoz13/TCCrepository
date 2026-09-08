@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Bot, RefreshCw } from "lucide-react";
+import { Bot, RefreshCw, Newspaper } from "lucide-react";
 import AppSidebar from "@/components/shell/AppSidebar";
 import TopBar from "@/components/shell/TopBar";
 import ChartsSection from "@/components/dashboard/ChartsSection";
@@ -71,10 +71,17 @@ function DashboardContent() {
         {erro && <div className="alert alert-error">{erro}</div>}
 
         <div className="dashboard-toolbar">
-          <Link href="/assistente-ia" className="btn btn-primary ai-quick-btn">
-            <Bot size={18} />
-            Abrir Assistente IA
-          </Link>
+          <div className="dashboard-toolbar-actions">
+            <Link href="/assistente-ia" className="btn btn-primary ai-quick-btn">
+              <Bot size={18} />
+              Abrir Assistente IA
+            </Link>
+
+            <a href="#noticias" className="btn btn-secondary">
+              <Newspaper size={18} />
+              Conferir notícias
+            </a>
+          </div>
 
           <span className={`sync-indicator ${pulsar ? "pulsing" : ""}`}>
             <RefreshCw size={13} className={pulsar ? "spin" : ""} />

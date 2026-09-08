@@ -81,7 +81,7 @@ export default function NoticiasSection() {
   const criminais = noticias.filter((item) => item.categoria_id === "criminal");
 
   return (
-    <section className="news-section">
+    <section className="news-section" id="noticias">
       <div className="news-section-header">
         <Newspaper size={18} />
         <h3>Notícias do mundo jurídico e criminal</h3>
