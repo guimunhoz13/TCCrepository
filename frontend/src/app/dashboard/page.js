@@ -103,7 +103,7 @@ function DashboardContent() {
           totais={totais}
         />
 
-        <div className="dashboard-grid" style={{ marginTop: 18 }}>
+        <div className="dashboard-grid dashboard-grid-inicio" style={{ marginTop: 18 }}>
           <div className="panel-card">
             <h3>Processos recentes</h3>
             <div className="table-wrap">

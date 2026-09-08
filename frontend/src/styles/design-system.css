@@ -2195,6 +2195,13 @@ body {
   flex-direction: column;
 }
 
+/* Na dashboard inicial, o card de "Processos recentes" não deve esticar
+   até a altura do calendário ao lado — ele deve caber no próprio
+   conteúdo e crescer conforme processos são cadastrados. */
+.dashboard-grid.dashboard-grid-inicio {
+  align-items: start;
+}
+
 .chart-legend-item {
   transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
