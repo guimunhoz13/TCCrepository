@@ -23,8 +23,20 @@ const formularioInicial = {
   telefone: "",
   endereco: "",
   data_nascimento: "",
+  rg: "",
+  estado_civil: "",
+  nacionalidade: "Brasileira",
   ativo: true,
 };
+
+const ESTADOS_CIVIS = [
+  { value: "", label: "Selecione" },
+  { value: "solteiro", label: "Solteiro(a)" },
+  { value: "casado", label: "Casado(a)" },
+  { value: "divorciado", label: "Divorciado(a)" },
+  { value: "viuvo", label: "Viúvo(a)" },
+  { value: "uniao_estavel", label: "União estável" },
+];
 
 function formatarCPF(valor) {
   const numeros = valor.replace(/\D/g, "").slice(0, 11);
@@ -91,6 +103,9 @@ export default function ClientesPanel() {
       data_nascimento: cliente.data_nascimento
         ? cliente.data_nascimento.slice(0, 10)
         : "",
+      rg: cliente.rg || "",
+      estado_civil: cliente.estado_civil || "",
+      nacionalidade: cliente.nacionalidade || "Brasileira",
       ativo: cliente.ativo !== undefined ? cliente.ativo : true,
     });
     setFoto(null);
@@ -122,6 +137,9 @@ export default function ClientesPanel() {
       if (formulario.data_nascimento) {
         payload.append("data_nascimento", formulario.data_nascimento);
       }
+      payload.append("rg", formulario.rg);
+      payload.append("estado_civil", formulario.estado_civil);
+      payload.append("nacionalidade", formulario.nacionalidade);
       payload.append("ativo", formulario.ativo);
       if (foto) payload.append("foto", foto);
       if (documentoIdentidade) payload.append("documento_identidade", documentoIdentidade);
@@ -232,6 +250,39 @@ export default function ClientesPanel() {
                   ...formulario,
                   data_nascimento: e.target.value,
                 })
+              }
+            />
+          </div>
+          <div className="form-field">
+            <label>RG</label>
+            <input
+              value={formulario.rg}
+              onChange={(e) =>
+                setFormulario({ ...formulario, rg: e.target.value })
+              }
+            />
+          </div>
+          <div className="form-field">
+            <label>Estado civil</label>
+            <select
+              value={formulario.estado_civil}
+              onChange={(e) =>
+                setFormulario({ ...formulario, estado_civil: e.target.value })
+              }
+            >
+              {ESTADOS_CIVIS.map((opcao) => (
+                <option key={opcao.value} value={opcao.value}>
+                  {opcao.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="form-field">
+            <label>Nacionalidade</label>
+            <input
+              value={formulario.nacionalidade}
+              onChange={(e) =>
+                setFormulario({ ...formulario, nacionalidade: e.target.value })
               }
             />
           </div>

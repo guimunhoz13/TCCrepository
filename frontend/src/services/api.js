@@ -158,6 +158,13 @@ export async function getAdvogados() {
   return request("/advogados/");
 }
 
+export async function updateAdvogado(id, data) {
+  return request(`/advogados/${id}/`, {
+    method: "PATCH",
+    body: corpoRequisicao(data),
+  });
+}
+
 export async function enviarMensagemIA({ mensagem, historico = [], contexto = {} }) {
   return request("/assistente-ia/", {
     method: "POST",
