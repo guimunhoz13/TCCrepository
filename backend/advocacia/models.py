@@ -1,6 +1,15 @@
 from django.db import models
 
 
+ESTADOS_CIVIS = (
+    ("solteiro", "Solteiro(a)"),
+    ("casado", "Casado(a)"),
+    ("divorciado", "Divorciado(a)"),
+    ("viuvo", "Viúvo(a)"),
+    ("uniao_estavel", "União estável"),
+)
+
+
 class Escritorio(models.Model):
 
     nome = models.CharField(max_length=255)
@@ -40,6 +49,11 @@ class Usuario(models.Model):
     tipo_usuario = models.CharField(max_length=20, choices=TIPOS_USUARIO)
     foto = models.ImageField(upload_to="usuarios/fotos/", null=True, blank=True)
     documento_identidade = models.FileField(upload_to="usuarios/documentos/", null=True, blank=True)
+    cpf = models.CharField(max_length=14, blank=True, default="")
+    rg = models.CharField(max_length=20, blank=True, default="")
+    data_nascimento = models.DateField(null=True, blank=True)
+    estado_civil = models.CharField(max_length=20, choices=ESTADOS_CIVIS, blank=True, default="")
+    nacionalidade = models.CharField(max_length=100, blank=True, default="Brasileira")
     ativo = models.BooleanField(default=True)
     criado_em = models.DateTimeField(auto_now_add=True)
 
@@ -61,6 +75,9 @@ class Cliente(models.Model):
     telefone = models.CharField(max_length=20)
     endereco = models.CharField(max_length=255)
     data_nascimento = models.DateField(null=True, blank=True)
+    rg = models.CharField(max_length=20, blank=True, default="")
+    estado_civil = models.CharField(max_length=20, choices=ESTADOS_CIVIS, blank=True, default="")
+    nacionalidade = models.CharField(max_length=100, blank=True, default="Brasileira")
     foto = models.ImageField(upload_to="clientes/fotos/", null=True, blank=True)
     documento_identidade = models.FileField(upload_to="clientes/documentos/", null=True, blank=True)
     ativo = models.BooleanField(default=True)

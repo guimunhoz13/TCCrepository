@@ -15,6 +15,7 @@ from .models import (
     Agenda,
     PreferenciasUsuario,
     ConfiguracaoEscritorio,
+    ESTADOS_CIVIS,
 )
 
 
@@ -106,6 +107,11 @@ class UsuarioSerializer(serializers.ModelSerializer):
             "tipo_usuario",
             "foto",
             "documento_identidade",
+            "cpf",
+            "rg",
+            "data_nascimento",
+            "estado_civil",
+            "nacionalidade",
             "ativo",
             "criado_em",
         ]
@@ -136,10 +142,16 @@ class AdvogadoRegistroSerializer(serializers.Serializer):
     nome = serializers.CharField(max_length=255)
     email = serializers.EmailField(validators=[validar_email_real])
     senha = serializers.CharField(write_only=True, min_length=6)
+    telefone = serializers.CharField(max_length=20, required=False, allow_blank=True)
     oab = serializers.CharField(max_length=30)
     especialidade = serializers.CharField(max_length=255)
     foto = serializers.ImageField(required=False, allow_null=True)
     documento_identidade = serializers.FileField(required=False, allow_null=True)
+    cpf = serializers.CharField(max_length=14, required=False, allow_blank=True)
+    rg = serializers.CharField(max_length=20, required=False, allow_blank=True)
+    data_nascimento = serializers.DateField(required=False, allow_null=True)
+    estado_civil = serializers.ChoiceField(choices=ESTADOS_CIVIS, required=False, allow_blank=True)
+    nacionalidade = serializers.CharField(max_length=100, required=False, allow_blank=True)
 
     def validate_email(self, value):
         if Usuario.objects.filter(email__iexact=value).exists():
@@ -154,8 +166,14 @@ class AdvogadoRegistroSerializer(serializers.Serializer):
             email=validated_data["email"],
             senha=make_password(validated_data["senha"]),
             tipo_usuario="advogado",
+            telefone=validated_data.get("telefone", ""),
             foto=validated_data.get("foto"),
             documento_identidade=validated_data.get("documento_identidade"),
+            cpf=validated_data.get("cpf", ""),
+            rg=validated_data.get("rg", ""),
+            data_nascimento=validated_data.get("data_nascimento"),
+            estado_civil=validated_data.get("estado_civil", ""),
+            nacionalidade=validated_data.get("nacionalidade") or "Brasileira",
         )
 
         advogado = Advogado.objects.create(
@@ -182,6 +200,9 @@ class ClienteSerializer(serializers.ModelSerializer):
             "telefone",
             "endereco",
             "data_nascimento",
+            "rg",
+            "estado_civil",
+            "nacionalidade",
             "foto",
             "documento_identidade",
             "ativo",
@@ -192,9 +213,24 @@ class ClienteSerializer(serializers.ModelSerializer):
 
 class AdvogadoSerializer(serializers.ModelSerializer):
 
-    nome = serializers.CharField(source="usuario.nome", read_only=True)
+    nome = serializers.CharField(source="usuario.nome")
     email = serializers.EmailField(source="usuario.email", read_only=True)
-    foto = serializers.ImageField(source="usuario.foto", read_only=True)
+    telefone = serializers.CharField(source="usuario.telefone", required=False, allow_blank=True)
+    foto = serializers.ImageField(source="usuario.foto", required=False, allow_null=True)
+    documento_identidade = serializers.FileField(
+        source="usuario.documento_identidade", required=False, allow_null=True
+    )
+    cpf = serializers.CharField(source="usuario.cpf", required=False, allow_blank=True)
+    rg = serializers.CharField(source="usuario.rg", required=False, allow_blank=True)
+    data_nascimento = serializers.DateField(
+        source="usuario.data_nascimento", required=False, allow_null=True
+    )
+    estado_civil = serializers.ChoiceField(
+        source="usuario.estado_civil", choices=ESTADOS_CIVIS, required=False, allow_blank=True
+    )
+    nacionalidade = serializers.CharField(
+        source="usuario.nacionalidade", required=False, allow_blank=True
+    )
 
     class Meta:
         model = Advogado
@@ -203,11 +239,26 @@ class AdvogadoSerializer(serializers.ModelSerializer):
             "usuario",
             "nome",
             "email",
+            "telefone",
             "foto",
+            "documento_identidade",
+            "cpf",
+            "rg",
+            "data_nascimento",
+            "estado_civil",
+            "nacionalidade",
             "oab",
             "especialidade",
         ]
-        read_only_fields = ["id", "nome", "email"]
+        read_only_fields = ["id", "usuario", "email"]
+
+    def update(self, instance, validated_data):
+        dados_usuario = validated_data.pop("usuario", {})
+        if dados_usuario:
+            for campo, valor in dados_usuario.items():
+                setattr(instance.usuario, campo, valor)
+            instance.usuario.save()
+        return super().update(instance, validated_data)
 
 
 class ProcessoSerializer(serializers.ModelSerializer):
