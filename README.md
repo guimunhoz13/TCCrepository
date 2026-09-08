@@ -14,7 +14,8 @@ Tecnologia em Desenvolvimento de Sistemas.
 ## Stack
 
 - **Backend**: Django 6 + Django REST Framework, autenticação via JWT
-  (`djangorestframework_simplejwt`), MySQL.
+  (`djangorestframework_simplejwt`), Postgres (hospedado no
+  [Supabase](https://supabase.com), banco compartilhado pela dupla).
 - **Frontend**: Next.js 16 (App Router) + React 19, CSS puro (design system
   próprio).
 
@@ -33,12 +34,17 @@ frontend/   Aplicação Next.js (src/app, src/components, src/services)
 cd backend
 python -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
+cp .env.example .env   # preencha com os dados do projeto Supabase (só na 1ª vez)
 python manage.py migrate
 python manage.py runserver
 ```
 
-Requer um MySQL local rodando (usuário/senha/banco configurados em
-`backend/core/settings.py`).
+O banco (Postgres) é o mesmo projeto Supabase para toda a dupla — as
+credenciais ficam em `backend/.env` (não versionado; veja
+`backend/.env.example`). Peça a string de conexão pra quem já tiver
+criado o projeto no Supabase, ou crie um novo em
+[supabase.com](https://supabase.com) → New Project → Project Settings →
+Database → "Direct connection", e compartilhe os dados com a dupla.
 
 ### Frontend
 
@@ -63,7 +69,8 @@ cd frontend && npm test
 A cada push/PR para `main`, o GitHub Actions ([`.github/workflows/ci.yml`](.github/workflows/ci.yml))
 roda automaticamente:
 
-- **Backend**: instala as dependências, roda os testes contra um MySQL de
-  serviço e valida o projeto (`manage.py check`).
+- **Backend**: instala as dependências, roda os testes contra um Postgres
+  de serviço (efêmero, não é o Supabase do projeto) e valida o projeto
+  (`manage.py check`).
 - **Frontend**: instala as dependências, roda os testes (Jest) e faz o
   build de produção (`next build`).
