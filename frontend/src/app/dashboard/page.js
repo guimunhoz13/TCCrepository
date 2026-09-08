@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Bot, RefreshCw, Newspaper } from "lucide-react";
 import AppSidebar from "@/components/shell/AppSidebar";
 import TopBar from "@/components/shell/TopBar";
+import AppFooter from "@/components/shell/AppFooter";
 import ChartsSection from "@/components/dashboard/ChartsSection";
 import MiniCalendar from "@/components/dashboard/MiniCalendar";
 import NoticiasSection from "@/components/dashboard/NoticiasSection";
@@ -156,6 +157,8 @@ function DashboardContent() {
         </div>
 
         <NoticiasSection />
+
+        <AppFooter />
       </main>
 
       <ClientesPanel />

@@ -2361,3 +2361,29 @@ tbody tr {
     grid-template-columns: 1fr;
   }
 }
+
+/* ==========================================================================
+   RODAPÉ — usado nas páginas internas (dashboard e demais telas do app)
+   ========================================================================== */
+
+.app-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 40px;
+  padding: 28px 0 4px;
+  border-top: 1px solid var(--border);
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  flex-wrap: wrap;
+}
+
+.app-footer-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: "Fraunces", serif;
+  font-weight: 600;
+  color: var(--text-primary);
+}
