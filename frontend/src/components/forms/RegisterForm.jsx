@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { registrarEscritorio } from "@/services/api";
 import { formatarCNPJ, formatarTelefone } from "@/utils/mascaras";
+import { senhaAtendeRequisitos } from "@/utils/senha";
+import RequisitosSenha from "@/components/ui/RequisitosSenha";
 
 export default function RegisterForm() {
   const router = useRouter();
@@ -30,6 +32,11 @@ export default function RegisterForm() {
   async function handleSubmit(event) {
     event.preventDefault();
     setErro("");
+
+    if (!senhaAtendeRequisitos(form.senha_admin)) {
+      setErro("A senha do admin não atende a todos os requisitos obrigatórios.");
+      return;
+    }
 
     try {
       setCarregando(true);
@@ -146,13 +153,14 @@ export default function RegisterForm() {
             onChange={(e) => alterarCampo("senha_admin", e.target.value)}
             required
           />
+          <RequisitosSenha senha={form.senha_admin} />
         </div>
       </div>
 
       <button
         className="btn btn-primary"
         style={{ width: "100%", marginTop: 20 }}
-        disabled={carregando}
+        disabled={carregando || !senhaAtendeRequisitos(form.senha_admin)}
       >
         {carregando ? "Cadastrando..." : "Criar escritório"}
       </button>

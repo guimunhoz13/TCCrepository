@@ -328,7 +328,7 @@ class EscritorioRegistroAPITestCase(APITestCase):
             "endereco_escritorio": "Rua Nova, 200",
             "nome_admin": "Novo Admin",
             "email_admin": "admin@novoescritorio.com",
-            "senha_admin": "senha12345",
+            "senha_admin": "Senha123!",
         }
         dados.update(overrides)
         return dados
@@ -368,6 +368,15 @@ class EscritorioRegistroAPITestCase(APITestCase):
         )
         self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("telefone_escritorio", resposta.data)
+
+    def test_registro_com_senha_fraca_e_rejeitado(self, _mock_mx):
+        resposta = self.client.post(
+            "/api/escritorios/registrar/",
+            self._payload_valido(senha_admin="senha12345"),  # sem maiúscula/especial
+            format="json",
+        )
+        self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("senha_admin", resposta.data)
 
 
 @patch("advocacia.validators._dominio_tem_mx", return_value=True)
@@ -439,7 +448,7 @@ class ValidacaoDeDocumentosAPITestCase(APITestCase):
             {
                 "nome": "Advogado Teste",
                 "email": "advogado.teste@gmail.com",
-                "senha": "senha12345",
+                "senha": "Senha123!",
                 "oab": "123456",  # falta a UF
                 "especialidade": "Civil",
             },
@@ -455,10 +464,26 @@ class ValidacaoDeDocumentosAPITestCase(APITestCase):
             {
                 "nome": "Advogado Teste",
                 "email": "advogado.valido@gmail.com",
-                "senha": "senha12345",
+                "senha": "Senha123!",
                 "oab": "123456/SP",
                 "especialidade": "Civil",
             },
             format="json",
         )
         self.assertEqual(resposta.status_code, status.HTTP_201_CREATED)
+
+    def test_advogado_com_senha_fraca_e_rejeitado(self, _mock_mx):
+        self._autenticar_como_admin()
+        resposta = self.client.post(
+            "/api/advogados/registrar/",
+            {
+                "nome": "Advogado Teste",
+                "email": "advogado.senhafraca@gmail.com",
+                "senha": "senha12345",  # sem maiúscula/especial
+                "oab": "654321/SP",
+                "especialidade": "Civil",
+            },
+            format="json",
+        )
+        self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("senha", resposta.data)

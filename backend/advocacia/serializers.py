@@ -10,6 +10,7 @@ from .validators import (
     validar_telefone,
     validar_oab,
     validar_rg,
+    validar_senha_forte,
 )
 from .models import (
     Escritorio,
@@ -57,7 +58,7 @@ class EscritorioRegistroSerializer(serializers.Serializer):
 
     nome_admin = serializers.CharField(max_length=255)
     email_admin = serializers.EmailField(validators=[validar_email_real])
-    senha_admin = serializers.CharField(write_only=True, min_length=6)
+    senha_admin = serializers.CharField(write_only=True, validators=[validar_senha_forte])
 
     def validate_cnpj(self, value):
         validar_cnpj(value)
@@ -154,7 +155,7 @@ class AdvogadoRegistroSerializer(serializers.Serializer):
 
     nome = serializers.CharField(max_length=255)
     email = serializers.EmailField(validators=[validar_email_real])
-    senha = serializers.CharField(write_only=True, min_length=6)
+    senha = serializers.CharField(write_only=True, validators=[validar_senha_forte])
     telefone = serializers.CharField(
         max_length=20, required=False, allow_blank=True, validators=[validar_telefone]
     )

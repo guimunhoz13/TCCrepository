@@ -29,6 +29,8 @@ import {
 import { gerarHtmlRelatorioCliente, gerarHtmlRelatorioProcesso, abrirRelatorio } from "@/utils/relatorio";
 import { abrirWhatsApp, montarMensagemCliente, montarMensagemProcesso } from "@/utils/whatsapp";
 import { formatarCNPJ, formatarTelefone } from "@/utils/mascaras";
+import { senhaAtendeRequisitos } from "@/utils/senha";
+import RequisitosSenha from "@/components/ui/RequisitosSenha";
 import Avatar from "@/components/ui/Avatar";
 
 const TABS = [
@@ -168,6 +170,10 @@ function ContaTab({ usuario, setDados, feedback, t }) {
   }
 
   async function salvarSenha() {
+    if (!senhaAtendeRequisitos(senha.nova_senha)) {
+      feedback("A nova senha não atende a todos os requisitos obrigatórios.", true);
+      return;
+    }
     try {
       setSalvando(true);
       const res = await alterarSenha(senha);
@@ -206,10 +212,13 @@ function ContaTab({ usuario, setDados, feedback, t }) {
     <Section title="Senha" description="A nova senha deve ter pelo menos 8 caracteres, 1 letra maiúscula, 1 número e 1 caractere especial.">
       <div className="form-grid">
         <Field label="Senha atual" full><div className="password-field"><input type={showPassword ? "text" : "password"} value={senha.senha_atual} onChange={(e) => setSenha({ ...senha, senha_atual: e.target.value })} /><button type="button" className="password-toggle" onClick={() => setShowPassword(!showPassword)}>{showPassword ? <EyeOff size={16}/> : <Eye size={16}/>}</button></div></Field>
-        <Field label="Nova senha"><input type={showPassword ? "text" : "password"} value={senha.nova_senha} onChange={(e) => setSenha({ ...senha, nova_senha: e.target.value })} /></Field>
+        <Field label="Nova senha">
+          <input type={showPassword ? "text" : "password"} value={senha.nova_senha} onChange={(e) => setSenha({ ...senha, nova_senha: e.target.value })} />
+          <RequisitosSenha senha={senha.nova_senha} />
+        </Field>
         <Field label="Confirmar nova senha"><input type={showPassword ? "text" : "password"} value={senha.confirmar_senha} onChange={(e) => setSenha({ ...senha, confirmar_senha: e.target.value })} /></Field>
       </div>
-      <Actions><button className="btn btn-secondary btn-sm" onClick={salvarSenha} disabled={salvando}>Alterar senha</button></Actions>
+      <Actions><button className="btn btn-secondary btn-sm" onClick={salvarSenha} disabled={salvando || !senhaAtendeRequisitos(senha.nova_senha)}>Alterar senha</button></Actions>
     </Section>
   </div>;
 }
