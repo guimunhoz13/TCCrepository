@@ -7,6 +7,16 @@ import { usePreferences } from "@/contexts/PreferencesContext";
 import OverlayPanel from "@/components/shell/OverlayPanel";
 import Avatar from "@/components/ui/Avatar";
 import {
+  formatarCPF,
+  formatarTelefone,
+  formatarRG,
+  formatarOAB,
+  validarCPF,
+  validarTelefone,
+  validarRG,
+  validarOAB,
+} from "@/utils/mascaras";
+import {
   getUsuarioLogado,
   registrarAdvogado,
   updateAdvogado,
@@ -78,11 +88,11 @@ export default function AdvogadosPanel() {
       nome: advogado.nome || "",
       email: advogado.email || "",
       senha: "",
-      telefone: advogado.telefone || "",
-      oab: advogado.oab || "",
+      telefone: advogado.telefone ? formatarTelefone(advogado.telefone) : "",
+      oab: advogado.oab ? formatarOAB(advogado.oab) : "",
       especialidade: advogado.especialidade || "",
-      cpf: advogado.cpf || "",
-      rg: advogado.rg || "",
+      cpf: advogado.cpf ? formatarCPF(advogado.cpf) : "",
+      rg: advogado.rg ? formatarRG(advogado.rg) : "",
       data_nascimento: advogado.data_nascimento
         ? advogado.data_nascimento.slice(0, 10)
         : "",
@@ -106,6 +116,24 @@ export default function AdvogadosPanel() {
     event.preventDefault();
     setErro("");
     setMensagem("");
+
+    if (formAdvogado.telefone && !validarTelefone(formAdvogado.telefone)) {
+      setErro("Telefone inválido. Informe DDD + número (10 ou 11 dígitos).");
+      return;
+    }
+    if (!validarOAB(formAdvogado.oab)) {
+      setErro("OAB inválida. Informe o número de inscrição e a seccional (ex.: 123456/SP).");
+      return;
+    }
+    if (formAdvogado.cpf && !validarCPF(formAdvogado.cpf)) {
+      setErro("CPF inválido. Informe os 11 dígitos corretamente.");
+      return;
+    }
+    if (formAdvogado.rg && !validarRG(formAdvogado.rg)) {
+      setErro("RG inválido. Informe entre 7 e 9 dígitos.");
+      return;
+    }
+
     setSalvando(true);
 
     try {
@@ -213,7 +241,10 @@ export default function AdvogadosPanel() {
             <input
               value={formAdvogado.telefone}
               onChange={(e) =>
-                setFormAdvogado({ ...formAdvogado, telefone: e.target.value })
+                setFormAdvogado({
+                  ...formAdvogado,
+                  telefone: formatarTelefone(e.target.value),
+                })
               }
               placeholder="(00) 00000-0000"
             />
@@ -223,8 +254,12 @@ export default function AdvogadosPanel() {
             <input
               value={formAdvogado.oab}
               onChange={(e) =>
-                setFormAdvogado({ ...formAdvogado, oab: e.target.value })
+                setFormAdvogado({
+                  ...formAdvogado,
+                  oab: formatarOAB(e.target.value),
+                })
               }
+              placeholder="123456/SP"
               required
             />
           </div>
@@ -246,7 +281,10 @@ export default function AdvogadosPanel() {
             <input
               value={formAdvogado.cpf}
               onChange={(e) =>
-                setFormAdvogado({ ...formAdvogado, cpf: e.target.value })
+                setFormAdvogado({
+                  ...formAdvogado,
+                  cpf: formatarCPF(e.target.value),
+                })
               }
             />
           </div>
@@ -255,7 +293,10 @@ export default function AdvogadosPanel() {
             <input
               value={formAdvogado.rg}
               onChange={(e) =>
-                setFormAdvogado({ ...formAdvogado, rg: e.target.value })
+                setFormAdvogado({
+                  ...formAdvogado,
+                  rg: formatarRG(e.target.value),
+                })
               }
             />
           </div>

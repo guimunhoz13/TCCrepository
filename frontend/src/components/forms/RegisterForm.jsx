@@ -4,6 +4,12 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { registrarEscritorio } from "@/services/api";
+import {
+  formatarCNPJ,
+  formatarTelefone,
+  validarCNPJ,
+  validarTelefone,
+} from "@/utils/mascaras";
 
 export default function RegisterForm() {
   const router = useRouter();
@@ -29,6 +35,15 @@ export default function RegisterForm() {
   async function handleSubmit(event) {
     event.preventDefault();
     setErro("");
+
+    if (!validarCNPJ(form.cnpj)) {
+      setErro("CNPJ inválido. Informe os 14 dígitos corretamente.");
+      return;
+    }
+    if (!validarTelefone(form.telefone_escritorio)) {
+      setErro("Telefone inválido. Informe DDD + número (10 ou 11 dígitos).");
+      return;
+    }
 
     try {
       setCarregando(true);
@@ -69,7 +84,8 @@ export default function RegisterForm() {
           <label>CNPJ</label>
           <input
             value={form.cnpj}
-            onChange={(e) => alterarCampo("cnpj", e.target.value)}
+            onChange={(e) => alterarCampo("cnpj", formatarCNPJ(e.target.value))}
+            placeholder="00.000.000/0000-00"
             required
           />
         </div>
@@ -78,8 +94,9 @@ export default function RegisterForm() {
           <input
             value={form.telefone_escritorio}
             onChange={(e) =>
-              alterarCampo("telefone_escritorio", e.target.value)
+              alterarCampo("telefone_escritorio", formatarTelefone(e.target.value))
             }
+            placeholder="(00) 00000-0000"
             required
           />
         </div>

@@ -14,7 +14,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from django.core.exceptions import ValidationError as DjangoValidationError
 
 from .mixins import EscritorioScopedMixin, get_usuario_from_request
-from .validators import validar_email_real
+from .validators import validar_email_real, telefone_valido
 from .emails import (
     enviar_email,
     montar_email_relatorio_cliente,
@@ -695,6 +695,12 @@ class ConfiguracoesContaView(APIView):
         if Usuario.objects.filter(email__iexact=email).exclude(id=usuario.id).exists():
             return Response({"email": ["E-mail já cadastrado."]}, status=status.HTTP_400_BAD_REQUEST)
 
+        if telefone and not telefone_valido(telefone):
+            return Response(
+                {"telefone": ["Telefone inválido. Informe DDD + número (10 ou 11 dígitos)."]},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         usuario.nome = nome
         usuario.email = email
         usuario.telefone = telefone
@@ -770,6 +776,12 @@ class ConfiguracoesEscritorioView(APIView):
                 validar_email_real(request.data["email"])
             except DjangoValidationError as exc:
                 return Response({"email": list(exc.messages)}, status=status.HTTP_400_BAD_REQUEST)
+
+        if "telefone" in request.data and request.data["telefone"] and not telefone_valido(request.data["telefone"]):
+            return Response(
+                {"telefone": ["Telefone inválido. Informe DDD + número (10 ou 11 dígitos)."]},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         campos = ["nome", "email", "telefone", "endereco", "cidade", "estado"]
         for campo in campos:

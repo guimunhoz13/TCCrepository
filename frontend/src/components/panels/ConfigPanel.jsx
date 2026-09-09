@@ -28,6 +28,7 @@ import {
 } from "@/services/api";
 import { gerarHtmlRelatorioCliente, gerarHtmlRelatorioProcesso, abrirRelatorio } from "@/utils/relatorio";
 import { abrirWhatsApp, montarMensagemCliente, montarMensagemProcesso } from "@/utils/whatsapp";
+import { formatarCNPJ, formatarTelefone, validarTelefone } from "@/utils/mascaras";
 import Avatar from "@/components/ui/Avatar";
 
 const TABS = [
@@ -141,13 +142,17 @@ export default function ConfigPanel() {
 }
 
 function ContaTab({ usuario, setDados, feedback, t }) {
-  const [form, setForm] = useState({ nome: usuario.nome || "", email: usuario.email || "", telefone: usuario.telefone || "" });
+  const [form, setForm] = useState({ nome: usuario.nome || "", email: usuario.email || "", telefone: usuario.telefone ? formatarTelefone(usuario.telefone) : "" });
   const [foto, setFoto] = useState(null);
   const [senha, setSenha] = useState({ senha_atual: "", nova_senha: "", confirmar_senha: "" });
   const [showPassword, setShowPassword] = useState(false);
   const [salvando, setSalvando] = useState(false);
 
   async function salvarConta() {
+    if (form.telefone && !validarTelefone(form.telefone)) {
+      feedback("Telefone inválido. Informe DDD + número (10 ou 11 dígitos).", true);
+      return;
+    }
     try {
       setSalvando(true);
       const payload = new FormData();
@@ -196,7 +201,7 @@ function ContaTab({ usuario, setDados, feedback, t }) {
       <div className="form-grid">
         <Field label="Nome"><input value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} /></Field>
         <Field label="E-mail"><input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></Field>
-        <Field label="Telefone"><input value={form.telefone} onChange={(e) => setForm({ ...form, telefone: e.target.value })} placeholder="(00) 00000-0000" /></Field>
+        <Field label="Telefone"><input value={form.telefone} onChange={(e) => setForm({ ...form, telefone: formatarTelefone(e.target.value) })} placeholder="(00) 00000-0000" /></Field>
         <Field label="Cargo"><input value={usuario.tipo_usuario === "admin" ? "Administrador" : "Advogado"} disabled /></Field>
       </div>
       <Actions><button className="btn btn-primary btn-sm" onClick={salvarConta} disabled={salvando}>Salvar alterações</button></Actions>
@@ -219,6 +224,10 @@ function EscritorioTab({ dados, setDados, feedback }) {
   const [form, setForm] = useState({ ...dados.escritorio, timezone: cfg.timezone || "America/Sao_Paulo", formato_data: cfg.formato_data || "dmy" });
 
   async function salvar() {
+    if (form.telefone && !validarTelefone(form.telefone)) {
+      feedback("Telefone inválido. Informe DDD + número (10 ou 11 dígitos).", true);
+      return;
+    }
     try {
       const res = await updateEscritorio(form);
       setDados((d) => ({ ...d, escritorio: res.escritorio, configuracao_escritorio: res.configuracao_escritorio }));
@@ -232,9 +241,9 @@ function EscritorioTab({ dados, setDados, feedback }) {
     <Section title="Dados do escritório" description={admin ? "Somente administradores podem alterar estes dados." : "Visualização dos dados do escritório."}>
       <div className="form-grid">
         <Field label="Nome do escritório"><input value={form.nome || ""} disabled={!admin} onChange={(e) => setForm({ ...form, nome: e.target.value })}/></Field>
-        <Field label="CNPJ"><input value={form.cnpj || ""} disabled /></Field>
+        <Field label="CNPJ"><input value={form.cnpj ? formatarCNPJ(form.cnpj) : ""} disabled /></Field>
         <Field label="E-mail"><input value={form.email || ""} disabled={!admin} onChange={(e) => setForm({ ...form, email: e.target.value })}/></Field>
-        <Field label="Telefone"><input value={form.telefone || ""} disabled={!admin} onChange={(e) => setForm({ ...form, telefone: e.target.value })}/></Field>
+        <Field label="Telefone"><input value={form.telefone || ""} disabled={!admin} onChange={(e) => setForm({ ...form, telefone: formatarTelefone(e.target.value) })}/></Field>
         <Field label="Endereço" full><input value={form.endereco || ""} disabled={!admin} onChange={(e) => setForm({ ...form, endereco: e.target.value })}/></Field>
         <Field label="Cidade"><input value={form.cidade || ""} disabled={!admin} onChange={(e) => setForm({ ...form, cidade: e.target.value })}/></Field>
         <Field label="Estado"><input maxLength={2} value={form.estado || ""} disabled={!admin} onChange={(e) => setForm({ ...form, estado: e.target.value.toUpperCase() })}/></Field>
@@ -349,11 +358,11 @@ function RelatoriosTab({ feedback, t }) {
     const item = opcoes.find((o) => String(o.id) === String(selecionado));
     if (tipo === "cliente") {
       setEmailDestino(item?.email || "");
-      setTelefoneDestino(item?.telefone || "");
+      setTelefoneDestino(item?.telefone ? formatarTelefone(item.telefone) : "");
     } else {
       setEmailDestino(item?.cliente_email || "");
       const clienteDoProcesso = clientes.find((c) => c.id === item?.cliente);
-      setTelefoneDestino(clienteDoProcesso?.telefone || "");
+      setTelefoneDestino(clienteDoProcesso?.telefone ? formatarTelefone(clienteDoProcesso.telefone) : "");
     }
   }, [selecionado, tipo]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -408,6 +417,10 @@ function RelatoriosTab({ feedback, t }) {
     }
     if (!telefoneDestino) {
       feedback("Informe o telefone de destino.", true);
+      return;
+    }
+    if (!validarTelefone(telefoneDestino)) {
+      feedback("Telefone inválido. Informe DDD + número (10 ou 11 dígitos).", true);
       return;
     }
     const item = opcoes.find((o) => String(o.id) === String(selecionado));
@@ -479,7 +492,7 @@ function RelatoriosTab({ feedback, t }) {
         <Field label={t("relatorios_whatsapp_label")} full>
           <input
             value={telefoneDestino}
-            onChange={(e) => setTelefoneDestino(e.target.value)}
+            onChange={(e) => setTelefoneDestino(formatarTelefone(e.target.value))}
             placeholder="(00) 00000-0000"
           />
         </Field>

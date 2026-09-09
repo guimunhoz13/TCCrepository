@@ -51,6 +51,72 @@ def _dominio_tem_mx(dominio):
     return resultado
 
 
+UFS_VALIDAS = {
+    "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA", "MT", "MS",
+    "MG", "PA", "PB", "PR", "PE", "PI", "RJ", "RN", "RS", "RO", "RR", "SC",
+    "SP", "SE", "TO",
+}
+
+
+def _somente_digitos(valor):
+    return re.sub(r"\D", "", valor or "")
+
+
+def cpf_valido(valor):
+    numeros = _somente_digitos(valor)
+    if len(numeros) != 11 or numeros == numeros[0] * 11:
+        return False
+
+    def calcular_digito(base):
+        soma = sum(
+            int(digito) * peso
+            for digito, peso in zip(base, range(len(base) + 1, 1, -1))
+        )
+        resto = (soma * 10) % 11
+        return 0 if resto == 10 else resto
+
+    digito1 = calcular_digito(numeros[:9])
+    digito2 = calcular_digito(numeros[:9] + str(digito1))
+    return numeros == numeros[:9] + str(digito1) + str(digito2)
+
+
+def cnpj_valido(valor):
+    numeros = _somente_digitos(valor)
+    if len(numeros) != 14 or numeros == numeros[0] * 14:
+        return False
+
+    def calcular_digito(base):
+        pesos = (
+            [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]
+            if len(base) == 12
+            else [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]
+        )
+        soma = sum(int(digito) * peso for digito, peso in zip(base, pesos))
+        resto = soma % 11
+        return 0 if resto < 2 else 11 - resto
+
+    digito1 = calcular_digito(numeros[:12])
+    digito2 = calcular_digito(numeros[:12] + str(digito1))
+    return numeros == numeros[:12] + str(digito1) + str(digito2)
+
+
+def telefone_valido(valor):
+    numeros = _somente_digitos(valor)
+    return len(numeros) in (10, 11)
+
+
+def rg_valido(valor):
+    limpo = re.sub(r"[^0-9Xx]", "", valor or "")
+    return 7 <= len(limpo) <= 9
+
+
+def oab_valida(valor):
+    bruto = (valor or "").upper()
+    numeros = re.sub(r"[^0-9]", "", bruto)
+    letras = re.sub(r"[^A-Z]", "", bruto)
+    return 3 <= len(numeros) <= 6 and letras in UFS_VALIDAS
+
+
 def validar_email_real(valor):
     """Validador de e-mail para uso em serializers/forms do DRF.
 

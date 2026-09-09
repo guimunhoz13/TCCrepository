@@ -3,7 +3,14 @@ from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
 from rest_framework import serializers
 
-from .validators import validar_email_real
+from .validators import (
+    validar_email_real,
+    cpf_valido,
+    cnpj_valido,
+    telefone_valido,
+    rg_valido,
+    oab_valida,
+)
 from .models import (
     Escritorio,
     Usuario,
@@ -53,8 +60,15 @@ class EscritorioRegistroSerializer(serializers.Serializer):
     senha_admin = serializers.CharField(write_only=True, min_length=6)
 
     def validate_cnpj(self, value):
+        if not cnpj_valido(value):
+            raise serializers.ValidationError("CNPJ inválido. Informe os 14 dígitos corretamente.")
         if Escritorio.objects.filter(cnpj=value).exists():
             raise serializers.ValidationError("CNPJ já cadastrado.")
+        return value
+
+    def validate_telefone_escritorio(self, value):
+        if not telefone_valido(value):
+            raise serializers.ValidationError("Telefone inválido. Informe DDD + número (10 ou 11 dígitos).")
         return value
 
     def validate_email_admin(self, value):
@@ -117,6 +131,21 @@ class UsuarioSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["id", "escritorio", "escritorio_nome", "criado_em"]
 
+    def validate_telefone(self, value):
+        if value and not telefone_valido(value):
+            raise serializers.ValidationError("Telefone inválido. Informe DDD + número (10 ou 11 dígitos).")
+        return value
+
+    def validate_cpf(self, value):
+        if value and not cpf_valido(value):
+            raise serializers.ValidationError("CPF inválido. Informe os 11 dígitos corretamente.")
+        return value
+
+    def validate_rg(self, value):
+        if value and not rg_valido(value):
+            raise serializers.ValidationError("RG inválido. Informe entre 7 e 9 dígitos.")
+        return value
+
     def create(self, validated_data):
         senha = validated_data.pop("senha")
         return Usuario.objects.create(
@@ -156,6 +185,26 @@ class AdvogadoRegistroSerializer(serializers.Serializer):
     def validate_email(self, value):
         if Usuario.objects.filter(email__iexact=value).exists():
             raise serializers.ValidationError("E-mail já cadastrado.")
+        return value
+
+    def validate_telefone(self, value):
+        if value and not telefone_valido(value):
+            raise serializers.ValidationError("Telefone inválido. Informe DDD + número (10 ou 11 dígitos).")
+        return value
+
+    def validate_oab(self, value):
+        if not oab_valida(value):
+            raise serializers.ValidationError("OAB inválida. Informe o número de inscrição e a seccional (ex.: 123456/SP).")
+        return value
+
+    def validate_cpf(self, value):
+        if value and not cpf_valido(value):
+            raise serializers.ValidationError("CPF inválido. Informe os 11 dígitos corretamente.")
+        return value
+
+    def validate_rg(self, value):
+        if value and not rg_valido(value):
+            raise serializers.ValidationError("RG inválido. Informe entre 7 e 9 dígitos.")
         return value
 
     @transaction.atomic
@@ -210,6 +259,21 @@ class ClienteSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["id", "criado_em"]
 
+    def validate_cpf(self, value):
+        if not cpf_valido(value):
+            raise serializers.ValidationError("CPF inválido. Informe os 11 dígitos corretamente.")
+        return value
+
+    def validate_telefone(self, value):
+        if not telefone_valido(value):
+            raise serializers.ValidationError("Telefone inválido. Informe DDD + número (10 ou 11 dígitos).")
+        return value
+
+    def validate_rg(self, value):
+        if value and not rg_valido(value):
+            raise serializers.ValidationError("RG inválido. Informe entre 7 e 9 dígitos.")
+        return value
+
 
 class AdvogadoSerializer(serializers.ModelSerializer):
 
@@ -251,6 +315,26 @@ class AdvogadoSerializer(serializers.ModelSerializer):
             "especialidade",
         ]
         read_only_fields = ["id", "usuario", "email"]
+
+    def validate_telefone(self, value):
+        if value and not telefone_valido(value):
+            raise serializers.ValidationError("Telefone inválido. Informe DDD + número (10 ou 11 dígitos).")
+        return value
+
+    def validate_cpf(self, value):
+        if value and not cpf_valido(value):
+            raise serializers.ValidationError("CPF inválido. Informe os 11 dígitos corretamente.")
+        return value
+
+    def validate_rg(self, value):
+        if value and not rg_valido(value):
+            raise serializers.ValidationError("RG inválido. Informe entre 7 e 9 dígitos.")
+        return value
+
+    def validate_oab(self, value):
+        if not oab_valida(value):
+            raise serializers.ValidationError("OAB inválida. Informe o número de inscrição e a seccional (ex.: 123456/SP).")
+        return value
 
     def update(self, instance, validated_data):
         dados_usuario = validated_data.pop("usuario", {})
