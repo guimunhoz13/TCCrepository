@@ -43,8 +43,10 @@ O banco (Postgres) é o mesmo projeto Supabase para toda a dupla — as
 credenciais ficam em `backend/.env` (não versionado; veja
 `backend/.env.example`). Peça a string de conexão pra quem já tiver
 criado o projeto no Supabase, ou crie um novo em
-[supabase.com](https://supabase.com) → New Project → Project Settings →
-Database → "Direct connection", e compartilhe os dados com a dupla.
+[supabase.com](https://supabase.com) → New Project → Connect → "Session
+pooler" (não o "Transaction pooler" — veja o comentário em
+`.env.example` sobre `CONN_MAX_AGE`), e compartilhe os dados com a
+dupla.
 
 ### Frontend
 

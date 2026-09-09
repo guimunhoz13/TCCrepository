@@ -130,6 +130,14 @@ DATABASES = {
 
         'PORT': os.environ.get('DB_PORT', '5432'),
 
+        # Sem isso, o Django abre e fecha uma conexão nova (handshake TLS
+        # completo) a cada request — em localhost isso é barato, mas contra
+        # um Postgres remoto (Supabase) deixa o site perceptivelmente lento.
+        # Reaproveita a mesma conexão por até 60s entre requests.
+        'CONN_MAX_AGE': int(os.environ.get('DB_CONN_MAX_AGE', '60')),
+
+        'CONN_HEALTH_CHECKS': True,
+
     }
 
 }
