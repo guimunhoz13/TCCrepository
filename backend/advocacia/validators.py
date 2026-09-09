@@ -128,3 +128,27 @@ def validar_rg(valor):
     if not (5 <= total <= 9):
         raise ValidationError("RG deve conter entre 5 e 9 dígitos.")
     return valor
+
+
+SENHA_MAIUSCULA_REGEX = re.compile(r"[A-Z]")
+SENHA_NUMERO_REGEX = re.compile(r"[0-9]")
+SENHA_ESPECIAL_REGEX = re.compile(r"[^A-Za-z0-9]")
+
+
+def validar_senha_forte(valor):
+    """Senha forte: mínimo 8 caracteres, 1 maiúscula, 1 número, 1 caractere especial.
+
+    Fase "green" da atividade de TDD (advocacia/tests.py,
+    ValidacaoDeSenhaAPITestCase) — os 3 requisitos que antes só a checagem
+    de tamanho mínimo não cobria.
+    """
+    senha = valor or ""
+    if len(senha) < 8:
+        raise ValidationError("A nova senha deve ter pelo menos 8 caracteres.")
+    if not SENHA_MAIUSCULA_REGEX.search(senha):
+        raise ValidationError("A nova senha deve conter pelo menos uma letra maiúscula.")
+    if not SENHA_NUMERO_REGEX.search(senha):
+        raise ValidationError("A nova senha deve conter pelo menos um número.")
+    if not SENHA_ESPECIAL_REGEX.search(senha):
+        raise ValidationError("A nova senha deve conter pelo menos um caractere especial.")
+    return senha

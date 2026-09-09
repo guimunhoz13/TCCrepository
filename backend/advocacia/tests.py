@@ -1,4 +1,3 @@
-import unittest
 from unittest.mock import patch
 
 from django.contrib.auth.hashers import make_password
@@ -192,7 +191,7 @@ class LoginAPITestCase(APITestCase):
 class ValidacaoDeSenhaAPITestCase(APITestCase):
     """
     TDD — testes escritos a partir dos requisitos de senha forte pedidos
-    na atividade, ANTES de confirmar se a view já os aplica:
+    na atividade:
 
       1) mínimo de 8 caracteres
       2) pelo menos uma letra maiúscula
@@ -201,7 +200,10 @@ class ValidacaoDeSenhaAPITestCase(APITestCase):
 
     Alvo: ConfiguracoesSenhaView (POST /api/configuracoes/senha/), a
     função responsável por definir/alterar a senha de um usuário já
-    autenticado (o caminho de troca de senha da autenticação).
+    autenticado (o caminho de troca de senha da autenticação). As 3
+    checagens que faltavam (fase "red", ver relatorio-tdd-ia.md para a
+    execução original com as falhas reais capturadas) foram implementadas
+    em validators.validar_senha_forte — fase "green" do TDD.
     """
 
     def setUp(self):
@@ -226,25 +228,14 @@ class ValidacaoDeSenhaAPITestCase(APITestCase):
         resposta = self._tentar_trocar_senha("Ab1!ab")
         self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
 
-    # As três checagens abaixo documentam requisitos que a atividade de
-    # TDD pediu, mas que ConfiguracoesSenhaView ainda NÃO implementa (a
-    # view só valida o comprimento mínimo). Ficam marcadas como
-    # "expectedFailure" — a fase "red" do TDD — de propósito: continuam
-    # rodando no CI como prova viva do gap, sem quebrar o pipeline do
-    # projeto por uma regra de negócio que ainda não foi implementada.
-    # Ver relatorio-tdd-ia.md para a execução original (sem o marcador),
-    # com as 3 falhas reais capturadas.
-    @unittest.expectedFailure
     def test_senha_sem_letra_maiuscula_e_rejeitada(self):
         resposta = self._tentar_trocar_senha("abcdefg1!")
         self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
 
-    @unittest.expectedFailure
     def test_senha_sem_numero_e_rejeitada(self):
         resposta = self._tentar_trocar_senha("Abcdefgh!")
         self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
 
-    @unittest.expectedFailure
     def test_senha_sem_caractere_especial_e_rejeitada(self):
         resposta = self._tentar_trocar_senha("Abcdefg1")
         self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)

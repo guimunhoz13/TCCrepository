@@ -14,7 +14,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from django.core.exceptions import ValidationError as DjangoValidationError
 
 from .mixins import EscritorioScopedMixin, get_usuario_from_request
-from .validators import validar_email_real, validar_telefone
+from .validators import validar_email_real, validar_telefone, validar_senha_forte
 from .emails import (
     enviar_email,
     montar_email_relatorio_cliente,
@@ -735,8 +735,10 @@ class ConfiguracoesSenhaView(APIView):
 
         if not check_password(senha_atual, usuario.senha):
             return Response({"detail": "Senha atual incorreta."}, status=status.HTTP_400_BAD_REQUEST)
-        if len(nova_senha) < 8:
-            return Response({"detail": "A nova senha deve ter pelo menos 8 caracteres."}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            validar_senha_forte(nova_senha)
+        except DjangoValidationError as exc:
+            return Response({"detail": exc.messages[0]}, status=status.HTTP_400_BAD_REQUEST)
         if nova_senha != confirmar_senha:
             return Response({"detail": "A confirmação da nova senha não confere."}, status=status.HTTP_400_BAD_REQUEST)
 
