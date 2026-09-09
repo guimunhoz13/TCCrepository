@@ -29,7 +29,7 @@ const formularioInicial = {
 };
 
 export default function ProcessosPanel() {
-  const { activePanel, panelTab } = usePanel();
+  const { activePanel, panelTab, setPanelTab } = usePanel();
   const { refresh: refreshDashboard } = useDashboardData();
   const { t } = usePreferences();
   const [processos, setProcessos] = useState([]);
@@ -39,6 +39,7 @@ export default function ProcessosPanel() {
   const [carregando, setCarregando] = useState(true);
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState("");
+  const [sucesso, setSucesso] = useState("");
 
   async function carregarDados() {
     try {
@@ -64,6 +65,7 @@ export default function ProcessosPanel() {
   async function handleSubmit(event) {
     event.preventDefault();
     setErro("");
+    setSucesso("");
 
     try {
       setSalvando(true);
@@ -75,6 +77,8 @@ export default function ProcessosPanel() {
         data_fim: formulario.data_fim || null,
       });
       setFormulario(formularioInicial);
+      setSucesso("Processo cadastrado com sucesso.");
+      setPanelTab("lista");
       await carregarDados();
       refreshDashboard().catch(() => {});
     } catch (error) {
@@ -94,6 +98,7 @@ export default function ProcessosPanel() {
       ]}
     >
       {erro && <div className="alert alert-error">{erro}</div>}
+      {sucesso && <div className="alert alert-success">{sucesso}</div>}
 
       {panelTab === "novo" ? (
         <form className="form-grid" onSubmit={handleSubmit}>

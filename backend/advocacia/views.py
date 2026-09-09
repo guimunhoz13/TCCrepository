@@ -5,6 +5,7 @@ from django.utils import timezone
 import csv
 
 from rest_framework import status, viewsets
+from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -425,6 +426,25 @@ class ClienteViewSet(
             .order_by("-criado_em")
         )
 
+    def _verificar_cpf_duplicado(self, serializer):
+        cpf = serializer.validated_data.get("cpf")
+        if not cpf:
+            return
+        escritorio = self.get_escritorio()
+        conflito = Cliente.objects.filter(escritorio=escritorio, cpf=cpf)
+        if serializer.instance:
+            conflito = conflito.exclude(pk=serializer.instance.pk)
+        if conflito.exists():
+            raise ValidationError({"cpf": ["Já existe um cliente com este CPF neste escritório."]})
+
+    def perform_create(self, serializer):
+        self._verificar_cpf_duplicado(serializer)
+        super().perform_create(serializer)
+
+    def perform_update(self, serializer):
+        self._verificar_cpf_duplicado(serializer)
+        super().perform_update(serializer)
+
 
 # =========================================================
 # ADVOGADOS
@@ -451,6 +471,17 @@ class AdvogadoViewSet(
             )
             .order_by("-id")
         )
+
+    def perform_update(self, serializer):
+        oab = serializer.validated_data.get("oab")
+        if oab:
+            escritorio = self.get_escritorio()
+            conflito = Advogado.objects.filter(escritorio=escritorio, oab=oab).exclude(
+                pk=serializer.instance.pk
+            )
+            if conflito.exists():
+                raise ValidationError({"oab": ["OAB já cadastrada neste escritório."]})
+        super().perform_update(serializer)
 
 
 # =========================================================
@@ -479,6 +510,27 @@ class ProcessoViewSet(
             )
             .order_by("-criado_em")
         )
+
+    def _verificar_numero_processo_duplicado(self, serializer):
+        numero_processo = serializer.validated_data.get("numero_processo")
+        if not numero_processo:
+            return
+        escritorio = self.get_escritorio()
+        conflito = Processo.objects.filter(escritorio=escritorio, numero_processo=numero_processo)
+        if serializer.instance:
+            conflito = conflito.exclude(pk=serializer.instance.pk)
+        if conflito.exists():
+            raise ValidationError(
+                {"numero_processo": ["Já existe um processo com este número neste escritório."]}
+            )
+
+    def perform_create(self, serializer):
+        self._verificar_numero_processo_duplicado(serializer)
+        super().perform_create(serializer)
+
+    def perform_update(self, serializer):
+        self._verificar_numero_processo_duplicado(serializer)
+        super().perform_update(serializer)
 
 
 # =========================================================
