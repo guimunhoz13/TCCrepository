@@ -15,7 +15,7 @@ import {
 } from "@/services/api";
 
 export default function DocumentosPanel() {
-  const { activePanel, panelTab } = usePanel();
+  const { activePanel, panelTab, setPanelTab } = usePanel();
   const { refresh: refreshDashboard } = useDashboardData();
   const { t } = usePreferences();
   const [documentos, setDocumentos] = useState([]);
@@ -25,6 +25,7 @@ export default function DocumentosPanel() {
   const [arquivo, setArquivo] = useState(null);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState("");
+  const [sucesso, setSucesso] = useState("");
 
   async function carregarDados() {
     try {
@@ -51,6 +52,7 @@ export default function DocumentosPanel() {
   async function handleSubmit(event) {
     event.preventDefault();
     setErro("");
+    setSucesso("");
 
     if (!arquivo) {
       setErro("Selecione um arquivo.");
@@ -67,6 +69,8 @@ export default function DocumentosPanel() {
       setProcessoId("");
       setNomeArquivo("");
       setArquivo(null);
+      setSucesso("Documento enviado com sucesso.");
+      setPanelTab("lista");
       await carregarDados();
       refreshDashboard().catch(() => {});
     } catch (error) {
@@ -84,6 +88,7 @@ export default function DocumentosPanel() {
       ]}
     >
       {erro && <div className="alert alert-error">{erro}</div>}
+      {sucesso && <div className="alert alert-success">{sucesso}</div>}
 
       {panelTab === "novo" ? (
         <form className="form-grid" onSubmit={handleSubmit}>

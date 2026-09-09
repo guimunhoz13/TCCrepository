@@ -9,7 +9,7 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from .models import Escritorio, Usuario, Cliente
+from .models import Escritorio, Usuario, Cliente, Advogado, Processo
 from .validators import validar_email_real
 
 
@@ -295,6 +295,47 @@ class ClientesAPITestCase(APITestCase):
             Cliente.objects.filter(escritorio=self.escritorio_a).count(), 2
         )
 
+    def test_criar_cliente_com_cpf_duplicado_retorna_erro_especifico(self, _mock_mx):
+        """Antes, um CPF duplicado (unique_together com escritorio, campo
+        que não está no serializer) derrubava um IntegrityError não tratado
+        (500 genérico). Agora deve voltar um 400 claro, no campo "cpf"."""
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Bearer {_gerar_token_de_acesso(self.admin_a)}"
+        )
+        resposta = self.client.post(
+            "/api/clientes/",
+            {
+                "nome": "Outro Cliente",
+                "cpf": "11122233344",  # mesmo CPF do cliente_a
+                "email": "outro@gmail.com",
+                "telefone": "11977776666",
+                "endereco": "Rua Nova, 10",
+            },
+            format="json",
+        )
+        self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("cpf", resposta.data)
+
+    def test_editar_cliente_para_cpf_de_outro_retorna_erro_especifico(self, _mock_mx):
+        outro_cliente = Cliente.objects.create(
+            escritorio=self.escritorio_a,
+            nome="Cliente C",
+            cpf="99988877766",
+            email="cliente.c@teste.com",
+            telefone="11988887779",
+            endereco="Rua Cliente C",
+        )
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Bearer {_gerar_token_de_acesso(self.admin_a)}"
+        )
+        resposta = self.client.patch(
+            f"/api/clientes/{outro_cliente.id}/",
+            {"cpf": self.cliente_a.cpf},
+            format="json",
+        )
+        self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("cpf", resposta.data)
+
     def test_isolamento_multi_tenant_entre_escritorios(self, _mock_mx):
         self.client.credentials(
             HTTP_AUTHORIZATION=f"Bearer {_gerar_token_de_acesso(self.admin_b)}"
@@ -487,3 +528,131 @@ class ValidacaoDeDocumentosAPITestCase(APITestCase):
         )
         self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("senha", resposta.data)
+
+
+class ProcessosAPITestCase(APITestCase):
+    """Testa o CRUD de processos, incluindo o erro de número duplicado."""
+
+    def setUp(self):
+        self.escritorio = _criar_escritorio()
+        self.admin = _criar_usuario(self.escritorio)
+        self.cliente = Cliente.objects.create(
+            escritorio=self.escritorio,
+            nome="Cliente Processo",
+            cpf="22233344455",
+            email="cliente.processo@teste.com",
+            telefone="11988887777",
+            endereco="Rua Cliente, 1",
+        )
+        usuario_advogado = Usuario.objects.create(
+            escritorio=self.escritorio,
+            nome="Advogado Processo",
+            email="advogado.processo@teste.com",
+            senha=make_password("senha12345"),
+            tipo_usuario="advogado",
+        )
+        self.advogado = Advogado.objects.create(
+            escritorio=self.escritorio,
+            usuario=usuario_advogado,
+            oab="111111/SP",
+            especialidade="Civil",
+        )
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Bearer {_gerar_token_de_acesso(self.admin)}"
+        )
+
+    def _payload_valido(self, **overrides):
+        dados = {
+            "numero_processo": "PROC-0001",
+            "titulo": "Processo Teste",
+            "descricao": "Descrição do processo.",
+            "status": "Em andamento",
+            "cliente": self.cliente.id,
+            "advogado": self.advogado.id,
+        }
+        dados.update(overrides)
+        return dados
+
+    def test_criar_processo(self):
+        resposta = self.client.post("/api/processos/", self._payload_valido(), format="json")
+        self.assertEqual(resposta.status_code, status.HTTP_201_CREATED)
+
+    def test_criar_processo_com_numero_duplicado_retorna_erro_especifico(self):
+        """Antes, o número duplicado (unique_together com escritorio, campo
+        que não está no serializer) derrubava um IntegrityError não tratado
+        (500 genérico). Agora deve voltar um 400 claro, no campo
+        "numero_processo"."""
+        Processo.objects.create(
+            escritorio=self.escritorio,
+            numero_processo="PROC-0001",
+            titulo="Processo Original",
+            descricao="Descrição.",
+            cliente=self.cliente,
+            advogado=self.advogado,
+        )
+        resposta = self.client.post("/api/processos/", self._payload_valido(), format="json")
+        self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("numero_processo", resposta.data)
+
+    def test_editar_processo_para_numero_de_outro_retorna_erro_especifico(self):
+        Processo.objects.create(
+            escritorio=self.escritorio,
+            numero_processo="PROC-0001",
+            titulo="Processo Original",
+            descricao="Descrição.",
+            cliente=self.cliente,
+            advogado=self.advogado,
+        )
+        outro = Processo.objects.create(
+            escritorio=self.escritorio,
+            numero_processo="PROC-0002",
+            titulo="Processo Dois",
+            descricao="Descrição.",
+            cliente=self.cliente,
+            advogado=self.advogado,
+        )
+        resposta = self.client.patch(
+            f"/api/processos/{outro.id}/",
+            {"numero_processo": "PROC-0001"},
+            format="json",
+        )
+        self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("numero_processo", resposta.data)
+
+
+class AdvogadosAPITestCase(APITestCase):
+    """Testa a edição de advogados, incluindo o erro de OAB duplicada."""
+
+    def setUp(self):
+        self.escritorio = _criar_escritorio()
+        self.admin = _criar_usuario(self.escritorio)
+
+        def _criar_advogado(nome, email, oab):
+            usuario = Usuario.objects.create(
+                escritorio=self.escritorio,
+                nome=nome,
+                email=email,
+                senha=make_password("senha12345"),
+                tipo_usuario="advogado",
+            )
+            return Advogado.objects.create(
+                escritorio=self.escritorio, usuario=usuario, oab=oab, especialidade="Civil"
+            )
+
+        self.advogado_a = _criar_advogado("Advogado A", "advogado.a@teste.com", "111111/SP")
+        self.advogado_b = _criar_advogado("Advogado B", "advogado.b@teste.com", "222222/SP")
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Bearer {_gerar_token_de_acesso(self.admin)}"
+        )
+
+    def test_editar_advogado_para_oab_de_outro_retorna_erro_especifico(self):
+        """Antes, a OAB duplicada ao editar caía no perform_update padrão do
+        ModelViewSet, sem checagem, derrubando um IntegrityError não tratado
+        (500 genérico). Agora deve voltar um 400 claro, no campo "oab"."""
+        resposta = self.client.patch(
+            f"/api/advogados/{self.advogado_b.id}/",
+            {"oab": self.advogado_a.oab},
+            format="json",
+        )
+        self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("oab", resposta.data)
