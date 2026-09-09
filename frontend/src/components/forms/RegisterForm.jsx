@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { registrarEscritorio } from "@/services/api";
+import { formatarCNPJ, formatarTelefone } from "@/utils/mascaras";
 
 export default function RegisterForm() {
   const router = useRouter();
@@ -69,7 +70,7 @@ export default function RegisterForm() {
           <label>CNPJ</label>
           <input
             value={form.cnpj}
-            onChange={(e) => alterarCampo("cnpj", e.target.value)}
+            onChange={(e) => alterarCampo("cnpj", formatarCNPJ(e.target.value))}
             required
           />
         </div>
@@ -78,7 +79,7 @@ export default function RegisterForm() {
           <input
             value={form.telefone_escritorio}
             onChange={(e) =>
-              alterarCampo("telefone_escritorio", e.target.value)
+              alterarCampo("telefone_escritorio", formatarTelefone(e.target.value))
             }
             required
           />

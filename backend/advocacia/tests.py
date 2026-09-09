@@ -359,3 +359,115 @@ class EscritorioRegistroAPITestCase(APITestCase):
             "/api/escritorios/registrar/", self._payload_valido(), format="json"
         )
         self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_registro_com_cnpj_com_poucos_digitos_e_rejeitado(self, _mock_mx):
+        resposta = self.client.post(
+            "/api/escritorios/registrar/",
+            self._payload_valido(cnpj="333333330001"),
+            format="json",
+        )
+        self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("cnpj", resposta.data)
+
+    def test_registro_com_telefone_com_poucos_digitos_e_rejeitado(self, _mock_mx):
+        resposta = self.client.post(
+            "/api/escritorios/registrar/",
+            self._payload_valido(telefone_escritorio="1199999"),
+            format="json",
+        )
+        self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("telefone_escritorio", resposta.data)
+
+
+@patch("advocacia.validators._dominio_tem_mx", return_value=True)
+class ValidacaoDeDocumentosAPITestCase(APITestCase):
+    """Testa a validação de quantidade de dígitos de CPF, RG, telefone, CNPJ e OAB."""
+
+    def setUp(self):
+        self.escritorio = _criar_escritorio()
+        self.admin = _criar_usuario(self.escritorio)
+
+    def _autenticar_como_admin(self):
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Bearer {_gerar_token_de_acesso(self.admin)}"
+        )
+
+    def test_cliente_com_cpf_incompleto_e_rejeitado(self, _mock_mx):
+        self._autenticar_como_admin()
+        resposta = self.client.post(
+            "/api/clientes/",
+            {
+                "nome": "Cliente Teste",
+                "cpf": "1234567890",  # 10 dígitos, falta 1
+                "email": "cliente.teste@gmail.com",
+                "telefone": "11977776666",
+                "endereco": "Rua Teste, 1",
+            },
+            format="json",
+        )
+        self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("cpf", resposta.data)
+
+    def test_cliente_com_telefone_sem_ddd_e_rejeitado(self, _mock_mx):
+        self._autenticar_como_admin()
+        resposta = self.client.post(
+            "/api/clientes/",
+            {
+                "nome": "Cliente Teste",
+                "cpf": "11122233355",
+                "email": "cliente.teste2@gmail.com",
+                "telefone": "988887777",  # 9 dígitos, sem DDD
+                "endereco": "Rua Teste, 1",
+            },
+            format="json",
+        )
+        self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("telefone", resposta.data)
+
+    def test_cliente_com_rg_curto_demais_e_rejeitado(self, _mock_mx):
+        self._autenticar_como_admin()
+        resposta = self.client.post(
+            "/api/clientes/",
+            {
+                "nome": "Cliente Teste",
+                "cpf": "11122233366",
+                "email": "cliente.teste3@gmail.com",
+                "telefone": "11977776666",
+                "endereco": "Rua Teste, 1",
+                "rg": "1234",  # 4 dígitos, mínimo é 5
+            },
+            format="json",
+        )
+        self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("rg", resposta.data)
+
+    def test_advogado_com_oab_sem_uf_e_rejeitado(self, _mock_mx):
+        self._autenticar_como_admin()
+        resposta = self.client.post(
+            "/api/advogados/registrar/",
+            {
+                "nome": "Advogado Teste",
+                "email": "advogado.teste@gmail.com",
+                "senha": "senha12345",
+                "oab": "123456",  # falta a UF
+                "especialidade": "Civil",
+            },
+            format="json",
+        )
+        self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("oab", resposta.data)
+
+    def test_advogado_com_oab_valida_e_aceito(self, _mock_mx):
+        self._autenticar_como_admin()
+        resposta = self.client.post(
+            "/api/advogados/registrar/",
+            {
+                "nome": "Advogado Teste",
+                "email": "advogado.valido@gmail.com",
+                "senha": "senha12345",
+                "oab": "123456/SP",
+                "especialidade": "Civil",
+            },
+            format="json",
+        )
+        self.assertEqual(resposta.status_code, status.HTTP_201_CREATED)

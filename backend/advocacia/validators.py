@@ -72,3 +72,59 @@ def validar_email_real(valor):
         raise ValidationError("O domínio deste e-mail não existe ou não recebe e-mails.")
 
     return email
+
+
+def _somente_digitos(valor):
+    return re.sub(r"\D", "", valor or "")
+
+
+def validar_cpf(valor):
+    """CPF deve ter exatamente 11 dígitos (fora pontuação)."""
+    if not valor:
+        return valor
+    if len(_somente_digitos(valor)) != 11:
+        raise ValidationError("CPF deve conter 11 dígitos.")
+    return valor
+
+
+def validar_cnpj(valor):
+    """CNPJ deve ter exatamente 14 dígitos (fora pontuação)."""
+    if not valor:
+        return valor
+    if len(_somente_digitos(valor)) != 14:
+        raise ValidationError("CNPJ deve conter 14 dígitos.")
+    return valor
+
+
+def validar_telefone(valor):
+    """Telefone (com DDD) deve ter 10 dígitos (fixo) ou 11 (celular)."""
+    if not valor:
+        return valor
+    if len(_somente_digitos(valor)) not in (10, 11):
+        raise ValidationError("Telefone deve conter 10 ou 11 dígitos, incluindo o DDD.")
+    return valor
+
+
+OAB_REGEX = re.compile(r"^\d{4,6}/[A-Za-z]{2}$")
+
+
+def validar_oab(valor):
+    """OAB no formato número/UF (ex.: 123456/SP), com 4 a 6 dígitos."""
+    if not valor:
+        return valor
+    if not OAB_REGEX.match(valor.strip()):
+        raise ValidationError("OAB deve estar no formato número/UF, com 4 a 6 dígitos (ex.: 123456/SP).")
+    return valor
+
+
+def validar_rg(valor):
+    """RG varia por estado — aceita de 5 a 9 dígitos (dígito verificador 'X' incluso)."""
+    limpo = (valor or "").strip()
+    if not limpo:
+        return valor
+    tem_x_final = limpo[-1].upper() == "X"
+    digitos = _somente_digitos(limpo[:-1] if tem_x_final else limpo)
+    total = len(digitos) + (1 if tem_x_final else 0)
+    if not (5 <= total <= 9):
+        raise ValidationError("RG deve conter entre 5 e 9 dígitos.")
+    return valor
