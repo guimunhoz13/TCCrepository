@@ -28,6 +28,9 @@ import {
 } from "@/services/api";
 import { gerarHtmlRelatorioCliente, gerarHtmlRelatorioProcesso, abrirRelatorio } from "@/utils/relatorio";
 import { abrirWhatsApp, montarMensagemCliente, montarMensagemProcesso } from "@/utils/whatsapp";
+import { formatarCNPJ, formatarTelefone } from "@/utils/mascaras";
+import { senhaAtendeRequisitos } from "@/utils/senha";
+import RequisitosSenha from "@/components/ui/RequisitosSenha";
 import Avatar from "@/components/ui/Avatar";
 
 const TABS = [
@@ -141,7 +144,7 @@ export default function ConfigPanel() {
 }
 
 function ContaTab({ usuario, setDados, feedback, t }) {
-  const [form, setForm] = useState({ nome: usuario.nome || "", email: usuario.email || "", telefone: usuario.telefone || "" });
+  const [form, setForm] = useState({ nome: usuario.nome || "", email: usuario.email || "", telefone: usuario.telefone ? formatarTelefone(usuario.telefone) : "" });
   const [foto, setFoto] = useState(null);
   const [senha, setSenha] = useState({ senha_atual: "", nova_senha: "", confirmar_senha: "" });
   const [showPassword, setShowPassword] = useState(false);
@@ -167,6 +170,10 @@ function ContaTab({ usuario, setDados, feedback, t }) {
   }
 
   async function salvarSenha() {
+    if (!senhaAtendeRequisitos(senha.nova_senha)) {
+      feedback("A nova senha não atende a todos os requisitos obrigatórios.", true);
+      return;
+    }
     try {
       setSalvando(true);
       const res = await alterarSenha(senha);
@@ -196,19 +203,22 @@ function ContaTab({ usuario, setDados, feedback, t }) {
       <div className="form-grid">
         <Field label="Nome"><input value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} /></Field>
         <Field label="E-mail"><input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></Field>
-        <Field label="Telefone"><input value={form.telefone} onChange={(e) => setForm({ ...form, telefone: e.target.value })} placeholder="(00) 00000-0000" /></Field>
+        <Field label="Telefone"><input value={form.telefone} onChange={(e) => setForm({ ...form, telefone: formatarTelefone(e.target.value) })} placeholder="(00) 00000-0000" /></Field>
         <Field label="Cargo"><input value={usuario.tipo_usuario === "admin" ? "Administrador" : "Advogado"} disabled /></Field>
       </div>
       <Actions><button className="btn btn-primary btn-sm" onClick={salvarConta} disabled={salvando}>Salvar alterações</button></Actions>
     </Section>
 
-    <Section title="Senha" description="A nova senha deve ter pelo menos 8 caracteres.">
+    <Section title="Senha" description="A nova senha deve ter pelo menos 8 caracteres, 1 letra maiúscula, 1 número e 1 caractere especial.">
       <div className="form-grid">
         <Field label="Senha atual" full><div className="password-field"><input type={showPassword ? "text" : "password"} value={senha.senha_atual} onChange={(e) => setSenha({ ...senha, senha_atual: e.target.value })} /><button type="button" className="password-toggle" onClick={() => setShowPassword(!showPassword)}>{showPassword ? <EyeOff size={16}/> : <Eye size={16}/>}</button></div></Field>
-        <Field label="Nova senha"><input type={showPassword ? "text" : "password"} value={senha.nova_senha} onChange={(e) => setSenha({ ...senha, nova_senha: e.target.value })} /></Field>
+        <Field label="Nova senha">
+          <input type={showPassword ? "text" : "password"} value={senha.nova_senha} onChange={(e) => setSenha({ ...senha, nova_senha: e.target.value })} />
+          <RequisitosSenha senha={senha.nova_senha} />
+        </Field>
         <Field label="Confirmar nova senha"><input type={showPassword ? "text" : "password"} value={senha.confirmar_senha} onChange={(e) => setSenha({ ...senha, confirmar_senha: e.target.value })} /></Field>
       </div>
-      <Actions><button className="btn btn-secondary btn-sm" onClick={salvarSenha} disabled={salvando}>Alterar senha</button></Actions>
+      <Actions><button className="btn btn-secondary btn-sm" onClick={salvarSenha} disabled={salvando || !senhaAtendeRequisitos(senha.nova_senha)}>Alterar senha</button></Actions>
     </Section>
   </div>;
 }
@@ -216,7 +226,12 @@ function ContaTab({ usuario, setDados, feedback, t }) {
 function EscritorioTab({ dados, setDados, feedback }) {
   const admin = dados.usuario.tipo_usuario === "admin";
   const cfg = dados.configuracao_escritorio || {};
-  const [form, setForm] = useState({ ...dados.escritorio, timezone: cfg.timezone || "America/Sao_Paulo", formato_data: cfg.formato_data || "dmy" });
+  const [form, setForm] = useState({
+    ...dados.escritorio,
+    telefone: dados.escritorio.telefone ? formatarTelefone(dados.escritorio.telefone) : "",
+    timezone: cfg.timezone || "America/Sao_Paulo",
+    formato_data: cfg.formato_data || "dmy",
+  });
 
   async function salvar() {
     try {
@@ -232,9 +247,9 @@ function EscritorioTab({ dados, setDados, feedback }) {
     <Section title="Dados do escritório" description={admin ? "Somente administradores podem alterar estes dados." : "Visualização dos dados do escritório."}>
       <div className="form-grid">
         <Field label="Nome do escritório"><input value={form.nome || ""} disabled={!admin} onChange={(e) => setForm({ ...form, nome: e.target.value })}/></Field>
-        <Field label="CNPJ"><input value={form.cnpj || ""} disabled /></Field>
+        <Field label="CNPJ"><input value={form.cnpj ? formatarCNPJ(form.cnpj) : ""} disabled /></Field>
         <Field label="E-mail"><input value={form.email || ""} disabled={!admin} onChange={(e) => setForm({ ...form, email: e.target.value })}/></Field>
-        <Field label="Telefone"><input value={form.telefone || ""} disabled={!admin} onChange={(e) => setForm({ ...form, telefone: e.target.value })}/></Field>
+        <Field label="Telefone"><input value={form.telefone || ""} disabled={!admin} onChange={(e) => setForm({ ...form, telefone: formatarTelefone(e.target.value) })}/></Field>
         <Field label="Endereço" full><input value={form.endereco || ""} disabled={!admin} onChange={(e) => setForm({ ...form, endereco: e.target.value })}/></Field>
         <Field label="Cidade"><input value={form.cidade || ""} disabled={!admin} onChange={(e) => setForm({ ...form, cidade: e.target.value })}/></Field>
         <Field label="Estado"><input maxLength={2} value={form.estado || ""} disabled={!admin} onChange={(e) => setForm({ ...form, estado: e.target.value.toUpperCase() })}/></Field>

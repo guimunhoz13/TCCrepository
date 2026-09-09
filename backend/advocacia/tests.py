@@ -1,4 +1,3 @@
-import unittest
 from unittest.mock import patch
 
 from django.contrib.auth.hashers import make_password
@@ -192,7 +191,7 @@ class LoginAPITestCase(APITestCase):
 class ValidacaoDeSenhaAPITestCase(APITestCase):
     """
     TDD — testes escritos a partir dos requisitos de senha forte pedidos
-    na atividade, ANTES de confirmar se a view já os aplica:
+    na atividade:
 
       1) mínimo de 8 caracteres
       2) pelo menos uma letra maiúscula
@@ -201,7 +200,10 @@ class ValidacaoDeSenhaAPITestCase(APITestCase):
 
     Alvo: ConfiguracoesSenhaView (POST /api/configuracoes/senha/), a
     função responsável por definir/alterar a senha de um usuário já
-    autenticado (o caminho de troca de senha da autenticação).
+    autenticado (o caminho de troca de senha da autenticação). As 3
+    checagens que faltavam (fase "red", ver relatorio-tdd-ia.md para a
+    execução original com as falhas reais capturadas) foram implementadas
+    em validators.validar_senha_forte — fase "green" do TDD.
     """
 
     def setUp(self):
@@ -226,25 +228,14 @@ class ValidacaoDeSenhaAPITestCase(APITestCase):
         resposta = self._tentar_trocar_senha("Ab1!ab")
         self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
 
-    # As três checagens abaixo documentam requisitos que a atividade de
-    # TDD pediu, mas que ConfiguracoesSenhaView ainda NÃO implementa (a
-    # view só valida o comprimento mínimo). Ficam marcadas como
-    # "expectedFailure" — a fase "red" do TDD — de propósito: continuam
-    # rodando no CI como prova viva do gap, sem quebrar o pipeline do
-    # projeto por uma regra de negócio que ainda não foi implementada.
-    # Ver relatorio-tdd-ia.md para a execução original (sem o marcador),
-    # com as 3 falhas reais capturadas.
-    @unittest.expectedFailure
     def test_senha_sem_letra_maiuscula_e_rejeitada(self):
         resposta = self._tentar_trocar_senha("abcdefg1!")
         self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
 
-    @unittest.expectedFailure
     def test_senha_sem_numero_e_rejeitada(self):
         resposta = self._tentar_trocar_senha("Abcdefgh!")
         self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
 
-    @unittest.expectedFailure
     def test_senha_sem_caractere_especial_e_rejeitada(self):
         resposta = self._tentar_trocar_senha("Abcdefg1")
         self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
@@ -337,7 +328,7 @@ class EscritorioRegistroAPITestCase(APITestCase):
             "endereco_escritorio": "Rua Nova, 200",
             "nome_admin": "Novo Admin",
             "email_admin": "admin@novoescritorio.com",
-            "senha_admin": "senha12345",
+            "senha_admin": "Senha123!",
         }
         dados.update(overrides)
         return dados
@@ -359,3 +350,140 @@ class EscritorioRegistroAPITestCase(APITestCase):
             "/api/escritorios/registrar/", self._payload_valido(), format="json"
         )
         self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_registro_com_cnpj_com_poucos_digitos_e_rejeitado(self, _mock_mx):
+        resposta = self.client.post(
+            "/api/escritorios/registrar/",
+            self._payload_valido(cnpj="333333330001"),
+            format="json",
+        )
+        self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("cnpj", resposta.data)
+
+    def test_registro_com_telefone_com_poucos_digitos_e_rejeitado(self, _mock_mx):
+        resposta = self.client.post(
+            "/api/escritorios/registrar/",
+            self._payload_valido(telefone_escritorio="1199999"),
+            format="json",
+        )
+        self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("telefone_escritorio", resposta.data)
+
+    def test_registro_com_senha_fraca_e_rejeitado(self, _mock_mx):
+        resposta = self.client.post(
+            "/api/escritorios/registrar/",
+            self._payload_valido(senha_admin="senha12345"),  # sem maiúscula/especial
+            format="json",
+        )
+        self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("senha_admin", resposta.data)
+
+
+@patch("advocacia.validators._dominio_tem_mx", return_value=True)
+class ValidacaoDeDocumentosAPITestCase(APITestCase):
+    """Testa a validação de quantidade de dígitos de CPF, RG, telefone, CNPJ e OAB."""
+
+    def setUp(self):
+        self.escritorio = _criar_escritorio()
+        self.admin = _criar_usuario(self.escritorio)
+
+    def _autenticar_como_admin(self):
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Bearer {_gerar_token_de_acesso(self.admin)}"
+        )
+
+    def test_cliente_com_cpf_incompleto_e_rejeitado(self, _mock_mx):
+        self._autenticar_como_admin()
+        resposta = self.client.post(
+            "/api/clientes/",
+            {
+                "nome": "Cliente Teste",
+                "cpf": "1234567890",  # 10 dígitos, falta 1
+                "email": "cliente.teste@gmail.com",
+                "telefone": "11977776666",
+                "endereco": "Rua Teste, 1",
+            },
+            format="json",
+        )
+        self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("cpf", resposta.data)
+
+    def test_cliente_com_telefone_sem_ddd_e_rejeitado(self, _mock_mx):
+        self._autenticar_como_admin()
+        resposta = self.client.post(
+            "/api/clientes/",
+            {
+                "nome": "Cliente Teste",
+                "cpf": "11122233355",
+                "email": "cliente.teste2@gmail.com",
+                "telefone": "988887777",  # 9 dígitos, sem DDD
+                "endereco": "Rua Teste, 1",
+            },
+            format="json",
+        )
+        self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("telefone", resposta.data)
+
+    def test_cliente_com_rg_curto_demais_e_rejeitado(self, _mock_mx):
+        self._autenticar_como_admin()
+        resposta = self.client.post(
+            "/api/clientes/",
+            {
+                "nome": "Cliente Teste",
+                "cpf": "11122233366",
+                "email": "cliente.teste3@gmail.com",
+                "telefone": "11977776666",
+                "endereco": "Rua Teste, 1",
+                "rg": "1234",  # 4 dígitos, mínimo é 5
+            },
+            format="json",
+        )
+        self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("rg", resposta.data)
+
+    def test_advogado_com_oab_sem_uf_e_rejeitado(self, _mock_mx):
+        self._autenticar_como_admin()
+        resposta = self.client.post(
+            "/api/advogados/registrar/",
+            {
+                "nome": "Advogado Teste",
+                "email": "advogado.teste@gmail.com",
+                "senha": "Senha123!",
+                "oab": "123456",  # falta a UF
+                "especialidade": "Civil",
+            },
+            format="json",
+        )
+        self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("oab", resposta.data)
+
+    def test_advogado_com_oab_valida_e_aceito(self, _mock_mx):
+        self._autenticar_como_admin()
+        resposta = self.client.post(
+            "/api/advogados/registrar/",
+            {
+                "nome": "Advogado Teste",
+                "email": "advogado.valido@gmail.com",
+                "senha": "Senha123!",
+                "oab": "123456/SP",
+                "especialidade": "Civil",
+            },
+            format="json",
+        )
+        self.assertEqual(resposta.status_code, status.HTTP_201_CREATED)
+
+    def test_advogado_com_senha_fraca_e_rejeitado(self, _mock_mx):
+        self._autenticar_como_admin()
+        resposta = self.client.post(
+            "/api/advogados/registrar/",
+            {
+                "nome": "Advogado Teste",
+                "email": "advogado.senhafraca@gmail.com",
+                "senha": "senha12345",  # sem maiúscula/especial
+                "oab": "654321/SP",
+                "especialidade": "Civil",
+            },
+            format="json",
+        )
+        self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("senha", resposta.data)

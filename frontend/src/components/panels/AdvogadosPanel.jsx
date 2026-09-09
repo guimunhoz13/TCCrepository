@@ -6,6 +6,9 @@ import { useDashboardData } from "@/contexts/DashboardDataContext";
 import { usePreferences } from "@/contexts/PreferencesContext";
 import OverlayPanel from "@/components/shell/OverlayPanel";
 import Avatar from "@/components/ui/Avatar";
+import { formatarCPF, formatarRG, formatarTelefone, formatarOAB } from "@/utils/mascaras";
+import { senhaAtendeRequisitos } from "@/utils/senha";
+import RequisitosSenha from "@/components/ui/RequisitosSenha";
 import {
   getUsuarioLogado,
   registrarAdvogado,
@@ -78,11 +81,11 @@ export default function AdvogadosPanel() {
       nome: advogado.nome || "",
       email: advogado.email || "",
       senha: "",
-      telefone: advogado.telefone || "",
-      oab: advogado.oab || "",
+      telefone: advogado.telefone ? formatarTelefone(advogado.telefone) : "",
+      oab: advogado.oab ? formatarOAB(advogado.oab) : "",
       especialidade: advogado.especialidade || "",
-      cpf: advogado.cpf || "",
-      rg: advogado.rg || "",
+      cpf: advogado.cpf ? formatarCPF(advogado.cpf) : "",
+      rg: advogado.rg ? formatarRG(advogado.rg) : "",
       data_nascimento: advogado.data_nascimento
         ? advogado.data_nascimento.slice(0, 10)
         : "",
@@ -106,6 +109,12 @@ export default function AdvogadosPanel() {
     event.preventDefault();
     setErro("");
     setMensagem("");
+
+    if (!advogadoEditando && !senhaAtendeRequisitos(formAdvogado.senha)) {
+      setErro("A senha não atende a todos os requisitos obrigatórios.");
+      return;
+    }
+
     setSalvando(true);
 
     try {
@@ -206,6 +215,7 @@ export default function AdvogadosPanel() {
                 }
                 required
               />
+              <RequisitosSenha senha={formAdvogado.senha} />
             </div>
           )}
           <div className="form-field">
@@ -213,7 +223,10 @@ export default function AdvogadosPanel() {
             <input
               value={formAdvogado.telefone}
               onChange={(e) =>
-                setFormAdvogado({ ...formAdvogado, telefone: e.target.value })
+                setFormAdvogado({
+                  ...formAdvogado,
+                  telefone: formatarTelefone(e.target.value),
+                })
               }
               placeholder="(00) 00000-0000"
             />
@@ -223,8 +236,9 @@ export default function AdvogadosPanel() {
             <input
               value={formAdvogado.oab}
               onChange={(e) =>
-                setFormAdvogado({ ...formAdvogado, oab: e.target.value })
+                setFormAdvogado({ ...formAdvogado, oab: formatarOAB(e.target.value) })
               }
+              placeholder="123456/SP"
               required
             />
           </div>
@@ -246,7 +260,7 @@ export default function AdvogadosPanel() {
             <input
               value={formAdvogado.cpf}
               onChange={(e) =>
-                setFormAdvogado({ ...formAdvogado, cpf: e.target.value })
+                setFormAdvogado({ ...formAdvogado, cpf: formatarCPF(e.target.value) })
               }
             />
           </div>
@@ -255,7 +269,7 @@ export default function AdvogadosPanel() {
             <input
               value={formAdvogado.rg}
               onChange={(e) =>
-                setFormAdvogado({ ...formAdvogado, rg: e.target.value })
+                setFormAdvogado({ ...formAdvogado, rg: formatarRG(e.target.value) })
               }
             />
           </div>
@@ -330,7 +344,13 @@ export default function AdvogadosPanel() {
             className="form-field full"
             style={{ display: "flex", gap: "10px", marginTop: "8px" }}
           >
-            <button className="btn btn-primary" disabled={salvando}>
+            <button
+              className="btn btn-primary"
+              disabled={
+                salvando ||
+                (!advogadoEditando && !senhaAtendeRequisitos(formAdvogado.senha))
+              }
+            >
               {salvando
                 ? t("acao_salvando")
                 : advogadoEditando
