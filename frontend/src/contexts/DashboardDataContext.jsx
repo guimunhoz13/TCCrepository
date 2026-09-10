@@ -5,6 +5,8 @@ import {
   getDashboardStats,
   getProcessos,
   getAgenda,
+  getClientes,
+  getDocumentos,
   normalizarLista,
 } from "@/services/api";
 
@@ -14,6 +16,8 @@ export function DashboardDataProvider({ children }) {
   const [stats, setStats] = useState(null);
   const [processos, setProcessos] = useState([]);
   const [agenda, setAgenda] = useState([]);
+  const [clientes, setClientes] = useState([]);
+  const [documentos, setDocumentos] = useState([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState("");
   const [atualizadoEm, setAtualizadoEm] = useState(null);
@@ -21,14 +25,19 @@ export function DashboardDataProvider({ children }) {
 
   const refresh = useCallback(async () => {
     try {
-      const [dadosStats, dadosProcessos, dadosAgenda] = await Promise.all([
-        getDashboardStats(),
-        getProcessos(),
-        getAgenda(),
-      ]);
+      const [dadosStats, dadosProcessos, dadosAgenda, dadosClientes, dadosDocumentos] =
+        await Promise.all([
+          getDashboardStats(),
+          getProcessos(),
+          getAgenda(),
+          getClientes(),
+          getDocumentos(),
+        ]);
       setStats(dadosStats);
       setProcessos(normalizarLista(dadosProcessos));
       setAgenda(normalizarLista(dadosAgenda));
+      setClientes(normalizarLista(dadosClientes));
+      setDocumentos(normalizarLista(dadosDocumentos));
       setAtualizadoEm(Date.now());
       setErro("");
       return true;
@@ -49,7 +58,17 @@ export function DashboardDataProvider({ children }) {
 
   return (
     <DashboardDataContext.Provider
-      value={{ stats, processos, agenda, carregando, erro, atualizadoEm, refresh }}
+      value={{
+        stats,
+        processos,
+        agenda,
+        clientes,
+        documentos,
+        carregando,
+        erro,
+        atualizadoEm,
+        refresh,
+      }}
     >
       {children}
     </DashboardDataContext.Provider>
