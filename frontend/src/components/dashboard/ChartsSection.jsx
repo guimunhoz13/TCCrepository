@@ -14,7 +14,10 @@ import {
   Legend,
 } from "recharts";
 
-const CORES = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6"];
+// Paleta categórica validada (contraste + distinção sob daltonismo) para o
+// fundo escuro do painel — não os tokens de marca (--accent etc.), que são
+// usados nos elementos interativos e ficariam confusos numa legenda.
+const CORES = ["#3987e5", "#d95926", "#199e70", "#c98500"];
 
 function CustomTooltip({ active, payload }) {
   if (!active || !payload?.length) return null;
