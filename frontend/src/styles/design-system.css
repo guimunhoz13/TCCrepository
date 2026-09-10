@@ -925,17 +925,24 @@ tbody tr:hover {
 
 .calendar-day,
 .calendar-cell {
-  aspect-ratio: 1;
   border-radius: 9px;
   display: grid;
   place-items: center;
   font-size: 0.82rem;
+  height: 34px;
+  transition: height 0.18s ease;
+}
+
+.calendar-grid.expandido .calendar-day,
+.calendar-grid.expandido .calendar-cell {
+  height: 62px;
 }
 
 .calendar-day {
   color: var(--text-muted);
   font-weight: 600;
   font-size: 0.72rem;
+  height: 22px;
 }
 
 .calendar-cell {

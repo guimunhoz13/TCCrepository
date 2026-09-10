@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, Maximize2, Minimize2 } from "lucide-react";
 import {
   createAgenda,
   getProcessos,
@@ -23,6 +23,7 @@ export default function MiniCalendar({ eventos = [], onEventoCriado }) {
   );
   const [diaSelecionado, setDiaSelecionado] = useState(null);
   const [mostrarForm, setMostrarForm] = useState(false);
+  const [expandido, setExpandido] = useState(false);
   const [processos, setProcessos] = useState([]);
   const [formulario, setFormulario] = useState({
     processo: "",
@@ -158,13 +159,22 @@ export default function MiniCalendar({ eventos = [], onEventoCriado }) {
         </button>
       </div>
 
-      <div style={{ textAlign: "center", marginBottom: 12 }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 12 }}>
         <button type="button" className="btn btn-sm btn-secondary" onClick={irParaHoje}>
           Hoje
         </button>
+        <button
+          type="button"
+          className="calendar-nav-btn"
+          onClick={() => setExpandido((atual) => !atual)}
+          aria-label={expandido ? "Comprimir calendário" : "Expandir calendário"}
+          title={expandido ? "Comprimir calendário" : "Expandir calendário"}
+        >
+          {expandido ? <Minimize2 size={15} /> : <Maximize2 size={15} />}
+        </button>
       </div>
 
-      <div className="calendar-grid">
+      <div className={`calendar-grid ${expandido ? "expandido" : ""}`}>
         {DIAS.map((dia) => (
           <div key={dia} className="calendar-day">
             {dia}
