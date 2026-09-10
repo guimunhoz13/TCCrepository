@@ -5,6 +5,7 @@ Django settings for core project.
 from pathlib import Path
 import os
 
+from django.core.exceptions import ImproperlyConfigured
 from dotenv import load_dotenv
 
 
@@ -13,13 +14,27 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / ".env")
 
 
-SECRET_KEY = 'django-insecure-=eb#qqbxlkt$51anhk95b6t0d0b0fa-29kugu#7^8+axaztbv+'
+DEBUG = os.environ.get("DJANGO_DEBUG", "True") == "True"
+
+# A chave abaixo (a antiga, fixa no código) foi exposta no histórico do
+# repositório e deve ser tratada como comprometida — nunca reutilizada.
+# Em produção (DEBUG=False), DJANGO_SECRET_KEY é obrigatória via
+# variável de ambiente; em desenvolvimento local, cai numa chave de
+# rascunho só para não travar quem ainda não configurou o .env.
+SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY")
+if not SECRET_KEY:
+    if not DEBUG:
+        raise ImproperlyConfigured(
+            "DJANGO_SECRET_KEY não definida. Obrigatória quando DEBUG=False."
+        )
+    SECRET_KEY = "django-insecure-dev-only-nao-use-em-producao"
 
 
-DEBUG = True
-
-
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    host.strip()
+    for host in os.environ.get("DJANGO_ALLOWED_HOSTS", "").split(",")
+    if host.strip()
+]
 
 
 # APPLICATIONS

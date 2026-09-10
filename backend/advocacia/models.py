@@ -1,5 +1,15 @@
+from django.core.validators import FileExtensionValidator
 from django.db import models
 
+
+# Documentos (identidade, contratos, peças processuais) só aceitam
+# tipos que não podem ser interpretados como código pelo navegador —
+# evita upload de .html/.svg/.js disfarçado de "documento", que
+# resultaria em XSS armazenado quando o arquivo é aberto direto pela
+# URL de mídia.
+EXTENSOES_DOCUMENTO_PERMITIDAS = FileExtensionValidator(
+    allowed_extensions=["pdf", "jpg", "jpeg", "png", "doc", "docx"]
+)
 
 ESTADOS_CIVIS = (
     ("solteiro", "Solteiro(a)"),
@@ -48,7 +58,12 @@ class Usuario(models.Model):
     senha = models.CharField(max_length=255)
     tipo_usuario = models.CharField(max_length=20, choices=TIPOS_USUARIO)
     foto = models.ImageField(upload_to="usuarios/fotos/", null=True, blank=True)
-    documento_identidade = models.FileField(upload_to="usuarios/documentos/", null=True, blank=True)
+    documento_identidade = models.FileField(
+        upload_to="usuarios/documentos/",
+        null=True,
+        blank=True,
+        validators=[EXTENSOES_DOCUMENTO_PERMITIDAS],
+    )
     cpf = models.CharField(max_length=14, blank=True, default="")
     rg = models.CharField(max_length=20, blank=True, default="")
     data_nascimento = models.DateField(null=True, blank=True)
@@ -79,7 +94,12 @@ class Cliente(models.Model):
     estado_civil = models.CharField(max_length=20, choices=ESTADOS_CIVIS, blank=True, default="")
     nacionalidade = models.CharField(max_length=100, blank=True, default="Brasileira")
     foto = models.ImageField(upload_to="clientes/fotos/", null=True, blank=True)
-    documento_identidade = models.FileField(upload_to="clientes/documentos/", null=True, blank=True)
+    documento_identidade = models.FileField(
+        upload_to="clientes/documentos/",
+        null=True,
+        blank=True,
+        validators=[EXTENSOES_DOCUMENTO_PERMITIDAS],
+    )
     ativo = models.BooleanField(default=True)
     criado_em = models.DateTimeField(auto_now_add=True)
 
@@ -185,7 +205,10 @@ class Documento(models.Model):
     )
 
     nome_arquivo = models.CharField(max_length=255)
-    arquivo = models.FileField(upload_to="documentos/")
+    arquivo = models.FileField(
+        upload_to="documentos/",
+        validators=[EXTENSOES_DOCUMENTO_PERMITIDAS],
+    )
     enviado_em = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

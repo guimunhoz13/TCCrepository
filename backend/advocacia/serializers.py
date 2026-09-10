@@ -24,6 +24,7 @@ from .models import (
     PreferenciasUsuario,
     ConfiguracaoEscritorio,
     ESTADOS_CIVIS,
+    EXTENSOES_DOCUMENTO_PERMITIDAS,
 )
 
 
@@ -162,7 +163,9 @@ class AdvogadoRegistroSerializer(serializers.Serializer):
     oab = serializers.CharField(max_length=30, validators=[validar_oab])
     especialidade = serializers.CharField(max_length=255)
     foto = serializers.ImageField(required=False, allow_null=True)
-    documento_identidade = serializers.FileField(required=False, allow_null=True)
+    documento_identidade = serializers.FileField(
+        required=False, allow_null=True, validators=[EXTENSOES_DOCUMENTO_PERMITIDAS]
+    )
     cpf = serializers.CharField(
         max_length=14, required=False, allow_blank=True, validators=[validar_cpf]
     )
@@ -245,7 +248,10 @@ class AdvogadoSerializer(serializers.ModelSerializer):
     )
     foto = serializers.ImageField(source="usuario.foto", required=False, allow_null=True)
     documento_identidade = serializers.FileField(
-        source="usuario.documento_identidade", required=False, allow_null=True
+        source="usuario.documento_identidade",
+        required=False,
+        allow_null=True,
+        validators=[EXTENSOES_DOCUMENTO_PERMITIDAS],
     )
     cpf = serializers.CharField(
         source="usuario.cpf", required=False, allow_blank=True, validators=[validar_cpf]
