@@ -1,7 +1,7 @@
 const API_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api";
 
-function buildQuery(params) {
+export function buildQuery(params) {
   if (!params) return "";
   const query = new URLSearchParams();
   Object.entries(params).forEach(([chave, valor]) => {

@@ -9,7 +9,9 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from .models import Escritorio, Usuario, Cliente, Advogado, Processo
+from django.utils import timezone
+
+from .models import Escritorio, Usuario, Cliente, Advogado, Processo, Agenda, Contrato, SuperAdmin
 from .validators import validar_email_real
 
 
@@ -46,6 +48,17 @@ def _gerar_token_de_acesso(usuario):
     refresh["tipo_usuario"] = usuario.tipo_usuario
     refresh["escritorio_id"] = usuario.escritorio_id
     refresh["escritorio_nome"] = usuario.escritorio.nome
+    return str(refresh.access_token)
+
+
+def _gerar_token_master(superadmin):
+    """Gera um access token JWT com as mesmas claims usadas pelo MasterLoginView."""
+    refresh = RefreshToken()
+    refresh["user_id"] = f"master-{superadmin.id}"
+    refresh["is_master"] = True
+    refresh["superadmin_id"] = superadmin.id
+    refresh["nome"] = superadmin.nome
+    refresh["email"] = superadmin.email
     return str(refresh.access_token)
 
 
@@ -656,3 +669,441 @@ class AdvogadosAPITestCase(APITestCase):
         )
         self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("oab", resposta.data)
+
+
+class LoginBloqueioAPITestCase(APITestCase):
+    """Testa o bloqueio de login após 3 tentativas de senha inválidas."""
+
+    def setUp(self):
+        self.escritorio = _criar_escritorio()
+        self.usuario = _criar_usuario(self.escritorio)
+
+    def _tentar_login(self, senha):
+        return self.client.post(
+            "/api/login/",
+            {"email": "ana@escritorio.com", "senha": senha},
+            format="json",
+        )
+
+    def test_bloqueia_apos_3_tentativas_erradas(self):
+        for _ in range(2):
+            resposta = self._tentar_login("senha-errada")
+            self.assertEqual(resposta.status_code, status.HTTP_401_UNAUTHORIZED)
+
+        resposta = self._tentar_login("senha-errada")
+        self.assertEqual(resposta.status_code, status.HTTP_403_FORBIDDEN)
+
+        self.usuario.refresh_from_db()
+        self.assertIsNotNone(self.usuario.bloqueado_ate)
+        self.assertEqual(self.usuario.tentativas_login, 0)
+
+    def test_tentativa_errada_isolada_nao_bloqueia(self):
+        resposta = self._tentar_login("senha-errada")
+        self.assertEqual(resposta.status_code, status.HTTP_401_UNAUTHORIZED)
+
+        self.usuario.refresh_from_db()
+        self.assertEqual(self.usuario.tentativas_login, 1)
+        self.assertIsNone(self.usuario.bloqueado_ate)
+
+    def test_login_correto_e_negado_enquanto_bloqueado(self):
+        self.usuario.bloqueado_ate = timezone.now() + timezone.timedelta(minutes=15)
+        self.usuario.save()
+
+        resposta = self._tentar_login("senha12345")
+        self.assertEqual(resposta.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_login_correto_funciona_apos_bloqueio_expirar(self):
+        self.usuario.bloqueado_ate = timezone.now() - timezone.timedelta(minutes=1)
+        self.usuario.tentativas_login = 2
+        self.usuario.save()
+
+        resposta = self._tentar_login("senha12345")
+        self.assertEqual(resposta.status_code, status.HTTP_200_OK)
+
+        self.usuario.refresh_from_db()
+        self.assertIsNone(self.usuario.bloqueado_ate)
+        self.assertEqual(self.usuario.tentativas_login, 0)
+
+
+class FiltroBuscaAPITestCase(APITestCase):
+    """Testa os filtros de busca em clientes e processos."""
+
+    def setUp(self):
+        self.escritorio = _criar_escritorio()
+        self.admin = _criar_usuario(self.escritorio)
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Bearer {_gerar_token_de_acesso(self.admin)}"
+        )
+
+        self.cliente_joao = Cliente.objects.create(
+            escritorio=self.escritorio,
+            nome="João Silva",
+            cpf="11111111111",
+            email="joao@teste.com",
+            telefone="11999999999",
+            endereco="Rua A",
+        )
+        self.cliente_maria = Cliente.objects.create(
+            escritorio=self.escritorio,
+            nome="Maria Souza",
+            cpf="22222222222",
+            email="maria@teste.com",
+            telefone="11888888888",
+            endereco="Rua B",
+        )
+
+        usuario_advogado = Usuario.objects.create(
+            escritorio=self.escritorio,
+            nome="Advogado Filtro",
+            email="advogado.filtro@teste.com",
+            senha=make_password("senha12345"),
+            tipo_usuario="advogado",
+        )
+        self.advogado = Advogado.objects.create(
+            escritorio=self.escritorio,
+            usuario=usuario_advogado,
+            oab="333333/SP",
+            especialidade="Civil",
+        )
+
+        self.processo_andamento = Processo.objects.create(
+            escritorio=self.escritorio,
+            numero_processo="PROC-0001",
+            titulo="Ação de Cobrança",
+            descricao="Descrição.",
+            status="Em andamento",
+            cliente=self.cliente_joao,
+            advogado=self.advogado,
+        )
+        self.processo_concluido = Processo.objects.create(
+            escritorio=self.escritorio,
+            numero_processo="PROC-0002",
+            titulo="Ação Trabalhista",
+            descricao="Descrição.",
+            status="Concluido",
+            cliente=self.cliente_maria,
+            advogado=self.advogado,
+        )
+
+    def test_busca_clientes_por_nome(self):
+        resposta = self.client.get("/api/clientes/", {"busca": "João"})
+        nomes = [c["nome"] for c in resposta.data]
+        self.assertIn("João Silva", nomes)
+        self.assertNotIn("Maria Souza", nomes)
+
+    def test_busca_clientes_sem_correspondencia_retorna_vazio(self):
+        resposta = self.client.get("/api/clientes/", {"busca": "Inexistente"})
+        self.assertEqual(len(resposta.data), 0)
+
+    def test_filtro_processos_por_status(self):
+        resposta = self.client.get("/api/processos/", {"status": "Concluido"})
+        numeros = [p["numero_processo"] for p in resposta.data]
+        self.assertEqual(numeros, ["PROC-0002"])
+
+    def test_filtro_processos_por_cliente(self):
+        resposta = self.client.get("/api/processos/", {"cliente": self.cliente_joao.id})
+        numeros = [p["numero_processo"] for p in resposta.data]
+        self.assertEqual(numeros, ["PROC-0001"])
+
+    def test_busca_processos_por_titulo(self):
+        resposta = self.client.get("/api/processos/", {"busca": "Trabalhista"})
+        numeros = [p["numero_processo"] for p in resposta.data]
+        self.assertEqual(numeros, ["PROC-0002"])
+
+
+class AgendaPrazoAPITestCase(APITestCase):
+    """Testa o tipo Prazo/Compromisso, o cálculo de atraso e os filtros da agenda."""
+
+    def setUp(self):
+        self.escritorio = _criar_escritorio()
+        self.admin = _criar_usuario(self.escritorio)
+        self.cliente = Cliente.objects.create(
+            escritorio=self.escritorio,
+            nome="Cliente Agenda",
+            cpf="33333333333",
+            email="cliente.agenda@teste.com",
+            telefone="11977777777",
+            endereco="Rua C",
+        )
+        usuario_advogado = Usuario.objects.create(
+            escritorio=self.escritorio,
+            nome="Advogado Agenda",
+            email="advogado.agenda@teste.com",
+            senha=make_password("senha12345"),
+            tipo_usuario="advogado",
+        )
+        self.advogado = Advogado.objects.create(
+            escritorio=self.escritorio,
+            usuario=usuario_advogado,
+            oab="444444/SP",
+            especialidade="Civil",
+        )
+        self.processo = Processo.objects.create(
+            escritorio=self.escritorio,
+            numero_processo="PROC-AG-1",
+            titulo="Processo Agenda",
+            descricao="Descrição.",
+            cliente=self.cliente,
+            advogado=self.advogado,
+        )
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Bearer {_gerar_token_de_acesso(self.admin)}"
+        )
+
+    def test_criar_prazo_atrasado_e_sinalizado(self):
+        resposta = self.client.post(
+            "/api/agenda/",
+            {
+                "processo": self.processo.id,
+                "tipo": "prazo",
+                "titulo": "Prazo recursal",
+                "descricao": "Descrição.",
+                "data_evento": "2020-01-01T10:00:00Z",
+                "local_evento": "",
+            },
+            format="json",
+        )
+        self.assertEqual(resposta.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(resposta.data["tipo"], "prazo")
+        self.assertTrue(resposta.data["atrasado"])
+
+    def test_prazo_cumprido_nao_e_sinalizado_como_atrasado(self):
+        evento = Agenda.objects.create(
+            processo=self.processo,
+            tipo="prazo",
+            titulo="Prazo cumprido",
+            descricao="Descrição.",
+            data_evento=timezone.now() - timezone.timedelta(days=1),
+            cumprido=True,
+        )
+        resposta = self.client.get(f"/api/agenda/{evento.id}/")
+        self.assertFalse(resposta.data["atrasado"])
+
+    def test_marcar_evento_como_cumprido(self):
+        evento = Agenda.objects.create(
+            processo=self.processo,
+            tipo="compromisso",
+            titulo="Audiência",
+            descricao="Descrição.",
+            data_evento=timezone.now() + timezone.timedelta(days=1),
+        )
+        resposta = self.client.patch(
+            f"/api/agenda/{evento.id}/", {"cumprido": True}, format="json"
+        )
+        self.assertEqual(resposta.status_code, status.HTTP_200_OK)
+        evento.refresh_from_db()
+        self.assertTrue(evento.cumprido)
+
+    def test_filtro_agenda_por_tipo(self):
+        Agenda.objects.create(
+            processo=self.processo,
+            tipo="compromisso",
+            titulo="Reunião",
+            descricao="Descrição.",
+            data_evento=timezone.now() + timezone.timedelta(days=1),
+        )
+        Agenda.objects.create(
+            processo=self.processo,
+            tipo="prazo",
+            titulo="Prazo X",
+            descricao="Descrição.",
+            data_evento=timezone.now() + timezone.timedelta(days=2),
+        )
+        resposta = self.client.get("/api/agenda/", {"tipo": "prazo"})
+        self.assertEqual(len(resposta.data), 1)
+        self.assertEqual(resposta.data[0]["titulo"], "Prazo X")
+
+
+class ContratoHonorarioAPITestCase(APITestCase):
+    """Testa a criação de contratos e a geração automática de parcelas."""
+
+    def setUp(self):
+        self.escritorio = _criar_escritorio()
+        self.admin = _criar_usuario(self.escritorio)
+        self.cliente = Cliente.objects.create(
+            escritorio=self.escritorio,
+            nome="Cliente Contrato",
+            cpf="44444444444",
+            email="cliente.contrato@teste.com",
+            telefone="11966666666",
+            endereco="Rua D",
+        )
+        usuario_advogado = Usuario.objects.create(
+            escritorio=self.escritorio,
+            nome="Advogado Contrato",
+            email="advogado.contrato@teste.com",
+            senha=make_password("senha12345"),
+            tipo_usuario="advogado",
+        )
+        self.advogado = Advogado.objects.create(
+            escritorio=self.escritorio,
+            usuario=usuario_advogado,
+            oab="555555/SP",
+            especialidade="Civil",
+        )
+        self.processo = Processo.objects.create(
+            escritorio=self.escritorio,
+            numero_processo="PROC-CT-1",
+            titulo="Processo Contrato",
+            descricao="Descrição.",
+            cliente=self.cliente,
+            advogado=self.advogado,
+        )
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Bearer {_gerar_token_de_acesso(self.admin)}"
+        )
+
+    def test_contrato_a_vista_gera_uma_unica_parcela(self):
+        resposta = self.client.post(
+            "/api/contratos/",
+            {
+                "processo": self.processo.id,
+                "tipo_honorario": "fixo",
+                "valor_total": "1500.00",
+                "forma_pagamento": "avista",
+            },
+            format="json",
+        )
+        self.assertEqual(resposta.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(len(resposta.data["parcelas"]), 1)
+        self.assertEqual(resposta.data["parcelas"][0]["valor"], "1500.00")
+
+    def test_contrato_parcelado_divide_o_valor_total_sem_perder_centavos(self):
+        resposta = self.client.post(
+            "/api/contratos/",
+            {
+                "processo": self.processo.id,
+                "tipo_honorario": "fixo",
+                "valor_total": "1000.00",
+                "forma_pagamento": "parcelado",
+                "numero_parcelas": 3,
+            },
+            format="json",
+        )
+        self.assertEqual(resposta.status_code, status.HTTP_201_CREATED)
+        parcelas = resposta.data["parcelas"]
+        self.assertEqual(len(parcelas), 3)
+        soma = sum(float(p["valor"]) for p in parcelas)
+        self.assertAlmostEqual(soma, 1000.00, places=2)
+
+    def test_marcar_parcela_como_paga_atualiza_status_e_data(self):
+        contrato = Contrato.objects.create(
+            escritorio=self.escritorio,
+            processo=self.processo,
+            tipo_honorario="fixo",
+            valor_total=500,
+            forma_pagamento="avista",
+        )
+        parcela = contrato.parcelas.create(
+            numero=1, valor=500, data_vencimento=timezone.now().date()
+        )
+        resposta = self.client.patch(
+            f"/api/parcelas/{parcela.id}/", {"status": "pago"}, format="json"
+        )
+        self.assertEqual(resposta.status_code, status.HTTP_200_OK)
+        self.assertIsNotNone(resposta.data["pago_em"])
+        parcela.refresh_from_db()
+        self.assertEqual(parcela.status, "pago")
+
+    def test_nao_e_possivel_criar_dois_contratos_para_o_mesmo_processo(self):
+        Contrato.objects.create(
+            escritorio=self.escritorio,
+            processo=self.processo,
+            tipo_honorario="fixo",
+            valor_total=500,
+            forma_pagamento="avista",
+        )
+        resposta = self.client.post(
+            "/api/contratos/",
+            {
+                "processo": self.processo.id,
+                "tipo_honorario": "fixo",
+                "valor_total": "300.00",
+                "forma_pagamento": "avista",
+            },
+            format="json",
+        )
+        self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
+
+
+class PainelMestreAPITestCase(APITestCase):
+    """Testa a autenticação e o isolamento do painel mestre (superadmin)."""
+
+    def setUp(self):
+        self.escritorio_a = _criar_escritorio(cnpj="11111111000111", nome="Escritorio A")
+        self.escritorio_b = _criar_escritorio(
+            cnpj="22222222000122", nome="Escritorio B", email="b@escritorio.com"
+        )
+        self.admin_a = _criar_usuario(self.escritorio_a)
+        self.superadmin = SuperAdmin.objects.create(
+            nome="Dev",
+            email="dev@lexoffice.com",
+            senha=make_password("masterpass123"),
+        )
+
+    def test_login_master_com_credenciais_corretas(self):
+        resposta = self.client.post(
+            "/api/master/login/",
+            {"email": "dev@lexoffice.com", "senha": "masterpass123"},
+            format="json",
+        )
+        self.assertEqual(resposta.status_code, status.HTTP_200_OK)
+        self.assertIn("access", resposta.data)
+
+    def test_login_master_com_senha_incorreta_e_negado(self):
+        resposta = self.client.post(
+            "/api/master/login/",
+            {"email": "dev@lexoffice.com", "senha": "senha-errada"},
+            format="json",
+        )
+        self.assertEqual(resposta.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_master_lista_todos_os_escritorios(self):
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Bearer {_gerar_token_master(self.superadmin)}"
+        )
+        resposta = self.client.get("/api/master/escritorios/")
+        self.assertEqual(resposta.status_code, status.HTTP_200_OK)
+        nomes = {e["nome"] for e in resposta.data}
+        self.assertIn("Escritorio A", nomes)
+        self.assertIn("Escritorio B", nomes)
+
+    def test_master_pode_inativar_escritorio(self):
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Bearer {_gerar_token_master(self.superadmin)}"
+        )
+        resposta = self.client.patch(
+            f"/api/master/escritorios/{self.escritorio_a.id}/",
+            {"ativo": False},
+            format="json",
+        )
+        self.assertEqual(resposta.status_code, status.HTTP_200_OK)
+        self.escritorio_a.refresh_from_db()
+        self.assertFalse(self.escritorio_a.ativo)
+
+    def test_usuario_comum_nao_acessa_painel_mestre(self):
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Bearer {_gerar_token_de_acesso(self.admin_a)}"
+        )
+        resposta = self.client.get("/api/master/escritorios/")
+        self.assertEqual(resposta.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_acesso_sem_token_e_negado(self):
+        resposta = self.client.get("/api/master/escritorios/")
+        self.assertEqual(resposta.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_token_master_nao_enxerga_dados_de_tenant(self):
+        Cliente.objects.create(
+            escritorio=self.escritorio_a,
+            nome="Cliente X",
+            cpf="55555555555",
+            email="x@teste.com",
+            telefone="11955555555",
+            endereco="Rua E",
+        )
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Bearer {_gerar_token_master(self.superadmin)}"
+        )
+        resposta = self.client.get("/api/clientes/")
+        self.assertEqual(resposta.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(resposta.data), 0)
