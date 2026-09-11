@@ -16,6 +16,8 @@ from .views import (
     MovimentacaoViewSet,
     DocumentoViewSet,
     AgendaViewSet,
+    ContratoViewSet,
+    ParcelaViewSet,
     ConfiguracoesView,
     ConfiguracoesContaView,
     ConfiguracoesSenhaView,
@@ -28,6 +30,9 @@ from .views import (
     RelatorioProcessoView,
     RelatorioClienteEmailView,
     RelatorioProcessoEmailView,
+    MasterLoginView,
+    MasterEscritorioViewSet,
+    MasterStatsView,
 )
 
 
@@ -41,6 +46,11 @@ router.register(r"processos", ProcessoViewSet, basename="processo")
 router.register(r"movimentacoes", MovimentacaoViewSet, basename="movimentacao")
 router.register(r"documentos", DocumentoViewSet, basename="documento")
 router.register(r"agenda", AgendaViewSet, basename="agenda")
+router.register(r"contratos", ContratoViewSet, basename="contrato")
+router.register(r"parcelas", ParcelaViewSet, basename="parcela")
+
+master_router = DefaultRouter()
+master_router.register(r"master/escritorios", MasterEscritorioViewSet, basename="master-escritorio")
 
 
 urlpatterns = [
@@ -62,4 +72,6 @@ urlpatterns = [
     path("configuracoes/relatorio/processo/<int:processo_id>/", RelatorioProcessoView.as_view(), name="relatorio-processo"),
     path("configuracoes/relatorio/cliente/<int:cliente_id>/email/", RelatorioClienteEmailView.as_view(), name="relatorio-cliente-email"),
     path("configuracoes/relatorio/processo/<int:processo_id>/email/", RelatorioProcessoEmailView.as_view(), name="relatorio-processo-email"),
-] + router.urls
+    path("master/login/", MasterLoginView.as_view(), name="master-login"),
+    path("master/stats/", MasterStatsView.as_view(), name="master-stats"),
+] + router.urls + master_router.urls

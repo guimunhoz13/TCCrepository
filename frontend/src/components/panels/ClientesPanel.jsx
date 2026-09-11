@@ -44,6 +44,7 @@ export default function ClientesPanel() {
   const { refresh: refreshDashboard } = useDashboardData();
   const { t } = usePreferences();
   const [clientes, setClientes] = useState([]);
+  const [busca, setBusca] = useState("");
   const [formulario, setFormulario] = useState(formularioInicial);
   const [foto, setFoto] = useState(null);
   const [documentoIdentidade, setDocumentoIdentidade] = useState(null);
@@ -53,10 +54,10 @@ export default function ClientesPanel() {
   const [erro, setErro] = useState("");
   const [sucesso, setSucesso] = useState("");
 
-  async function carregarClientes() {
+  async function carregarClientes(filtroBusca) {
     try {
       setCarregando(true);
-      const dados = await getClientes();
+      const dados = await getClientes({ busca: filtroBusca ?? busca });
       setClientes(normalizarLista(dados));
     } catch (error) {
       setErro(error.message);
@@ -69,7 +70,15 @@ export default function ClientesPanel() {
     if (activePanel === "clientes") {
       carregarClientes();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activePanel]);
+
+  useEffect(() => {
+    if (activePanel !== "clientes") return;
+    const timeout = setTimeout(() => carregarClientes(busca), 300);
+    return () => clearTimeout(timeout);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [busca]);
 
   function handleIniciarEdicao(cliente) {
     setErro("");
@@ -322,6 +331,14 @@ export default function ClientesPanel() {
         </form>
       ) : (
         <div className="table-wrap">
+          <div className="form-field" style={{ marginBottom: 12 }}>
+            <input
+              type="search"
+              placeholder="Buscar por nome, CPF ou e-mail..."
+              value={busca}
+              onChange={(e) => setBusca(e.target.value)}
+            />
+          </div>
           <table>
             <thead>
               <tr>

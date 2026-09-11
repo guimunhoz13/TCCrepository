@@ -9,6 +9,7 @@ export const PANELS = {
   PROCESSOS: "processos",
   DOCUMENTOS: "documentos",
   AGENDA: "agenda",
+  CONTRATOS: "contratos",
   CONTATO: "contato",
   CONFIG: "config",
   ADVOGADOS: "advogados",

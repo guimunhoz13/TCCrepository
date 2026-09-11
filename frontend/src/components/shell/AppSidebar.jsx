@@ -13,6 +13,7 @@ import {
   CreditCard,
   CalendarClock,
   Bot,
+  ScrollText,
 } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
 import { PANELS, usePanel } from "@/contexts/PanelContext";
@@ -58,6 +59,11 @@ const NAV_ITEMS = [
     id: PANELS.DOCUMENTOS,
     tKey: "nav_documentos",
     icon: FileText,
+  },
+  {
+    id: PANELS.CONTRATOS,
+    tKey: "nav_contratos",
+    icon: ScrollText,
   },
   {
     id: PANELS.ADVOGADOS,

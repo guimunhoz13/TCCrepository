@@ -21,6 +21,8 @@ from .models import (
     Movimentacao,
     Documento,
     Agenda,
+    Contrato,
+    Parcela,
     PreferenciasUsuario,
     ConfiguracaoEscritorio,
     ESTADOS_CIVIS,
@@ -401,6 +403,7 @@ class AgendaSerializer(serializers.ModelSerializer):
         source="processo.advogado.usuario.nome",
         read_only=True,
     )
+    atrasado = serializers.SerializerMethodField()
 
     class Meta:
         model = Agenda
@@ -411,10 +414,13 @@ class AgendaSerializer(serializers.ModelSerializer):
             "numero_processo",
             "cliente_nome",
             "advogado_nome",
+            "tipo",
             "titulo",
             "descricao",
             "data_evento",
             "local_evento",
+            "cumprido",
+            "atrasado",
             "criado_em",
         ]
         read_only_fields = [
@@ -423,8 +429,113 @@ class AgendaSerializer(serializers.ModelSerializer):
             "numero_processo",
             "cliente_nome",
             "advogado_nome",
+            "atrasado",
             "criado_em",
         ]
+
+    def get_atrasado(self, obj):
+        from django.utils import timezone
+
+        return not obj.cumprido and obj.data_evento < timezone.now()
+
+
+class EscritorioAdminSerializer(serializers.ModelSerializer):
+
+    total_advogados = serializers.SerializerMethodField()
+    total_clientes = serializers.SerializerMethodField()
+    total_processos = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Escritorio
+        fields = [
+            "id",
+            "nome",
+            "cnpj",
+            "email",
+            "telefone",
+            "endereco",
+            "cidade",
+            "estado",
+            "ativo",
+            "plano",
+            "plano_validade",
+            "total_advogados",
+            "total_clientes",
+            "total_processos",
+            "criado_em",
+        ]
+        read_only_fields = ["id", "criado_em", "total_advogados", "total_clientes", "total_processos"]
+
+    def get_total_advogados(self, obj):
+        return obj.advogados.count()
+
+    def get_total_clientes(self, obj):
+        return obj.clientes.count()
+
+    def get_total_processos(self, obj):
+        return obj.processos.count()
+
+
+class ParcelaSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Parcela
+        fields = [
+            "id",
+            "contrato",
+            "numero",
+            "valor",
+            "data_vencimento",
+            "status",
+            "pago_em",
+        ]
+        read_only_fields = ["id", "contrato", "numero", "valor", "data_vencimento", "pago_em"]
+
+
+class ContratoSerializer(serializers.ModelSerializer):
+
+    numero_processo = serializers.CharField(source="processo.numero_processo", read_only=True)
+    processo_titulo = serializers.CharField(source="processo.titulo", read_only=True)
+    cliente_nome = serializers.CharField(source="processo.cliente.nome", read_only=True)
+    parcelas = ParcelaSerializer(many=True, read_only=True)
+    valor_pago = serializers.SerializerMethodField()
+    valor_pendente = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Contrato
+        fields = [
+            "id",
+            "processo",
+            "numero_processo",
+            "processo_titulo",
+            "cliente_nome",
+            "tipo_honorario",
+            "valor_total",
+            "forma_pagamento",
+            "numero_parcelas",
+            "status",
+            "observacoes",
+            "parcelas",
+            "valor_pago",
+            "valor_pendente",
+            "criado_em",
+        ]
+        read_only_fields = [
+            "id",
+            "numero_processo",
+            "processo_titulo",
+            "cliente_nome",
+            "parcelas",
+            "valor_pago",
+            "valor_pendente",
+            "criado_em",
+        ]
+
+    def get_valor_pago(self, obj):
+        return sum((p.valor for p in obj.parcelas.all() if p.status == "pago"), 0)
+
+    def get_valor_pendente(self, obj):
+        return sum((p.valor for p in obj.parcelas.all() if p.status != "pago"), 0)
 
 
 class PreferenciasUsuarioSerializer(serializers.ModelSerializer):

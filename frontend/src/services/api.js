@@ -1,10 +1,22 @@
 const API_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api";
 
-async function request(endpoint, options = {}) {
+function buildQuery(params) {
+  if (!params) return "";
+  const query = new URLSearchParams();
+  Object.entries(params).forEach(([chave, valor]) => {
+    if (valor !== undefined && valor !== null && valor !== "") {
+      query.set(chave, valor);
+    }
+  });
+  const texto = query.toString();
+  return texto ? `?${texto}` : "";
+}
+
+async function request(endpoint, options = {}, tokenKey = "access") {
   const token =
     typeof window !== "undefined"
-      ? localStorage.getItem("access")
+      ? localStorage.getItem(tokenKey)
       : null;
 
   const isFormData = options.body instanceof FormData;
@@ -80,8 +92,8 @@ export async function getNoticiasJuridicas() {
   return request("/noticias/");
 }
 
-export async function getClientes() {
-  return request("/clientes/");
+export async function getClientes(params) {
+  return request(`/clientes/${buildQuery(params)}`);
 }
 
 export async function createCliente(data) {
@@ -102,8 +114,8 @@ export async function deleteCliente(id) {
   return request(`/clientes/${id}/`, { method: "DELETE" });
 }
 
-export async function getProcessos() {
-  return request("/processos/");
+export async function getProcessos(params) {
+  return request(`/processos/${buildQuery(params)}`);
 }
 
 export async function createProcesso(data) {
@@ -124,8 +136,8 @@ export async function deleteProcesso(id) {
   return request(`/processos/${id}/`, { method: "DELETE" });
 }
 
-export async function getAgenda() {
-  return request("/agenda/");
+export async function getAgenda(params) {
+  return request(`/agenda/${buildQuery(params)}`);
 }
 
 export async function createAgenda(data) {
@@ -135,8 +147,44 @@ export async function createAgenda(data) {
   });
 }
 
+export async function updateAgenda(id, data) {
+  return request(`/agenda/${id}/`, {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  });
+}
+
 export async function deleteAgenda(id) {
   return request(`/agenda/${id}/`, { method: "DELETE" });
+}
+
+export async function getContratos() {
+  return request("/contratos/");
+}
+
+export async function createContrato(data) {
+  return request("/contratos/", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function updateContrato(id, data) {
+  return request(`/contratos/${id}/`, {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function deleteContrato(id) {
+  return request(`/contratos/${id}/`, { method: "DELETE" });
+}
+
+export async function updateParcela(id, data) {
+  return request(`/parcelas/${id}/`, {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  });
 }
 
 export async function getDocumentos() {
@@ -284,4 +332,56 @@ export async function enviarRelatorioProcessoPorEmail(processoId, destinatario) 
     method: "POST",
     body: JSON.stringify({ destinatario }),
   });
+}
+
+// =========================================================
+// PAINEL MESTRE (DESENVOLVEDOR)
+// =========================================================
+
+async function masterRequest(endpoint, options = {}) {
+  return request(endpoint, options, "master_access");
+}
+
+export async function masterLogin(email, senha) {
+  return request("/master/login/", {
+    method: "POST",
+    body: JSON.stringify({ email, senha }),
+  });
+}
+
+export function masterLogout() {
+  localStorage.removeItem("master_access");
+  localStorage.removeItem("masterLogado");
+}
+
+export function getMasterLogado() {
+  if (typeof window === "undefined") return null;
+  const raw = localStorage.getItem("masterLogado");
+  return raw ? JSON.parse(raw) : null;
+}
+
+export async function getMasterStats() {
+  return masterRequest("/master/stats/");
+}
+
+export async function getMasterEscritorios() {
+  return masterRequest("/master/escritorios/");
+}
+
+export async function createMasterEscritorio(data) {
+  return masterRequest("/master/escritorios/", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function updateMasterEscritorio(id, data) {
+  return masterRequest(`/master/escritorios/${id}/`, {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function deleteMasterEscritorio(id) {
+  return masterRequest(`/master/escritorios/${id}/`, { method: "DELETE" });
 }

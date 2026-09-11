@@ -12,6 +12,12 @@ ESTADOS_CIVIS = (
 
 class Escritorio(models.Model):
 
+    PLANOS = (
+        ("gratuito", "Gratuito"),
+        ("basico", "Básico"),
+        ("profissional", "Profissional"),
+    )
+
     nome = models.CharField(max_length=255)
     cnpj = models.CharField(max_length=18, unique=True)
     email = models.EmailField()
@@ -20,10 +26,28 @@ class Escritorio(models.Model):
     cidade = models.CharField(max_length=100, blank=True, default="")
     estado = models.CharField(max_length=2, blank=True, default="")
     ativo = models.BooleanField(default=True)
+    plano = models.CharField(max_length=20, choices=PLANOS, default="gratuito")
+    plano_validade = models.DateField(null=True, blank=True)
     criado_em = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         verbose_name_plural = "Escritórios"
+
+    def __str__(self):
+        return self.nome
+
+
+class SuperAdmin(models.Model):
+
+    nome = models.CharField(max_length=255)
+    email = models.EmailField(unique=True)
+    senha = models.CharField(max_length=255)
+    ativo = models.BooleanField(default=True)
+    criado_em = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Administrador do sistema"
+        verbose_name_plural = "Administradores do sistema"
 
     def __str__(self):
         return self.nome
@@ -55,6 +79,8 @@ class Usuario(models.Model):
     estado_civil = models.CharField(max_length=20, choices=ESTADOS_CIVIS, blank=True, default="")
     nacionalidade = models.CharField(max_length=100, blank=True, default="Brasileira")
     ativo = models.BooleanField(default=True)
+    tentativas_login = models.PositiveSmallIntegerField(default=0)
+    bloqueado_ate = models.DateTimeField(null=True, blank=True)
     criado_em = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -194,20 +220,97 @@ class Documento(models.Model):
 
 class Agenda(models.Model):
 
+    TIPOS_EVENTO = (
+        ("compromisso", "Compromisso"),
+        ("prazo", "Prazo"),
+    )
+
     processo = models.ForeignKey(
         Processo,
         on_delete=models.CASCADE,
         related_name="eventos_agenda",
     )
 
+    tipo = models.CharField(max_length=20, choices=TIPOS_EVENTO, default="compromisso")
     titulo = models.CharField(max_length=255)
     descricao = models.TextField()
     data_evento = models.DateTimeField()
-    local_evento = models.CharField(max_length=255)
+    local_evento = models.CharField(max_length=255, blank=True, default="")
+    cumprido = models.BooleanField(default=False)
     criado_em = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.titulo
+
+
+class Contrato(models.Model):
+
+    TIPOS_HONORARIO = (
+        ("fixo", "Valor fixo"),
+        ("exito", "Percentual de êxito"),
+        ("hora", "Por hora trabalhada"),
+    )
+
+    FORMAS_PAGAMENTO = (
+        ("avista", "À vista"),
+        ("parcelado", "Parcelado"),
+    )
+
+    STATUS_CONTRATO = (
+        ("ativo", "Ativo"),
+        ("quitado", "Quitado"),
+        ("cancelado", "Cancelado"),
+    )
+
+    escritorio = models.ForeignKey(
+        Escritorio,
+        on_delete=models.CASCADE,
+        related_name="contratos",
+    )
+
+    processo = models.OneToOneField(
+        Processo,
+        on_delete=models.CASCADE,
+        related_name="contrato",
+    )
+
+    tipo_honorario = models.CharField(max_length=20, choices=TIPOS_HONORARIO, default="fixo")
+    valor_total = models.DecimalField(max_digits=12, decimal_places=2)
+    forma_pagamento = models.CharField(max_length=20, choices=FORMAS_PAGAMENTO, default="avista")
+    numero_parcelas = models.PositiveSmallIntegerField(default=1)
+    status = models.CharField(max_length=20, choices=STATUS_CONTRATO, default="ativo")
+    observacoes = models.TextField(blank=True, default="")
+    criado_em = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Contrato — {self.processo.numero_processo}"
+
+
+class Parcela(models.Model):
+
+    STATUS_PARCELA = (
+        ("pendente", "Pendente"),
+        ("pago", "Pago"),
+        ("atrasado", "Atrasado"),
+    )
+
+    contrato = models.ForeignKey(
+        Contrato,
+        on_delete=models.CASCADE,
+        related_name="parcelas",
+    )
+
+    numero = models.PositiveSmallIntegerField()
+    valor = models.DecimalField(max_digits=12, decimal_places=2)
+    data_vencimento = models.DateField()
+    status = models.CharField(max_length=20, choices=STATUS_PARCELA, default="pendente")
+    pago_em = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["numero"]
+
+    def __str__(self):
+        return f"Parcela {self.numero} — {self.contrato}"
 
 
 class PreferenciasUsuario(models.Model):

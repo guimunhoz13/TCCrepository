@@ -691,6 +691,11 @@ tbody tr:hover {
   color: var(--accent);
 }
 
+.badge-danger {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
 /* ==========================================================================
    OVERLAYS / MODALS
    ========================================================================== */
@@ -2154,6 +2159,7 @@ body {
 
 .badge-success { opacity: 1; }
 .badge-warning { opacity: 1; }
+.badge-danger { opacity: 1; }
 .badge-muted { box-shadow: none; }
 
 /* ==========================================================================

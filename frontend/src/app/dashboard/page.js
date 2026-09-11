@@ -28,6 +28,7 @@ import ClientesPanel from "@/components/panels/ClientesPanel";
 import ProcessosPanel from "@/components/panels/ProcessosPanel";
 import AgendaPanel from "@/components/panels/AgendaPanel";
 import DocumentosPanel from "@/components/panels/DocumentosPanel";
+import ContratosPanel from "@/components/panels/ContratosPanel";
 import ContatoPanel from "@/components/panels/ContatoPanel";
 import ConfigPanel from "@/components/panels/ConfigPanel";
 import AdvogadosPanel from "@/components/panels/AdvogadosPanel";
@@ -414,6 +415,7 @@ function DashboardContent() {
       <ProcessosPanel />
       <AgendaPanel />
       <DocumentosPanel />
+      <ContratosPanel />
       <ContatoPanel />
       <ConfigPanel />
       <AdvogadosPanel />
