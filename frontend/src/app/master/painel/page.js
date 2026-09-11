@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ShieldCheck, LogOut, Trash2 } from "lucide-react";
+import { ShieldCheck, LogOut, Trash2, Moon, Sun } from "lucide-react";
 import {
   getMasterLogado,
   masterLogout,
@@ -12,9 +12,11 @@ import {
   deleteMasterEscritorio,
   normalizarLista,
 } from "@/services/api";
+import { useTheme } from "@/contexts/ThemeContext";
 
 export default function MasterPainelPage() {
   const router = useRouter();
+  const { theme, toggleTheme } = useTheme();
   const [master, setMaster] = useState(null);
   const [stats, setStats] = useState(null);
   const [escritorios, setEscritorios] = useState([]);
@@ -84,9 +86,19 @@ export default function MasterPainelPage() {
             </p>
           </div>
         </div>
-        <button type="button" className="btn btn-secondary btn-sm" onClick={handleSair}>
-          <LogOut size={14} /> Sair
-        </button>
+        <div style={{ display: "flex", gap: 8 }}>
+          <button
+            type="button"
+            className="icon-btn"
+            onClick={toggleTheme}
+            aria-label="Alternar tema"
+          >
+            {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
+          </button>
+          <button type="button" className="btn btn-secondary btn-sm" onClick={handleSair}>
+            <LogOut size={14} /> Sair
+          </button>
+        </div>
       </header>
 
       {erro && <div className="alert alert-error">{erro}</div>}
@@ -149,6 +161,7 @@ export default function MasterPainelPage() {
                   <td>{escritorio.total_processos}</td>
                   <td>
                     <select
+                      className="table-input"
                       value={escritorio.plano}
                       onChange={(e) => handleAtualizarPlano(escritorio, "plano", e.target.value)}
                     >
@@ -160,6 +173,7 @@ export default function MasterPainelPage() {
                   <td>
                     <input
                       type="date"
+                      className="table-input"
                       value={escritorio.plano_validade || ""}
                       onChange={(e) => handleAtualizarPlano(escritorio, "plano_validade", e.target.value)}
                     />

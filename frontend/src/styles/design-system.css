@@ -696,6 +696,23 @@ tbody tr:hover {
   color: var(--danger);
 }
 
+/* Select/input soltos dentro de células de tabela (sem o wrapper
+   .form-field) — mesmo acabamento visual, em tamanho compacto. */
+.table-input {
+  padding: 7px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border-strong);
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font-size: 0.86rem;
+  transition: border-color 0.15s ease;
+}
+
+.table-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
 /* ==========================================================================
    OVERLAYS / MODALS
    ========================================================================== */
@@ -2171,6 +2188,19 @@ body {
 .auth-page {
   position: relative;
   overflow: hidden;
+}
+
+/* Variante de página de login sem a coluna de apresentação (ex.: painel
+   mestre) — um único cartão centralizado na tela inteira. */
+.auth-page.auth-page-single {
+  grid-template-columns: 1fr;
+}
+
+.auth-page-theme-toggle {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  z-index: 2;
 }
 
 .auth-page::before,
