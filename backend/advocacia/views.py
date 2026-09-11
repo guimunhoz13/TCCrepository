@@ -1,10 +1,11 @@
 from django.contrib.auth.hashers import check_password, make_password
-from django.db.models import Count
+from django.db.models import Count, Q
 from django.http import HttpResponse
 from django.utils import timezone
 import csv
 
 from rest_framework import status, viewsets
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -13,7 +14,11 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from django.core.exceptions import ValidationError as DjangoValidationError
 
-from .mixins import EscritorioScopedMixin, get_usuario_from_request
+from .mixins import (
+    EscritorioScopedMixin,
+    get_usuario_from_request,
+    IsMasterUser,
+)
 from .validators import validar_email_real
 from .emails import (
     enviar_email,
@@ -30,6 +35,9 @@ from .models import (
     Movimentacao,
     Documento,
     Agenda,
+    Contrato,
+    Parcela,
+    SuperAdmin,
     PreferenciasUsuario,
     ConfiguracaoEscritorio,
 )
@@ -37,6 +45,7 @@ from .models import (
 from .serializers import (
     EscritorioSerializer,
     EscritorioRegistroSerializer,
+    EscritorioAdminSerializer,
     UsuarioSerializer,
     AdvogadoRegistroSerializer,
     ClienteSerializer,
@@ -45,6 +54,8 @@ from .serializers import (
     MovimentacaoSerializer,
     DocumentoSerializer,
     AgendaSerializer,
+    ContratoSerializer,
+    ParcelaSerializer,
     PreferenciasUsuarioSerializer,
     ConfiguracaoEscritorioSerializer,
 )
@@ -105,13 +116,44 @@ class LoginView(APIView):
                 status=status.HTTP_403_FORBIDDEN,
             )
 
+        if usuario.bloqueado_ate and usuario.bloqueado_ate > timezone.now():
+            minutos_restantes = max(
+                1,
+                int((usuario.bloqueado_ate - timezone.now()).total_seconds() // 60) + 1,
+            )
+            return Response(
+                {
+                    "detail": f"Conta bloqueada por excesso de tentativas. Tente novamente em {minutos_restantes} minuto(s)."
+                },
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
         if not check_password(senha, usuario.senha):
+            usuario.tentativas_login += 1
+
+            if usuario.tentativas_login >= 3:
+                usuario.bloqueado_ate = timezone.now() + timezone.timedelta(minutes=15)
+                usuario.tentativas_login = 0
+                usuario.save(update_fields=["tentativas_login", "bloqueado_ate"])
+                return Response(
+                    {
+                        "detail": "Conta bloqueada por 15 minutos após 3 tentativas de senha inválidas."
+                    },
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+
+            usuario.save(update_fields=["tentativas_login"])
             return Response(
                 {
                     "detail": "E-mail ou senha inválidos."
                 },
                 status=status.HTTP_401_UNAUTHORIZED,
             )
+
+        if usuario.tentativas_login or usuario.bloqueado_ate:
+            usuario.tentativas_login = 0
+            usuario.bloqueado_ate = None
+            usuario.save(update_fields=["tentativas_login", "bloqueado_ate"])
 
         refresh = RefreshToken()
 
@@ -419,11 +461,25 @@ class ClienteViewSet(
 
     def get_queryset(self):
 
-        return (
+        queryset = (
             super()
             .get_queryset()
             .order_by("-criado_em")
         )
+
+        busca = self.request.query_params.get("busca")
+        if busca:
+            queryset = queryset.filter(
+                Q(nome__icontains=busca)
+                | Q(cpf__icontains=busca)
+                | Q(email__icontains=busca)
+            )
+
+        ativo = self.request.query_params.get("ativo")
+        if ativo in ("true", "false"):
+            queryset = queryset.filter(ativo=(ativo == "true"))
+
+        return queryset
 
 
 # =========================================================
@@ -470,7 +526,7 @@ class ProcessoViewSet(
 
     def get_queryset(self):
 
-        return (
+        queryset = (
             super()
             .get_queryset()
             .select_related(
@@ -479,6 +535,38 @@ class ProcessoViewSet(
             )
             .order_by("-criado_em")
         )
+
+        params = self.request.query_params
+
+        busca = params.get("busca")
+        if busca:
+            queryset = queryset.filter(
+                Q(numero_processo__icontains=busca)
+                | Q(titulo__icontains=busca)
+                | Q(cliente__nome__icontains=busca)
+            )
+
+        status_filtro = params.get("status")
+        if status_filtro:
+            queryset = queryset.filter(status=status_filtro)
+
+        cliente_id = params.get("cliente")
+        if cliente_id:
+            queryset = queryset.filter(cliente_id=cliente_id)
+
+        advogado_id = params.get("advogado")
+        if advogado_id:
+            queryset = queryset.filter(advogado_id=advogado_id)
+
+        data_inicio_de = params.get("data_inicio_de")
+        if data_inicio_de:
+            queryset = queryset.filter(data_inicio__gte=data_inicio_de)
+
+        data_inicio_ate = params.get("data_inicio_ate")
+        if data_inicio_ate:
+            queryset = queryset.filter(data_inicio__lte=data_inicio_ate)
+
+        return queryset
 
 
 # =========================================================
@@ -556,7 +644,7 @@ class AgendaViewSet(
 
     def get_queryset(self):
 
-        return (
+        queryset = (
             super()
             .get_queryset()
             .select_related(
@@ -567,6 +655,120 @@ class AgendaViewSet(
                 "data_evento"
             )
         )
+
+        tipo = self.request.query_params.get("tipo")
+        if tipo:
+            queryset = queryset.filter(tipo=tipo)
+
+        cumprido = self.request.query_params.get("cumprido")
+        if cumprido in ("true", "false"):
+            queryset = queryset.filter(cumprido=(cumprido == "true"))
+
+        return queryset
+
+
+# =========================================================
+# CONTRATOS E HONORÁRIOS
+# =========================================================
+
+def _somar_meses(data, meses):
+    import calendar
+
+    mes_total = data.month - 1 + meses
+    ano = data.year + mes_total // 12
+    mes = mes_total % 12 + 1
+    dia = min(data.day, calendar.monthrange(ano, mes)[1])
+    return data.replace(year=ano, month=mes, day=dia)
+
+
+def _gerar_parcelas(contrato):
+    from decimal import Decimal, ROUND_HALF_UP
+
+    total_parcelas = contrato.numero_parcelas if contrato.forma_pagamento == "parcelado" else 1
+    total_parcelas = max(1, total_parcelas)
+
+    valor_parcela = (contrato.valor_total / total_parcelas).quantize(
+        Decimal("0.01"), rounding=ROUND_HALF_UP
+    )
+
+    hoje = timezone.now().date()
+    soma = Decimal("0.00")
+
+    for numero in range(1, total_parcelas + 1):
+        valor = valor_parcela
+        if numero == total_parcelas:
+            valor = contrato.valor_total - soma
+        soma += valor
+
+        Parcela.objects.create(
+            contrato=contrato,
+            numero=numero,
+            valor=valor,
+            data_vencimento=_somar_meses(hoje, numero - 1),
+        )
+
+
+class ContratoViewSet(
+    EscritorioScopedMixin,
+    viewsets.ModelViewSet
+):
+
+    queryset = Contrato.objects.all()
+
+    serializer_class = ContratoSerializer
+
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+
+        return (
+            super()
+            .get_queryset()
+            .select_related("processo__cliente")
+            .prefetch_related("parcelas")
+            .order_by("-criado_em")
+        )
+
+    def perform_create(self, serializer):
+        escritorio = self.get_escritorio()
+
+        if not escritorio:
+            raise PermissionDenied("Escritório não identificado.")
+
+        contrato = serializer.save(escritorio=escritorio)
+        _gerar_parcelas(contrato)
+
+
+class ParcelaViewSet(
+    EscritorioScopedMixin,
+    viewsets.ModelViewSet
+):
+
+    http_method_names = ["get", "patch", "head", "options"]
+
+    queryset = Parcela.objects.all()
+
+    serializer_class = ParcelaSerializer
+
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+
+        return (
+            super()
+            .get_queryset()
+            .select_related("contrato__processo")
+            .order_by("data_vencimento")
+        )
+
+    def perform_update(self, serializer):
+        parcela = serializer.instance
+        novo_status = serializer.validated_data.get("status", parcela.status)
+
+        if novo_status == "pago" and parcela.status != "pago":
+            serializer.save(pago_em=timezone.now())
+        else:
+            serializer.save()
 
 
 # =========================================================
@@ -1013,3 +1215,90 @@ class ExportarProcessosCSVView(APIView):
         for processo in queryset:
             writer.writerow([processo.numero_processo, processo.titulo, processo.get_status_display(), processo.cliente.nome, processo.advogado.usuario.nome, processo.data_inicio or "", processo.data_fim or ""])
         return response
+
+
+# =========================================================
+# PAINEL MESTRE (DESENVOLVEDOR)
+# =========================================================
+
+class MasterLoginView(APIView):
+
+    permission_classes = [AllowAny]
+    authentication_classes = []
+
+    def post(self, request):
+
+        email = request.data.get("email", "").strip()
+        senha = request.data.get("senha", "")
+
+        if not email or not senha:
+            return Response(
+                {"detail": "Informe o e-mail e a senha."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            superadmin = SuperAdmin.objects.get(email__iexact=email)
+        except SuperAdmin.DoesNotExist:
+            return Response(
+                {"detail": "E-mail ou senha inválidos."},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+
+        if not superadmin.ativo:
+            return Response(
+                {"detail": "Este acesso está desativado."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        if not check_password(senha, superadmin.senha):
+            return Response(
+                {"detail": "E-mail ou senha inválidos."},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+
+        refresh = RefreshToken()
+        refresh["user_id"] = f"master-{superadmin.id}"
+        refresh["is_master"] = True
+        refresh["superadmin_id"] = superadmin.id
+        refresh["nome"] = superadmin.nome
+        refresh["email"] = superadmin.email
+
+        return Response(
+            {
+                "refresh": str(refresh),
+                "access": str(refresh.access_token),
+                "superadmin": {
+                    "id": superadmin.id,
+                    "nome": superadmin.nome,
+                    "email": superadmin.email,
+                },
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
+class MasterEscritorioViewSet(viewsets.ModelViewSet):
+
+    queryset = Escritorio.objects.all().order_by("-criado_em")
+
+    serializer_class = EscritorioAdminSerializer
+
+    permission_classes = [IsMasterUser]
+
+
+class MasterStatsView(APIView):
+
+    permission_classes = [IsMasterUser]
+
+    def get(self, request):
+        return Response(
+            {
+                "total_escritorios": Escritorio.objects.count(),
+                "escritorios_ativos": Escritorio.objects.filter(ativo=True).count(),
+                "escritorios_inativos": Escritorio.objects.filter(ativo=False).count(),
+                "total_advogados": Advogado.objects.count(),
+                "total_clientes": Cliente.objects.count(),
+                "total_processos": Processo.objects.count(),
+            }
+        )

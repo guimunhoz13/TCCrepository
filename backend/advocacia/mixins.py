@@ -1,11 +1,15 @@
 from rest_framework.exceptions import PermissionDenied
+from rest_framework.permissions import BasePermission
 
-from .models import Usuario
+from .models import Usuario, SuperAdmin
 
 
 def get_usuario_from_request(request):
 
     if not request.auth:
+        return None
+
+    if request.auth.get("is_master"):
         return None
 
     user_id = request.auth.get("user_id")
@@ -17,6 +21,28 @@ def get_usuario_from_request(request):
         return Usuario.objects.select_related("escritorio").get(id=user_id)
     except Usuario.DoesNotExist:
         return None
+
+
+def get_superadmin_from_request(request):
+
+    if not request.auth or not request.auth.get("is_master"):
+        return None
+
+    superadmin_id = request.auth.get("superadmin_id")
+
+    if not superadmin_id:
+        return None
+
+    try:
+        return SuperAdmin.objects.get(id=superadmin_id, ativo=True)
+    except SuperAdmin.DoesNotExist:
+        return None
+
+
+class IsMasterUser(BasePermission):
+
+    def has_permission(self, request, view):
+        return get_superadmin_from_request(request) is not None
 
 
 class EscritorioScopedMixin:
@@ -46,6 +72,9 @@ class EscritorioScopedMixin:
 
         if queryset.model.__name__ == "Agenda":
             return queryset.filter(processo__escritorio=escritorio)
+
+        if queryset.model.__name__ == "Parcela":
+            return queryset.filter(contrato__processo__escritorio=escritorio)
 
         return queryset
 

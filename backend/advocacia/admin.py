@@ -8,6 +8,8 @@ from .models import (
     Movimentacao,
     Documento,
     Agenda,
+    Contrato,
+    Parcela,
 )
 
 
@@ -242,3 +244,63 @@ class AgendaAdmin(admin.ModelAdmin):
     @admin.display(description='Cliente')
     def cliente_evento(self, obj):
         return obj.processo.cliente.nome
+
+
+@admin.register(Contrato)
+class ContratoAdmin(admin.ModelAdmin):
+
+    list_display = (
+        'id',
+        'processo',
+        'tipo_honorario',
+        'valor_total',
+        'forma_pagamento',
+        'status',
+        'criado_em',
+    )
+
+    search_fields = (
+        'processo__numero_processo',
+        'processo__titulo',
+        'processo__cliente__nome',
+    )
+
+    list_filter = (
+        'tipo_honorario',
+        'forma_pagamento',
+        'status',
+    )
+
+    list_select_related = (
+        'processo__cliente',
+    )
+
+    ordering = (
+        '-criado_em',
+    )
+
+
+@admin.register(Parcela)
+class ParcelaAdmin(admin.ModelAdmin):
+
+    list_display = (
+        'id',
+        'contrato',
+        'numero',
+        'valor',
+        'data_vencimento',
+        'status',
+    )
+
+    list_filter = (
+        'status',
+        'data_vencimento',
+    )
+
+    list_select_related = (
+        'contrato__processo',
+    )
+
+    ordering = (
+        'data_vencimento',
+    )

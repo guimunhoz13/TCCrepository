@@ -35,16 +35,28 @@ export default function ProcessosPanel() {
   const [processos, setProcessos] = useState([]);
   const [clientes, setClientes] = useState([]);
   const [advogados, setAdvogados] = useState([]);
+  const [busca, setBusca] = useState("");
+  const [filtroStatus, setFiltroStatus] = useState("");
+  const [filtroAdvogado, setFiltroAdvogado] = useState("");
   const [formulario, setFormulario] = useState(formularioInicial);
   const [carregando, setCarregando] = useState(true);
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState("");
 
-  async function carregarDados() {
+  async function carregarDados(filtros = {}) {
     try {
       setCarregando(true);
+      const parametros = {
+        busca: filtros.busca ?? busca,
+        status: filtros.status ?? filtroStatus,
+        advogado: filtros.advogado ?? filtroAdvogado,
+      };
       const [dadosProcessos, dadosClientes, dadosAdvogados] =
-        await Promise.all([getProcessos(), getClientes(), getAdvogados()]);
+        await Promise.all([
+          getProcessos(parametros),
+          getClientes(),
+          getAdvogados(),
+        ]);
       setProcessos(normalizarLista(dadosProcessos));
       setClientes(normalizarLista(dadosClientes));
       setAdvogados(normalizarLista(dadosAdvogados));
@@ -59,7 +71,21 @@ export default function ProcessosPanel() {
     if (activePanel === "processos") {
       carregarDados();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activePanel]);
+
+  useEffect(() => {
+    if (activePanel !== "processos") return;
+    const timeout = setTimeout(() => carregarDados({ busca }), 300);
+    return () => clearTimeout(timeout);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [busca]);
+
+  useEffect(() => {
+    if (activePanel !== "processos") return;
+    carregarDados({ status: filtroStatus, advogado: filtroAdvogado });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filtroStatus, filtroAdvogado]);
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -196,6 +222,44 @@ export default function ProcessosPanel() {
         </form>
       ) : (
         <div className="table-wrap">
+          <div
+            className="form-grid"
+            style={{ marginBottom: 12, gridTemplateColumns: "2fr 1fr 1fr" }}
+          >
+            <div className="form-field">
+              <input
+                type="search"
+                placeholder="Buscar por número, título ou cliente..."
+                value={busca}
+                onChange={(e) => setBusca(e.target.value)}
+              />
+            </div>
+            <div className="form-field">
+              <select
+                value={filtroStatus}
+                onChange={(e) => setFiltroStatus(e.target.value)}
+              >
+                <option value="">Todos os status</option>
+                <option value="Em andamento">Em andamento</option>
+                <option value="Concluido">Concluído</option>
+                <option value="Suspenso">Suspenso</option>
+                <option value="Arquivado">Arquivado</option>
+              </select>
+            </div>
+            <div className="form-field">
+              <select
+                value={filtroAdvogado}
+                onChange={(e) => setFiltroAdvogado(e.target.value)}
+              >
+                <option value="">Todos os advogados</option>
+                {advogados.map((adv) => (
+                  <option key={adv.id} value={adv.id}>
+                    {adv.nome}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
           <table>
             <thead>
               <tr>
