@@ -2,11 +2,13 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ShieldCheck } from "lucide-react";
+import { ShieldCheck, Moon, Sun } from "lucide-react";
 import { masterLogin } from "@/services/api";
+import { useTheme } from "@/contexts/ThemeContext";
 
 export default function MasterLoginPage() {
   const router = useRouter();
+  const { theme, toggleTheme } = useTheme();
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [erro, setErro] = useState("");
@@ -32,8 +34,17 @@ export default function MasterLoginPage() {
   }
 
   return (
-    <main className="auth-page">
-      <section className="auth-card-wrap" style={{ margin: "0 auto" }}>
+    <main className="auth-page auth-page-single">
+      <button
+        type="button"
+        className="icon-btn auth-page-theme-toggle"
+        onClick={toggleTheme}
+        aria-label="Alternar tema"
+      >
+        {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
+      </button>
+
+      <section className="auth-card-wrap">
         <div className="auth-card">
           <form onSubmit={handleLogin}>
             <h2>
