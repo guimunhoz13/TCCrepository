@@ -24,7 +24,7 @@ const formularioInicial = {
 };
 
 export default function AgendaPanel() {
-  const { activePanel, panelTab } = usePanel();
+  const { activePanel, panelTab, setPanelTab } = usePanel();
   const { refresh: refreshDashboard } = useDashboardData();
   const { t } = usePreferences();
   const [eventos, setEventos] = useState([]);
@@ -33,6 +33,7 @@ export default function AgendaPanel() {
   const [formulario, setFormulario] = useState(formularioInicial);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState("");
+  const [sucesso, setSucesso] = useState("");
 
   async function carregarDados(tipo = filtroTipo) {
     try {
@@ -66,6 +67,7 @@ export default function AgendaPanel() {
   async function handleSubmit(event) {
     event.preventDefault();
     setErro("");
+    setSucesso("");
 
     try {
       await createAgenda({
@@ -73,6 +75,8 @@ export default function AgendaPanel() {
         processo: Number(formulario.processo),
       });
       setFormulario(formularioInicial);
+      setSucesso("Evento agendado com sucesso.");
+      setPanelTab("lista");
       await carregarDados();
       refreshDashboard().catch(() => {});
     } catch (error) {
@@ -90,6 +94,7 @@ export default function AgendaPanel() {
       ]}
     >
       {erro && <div className="alert alert-error">{erro}</div>}
+      {sucesso && <div className="alert alert-success">{sucesso}</div>}
 
       {panelTab === "novo" ? (
         <form className="form-grid" onSubmit={handleSubmit}>

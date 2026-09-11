@@ -1,4 +1,6 @@
-from rest_framework.exceptions import PermissionDenied
+from django.db import IntegrityError
+
+from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.permissions import BasePermission
 
 from .models import Usuario, SuperAdmin
@@ -84,9 +86,27 @@ class EscritorioScopedMixin:
         if not escritorio:
             raise PermissionDenied("Escritório não identificado.")
 
+        kwargs = {}
         if "escritorio" in serializer.validated_data or hasattr(
             serializer.Meta.model, "escritorio"
         ):
-            serializer.save(escritorio=escritorio)
-        else:
-            serializer.save()
+            kwargs["escritorio"] = escritorio
+
+        self._salvar(serializer, **kwargs)
+
+    def perform_update(self, serializer):
+        self._salvar(serializer)
+
+    def _salvar(self, serializer, **kwargs):
+        """Salva o serializer, convertendo uma violação de constraint única
+        (ex.: CPF/número de processo/OAB repetido no mesmo escritório — não
+        detectável pelo DRF porque o campo "escritorio" não é exposto no
+        serializer) num erro 400 claro, em vez de deixar o IntegrityError
+        virar um 500 sem mensagem específica para o usuário.
+        """
+        try:
+            serializer.save(**kwargs)
+        except IntegrityError:
+            raise ValidationError(
+                {"detail": "Já existe um registro com esses dados neste escritório."}
+            )

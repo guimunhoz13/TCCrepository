@@ -3,7 +3,15 @@ from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
 from rest_framework import serializers
 
-from .validators import validar_email_real
+from .validators import (
+    validar_email_real,
+    validar_cpf,
+    validar_cnpj,
+    validar_telefone,
+    validar_oab,
+    validar_rg,
+    validar_senha_forte,
+)
 from .models import (
     Escritorio,
     Usuario,
@@ -45,16 +53,17 @@ class EscritorioRegistroSerializer(serializers.Serializer):
     nome_escritorio = serializers.CharField(max_length=255)
     cnpj = serializers.CharField(max_length=18)
     email_escritorio = serializers.EmailField(validators=[validar_email_real])
-    telefone_escritorio = serializers.CharField(max_length=20)
+    telefone_escritorio = serializers.CharField(max_length=20, validators=[validar_telefone])
     endereco_escritorio = serializers.CharField(max_length=255)
     cidade = serializers.CharField(max_length=100, required=False, allow_blank=True)
     estado = serializers.CharField(max_length=2, required=False, allow_blank=True)
 
     nome_admin = serializers.CharField(max_length=255)
     email_admin = serializers.EmailField(validators=[validar_email_real])
-    senha_admin = serializers.CharField(write_only=True, min_length=6)
+    senha_admin = serializers.CharField(write_only=True, validators=[validar_senha_forte])
 
     def validate_cnpj(self, value):
+        validar_cnpj(value)
         if Escritorio.objects.filter(cnpj=value).exists():
             raise serializers.ValidationError("CNPJ já cadastrado.")
         return value
@@ -118,6 +127,11 @@ class UsuarioSerializer(serializers.ModelSerializer):
             "criado_em",
         ]
         read_only_fields = ["id", "escritorio", "escritorio_nome", "criado_em"]
+        extra_kwargs = {
+            "cpf": {"validators": [validar_cpf]},
+            "rg": {"validators": [validar_rg]},
+            "telefone": {"validators": [validar_telefone]},
+        }
 
     def create(self, validated_data):
         senha = validated_data.pop("senha")
@@ -143,14 +157,20 @@ class AdvogadoRegistroSerializer(serializers.Serializer):
 
     nome = serializers.CharField(max_length=255)
     email = serializers.EmailField(validators=[validar_email_real])
-    senha = serializers.CharField(write_only=True, min_length=6)
-    telefone = serializers.CharField(max_length=20, required=False, allow_blank=True)
-    oab = serializers.CharField(max_length=30)
+    senha = serializers.CharField(write_only=True, validators=[validar_senha_forte])
+    telefone = serializers.CharField(
+        max_length=20, required=False, allow_blank=True, validators=[validar_telefone]
+    )
+    oab = serializers.CharField(max_length=30, validators=[validar_oab])
     especialidade = serializers.CharField(max_length=255)
     foto = serializers.ImageField(required=False, allow_null=True)
     documento_identidade = serializers.FileField(required=False, allow_null=True)
-    cpf = serializers.CharField(max_length=14, required=False, allow_blank=True)
-    rg = serializers.CharField(max_length=20, required=False, allow_blank=True)
+    cpf = serializers.CharField(
+        max_length=14, required=False, allow_blank=True, validators=[validar_cpf]
+    )
+    rg = serializers.CharField(
+        max_length=20, required=False, allow_blank=True, validators=[validar_rg]
+    )
     data_nascimento = serializers.DateField(required=False, allow_null=True)
     estado_civil = serializers.ChoiceField(choices=ESTADOS_CIVIS, required=False, allow_blank=True)
     nacionalidade = serializers.CharField(max_length=100, required=False, allow_blank=True)
@@ -211,19 +231,30 @@ class ClienteSerializer(serializers.ModelSerializer):
             "criado_em",
         ]
         read_only_fields = ["id", "criado_em"]
+        extra_kwargs = {
+            "cpf": {"validators": [validar_cpf]},
+            "rg": {"validators": [validar_rg]},
+            "telefone": {"validators": [validar_telefone]},
+        }
 
 
 class AdvogadoSerializer(serializers.ModelSerializer):
 
     nome = serializers.CharField(source="usuario.nome")
     email = serializers.EmailField(source="usuario.email", read_only=True)
-    telefone = serializers.CharField(source="usuario.telefone", required=False, allow_blank=True)
+    telefone = serializers.CharField(
+        source="usuario.telefone", required=False, allow_blank=True, validators=[validar_telefone]
+    )
     foto = serializers.ImageField(source="usuario.foto", required=False, allow_null=True)
     documento_identidade = serializers.FileField(
         source="usuario.documento_identidade", required=False, allow_null=True
     )
-    cpf = serializers.CharField(source="usuario.cpf", required=False, allow_blank=True)
-    rg = serializers.CharField(source="usuario.rg", required=False, allow_blank=True)
+    cpf = serializers.CharField(
+        source="usuario.cpf", required=False, allow_blank=True, validators=[validar_cpf]
+    )
+    rg = serializers.CharField(
+        source="usuario.rg", required=False, allow_blank=True, validators=[validar_rg]
+    )
     data_nascimento = serializers.DateField(
         source="usuario.data_nascimento", required=False, allow_null=True
     )
@@ -253,6 +284,9 @@ class AdvogadoSerializer(serializers.ModelSerializer):
             "especialidade",
         ]
         read_only_fields = ["id", "usuario", "email"]
+        extra_kwargs = {
+            "oab": {"validators": [validar_oab]},
+        }
 
     def update(self, instance, validated_data):
         dados_usuario = validated_data.pop("usuario", {})

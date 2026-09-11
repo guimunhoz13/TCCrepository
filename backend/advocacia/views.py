@@ -5,7 +5,7 @@ from django.utils import timezone
 import csv
 
 from rest_framework import status, viewsets
-from rest_framework.exceptions import PermissionDenied
+from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -19,7 +19,7 @@ from .mixins import (
     get_usuario_from_request,
     IsMasterUser,
 )
-from .validators import validar_email_real
+from .validators import validar_email_real, validar_telefone, validar_senha_forte
 from .emails import (
     enviar_email,
     montar_email_relatorio_cliente,
@@ -481,6 +481,25 @@ class ClienteViewSet(
 
         return queryset
 
+    def _verificar_cpf_duplicado(self, serializer):
+        cpf = serializer.validated_data.get("cpf")
+        if not cpf:
+            return
+        escritorio = self.get_escritorio()
+        conflito = Cliente.objects.filter(escritorio=escritorio, cpf=cpf)
+        if serializer.instance:
+            conflito = conflito.exclude(pk=serializer.instance.pk)
+        if conflito.exists():
+            raise ValidationError({"cpf": ["Já existe um cliente com este CPF neste escritório."]})
+
+    def perform_create(self, serializer):
+        self._verificar_cpf_duplicado(serializer)
+        super().perform_create(serializer)
+
+    def perform_update(self, serializer):
+        self._verificar_cpf_duplicado(serializer)
+        super().perform_update(serializer)
+
 
 # =========================================================
 # ADVOGADOS
@@ -507,6 +526,17 @@ class AdvogadoViewSet(
             )
             .order_by("-id")
         )
+
+    def perform_update(self, serializer):
+        oab = serializer.validated_data.get("oab")
+        if oab:
+            escritorio = self.get_escritorio()
+            conflito = Advogado.objects.filter(escritorio=escritorio, oab=oab).exclude(
+                pk=serializer.instance.pk
+            )
+            if conflito.exists():
+                raise ValidationError({"oab": ["OAB já cadastrada neste escritório."]})
+        super().perform_update(serializer)
 
 
 # =========================================================
@@ -567,6 +597,27 @@ class ProcessoViewSet(
             queryset = queryset.filter(data_inicio__lte=data_inicio_ate)
 
         return queryset
+
+    def _verificar_numero_processo_duplicado(self, serializer):
+        numero_processo = serializer.validated_data.get("numero_processo")
+        if not numero_processo:
+            return
+        escritorio = self.get_escritorio()
+        conflito = Processo.objects.filter(escritorio=escritorio, numero_processo=numero_processo)
+        if serializer.instance:
+            conflito = conflito.exclude(pk=serializer.instance.pk)
+        if conflito.exists():
+            raise ValidationError(
+                {"numero_processo": ["Já existe um processo com este número neste escritório."]}
+            )
+
+    def perform_create(self, serializer):
+        self._verificar_numero_processo_duplicado(serializer)
+        super().perform_create(serializer)
+
+    def perform_update(self, serializer):
+        self._verificar_numero_processo_duplicado(serializer)
+        super().perform_update(serializer)
 
 
 # =========================================================
@@ -897,6 +948,11 @@ class ConfiguracoesContaView(APIView):
         if Usuario.objects.filter(email__iexact=email).exclude(id=usuario.id).exists():
             return Response({"email": ["E-mail já cadastrado."]}, status=status.HTTP_400_BAD_REQUEST)
 
+        try:
+            validar_telefone(telefone)
+        except DjangoValidationError as exc:
+            return Response({"telefone": list(exc.messages)}, status=status.HTTP_400_BAD_REQUEST)
+
         usuario.nome = nome
         usuario.email = email
         usuario.telefone = telefone
@@ -932,8 +988,10 @@ class ConfiguracoesSenhaView(APIView):
 
         if not check_password(senha_atual, usuario.senha):
             return Response({"detail": "Senha atual incorreta."}, status=status.HTTP_400_BAD_REQUEST)
-        if len(nova_senha) < 8:
-            return Response({"detail": "A nova senha deve ter pelo menos 8 caracteres."}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            validar_senha_forte(nova_senha)
+        except DjangoValidationError as exc:
+            return Response({"detail": exc.messages[0]}, status=status.HTTP_400_BAD_REQUEST)
         if nova_senha != confirmar_senha:
             return Response({"detail": "A confirmação da nova senha não confere."}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -972,6 +1030,12 @@ class ConfiguracoesEscritorioView(APIView):
                 validar_email_real(request.data["email"])
             except DjangoValidationError as exc:
                 return Response({"email": list(exc.messages)}, status=status.HTTP_400_BAD_REQUEST)
+
+        if "telefone" in request.data:
+            try:
+                validar_telefone(request.data["telefone"])
+            except DjangoValidationError as exc:
+                return Response({"telefone": list(exc.messages)}, status=status.HTTP_400_BAD_REQUEST)
 
         campos = ["nome", "email", "telefone", "endereco", "cidade", "estado"]
         for campo in campos:

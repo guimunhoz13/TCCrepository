@@ -8,6 +8,7 @@ import OverlayPanel from "@/components/shell/OverlayPanel";
 import { MessageCircle } from "lucide-react";
 import Avatar from "@/components/ui/Avatar";
 import { abrirWhatsApp, montarMensagemCliente } from "@/utils/whatsapp";
+import { formatarCPF, formatarRG, formatarTelefone } from "@/utils/mascaras";
 import {
   getClientes,
   createCliente,
@@ -37,26 +38,6 @@ const ESTADOS_CIVIS = [
   { value: "viuvo", label: "Viúvo(a)" },
   { value: "uniao_estavel", label: "União estável" },
 ];
-
-function formatarCPF(valor) {
-  const numeros = valor.replace(/\D/g, "").slice(0, 11);
-  return numeros
-    .replace(/^(\d{3})(\d)/, "$1.$2")
-    .replace(/^(\d{3})\.(\d{3})(\d)/, "$1.$2.$3")
-    .replace(/\.(\d{3})(\d)/, ".$1-$2");
-}
-
-function formatarTelefone(valor) {
-  const numeros = valor.replace(/\D/g, "").slice(0, 11);
-  if (numeros.length <= 10) {
-    return numeros
-      .replace(/^(\d{2})(\d)/, "($1) $2")
-      .replace(/(\d{4})(\d)/, "$1-$2");
-  }
-  return numeros
-    .replace(/^(\d{2})(\d)/, "($1) $2")
-    .replace(/(\d{5})(\d)/, "$1-$2");
-}
 
 export default function ClientesPanel() {
   const { activePanel, panelTab, setPanelTab } = usePanel();
@@ -112,7 +93,7 @@ export default function ClientesPanel() {
       data_nascimento: cliente.data_nascimento
         ? cliente.data_nascimento.slice(0, 10)
         : "",
-      rg: cliente.rg || "",
+      rg: cliente.rg ? formatarRG(cliente.rg) : "",
       estado_civil: cliente.estado_civil || "",
       nacionalidade: cliente.nacionalidade || "Brasileira",
       ativo: cliente.ativo !== undefined ? cliente.ativo : true,
@@ -267,7 +248,7 @@ export default function ClientesPanel() {
             <input
               value={formulario.rg}
               onChange={(e) =>
-                setFormulario({ ...formulario, rg: e.target.value })
+                setFormulario({ ...formulario, rg: formatarRG(e.target.value) })
               }
             />
           </div>

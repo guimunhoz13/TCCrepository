@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { useTheme } from "@/contexts/ThemeContext";
 import { usePreferences } from "@/contexts/PreferencesContext";
 import Avatar from "@/components/ui/Avatar";
+import GlobalSearch from "@/components/shell/GlobalSearch";
+import NotificationBell from "@/components/shell/NotificationBell";
 import { getUsuarioLogado, logout } from "@/services/api";
 import { getSaudacaoCompleta } from "@/utils/greeting";
 import { useEffect, useState } from "react";
@@ -13,6 +15,10 @@ export default function TopBar({
   title,
   subtitle,
   showGreeting = false,
+  searchData,
+  onSelectSearchResult,
+  notificacoes,
+  onSelectNotificacao,
 }) {
   const { theme, toggleTheme } = useTheme();
   const { t } = usePreferences();
@@ -57,6 +63,19 @@ export default function TopBar({
       </div>
 
       <div className="topbar-actions">
+        {searchData && (
+          <GlobalSearch
+            clientes={searchData.clientes}
+            processos={searchData.processos}
+            documentos={searchData.documentos}
+            onSelect={onSelectSearchResult}
+          />
+        )}
+
+        {notificacoes && (
+          <NotificationBell eventos={notificacoes} onSelect={onSelectNotificacao} />
+        )}
+
         <span className="topbar-user">
           <span
             style={{
