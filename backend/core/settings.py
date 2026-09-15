@@ -4,6 +4,7 @@ Django settings for core project.
 
 from pathlib import Path
 import os
+import sys
 
 from dotenv import load_dotenv
 
@@ -12,14 +13,36 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 load_dotenv(BASE_DIR / ".env")
 
+# `manage.py test` roda dezenas de casos de teste contra os mesmos endpoints
+# sensíveis (login, cadastro) em segundos — bem abaixo da janela de 1 minuto
+# do rate limiting. Sem isso, a suíte de testes ficaria instável (passa ou
+# falha dependendo da ordem/velocidade de execução) por um motivo que nada
+# tem a ver com o comportamento sendo testado.
+TESTING = "test" in sys.argv
 
-SECRET_KEY = 'django-insecure-=eb#qqbxlkt$51anhk95b6t0d0b0fa-29kugu#7^8+axaztbv+'
+
+# Em produção, SECRET_KEY/DEBUG/ALLOWED_HOSTS DEVEM vir de variáveis de
+# ambiente reais — os valores abaixo são apenas fallback para desenvolvimento
+# local, nunca usados quando as variáveis são definidas (.env local ou
+# ambiente de produção/CI).
+SECRET_KEY = os.environ.get(
+    'SECRET_KEY',
+    'django-insecure-=eb#qqbxlkt$51anhk95b6t0d0b0fa-29kugu#7^8+axaztbv+',
+)
 
 
-DEBUG = True
+DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    host.strip()
+    for host in os.environ.get('ALLOWED_HOSTS', '').split(',')
+    if host.strip()
+]
+
+# URL do frontend, usada para montar links (ex.: redefinição de senha)
+# enviados por e-mail.
+FRONTEND_URL = os.environ.get('FRONTEND_URL', 'http://localhost:3000')
 
 
 # APPLICATIONS
@@ -225,9 +248,9 @@ else:
 # CORS
 
 CORS_ALLOWED_ORIGINS = [
-
-    "http://localhost:3000",
-
+    origin.strip()
+    for origin in os.environ.get('CORS_ALLOWED_ORIGINS', 'http://localhost:3000').split(',')
+    if origin.strip()
 ]
 
 
@@ -247,5 +270,34 @@ REST_FRAMEWORK = {
         "rest_framework.permissions.IsAuthenticated",
 
     ),
+
+    "DEFAULT_PAGINATION_CLASS": "advocacia.pagination.PaginacaoPadrao",
+
+    "DEFAULT_THROTTLE_CLASSES": () if TESTING else (
+
+        "rest_framework.throttling.AnonRateThrottle",
+
+        "rest_framework.throttling.UserRateThrottle",
+
+        "rest_framework.throttling.ScopedRateThrottle",
+
+    ),
+
+    # "sensivel" cobre endpoints propensos a abuso mesmo sem autenticação
+    # (verificação de e-mail, cadastro, redefinição de senha — todos usados
+    # por quem ainda não tem uma sessão para ser limitado por "user").
+    # "login" é mais permissivo que "sensivel" para não travar um usuário
+    # legítimo errando a senha algumas vezes antes do bloqueio de conta.
+    "DEFAULT_THROTTLE_RATES": {
+
+        "anon": "100/minute",
+
+        "user": "1000/minute",
+
+        "login": "20/minute",
+
+        "sensivel": "10/minute",
+
+    },
 
 }

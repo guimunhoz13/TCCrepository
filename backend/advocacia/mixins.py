@@ -3,7 +3,7 @@ from django.db import IntegrityError
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.permissions import BasePermission
 
-from .models import Usuario, SuperAdmin
+from .models import RegistroAuditoria, SuperAdmin, Usuario
 
 
 def get_usuario_from_request(request):
@@ -45,6 +45,51 @@ class IsMasterUser(BasePermission):
 
     def has_permission(self, request, view):
         return get_superadmin_from_request(request) is not None
+
+
+def obter_ip_requisicao(request):
+    x_forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR")
+    if x_forwarded_for:
+        return x_forwarded_for.split(",")[0].strip()
+    return request.META.get("REMOTE_ADDR")
+
+
+def registrar_auditoria(
+    request,
+    acao,
+    instancia=None,
+    descricao="",
+    escritorio=None,
+    modelo=None,
+    objeto_id=None,
+    usuario=None,
+    superadmin=None,
+):
+    """Cria um RegistroAuditoria para ações sensíveis (login, criação, edição,
+    exclusão). Nunca deve derrubar a requisição principal caso algo falhe.
+
+    `usuario`/`superadmin` podem ser passados explicitamente para eventos
+    de login, quando ainda não existe um JWT válido na requisição para
+    inferi-los automaticamente.
+    """
+    try:
+        usuario = usuario if usuario is not None else get_usuario_from_request(request)
+        superadmin = (
+            superadmin if superadmin is not None else get_superadmin_from_request(request)
+        )
+
+        RegistroAuditoria.objects.create(
+            escritorio=escritorio or (usuario.escritorio if usuario else None),
+            usuario=usuario,
+            superadmin=superadmin,
+            acao=acao,
+            modelo=modelo or (instancia.__class__.__name__ if instancia is not None else ""),
+            objeto_id=objeto_id if objeto_id is not None else getattr(instancia, "id", None),
+            descricao=descricao,
+            endereco_ip=obter_ip_requisicao(request),
+        )
+    except Exception:
+        pass
 
 
 class EscritorioScopedMixin:
@@ -93,9 +138,31 @@ class EscritorioScopedMixin:
             kwargs["escritorio"] = escritorio
 
         self._salvar(serializer, **kwargs)
+        registrar_auditoria(
+            self.request, "criacao", serializer.instance, escritorio=escritorio
+        )
 
     def perform_update(self, serializer):
+        escritorio = self.get_escritorio()
         self._salvar(serializer)
+        registrar_auditoria(
+            self.request, "edicao", serializer.instance, escritorio=escritorio
+        )
+
+    def perform_destroy(self, instance):
+        escritorio = self.get_escritorio()
+        descricao = str(instance)
+        modelo = instance.__class__.__name__
+        objeto_id = instance.id
+        instance.delete()
+        registrar_auditoria(
+            self.request,
+            "exclusao",
+            descricao=descricao,
+            escritorio=escritorio,
+            modelo=modelo,
+            objeto_id=objeto_id,
+        )
 
     def _salvar(self, serializer, **kwargs):
         """Salva o serializer, convertendo uma violação de constraint única

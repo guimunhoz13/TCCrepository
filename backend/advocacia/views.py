@@ -1,8 +1,10 @@
+from django.conf import settings
 from django.contrib.auth.hashers import check_password, make_password
 from django.db.models import Count, Q
 from django.http import HttpResponse
 from django.utils import timezone
 import csv
+import secrets
 
 from rest_framework import status, viewsets
 from rest_framework.exceptions import PermissionDenied, ValidationError
@@ -18,10 +20,12 @@ from .mixins import (
     EscritorioScopedMixin,
     get_usuario_from_request,
     IsMasterUser,
+    registrar_auditoria,
 )
 from .validators import validar_email_real, validar_telefone, validar_senha_forte
 from .emails import (
     enviar_email,
+    montar_email_redefinicao_senha,
     montar_email_relatorio_cliente,
     montar_email_relatorio_processo,
 )
@@ -40,6 +44,8 @@ from .models import (
     SuperAdmin,
     PreferenciasUsuario,
     ConfiguracaoEscritorio,
+    RegistroAuditoria,
+    TokenRedefinicaoSenha,
 )
 
 from .serializers import (
@@ -58,6 +64,7 @@ from .serializers import (
     ParcelaSerializer,
     PreferenciasUsuarioSerializer,
     ConfiguracaoEscritorioSerializer,
+    RegistroAuditoriaSerializer,
 )
 
 from .ia_service import montar_contexto_sistema, gerar_resposta_ia
@@ -71,6 +78,7 @@ class LoginView(APIView):
 
     permission_classes = [AllowAny]
     authentication_classes = []
+    throttle_scope = "login"
 
     def post(self, request):
 
@@ -135,6 +143,13 @@ class LoginView(APIView):
                 usuario.bloqueado_ate = timezone.now() + timezone.timedelta(minutes=15)
                 usuario.tentativas_login = 0
                 usuario.save(update_fields=["tentativas_login", "bloqueado_ate"])
+                registrar_auditoria(
+                    request,
+                    "login_bloqueado",
+                    usuario=usuario,
+                    escritorio=usuario.escritorio,
+                    descricao=f"Login bloqueado para {usuario.email} por 15 minutos.",
+                )
                 return Response(
                     {
                         "detail": "Conta bloqueada por 15 minutos após 3 tentativas de senha inválidas."
@@ -143,6 +158,13 @@ class LoginView(APIView):
                 )
 
             usuario.save(update_fields=["tentativas_login"])
+            registrar_auditoria(
+                request,
+                "login_falha",
+                usuario=usuario,
+                escritorio=usuario.escritorio,
+                descricao=f"Senha inválida para {usuario.email}.",
+            )
             return Response(
                 {
                     "detail": "E-mail ou senha inválidos."
@@ -154,6 +176,14 @@ class LoginView(APIView):
             usuario.tentativas_login = 0
             usuario.bloqueado_ate = None
             usuario.save(update_fields=["tentativas_login", "bloqueado_ate"])
+
+        registrar_auditoria(
+            request,
+            "login_sucesso",
+            usuario=usuario,
+            escritorio=usuario.escritorio,
+            descricao=f"Login realizado por {usuario.email}.",
+        )
 
         refresh = RefreshToken()
 
@@ -188,6 +218,7 @@ class VerificarEmailView(APIView):
 
     permission_classes = [AllowAny]
     authentication_classes = []
+    throttle_scope = "sensivel"
 
     def post(self, request):
 
@@ -225,6 +256,103 @@ class VerificarEmailView(APIView):
 
 
 # =========================================================
+# REDEFINIÇÃO DE SENHA
+# =========================================================
+
+class SolicitarRedefinicaoSenhaView(APIView):
+
+    permission_classes = [AllowAny]
+    authentication_classes = []
+    throttle_scope = "sensivel"
+
+    def post(self, request):
+        email = request.data.get("email", "").strip()
+
+        resposta_generica = Response(
+            {"detail": "Se este e-mail estiver cadastrado, enviaremos um link de redefinição."},
+            status=status.HTTP_200_OK,
+        )
+
+        if not email:
+            return resposta_generica
+
+        try:
+            usuario = Usuario.objects.select_related("escritorio").get(email__iexact=email, ativo=True)
+        except Usuario.DoesNotExist:
+            return resposta_generica
+
+        token = secrets.token_urlsafe(32)
+        TokenRedefinicaoSenha.objects.create(
+            usuario=usuario,
+            token=token,
+            expira_em=timezone.now() + timezone.timedelta(hours=1),
+        )
+
+        link = f"{settings.FRONTEND_URL}/redefinir-senha?token={token}"
+        assunto, corpo_html, corpo_texto = montar_email_redefinicao_senha(
+            usuario.nome, link, usuario.escritorio.nome
+        )
+        try:
+            enviar_email(usuario.email, assunto, corpo_html, corpo_texto)
+        except Exception:
+            pass
+
+        return resposta_generica
+
+
+class RedefinirSenhaView(APIView):
+
+    permission_classes = [AllowAny]
+    authentication_classes = []
+    throttle_scope = "sensivel"
+
+    def post(self, request):
+        token_valor = request.data.get("token", "").strip()
+        nova_senha = request.data.get("nova_senha", "")
+        confirmar_senha = request.data.get("confirmar_senha", "")
+
+        if not token_valor:
+            return Response({"detail": "Token inválido."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            token = TokenRedefinicaoSenha.objects.select_related("usuario").get(token=token_valor)
+        except TokenRedefinicaoSenha.DoesNotExist:
+            return Response({"detail": "Token inválido ou expirado."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if token.usado or token.expira_em < timezone.now():
+            return Response({"detail": "Token inválido ou expirado."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if nova_senha != confirmar_senha:
+            return Response({"detail": "A confirmação da nova senha não confere."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            validar_senha_forte(nova_senha)
+        except DjangoValidationError as exc:
+            return Response({"detail": exc.messages[0]}, status=status.HTTP_400_BAD_REQUEST)
+
+        usuario = token.usuario
+        usuario.senha = make_password(nova_senha)
+        usuario.tentativas_login = 0
+        usuario.bloqueado_ate = None
+        usuario.save(update_fields=["senha", "tentativas_login", "bloqueado_ate"])
+
+        token.usado = True
+        token.save(update_fields=["usado"])
+
+        registrar_auditoria(
+            request,
+            "edicao",
+            usuario=usuario,
+            escritorio=usuario.escritorio,
+            descricao=f"Senha redefinida via link de recuperação para {usuario.email}.",
+            modelo="Usuario",
+            objeto_id=usuario.id,
+        )
+
+        return Response({"detail": "Senha redefinida com sucesso."})
+
+
+# =========================================================
 # REGISTRO CENTRAL DO ESCRITÓRIO
 # =========================================================
 
@@ -232,6 +360,7 @@ class EscritorioRegistroView(APIView):
 
     permission_classes = [AllowAny]
     authentication_classes = []
+    throttle_scope = "sensivel"
 
     def post(self, request):
 
@@ -641,12 +770,21 @@ class MovimentacaoViewSet(
             super()
             .get_queryset()
             .select_related(
-                "processo"
+                "processo", "criado_por"
             )
             .order_by(
                 "-data_movimentacao"
             )
         )
+
+    def perform_create(self, serializer):
+        escritorio = self.get_escritorio()
+
+        if not escritorio:
+            raise PermissionDenied("Escritório não identificado.")
+
+        self._salvar(serializer, criado_por=self.get_usuario())
+        registrar_auditoria(self.request, "criacao", serializer.instance, escritorio=escritorio)
 
 
 # =========================================================
@@ -1186,6 +1324,7 @@ class RelatorioProcessoView(APIView):
 
 class RelatorioClienteEmailView(APIView):
     permission_classes = [IsAuthenticated]
+    throttle_scope = "sensivel"
 
     def post(self, request, cliente_id):
         usuario = get_usuario_from_request(request)
@@ -1217,6 +1356,7 @@ class RelatorioClienteEmailView(APIView):
 
 class RelatorioProcessoEmailView(APIView):
     permission_classes = [IsAuthenticated]
+    throttle_scope = "sensivel"
 
     def post(self, request, processo_id):
         usuario = get_usuario_from_request(request)
@@ -1282,6 +1422,32 @@ class ExportarProcessosCSVView(APIView):
 
 
 # =========================================================
+# AUDITORIA
+# =========================================================
+
+class AuditoriaViewSet(EscritorioScopedMixin, viewsets.ReadOnlyModelViewSet):
+
+    queryset = RegistroAuditoria.objects.all()
+
+    serializer_class = RegistroAuditoriaSerializer
+
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        usuario = self.get_usuario()
+
+        if not usuario or usuario.tipo_usuario != "admin":
+            return RegistroAuditoria.objects.none()
+
+        return (
+            super()
+            .get_queryset()
+            .select_related("usuario", "escritorio")
+            .order_by("-criado_em")
+        )
+
+
+# =========================================================
 # PAINEL MESTRE (DESENVOLVEDOR)
 # =========================================================
 
@@ -1289,6 +1455,7 @@ class MasterLoginView(APIView):
 
     permission_classes = [AllowAny]
     authentication_classes = []
+    throttle_scope = "login"
 
     def post(self, request):
 
@@ -1316,10 +1483,23 @@ class MasterLoginView(APIView):
             )
 
         if not check_password(senha, superadmin.senha):
+            registrar_auditoria(
+                request,
+                "login_falha",
+                superadmin=superadmin,
+                descricao=f"Senha inválida para o mestre {superadmin.email}.",
+            )
             return Response(
                 {"detail": "E-mail ou senha inválidos."},
                 status=status.HTTP_401_UNAUTHORIZED,
             )
+
+        registrar_auditoria(
+            request,
+            "login_sucesso",
+            superadmin=superadmin,
+            descricao=f"Login mestre realizado por {superadmin.email}.",
+        )
 
         refresh = RefreshToken()
         refresh["user_id"] = f"master-{superadmin.id}"
@@ -1347,6 +1527,43 @@ class MasterEscritorioViewSet(viewsets.ModelViewSet):
     queryset = Escritorio.objects.all().order_by("-criado_em")
 
     serializer_class = EscritorioAdminSerializer
+
+    permission_classes = [IsMasterUser]
+
+    def perform_create(self, serializer):
+        serializer.save()
+        registrar_auditoria(
+            self.request, "criacao", serializer.instance, escritorio=serializer.instance
+        )
+
+    def perform_update(self, serializer):
+        serializer.save()
+        registrar_auditoria(
+            self.request, "edicao", serializer.instance, escritorio=serializer.instance
+        )
+
+    def perform_destroy(self, instance):
+        descricao = str(instance)
+        objeto_id = instance.id
+        instance.delete()
+        registrar_auditoria(
+            self.request,
+            "exclusao",
+            descricao=descricao,
+            modelo="Escritorio",
+            objeto_id=objeto_id,
+        )
+
+
+class MasterAuditoriaViewSet(viewsets.ReadOnlyModelViewSet):
+
+    queryset = (
+        RegistroAuditoria.objects.all()
+        .select_related("usuario", "superadmin", "escritorio")
+        .order_by("-criado_em")
+    )
+
+    serializer_class = RegistroAuditoriaSerializer
 
     permission_classes = [IsMasterUser]
 

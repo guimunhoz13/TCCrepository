@@ -66,6 +66,20 @@ export async function verificarEmail(email) {
   });
 }
 
+export async function solicitarRedefinicaoSenha(email) {
+  return request("/login/esqueci-senha/", {
+    method: "POST",
+    body: JSON.stringify({ email }),
+  });
+}
+
+export async function redefinirSenha({ token, nova_senha, confirmar_senha }) {
+  return request("/login/redefinir-senha/", {
+    method: "POST",
+    body: JSON.stringify({ token, nova_senha, confirmar_senha }),
+  });
+}
+
 export async function registrarEscritorio(data) {
   return request("/escritorios/registrar/", {
     method: "POST",
@@ -384,4 +398,12 @@ export async function updateMasterEscritorio(id, data) {
 
 export async function deleteMasterEscritorio(id) {
   return masterRequest(`/master/escritorios/${id}/`, { method: "DELETE" });
+}
+
+export async function getMasterAuditoria(params) {
+  return masterRequest(`/master/auditoria/${buildQuery(params)}`);
+}
+
+export async function getAuditoria(params) {
+  return request(`/auditoria/${buildQuery(params)}`);
 }

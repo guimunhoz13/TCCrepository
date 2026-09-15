@@ -135,6 +135,22 @@ SENHA_NUMERO_REGEX = re.compile(r"[0-9]")
 SENHA_ESPECIAL_REGEX = re.compile(r"[^A-Za-z0-9]")
 
 
+TAMANHO_MAXIMO_IMAGEM = 5 * 1024 * 1024  # 5 MB
+TAMANHO_MAXIMO_DOCUMENTO = 10 * 1024 * 1024  # 10 MB
+
+
+def validar_tamanho_imagem(arquivo):
+    """Limita fotos de perfil a 5 MB para evitar uploads abusivos."""
+    if arquivo and arquivo.size > TAMANHO_MAXIMO_IMAGEM:
+        raise ValidationError("A imagem não pode ultrapassar 5 MB.")
+
+
+def validar_tamanho_documento(arquivo):
+    """Limita documentos anexados a 10 MB para evitar uploads abusivos."""
+    if arquivo and arquivo.size > TAMANHO_MAXIMO_DOCUMENTO:
+        raise ValidationError("O arquivo não pode ultrapassar 10 MB.")
+
+
 def validar_senha_forte(valor):
     """Senha forte: mínimo 8 caracteres, 1 maiúscula, 1 número, 1 caractere especial.
 

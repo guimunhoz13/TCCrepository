@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import {
   X, User, Building2, Bell, Palette, Database, CreditCard,
-  Eye, EyeOff, Trash2, Download, FileBarChart, Mail, MessageCircle,
+  Eye, EyeOff, Trash2, Download, FileBarChart, Mail, MessageCircle, History,
 } from "lucide-react";
 import { usePanel, PANELS } from "@/contexts/PanelContext";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -23,6 +23,7 @@ import {
   getRelatorioProcesso,
   enviarRelatorioClientePorEmail,
   enviarRelatorioProcessoPorEmail,
+  getAuditoria,
   normalizarLista,
   logout,
 } from "@/services/api";
@@ -40,6 +41,7 @@ const TABS = [
   { id: "aparencia", tKey: "config_aparencia", icon: Palette },
   { id: "dados", tKey: "config_dados", icon: Database },
   { id: "relatorios", tKey: "config_relatorios", icon: FileBarChart },
+  { id: "auditoria", tKey: "config_auditoria", icon: History, adminOnly: true },
   { id: "faturamento", tKey: "config_faturamento", icon: CreditCard },
 ];
 
@@ -103,7 +105,7 @@ export default function ConfigPanel() {
         </div>
 
         <div className="overlay-tabs">
-          {TABS.map((tab) => {
+          {TABS.filter((tab) => !tab.adminOnly || dados?.usuario?.tipo_usuario === "admin").map((tab) => {
             const Icon = tab.icon;
             return (
               <button key={tab.id} className={`tab-btn ${activeTab === tab.id ? "active" : ""}`} onClick={() => { setActiveTab(tab.id); setErro(""); setSucesso(""); }}>
@@ -135,6 +137,9 @@ export default function ConfigPanel() {
           )}
           {!carregando && dados && activeTab === "relatorios" && (
             <RelatoriosTab feedback={feedback} t={t} />
+          )}
+          {!carregando && dados && activeTab === "auditoria" && dados.usuario.tipo_usuario === "admin" && (
+            <AuditoriaTab feedback={feedback} />
           )}
           {!carregando && activeTab === "faturamento" && <FaturamentoTab />}
         </div>
@@ -505,6 +510,69 @@ function RelatoriosTab({ feedback, t }) {
           {t("acao_enviar_whatsapp")}
         </button>
       </Actions>
+    </Section>
+  </div>;
+}
+
+const ACOES_LABEL = {
+  login_sucesso: "Login realizado",
+  login_falha: "Tentativa de login falhou",
+  login_bloqueado: "Login bloqueado",
+  criacao: "Registro criado",
+  edicao: "Registro editado",
+  exclusao: "Registro excluído",
+};
+
+const ACOES_BADGE = {
+  login_sucesso: "badge-success",
+  login_falha: "badge-warning",
+  login_bloqueado: "badge-danger",
+  criacao: "badge-success",
+  edicao: "badge-muted",
+  exclusao: "badge-danger",
+};
+
+function AuditoriaTab({ feedback }) {
+  const [registros, setRegistros] = useState([]);
+  const [carregando, setCarregando] = useState(true);
+
+  useEffect(() => {
+    let ativo = true;
+    getAuditoria()
+      .then((res) => ativo && setRegistros(normalizarLista(res)))
+      .catch((e) => ativo && feedback(e.message, true))
+      .finally(() => ativo && setCarregando(false));
+    return () => { ativo = false; };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  return <div className="settings-stack">
+    <Section title="Registro de auditoria" description="Quem entrou no sistema e quem criou, editou ou excluiu registros — os 200 eventos mais recentes deste escritório.">
+      {carregando && <div className="empty-state">Carregando registros...</div>}
+      {!carregando && registros.length === 0 && <div className="empty-state">Nenhum evento de auditoria registrado ainda.</div>}
+      {!carregando && registros.length > 0 && (
+        <div className="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Data/hora</th>
+                <th>Ação</th>
+                <th>Usuário</th>
+                <th>Descrição</th>
+              </tr>
+            </thead>
+            <tbody>
+              {registros.map((r) => (
+                <tr key={r.id}>
+                  <td>{new Date(r.criado_em).toLocaleString("pt-BR")}</td>
+                  <td><span className={`badge ${ACOES_BADGE[r.acao] || "badge-muted"}`}>{ACOES_LABEL[r.acao] || r.acao_label}</span></td>
+                  <td>{r.usuario_nome || r.superadmin_nome || "—"}</td>
+                  <td>{r.descricao || (r.modelo ? `${r.modelo} #${r.objeto_id ?? ""}` : "—")}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </Section>
   </div>;
 }

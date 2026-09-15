@@ -1,9 +1,10 @@
 from unittest.mock import patch
 
-from django.contrib.auth.hashers import make_password
+from django.contrib.auth.hashers import check_password, make_password
+from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
-from django.test import TestCase
+from django.test import TestCase, override_settings
 
 from rest_framework import status
 from rest_framework.test import APITestCase
@@ -11,8 +12,22 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from django.utils import timezone
 
-from .models import Escritorio, Usuario, Cliente, Advogado, Processo, Agenda, Contrato, SuperAdmin
-from .validators import validar_email_real
+from .models import (
+    Escritorio,
+    Usuario,
+    Cliente,
+    Advogado,
+    Processo,
+    Movimentacao,
+    Agenda,
+    Contrato,
+    Parcela,
+    SuperAdmin,
+    RegistroAuditoria,
+    TokenRedefinicaoSenha,
+)
+from .validators import validar_email_real, validar_tamanho_documento, validar_tamanho_imagem
+from .views import SolicitarRedefinicaoSenhaView
 
 
 def _criar_escritorio(**overrides):
@@ -355,9 +370,9 @@ class ClientesAPITestCase(APITestCase):
         )
         resposta = self.client.get("/api/clientes/")
         self.assertEqual(resposta.status_code, status.HTTP_200_OK)
-        nomes = [cliente["nome"] for cliente in resposta.data]
+        nomes = [cliente["nome"] for cliente in resposta.data["results"]]
         self.assertNotIn("Cliente A", nomes)
-        self.assertEqual(len(resposta.data), 0)
+        self.assertEqual(len(resposta.data["results"]), 0)
 
     def test_admin_ve_apenas_clientes_do_proprio_escritorio(self, _mock_mx):
         self.client.credentials(
@@ -365,7 +380,7 @@ class ClientesAPITestCase(APITestCase):
         )
         resposta = self.client.get("/api/clientes/")
         self.assertEqual(resposta.status_code, status.HTTP_200_OK)
-        nomes = [cliente["nome"] for cliente in resposta.data]
+        nomes = [cliente["nome"] for cliente in resposta.data["results"]]
         self.assertEqual(nomes, ["Cliente A"])
 
 
@@ -787,27 +802,27 @@ class FiltroBuscaAPITestCase(APITestCase):
 
     def test_busca_clientes_por_nome(self):
         resposta = self.client.get("/api/clientes/", {"busca": "João"})
-        nomes = [c["nome"] for c in resposta.data]
+        nomes = [c["nome"] for c in resposta.data["results"]]
         self.assertIn("João Silva", nomes)
         self.assertNotIn("Maria Souza", nomes)
 
     def test_busca_clientes_sem_correspondencia_retorna_vazio(self):
         resposta = self.client.get("/api/clientes/", {"busca": "Inexistente"})
-        self.assertEqual(len(resposta.data), 0)
+        self.assertEqual(len(resposta.data["results"]), 0)
 
     def test_filtro_processos_por_status(self):
         resposta = self.client.get("/api/processos/", {"status": "Concluido"})
-        numeros = [p["numero_processo"] for p in resposta.data]
+        numeros = [p["numero_processo"] for p in resposta.data["results"]]
         self.assertEqual(numeros, ["PROC-0002"])
 
     def test_filtro_processos_por_cliente(self):
         resposta = self.client.get("/api/processos/", {"cliente": self.cliente_joao.id})
-        numeros = [p["numero_processo"] for p in resposta.data]
+        numeros = [p["numero_processo"] for p in resposta.data["results"]]
         self.assertEqual(numeros, ["PROC-0001"])
 
     def test_busca_processos_por_titulo(self):
         resposta = self.client.get("/api/processos/", {"busca": "Trabalhista"})
-        numeros = [p["numero_processo"] for p in resposta.data]
+        numeros = [p["numero_processo"] for p in resposta.data["results"]]
         self.assertEqual(numeros, ["PROC-0002"])
 
 
@@ -910,8 +925,8 @@ class AgendaPrazoAPITestCase(APITestCase):
             data_evento=timezone.now() + timezone.timedelta(days=2),
         )
         resposta = self.client.get("/api/agenda/", {"tipo": "prazo"})
-        self.assertEqual(len(resposta.data), 1)
-        self.assertEqual(resposta.data[0]["titulo"], "Prazo X")
+        self.assertEqual(len(resposta.data["results"]), 1)
+        self.assertEqual(resposta.data["results"][0]["titulo"], "Prazo X")
 
 
 class ContratoHonorarioAPITestCase(APITestCase):
@@ -1064,7 +1079,7 @@ class PainelMestreAPITestCase(APITestCase):
         )
         resposta = self.client.get("/api/master/escritorios/")
         self.assertEqual(resposta.status_code, status.HTTP_200_OK)
-        nomes = {e["nome"] for e in resposta.data}
+        nomes = {e["nome"] for e in resposta.data["results"]}
         self.assertIn("Escritorio A", nomes)
         self.assertIn("Escritorio B", nomes)
 
@@ -1106,4 +1121,473 @@ class PainelMestreAPITestCase(APITestCase):
         )
         resposta = self.client.get("/api/clientes/")
         self.assertEqual(resposta.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(resposta.data), 0)
+        self.assertEqual(len(resposta.data["results"]), 0)
+
+
+class ValidadoresDeUploadTestCase(TestCase):
+    """Testa os validadores de tamanho de arquivo isoladamente."""
+
+    class _ArquivoFalso:
+        def __init__(self, size):
+            self.size = size
+
+    def test_imagem_dentro_do_limite_nao_levanta_erro(self):
+        validar_tamanho_imagem(self._ArquivoFalso(1024))
+
+    def test_imagem_acima_de_5mb_levanta_erro(self):
+        with self.assertRaises(ValidationError):
+            validar_tamanho_imagem(self._ArquivoFalso(6 * 1024 * 1024))
+
+    def test_documento_dentro_do_limite_nao_levanta_erro(self):
+        validar_tamanho_documento(self._ArquivoFalso(1024))
+
+    def test_documento_acima_de_10mb_levanta_erro(self):
+        with self.assertRaises(ValidationError):
+            validar_tamanho_documento(self._ArquivoFalso(11 * 1024 * 1024))
+
+
+class ContratoValorMinimoAPITestCase(APITestCase):
+    """Testa que valores não positivos em Contrato/Parcela são rejeitados."""
+
+    def setUp(self):
+        self.escritorio = _criar_escritorio()
+        self.admin = _criar_usuario(self.escritorio)
+        self.cliente = Cliente.objects.create(
+            escritorio=self.escritorio,
+            nome="Cliente Valor",
+            cpf="66666666666",
+            email="cliente.valor@teste.com",
+            telefone="11966666677",
+            endereco="Rua F",
+        )
+        usuario_advogado = Usuario.objects.create(
+            escritorio=self.escritorio,
+            nome="Advogado Valor",
+            email="advogado.valor@teste.com",
+            senha=make_password("senha12345"),
+            tipo_usuario="advogado",
+        )
+        self.advogado = Advogado.objects.create(
+            escritorio=self.escritorio,
+            usuario=usuario_advogado,
+            oab="666666/SP",
+            especialidade="Civil",
+        )
+        self.processo = Processo.objects.create(
+            escritorio=self.escritorio,
+            numero_processo="PROC-VAL-1",
+            titulo="Processo Valor",
+            descricao="Descrição.",
+            cliente=self.cliente,
+            advogado=self.advogado,
+        )
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Bearer {_gerar_token_de_acesso(self.admin)}"
+        )
+
+    def test_contrato_com_valor_zero_e_rejeitado(self):
+        resposta = self.client.post(
+            "/api/contratos/",
+            {
+                "processo": self.processo.id,
+                "tipo_honorario": "fixo",
+                "valor_total": "0.00",
+                "forma_pagamento": "avista",
+                "numero_parcelas": 1,
+            },
+            format="json",
+        )
+        self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("valor_total", resposta.data)
+
+    def test_contrato_com_numero_de_parcelas_zero_e_rejeitado(self):
+        resposta = self.client.post(
+            "/api/contratos/",
+            {
+                "processo": self.processo.id,
+                "tipo_honorario": "fixo",
+                "valor_total": "1000.00",
+                "forma_pagamento": "parcelado",
+                "numero_parcelas": 0,
+            },
+            format="json",
+        )
+        self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("numero_parcelas", resposta.data)
+
+
+class MovimentacaoCriadoPorAPITestCase(APITestCase):
+    """Testa que uma movimentação registra quem a criou."""
+
+    def setUp(self):
+        self.escritorio = _criar_escritorio()
+        self.admin = _criar_usuario(self.escritorio)
+        self.cliente = Cliente.objects.create(
+            escritorio=self.escritorio,
+            nome="Cliente Mov",
+            cpf="77777777777",
+            email="cliente.mov@teste.com",
+            telefone="11966666688",
+            endereco="Rua G",
+        )
+        usuario_advogado = Usuario.objects.create(
+            escritorio=self.escritorio,
+            nome="Advogado Mov",
+            email="advogado.mov@teste.com",
+            senha=make_password("senha12345"),
+            tipo_usuario="advogado",
+        )
+        self.advogado = Advogado.objects.create(
+            escritorio=self.escritorio,
+            usuario=usuario_advogado,
+            oab="777777/SP",
+            especialidade="Civil",
+        )
+        self.processo = Processo.objects.create(
+            escritorio=self.escritorio,
+            numero_processo="PROC-MOV-1",
+            titulo="Processo Movimentação",
+            descricao="Descrição.",
+            cliente=self.cliente,
+            advogado=self.advogado,
+        )
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Bearer {_gerar_token_de_acesso(self.admin)}"
+        )
+
+    def test_movimentacao_registra_o_usuario_que_criou(self):
+        resposta = self.client.post(
+            "/api/movimentacoes/",
+            {"processo": self.processo.id, "descricao": "Petição protocolada."},
+            format="json",
+        )
+        self.assertEqual(resposta.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(resposta.data["criado_por_nome"], "Ana Admin")
+
+        movimentacao = Movimentacao.objects.get(id=resposta.data["id"])
+        self.assertEqual(movimentacao.criado_por, self.admin)
+
+
+class AuditoriaLoginAPITestCase(APITestCase):
+    """Testa que eventos de login (sucesso, falha, bloqueio) geram registros de auditoria."""
+
+    def setUp(self):
+        self.escritorio = _criar_escritorio()
+        self.usuario = _criar_usuario(self.escritorio)
+        self.superadmin = SuperAdmin.objects.create(
+            nome="Dev Master",
+            email="dev.audit@lexoffice.com",
+            senha=make_password("senha-master-123"),
+        )
+
+    def test_login_bem_sucedido_gera_registro_de_auditoria(self):
+        resposta = self.client.post(
+            "/api/login/",
+            {"email": "ana@escritorio.com", "senha": "senha12345"},
+            format="json",
+        )
+        self.assertEqual(resposta.status_code, status.HTTP_200_OK)
+        registro = RegistroAuditoria.objects.filter(acao="login_sucesso").latest("id")
+        self.assertEqual(registro.usuario, self.usuario)
+        self.assertEqual(registro.escritorio, self.escritorio)
+
+    def test_login_com_senha_errada_gera_registro_de_falha(self):
+        resposta = self.client.post(
+            "/api/login/",
+            {"email": "ana@escritorio.com", "senha": "senha-errada"},
+            format="json",
+        )
+        self.assertEqual(resposta.status_code, status.HTTP_401_UNAUTHORIZED)
+        registro = RegistroAuditoria.objects.filter(acao="login_falha").latest("id")
+        self.assertEqual(registro.usuario, self.usuario)
+
+    def test_bloqueio_apos_3_tentativas_gera_registro_de_bloqueio(self):
+        for _ in range(3):
+            self.client.post(
+                "/api/login/",
+                {"email": "ana@escritorio.com", "senha": "senha-errada"},
+                format="json",
+            )
+        registro = RegistroAuditoria.objects.filter(acao="login_bloqueado").latest("id")
+        self.assertEqual(registro.usuario, self.usuario)
+
+    def test_login_master_bem_sucedido_gera_registro_de_auditoria(self):
+        resposta = self.client.post(
+            "/api/master/login/",
+            {"email": "dev.audit@lexoffice.com", "senha": "senha-master-123"},
+            format="json",
+        )
+        self.assertEqual(resposta.status_code, status.HTTP_200_OK)
+        registro = RegistroAuditoria.objects.filter(acao="login_sucesso", superadmin=self.superadmin).latest("id")
+        self.assertIsNotNone(registro)
+
+
+class AuditoriaVisualizacaoAPITestCase(APITestCase):
+    """Testa a visibilidade e o isolamento multi-tenant do painel de auditoria."""
+
+    def setUp(self):
+        self.escritorio_a = _criar_escritorio(nome="Escritorio A", cnpj="11111111000111", email="a@teste.com")
+        self.escritorio_b = _criar_escritorio(nome="Escritorio B", cnpj="22222222000122", email="b@teste.com")
+
+        self.admin_a = _criar_usuario(self.escritorio_a, email="admin.a@teste.com")
+        self.advogado_a = _criar_usuario(
+            self.escritorio_a,
+            nome="Advogado A",
+            email="adv.a@teste.com",
+            tipo_usuario="advogado",
+        )
+        self.admin_b = _criar_usuario(self.escritorio_b, email="admin.b@teste.com")
+
+        self.superadmin = SuperAdmin.objects.create(
+            nome="Dev Master",
+            email="dev.view@lexoffice.com",
+            senha=make_password("senha-master-123"),
+        )
+
+        RegistroAuditoria.objects.create(
+            escritorio=self.escritorio_a,
+            usuario=self.admin_a,
+            acao="login_sucesso",
+            descricao="Login de teste — escritório A",
+        )
+        RegistroAuditoria.objects.create(
+            escritorio=self.escritorio_b,
+            usuario=self.admin_b,
+            acao="login_sucesso",
+            descricao="Login de teste — escritório B",
+        )
+
+    def test_admin_ve_apenas_registros_do_proprio_escritorio(self):
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Bearer {_gerar_token_de_acesso(self.admin_a)}"
+        )
+        resposta = self.client.get("/api/auditoria/")
+        self.assertEqual(resposta.status_code, status.HTTP_200_OK)
+        descricoes = [r["descricao"] for r in resposta.data["results"]]
+        self.assertIn("Login de teste — escritório A", descricoes)
+        self.assertNotIn("Login de teste — escritório B", descricoes)
+
+    def test_advogado_comum_nao_ve_registros_de_auditoria(self):
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Bearer {_gerar_token_de_acesso(self.advogado_a)}"
+        )
+        resposta = self.client.get("/api/auditoria/")
+        self.assertEqual(resposta.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(resposta.data["results"]), 0)
+
+    def test_master_ve_registros_de_todos_os_escritorios(self):
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Bearer {_gerar_token_master(self.superadmin)}"
+        )
+        resposta = self.client.get("/api/master/auditoria/")
+        self.assertEqual(resposta.status_code, status.HTTP_200_OK)
+        descricoes = [r["descricao"] for r in resposta.data["results"]]
+        self.assertIn("Login de teste — escritório A", descricoes)
+        self.assertIn("Login de teste — escritório B", descricoes)
+
+    def test_tenant_nao_acessa_auditoria_master(self):
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Bearer {_gerar_token_de_acesso(self.admin_a)}"
+        )
+        resposta = self.client.get("/api/master/auditoria/")
+        self.assertEqual(resposta.status_code, status.HTTP_403_FORBIDDEN)
+
+
+class RedefinicaoSenhaAPITestCase(APITestCase):
+    """Testa o fluxo de "esqueci minha senha"."""
+
+    def setUp(self):
+        self.escritorio = _criar_escritorio()
+        self.usuario = _criar_usuario(self.escritorio)
+
+    def test_solicitar_com_email_existente_cria_token_e_retorna_generico(self):
+        resposta = self.client.post(
+            "/api/login/esqueci-senha/",
+            {"email": "ana@escritorio.com"},
+            format="json",
+        )
+        self.assertEqual(resposta.status_code, status.HTTP_200_OK)
+        self.assertTrue(TokenRedefinicaoSenha.objects.filter(usuario=self.usuario).exists())
+
+    def test_solicitar_com_email_inexistente_retorna_a_mesma_resposta_generica(self):
+        resposta_existente = self.client.post(
+            "/api/login/esqueci-senha/",
+            {"email": "ana@escritorio.com"},
+            format="json",
+        )
+        resposta_inexistente = self.client.post(
+            "/api/login/esqueci-senha/",
+            {"email": "nao-existe@teste.com"},
+            format="json",
+        )
+        self.assertEqual(resposta_existente.status_code, resposta_inexistente.status_code)
+        self.assertEqual(resposta_existente.data, resposta_inexistente.data)
+
+    def test_redefinir_com_token_valido_altera_a_senha(self):
+        token = TokenRedefinicaoSenha.objects.create(
+            usuario=self.usuario,
+            token="token-valido-123",
+            expira_em=timezone.now() + timezone.timedelta(hours=1),
+        )
+        resposta = self.client.post(
+            "/api/login/redefinir-senha/",
+            {
+                "token": token.token,
+                "nova_senha": "NovaSenha@123",
+                "confirmar_senha": "NovaSenha@123",
+            },
+            format="json",
+        )
+        self.assertEqual(resposta.status_code, status.HTTP_200_OK)
+
+        self.usuario.refresh_from_db()
+        self.assertTrue(check_password("NovaSenha@123", self.usuario.senha))
+
+        token.refresh_from_db()
+        self.assertTrue(token.usado)
+
+    def test_redefinir_com_token_ja_usado_e_rejeitado(self):
+        token = TokenRedefinicaoSenha.objects.create(
+            usuario=self.usuario,
+            token="token-usado-123",
+            expira_em=timezone.now() + timezone.timedelta(hours=1),
+            usado=True,
+        )
+        resposta = self.client.post(
+            "/api/login/redefinir-senha/",
+            {
+                "token": token.token,
+                "nova_senha": "NovaSenha@123",
+                "confirmar_senha": "NovaSenha@123",
+            },
+            format="json",
+        )
+        self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_redefinir_com_token_expirado_e_rejeitado(self):
+        token = TokenRedefinicaoSenha.objects.create(
+            usuario=self.usuario,
+            token="token-expirado-123",
+            expira_em=timezone.now() - timezone.timedelta(minutes=1),
+        )
+        resposta = self.client.post(
+            "/api/login/redefinir-senha/",
+            {
+                "token": token.token,
+                "nova_senha": "NovaSenha@123",
+                "confirmar_senha": "NovaSenha@123",
+            },
+            format="json",
+        )
+        self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_redefinir_com_senha_fraca_e_rejeitado(self):
+        token = TokenRedefinicaoSenha.objects.create(
+            usuario=self.usuario,
+            token="token-fraco-123",
+            expira_em=timezone.now() + timezone.timedelta(hours=1),
+        )
+        resposta = self.client.post(
+            "/api/login/redefinir-senha/",
+            {
+                "token": token.token,
+                "nova_senha": "fraca",
+                "confirmar_senha": "fraca",
+            },
+            format="json",
+        )
+        self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_redefinir_com_confirmacao_diferente_e_rejeitado(self):
+        token = TokenRedefinicaoSenha.objects.create(
+            usuario=self.usuario,
+            token="token-confirma-123",
+            expira_em=timezone.now() + timezone.timedelta(hours=1),
+        )
+        resposta = self.client.post(
+            "/api/login/redefinir-senha/",
+            {
+                "token": token.token,
+                "nova_senha": "NovaSenha@123",
+                "confirmar_senha": "OutraSenha@123",
+            },
+            format="json",
+        )
+        self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
+
+
+class PaginacaoAPITestCase(APITestCase):
+    """Testa que os endpoints de listagem retornam o formato paginado do DRF."""
+
+    def setUp(self):
+        self.escritorio = _criar_escritorio()
+        self.admin = _criar_usuario(self.escritorio)
+        for i in range(3):
+            Cliente.objects.create(
+                escritorio=self.escritorio,
+                nome=f"Cliente {i}",
+                cpf=f"1000000000{i}",
+                email=f"cliente{i}@teste.com",
+                telefone="11966666699",
+                endereco="Rua H",
+            )
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Bearer {_gerar_token_de_acesso(self.admin)}"
+        )
+
+    def test_listagem_retorna_envelope_paginado(self):
+        resposta = self.client.get("/api/clientes/")
+        self.assertEqual(resposta.status_code, status.HTTP_200_OK)
+        for chave in ("count", "next", "previous", "results"):
+            self.assertIn(chave, resposta.data)
+        self.assertEqual(resposta.data["count"], 3)
+
+    def test_page_size_customizado_e_respeitado(self):
+        resposta = self.client.get("/api/clientes/", {"page_size": 1})
+        self.assertEqual(len(resposta.data["results"]), 1)
+        self.assertIsNotNone(resposta.data["next"])
+
+
+class ThrottlingAPITestCase(APITestCase):
+    """Testa que endpoints sensíveis aplicam rate limiting quando habilitado.
+
+    O rate limiting fica desligado durante `manage.py test` (ver
+    core/settings.TESTING) para não deixar a suíte inteira instável; este
+    teste liga explicitamente as classes de throttle para validar o
+    comportamento em si.
+    """
+
+    def setUp(self):
+        cache.clear()
+        self.escritorio = _criar_escritorio()
+        self.usuario = _criar_usuario(self.escritorio)
+
+    def tearDown(self):
+        cache.clear()
+
+    @override_settings(REST_FRAMEWORK={"DEFAULT_THROTTLE_RATES": {"sensivel": "2/minute"}})
+    def test_endpoint_sensivel_bloqueia_apos_exceder_o_limite(self):
+        # `throttle_classes` de uma view baseada em APIView é resolvido de
+        # `api_settings.DEFAULT_THROTTLE_CLASSES` uma única vez, na
+        # importação do módulo — antes de qualquer teste rodar, quando
+        # TESTING já vale () (ver core/settings.py). Por isso, para este
+        # teste específico validar o throttling de verdade, a classe de
+        # throttle é ligada diretamente na view em vez de via
+        # override_settings (que não afeta um atributo já resolvido).
+        from rest_framework.throttling import ScopedRateThrottle
+
+        with patch.object(SolicitarRedefinicaoSenhaView, "throttle_classes", [ScopedRateThrottle]):
+            for _ in range(2):
+                resposta = self.client.post(
+                    "/api/login/esqueci-senha/",
+                    {"email": "ana@escritorio.com"},
+                    format="json",
+                )
+                self.assertEqual(resposta.status_code, status.HTTP_200_OK)
+
+            resposta = self.client.post(
+                "/api/login/esqueci-senha/",
+                {"email": "ana@escritorio.com"},
+                format="json",
+            )
+            self.assertEqual(resposta.status_code, status.HTTP_429_TOO_MANY_REQUESTS)

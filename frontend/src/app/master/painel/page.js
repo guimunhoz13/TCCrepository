@@ -10,6 +10,7 @@ import {
   getMasterEscritorios,
   updateMasterEscritorio,
   deleteMasterEscritorio,
+  getMasterAuditoria,
   normalizarLista,
 } from "@/services/api";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -20,18 +21,21 @@ export default function MasterPainelPage() {
   const [master, setMaster] = useState(null);
   const [stats, setStats] = useState(null);
   const [escritorios, setEscritorios] = useState([]);
+  const [auditoria, setAuditoria] = useState([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState("");
 
   async function carregarDados() {
     try {
       setCarregando(true);
-      const [dadosStats, dadosEscritorios] = await Promise.all([
+      const [dadosStats, dadosEscritorios, dadosAuditoria] = await Promise.all([
         getMasterStats(),
         getMasterEscritorios(),
+        getMasterAuditoria(),
       ]);
       setStats(dadosStats);
       setEscritorios(normalizarLista(dadosEscritorios));
+      setAuditoria(normalizarLista(dadosAuditoria));
     } catch (error) {
       setErro(error.message);
     } finally {
@@ -202,6 +206,43 @@ export default function MasterPainelPage() {
                       </button>
                     </div>
                   </td>
+                </tr>
+              ))}
+          </tbody>
+        </table>
+      </div>
+
+      <h2 style={{ fontSize: "1.05rem", margin: "32px 0 12px" }}>Registro de auditoria da plataforma</h2>
+      <div className="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Data/hora</th>
+              <th>Ação</th>
+              <th>Escritório</th>
+              <th>Quem</th>
+              <th>Descrição</th>
+            </tr>
+          </thead>
+          <tbody>
+            {carregando && (
+              <tr>
+                <td colSpan="5">Carregando...</td>
+              </tr>
+            )}
+            {!carregando && auditoria.length === 0 && (
+              <tr>
+                <td colSpan="5">Nenhum evento de auditoria registrado ainda.</td>
+              </tr>
+            )}
+            {!carregando &&
+              auditoria.map((registro) => (
+                <tr key={registro.id}>
+                  <td>{new Date(registro.criado_em).toLocaleString("pt-BR")}</td>
+                  <td>{registro.acao_label}</td>
+                  <td>{registro.escritorio_nome || "—"}</td>
+                  <td>{registro.usuario_nome || registro.superadmin_nome || "—"}</td>
+                  <td>{registro.descricao || "—"}</td>
                 </tr>
               ))}
           </tbody>

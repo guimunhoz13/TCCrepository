@@ -24,4 +24,10 @@ describe("traduzir", () => {
       "chave_que_nao_existe"
     );
   });
+
+  test("a aba de auditoria está traduzida em todos os idiomas suportados", () => {
+    for (const idioma of IDIOMAS_SUPORTADOS) {
+      expect(traduzir(idioma, "config_auditoria")).not.toBe("config_auditoria");
+    }
+  });
 });

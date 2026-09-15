@@ -25,6 +25,7 @@ from .models import (
     Parcela,
     PreferenciasUsuario,
     ConfiguracaoEscritorio,
+    RegistroAuditoria,
     ESTADOS_CIVIS,
 )
 
@@ -342,6 +343,7 @@ class MovimentacaoSerializer(serializers.ModelSerializer):
         source="processo.numero_processo",
         read_only=True,
     )
+    criado_por_nome = serializers.CharField(source="criado_por.nome", read_only=True, default=None)
 
     class Meta:
         model = Movimentacao
@@ -352,12 +354,14 @@ class MovimentacaoSerializer(serializers.ModelSerializer):
             "numero_processo",
             "descricao",
             "data_movimentacao",
+            "criado_por_nome",
         ]
         read_only_fields = [
             "id",
             "processo_titulo",
             "numero_processo",
             "data_movimentacao",
+            "criado_por_nome",
         ]
 
 
@@ -557,6 +561,32 @@ class PreferenciasUsuarioSerializer(serializers.ModelSerializer):
             "atualizado_em",
         ]
         read_only_fields = ["atualizado_em"]
+
+
+class RegistroAuditoriaSerializer(serializers.ModelSerializer):
+
+    usuario_nome = serializers.CharField(source="usuario.nome", read_only=True, default=None)
+    superadmin_nome = serializers.CharField(source="superadmin.nome", read_only=True, default=None)
+    escritorio_nome = serializers.CharField(source="escritorio.nome", read_only=True, default=None)
+    acao_label = serializers.CharField(source="get_acao_display", read_only=True)
+
+    class Meta:
+        model = RegistroAuditoria
+        fields = [
+            "id",
+            "escritorio",
+            "escritorio_nome",
+            "usuario_nome",
+            "superadmin_nome",
+            "acao",
+            "acao_label",
+            "modelo",
+            "objeto_id",
+            "descricao",
+            "endereco_ip",
+            "criado_em",
+        ]
+        read_only_fields = fields
 
 
 class ConfiguracaoEscritorioSerializer(serializers.ModelSerializer):

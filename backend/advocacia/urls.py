@@ -7,6 +7,8 @@ from .views import (
     DashboardStatsView,
     AdvogadoRegistroView,
     VerificarEmailView,
+    SolicitarRedefinicaoSenhaView,
+    RedefinirSenhaView,
     AssistenteIAView,
     EscritorioViewSet,
     UsuarioViewSet,
@@ -18,6 +20,8 @@ from .views import (
     AgendaViewSet,
     ContratoViewSet,
     ParcelaViewSet,
+    AuditoriaViewSet,
+    MasterAuditoriaViewSet,
     ConfiguracoesView,
     ConfiguracoesContaView,
     ConfiguracoesSenhaView,
@@ -48,9 +52,11 @@ router.register(r"documentos", DocumentoViewSet, basename="documento")
 router.register(r"agenda", AgendaViewSet, basename="agenda")
 router.register(r"contratos", ContratoViewSet, basename="contrato")
 router.register(r"parcelas", ParcelaViewSet, basename="parcela")
+router.register(r"auditoria", AuditoriaViewSet, basename="auditoria")
 
 master_router = DefaultRouter()
 master_router.register(r"master/escritorios", MasterEscritorioViewSet, basename="master-escritorio")
+master_router.register(r"master/auditoria", MasterAuditoriaViewSet, basename="master-auditoria")
 
 
 urlpatterns = [
@@ -59,6 +65,8 @@ urlpatterns = [
     path("noticias/", NoticiasJuridicasView.as_view(), name="noticias-juridicas"),
     path("advogados/registrar/", AdvogadoRegistroView.as_view(), name="advogado-registrar"),
     path("login/verificar-email/", VerificarEmailView.as_view(), name="verificar-email"),
+    path("login/esqueci-senha/", SolicitarRedefinicaoSenhaView.as_view(), name="solicitar-redefinicao-senha"),
+    path("login/redefinir-senha/", RedefinirSenhaView.as_view(), name="redefinir-senha"),
     path("assistente-ia/", AssistenteIAView.as_view(), name="assistente-ia"),
     path("configuracoes/", ConfiguracoesView.as_view(), name="configuracoes"),
     path("configuracoes/conta/", ConfiguracoesContaView.as_view(), name="configuracoes-conta"),

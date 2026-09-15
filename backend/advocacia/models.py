@@ -1,4 +1,9 @@
+from decimal import Decimal
+
+from django.core.validators import FileExtensionValidator, MinValueValidator
 from django.db import models
+
+from .validators import validar_tamanho_documento, validar_tamanho_imagem
 
 
 ESTADOS_CIVIS = (
@@ -71,8 +76,24 @@ class Usuario(models.Model):
     telefone = models.CharField(max_length=20, blank=True, default="")
     senha = models.CharField(max_length=255)
     tipo_usuario = models.CharField(max_length=20, choices=TIPOS_USUARIO)
-    foto = models.ImageField(upload_to="usuarios/fotos/", null=True, blank=True)
-    documento_identidade = models.FileField(upload_to="usuarios/documentos/", null=True, blank=True)
+    foto = models.ImageField(
+        upload_to="usuarios/fotos/",
+        null=True,
+        blank=True,
+        validators=[
+            FileExtensionValidator(["jpg", "jpeg", "png", "webp"]),
+            validar_tamanho_imagem,
+        ],
+    )
+    documento_identidade = models.FileField(
+        upload_to="usuarios/documentos/",
+        null=True,
+        blank=True,
+        validators=[
+            FileExtensionValidator(["pdf", "jpg", "jpeg", "png"]),
+            validar_tamanho_documento,
+        ],
+    )
     cpf = models.CharField(max_length=14, blank=True, default="")
     rg = models.CharField(max_length=20, blank=True, default="")
     data_nascimento = models.DateField(null=True, blank=True)
@@ -104,8 +125,24 @@ class Cliente(models.Model):
     rg = models.CharField(max_length=20, blank=True, default="")
     estado_civil = models.CharField(max_length=20, choices=ESTADOS_CIVIS, blank=True, default="")
     nacionalidade = models.CharField(max_length=100, blank=True, default="Brasileira")
-    foto = models.ImageField(upload_to="clientes/fotos/", null=True, blank=True)
-    documento_identidade = models.FileField(upload_to="clientes/documentos/", null=True, blank=True)
+    foto = models.ImageField(
+        upload_to="clientes/fotos/",
+        null=True,
+        blank=True,
+        validators=[
+            FileExtensionValidator(["jpg", "jpeg", "png", "webp"]),
+            validar_tamanho_imagem,
+        ],
+    )
+    documento_identidade = models.FileField(
+        upload_to="clientes/documentos/",
+        null=True,
+        blank=True,
+        validators=[
+            FileExtensionValidator(["pdf", "jpg", "jpeg", "png"]),
+            validar_tamanho_documento,
+        ],
+    )
     ativo = models.BooleanField(default=True)
     criado_em = models.DateTimeField(auto_now_add=True)
 
@@ -195,6 +232,14 @@ class Movimentacao(models.Model):
         related_name="movimentacoes",
     )
 
+    criado_por = models.ForeignKey(
+        Usuario,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="movimentacoes_criadas",
+    )
+
     descricao = models.TextField()
     data_movimentacao = models.DateTimeField(auto_now_add=True)
 
@@ -211,7 +256,13 @@ class Documento(models.Model):
     )
 
     nome_arquivo = models.CharField(max_length=255)
-    arquivo = models.FileField(upload_to="documentos/")
+    arquivo = models.FileField(
+        upload_to="documentos/",
+        validators=[
+            FileExtensionValidator(["pdf", "jpg", "jpeg", "png", "doc", "docx"]),
+            validar_tamanho_documento,
+        ],
+    )
     enviado_em = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -275,9 +326,16 @@ class Contrato(models.Model):
     )
 
     tipo_honorario = models.CharField(max_length=20, choices=TIPOS_HONORARIO, default="fixo")
-    valor_total = models.DecimalField(max_digits=12, decimal_places=2)
+    valor_total = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        validators=[MinValueValidator(Decimal("0.01"))],
+    )
     forma_pagamento = models.CharField(max_length=20, choices=FORMAS_PAGAMENTO, default="avista")
-    numero_parcelas = models.PositiveSmallIntegerField(default=1)
+    numero_parcelas = models.PositiveSmallIntegerField(
+        default=1,
+        validators=[MinValueValidator(1)],
+    )
     status = models.CharField(max_length=20, choices=STATUS_CONTRATO, default="ativo")
     observacoes = models.TextField(blank=True, default="")
     criado_em = models.DateTimeField(auto_now_add=True)
@@ -301,7 +359,11 @@ class Parcela(models.Model):
     )
 
     numero = models.PositiveSmallIntegerField()
-    valor = models.DecimalField(max_digits=12, decimal_places=2)
+    valor = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        validators=[MinValueValidator(Decimal("0.01"))],
+    )
     data_vencimento = models.DateField()
     status = models.CharField(max_length=20, choices=STATUS_PARCELA, default="pendente")
     pago_em = models.DateTimeField(null=True, blank=True)
@@ -336,6 +398,74 @@ class PreferenciasUsuario(models.Model):
 
     def __str__(self):
         return f"Preferências de {self.usuario.nome}"
+
+
+class RegistroAuditoria(models.Model):
+
+    ACOES = (
+        ("login_sucesso", "Login realizado"),
+        ("login_falha", "Tentativa de login falhou"),
+        ("login_bloqueado", "Login bloqueado por tentativas excessivas"),
+        ("criacao", "Registro criado"),
+        ("edicao", "Registro editado"),
+        ("exclusao", "Registro excluído"),
+    )
+
+    escritorio = models.ForeignKey(
+        Escritorio,
+        on_delete=models.CASCADE,
+        related_name="registros_auditoria",
+        null=True,
+        blank=True,
+    )
+
+    usuario = models.ForeignKey(
+        Usuario,
+        on_delete=models.SET_NULL,
+        related_name="registros_auditoria",
+        null=True,
+        blank=True,
+    )
+
+    superadmin = models.ForeignKey(
+        SuperAdmin,
+        on_delete=models.SET_NULL,
+        related_name="registros_auditoria",
+        null=True,
+        blank=True,
+    )
+
+    acao = models.CharField(max_length=20, choices=ACOES)
+    modelo = models.CharField(max_length=100, blank=True, default="")
+    objeto_id = models.PositiveIntegerField(null=True, blank=True)
+    descricao = models.CharField(max_length=255, blank=True, default="")
+    endereco_ip = models.GenericIPAddressField(null=True, blank=True)
+    criado_em = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Registro de auditoria"
+        verbose_name_plural = "Registros de auditoria"
+        ordering = ["-criado_em"]
+
+    def __str__(self):
+        return f"{self.get_acao_display()} — {self.criado_em:%d/%m/%Y %H:%M}"
+
+
+class TokenRedefinicaoSenha(models.Model):
+
+    usuario = models.ForeignKey(
+        Usuario,
+        on_delete=models.CASCADE,
+        related_name="tokens_redefinicao_senha",
+    )
+
+    token = models.CharField(max_length=64, unique=True)
+    criado_em = models.DateTimeField(auto_now_add=True)
+    expira_em = models.DateTimeField()
+    usado = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"Token de {self.usuario.nome}"
 
 
 class ConfiguracaoEscritorio(models.Model):

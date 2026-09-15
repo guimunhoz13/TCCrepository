@@ -66,6 +66,7 @@ const DICIONARIO = {
     config_aparencia: "Aparência",
     config_dados: "Dados",
     config_relatorios: "Relatórios",
+    config_auditoria: "Auditoria",
     config_faturamento: "Faturamento",
 
     perfil_admin: "Administrador",
@@ -166,6 +167,7 @@ const DICIONARIO = {
     config_aparencia: "Appearance",
     config_dados: "Data",
     config_relatorios: "Reports",
+    config_auditoria: "Audit log",
     config_faturamento: "Billing",
 
     perfil_admin: "Administrator",
@@ -266,6 +268,7 @@ const DICIONARIO = {
     config_aparencia: "Apariencia",
     config_dados: "Datos",
     config_relatorios: "Informes",
+    config_auditoria: "Auditoría",
     config_faturamento: "Facturación",
 
     perfil_admin: "Administrador",
