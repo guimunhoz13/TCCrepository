@@ -3,9 +3,7 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path, include
 
-from rest_framework_simplejwt.views import TokenRefreshView
-
-from advocacia.views import LoginView
+from advocacia.views import LoginView, RenovarTokenView
 
 
 urlpatterns = [
@@ -23,7 +21,7 @@ urlpatterns = [
 
     path(
         "api/token/refresh/",
-        TokenRefreshView.as_view(),
+        RenovarTokenView.as_view(),
         name="token_refresh"
     ),
 

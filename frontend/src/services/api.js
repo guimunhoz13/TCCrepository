@@ -13,6 +13,41 @@ export function buildQuery(params) {
   return texto ? `?${texto}` : "";
 }
 
+const CHAVE_REFRESH = {
+  access: "refresh",
+  master_access: "master_refresh",
+};
+
+// O access token expira em 30 minutos (ver SIMPLE_JWT no backend). Sem isso,
+// a primeira chamada à API depois da expiração falhava com "Given token not
+// valid for any token type" e o usuário era obrigado a atualizar a página e
+// logar de novo no meio do uso do sistema.
+async function renovarAccessToken(tokenKey) {
+  const refreshKey = CHAVE_REFRESH[tokenKey];
+  const refreshToken =
+    refreshKey && typeof window !== "undefined"
+      ? localStorage.getItem(refreshKey)
+      : null;
+
+  if (!refreshToken) return null;
+
+  try {
+    const response = await fetch(`${API_URL}/token/refresh/`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refresh: refreshToken }),
+    });
+
+    if (!response.ok) return null;
+
+    const data = await response.json();
+    localStorage.setItem(tokenKey, data.access);
+    return data.access;
+  } catch {
+    return null;
+  }
+}
+
 async function request(endpoint, options = {}, tokenKey = "access") {
   const token =
     typeof window !== "undefined"
@@ -21,14 +56,25 @@ async function request(endpoint, options = {}, tokenKey = "access") {
 
   const isFormData = options.body instanceof FormData;
 
-  const response = await fetch(`${API_URL}${endpoint}`, {
-    ...options,
-    headers: {
-      ...(isFormData ? {} : { "Content-Type": "application/json" }),
-      ...(token && { Authorization: `Bearer ${token}` }),
-      ...options.headers,
-    },
-  });
+  async function enviar(tokenAtual) {
+    return fetch(`${API_URL}${endpoint}`, {
+      ...options,
+      headers: {
+        ...(isFormData ? {} : { "Content-Type": "application/json" }),
+        ...(tokenAtual && { Authorization: `Bearer ${tokenAtual}` }),
+        ...options.headers,
+      },
+    });
+  }
+
+  let response = await enviar(token);
+
+  if (response.status === 401 && token) {
+    const novoToken = await renovarAccessToken(tokenKey);
+    if (novoToken) {
+      response = await enviar(novoToken);
+    }
+  }
 
   let data = null;
 
@@ -365,6 +411,7 @@ export async function masterLogin(email, senha) {
 
 export function masterLogout() {
   localStorage.removeItem("master_access");
+  localStorage.removeItem("master_refresh");
   localStorage.removeItem("masterLogado");
 }
 

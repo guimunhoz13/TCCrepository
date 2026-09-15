@@ -23,6 +23,7 @@ export default function MasterLoginPage() {
       const data = await masterLogin(email.trim(), senha);
 
       localStorage.setItem("master_access", data.access);
+      localStorage.setItem("master_refresh", data.refresh);
       localStorage.setItem("masterLogado", JSON.stringify(data.superadmin));
 
       router.push("/master/painel");
