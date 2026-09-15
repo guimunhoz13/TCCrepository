@@ -12,6 +12,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from django.core.exceptions import ValidationError as DjangoValidationError
@@ -68,6 +69,48 @@ from .serializers import (
 )
 
 from .ia_service import montar_contexto_sistema, gerar_resposta_ia
+
+
+# =========================================================
+# RENOVAÇÃO DE TOKEN
+# =========================================================
+
+class RenovarTokenView(APIView):
+    """Emite um novo access token a partir de um refresh token válido.
+
+    Não usa o TokenRefreshView padrão do simplejwt: sua serializer tenta
+    confirmar que o usuário ainda existe via
+    get_user_model().objects.get(id=<claim user_id>) contra o model padrão
+    do Django (auth.User) — mas este sistema não usa auth.User, e sim os
+    models Usuario/SuperAdmin, com autenticação stateless
+    (JWTStatelessUserAuthentication não consulta o banco a cada
+    requisição). Essa checagem sempre falharia com User.DoesNotExist. Em
+    vez disso, seguimos o mesmo padrão já usado em LoginView/
+    MasterLoginView: construir o access token diretamente a partir do
+    RefreshToken.
+    """
+
+    permission_classes = [AllowAny]
+    authentication_classes = []
+
+    def post(self, request):
+        refresh_str = request.data.get("refresh", "")
+
+        if not refresh_str:
+            return Response(
+                {"detail": "Informe o refresh token."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            refresh = RefreshToken(refresh_str)
+        except TokenError:
+            return Response(
+                {"detail": "Token inválido ou expirado."},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+
+        return Response({"access": str(refresh.access_token)})
 
 
 # =========================================================

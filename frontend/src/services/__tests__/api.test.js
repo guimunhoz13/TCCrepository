@@ -6,6 +6,7 @@ import {
   redefinirSenha,
   getAuditoria,
   getMasterAuditoria,
+  getClientes,
 } from "../api";
 
 describe("normalizarLista", () => {
@@ -123,5 +124,88 @@ describe("auditoria", () => {
     await getMasterAuditoria();
     const [url] = global.fetch.mock.calls[0];
     expect(url).toMatch(/\/master\/auditoria\/$/);
+  });
+});
+
+describe("renovação automática do access token expirado", () => {
+  beforeEach(() => {
+    global.window = {};
+    global.localStorage = {
+      _dados: {},
+      getItem(chave) {
+        return Object.prototype.hasOwnProperty.call(this._dados, chave)
+          ? this._dados[chave]
+          : null;
+      },
+      setItem(chave, valor) {
+        this._dados[chave] = valor;
+      },
+      removeItem(chave) {
+        delete this._dados[chave];
+      },
+    };
+    localStorage.setItem("access", "token-expirado");
+    localStorage.setItem("refresh", "refresh-valido");
+  });
+
+  afterEach(() => {
+    delete global.window;
+    delete global.localStorage;
+    delete global.fetch;
+  });
+
+  test("ao receber 401, renova o access token e repete a requisição original", async () => {
+    let numeroDaChamada = 0;
+
+    global.fetch = jest.fn((url) => {
+      numeroDaChamada += 1;
+
+      if (url.endsWith("/token/refresh/")) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({ access: "token-novo" }),
+        });
+      }
+
+      if (numeroDaChamada === 1) {
+        return Promise.resolve({
+          ok: false,
+          status: 401,
+          json: async () => ({ detail: "Given token not valid for any token type" }),
+        });
+      }
+
+      return Promise.resolve({
+        ok: true,
+        json: async () => ({ count: 0, next: null, previous: null, results: [] }),
+      });
+    });
+
+    const resultado = await getClientes();
+
+    expect(resultado.results).toEqual([]);
+    expect(global.fetch).toHaveBeenCalledTimes(3);
+    expect(localStorage.getItem("access")).toBe("token-novo");
+
+    const [, opcoesRetentativa] = global.fetch.mock.calls[2];
+    expect(opcoesRetentativa.headers.Authorization).toBe("Bearer token-novo");
+  });
+
+  test("se a renovação falhar, propaga o erro original em vez de travar", async () => {
+    global.fetch = jest.fn((url) => {
+      if (url.endsWith("/token/refresh/")) {
+        return Promise.resolve({ ok: false, status: 401, json: async () => ({}) });
+      }
+      return Promise.resolve({
+        ok: false,
+        status: 401,
+        json: async () => ({ detail: "Given token not valid for any token type" }),
+      });
+    });
+
+    await expect(getClientes()).rejects.toThrow(
+      "Given token not valid for any token type"
+    );
+    expect(global.fetch).toHaveBeenCalledTimes(2);
   });
 });

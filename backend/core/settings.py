@@ -2,6 +2,7 @@
 Django settings for core project.
 """
 
+from datetime import timedelta
 from pathlib import Path
 import os
 import sys
@@ -300,4 +301,20 @@ REST_FRAMEWORK = {
 
     },
 
+}
+
+
+# JWT
+#
+# O padrão da biblioteca (5 minutos de access token, sem rotação de refresh)
+# é curto demais para o uso real do sistema: o frontend não tinha nenhuma
+# lógica de renovação automática, então o access token expirava no meio do
+# uso e toda chamada à API passava a falhar com "Given token not valid for
+# any token type" até o usuário atualizar a página e logar de novo. Agora o
+# frontend renova o access token automaticamente via /api/token/refresh/
+# quando recebe 401 (ver services/api.js), mas mesmo assim um access token
+# de vida mais longa reduz a frequência dessas renovações.
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
 }

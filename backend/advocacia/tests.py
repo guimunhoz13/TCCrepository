@@ -216,6 +216,79 @@ class LoginAPITestCase(APITestCase):
         self.assertEqual(resposta.status_code, status.HTTP_403_FORBIDDEN)
 
 
+class RenovacaoDeTokenAPITestCase(APITestCase):
+    """Testa /api/token/refresh/: sem essa renovação, o access token (que
+    dura poucos minutos) expira no meio do uso do sistema e toda chamada
+    à API passa a falhar com "Given token not valid for any token type"
+    até o usuário logar de novo — o frontend agora chama esse endpoint
+    automaticamente quando recebe 401 (ver services/api.js)."""
+
+    def setUp(self):
+        self.escritorio = _criar_escritorio()
+        self.usuario = _criar_usuario(self.escritorio)
+
+    def test_refresh_token_gera_um_access_token_valido(self):
+        login = self.client.post(
+            "/api/login/",
+            {"email": "ana@escritorio.com", "senha": "senha12345"},
+            format="json",
+        )
+        refresh_token = login.data["refresh"]
+
+        resposta = self.client.post(
+            "/api/token/refresh/",
+            {"refresh": refresh_token},
+            format="json",
+        )
+        self.assertEqual(resposta.status_code, status.HTTP_200_OK)
+        self.assertIn("access", resposta.data)
+
+        novo_access = resposta.data["access"]
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {novo_access}")
+        resposta_protegida = self.client.get("/api/clientes/")
+        self.assertEqual(resposta_protegida.status_code, status.HTTP_200_OK)
+
+    def test_refresh_token_invalido_e_rejeitado(self):
+        resposta = self.client.post(
+            "/api/token/refresh/",
+            {"refresh": "token-invalido"},
+            format="json",
+        )
+        self.assertEqual(resposta.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_access_token_renovado_preserva_as_claims_do_usuario(self):
+        login = self.client.post(
+            "/api/login/",
+            {"email": "ana@escritorio.com", "senha": "senha12345"},
+            format="json",
+        )
+        refresh_token = login.data["refresh"]
+
+        resposta = self.client.post(
+            "/api/token/refresh/",
+            {"refresh": refresh_token},
+            format="json",
+        )
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {resposta.data['access']}")
+
+        # Só um usuário do próprio escritório aparece — prova que o novo
+        # access token carrega a claim escritorio_id corretamente.
+        outro_escritorio = _criar_escritorio(
+            nome="Outro Escritório", cnpj="99999999000199", email="outro@teste.com"
+        )
+        Cliente.objects.create(
+            escritorio=outro_escritorio,
+            nome="Cliente de outro escritório",
+            cpf="12312312312",
+            email="x@teste.com",
+            telefone="11955555555",
+            endereco="Rua X",
+        )
+        resposta_clientes = self.client.get("/api/clientes/")
+        self.assertEqual(resposta_clientes.status_code, status.HTTP_200_OK)
+        self.assertEqual(resposta_clientes.data["count"], 0)
+
+
 class ValidacaoDeSenhaAPITestCase(APITestCase):
     """
     TDD — testes escritos a partir dos requisitos de senha forte pedidos
