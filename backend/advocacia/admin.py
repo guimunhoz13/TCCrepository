@@ -10,6 +10,7 @@ from .models import (
     Agenda,
     Contrato,
     Parcela,
+    RegistroAuditoria,
 )
 
 
@@ -304,3 +305,48 @@ class ParcelaAdmin(admin.ModelAdmin):
     ordering = (
         'data_vencimento',
     )
+
+
+@admin.register(RegistroAuditoria)
+class RegistroAuditoriaAdmin(admin.ModelAdmin):
+    """Somente leitura: um registro de auditoria nunca deve ser editável ou
+    apagável pelo admin — isso anularia o propósito da trilha de auditoria.
+    """
+
+    list_display = (
+        'id',
+        'acao',
+        'usuario',
+        'superadmin',
+        'escritorio',
+        'modelo',
+        'objeto_id',
+        'criado_em',
+    )
+
+    search_fields = (
+        'usuario__nome',
+        'superadmin__nome',
+        'escritorio__nome',
+        'modelo',
+        'descricao',
+    )
+
+    list_filter = (
+        'acao',
+        'modelo',
+        'criado_em',
+    )
+
+    ordering = (
+        '-criado_em',
+    )
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False

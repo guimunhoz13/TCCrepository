@@ -142,6 +142,11 @@ export default function LoginForm() {
           onChange={(e) => setSenha(e.target.value)}
           required
         />
+        <div style={{ textAlign: "right", marginTop: 6 }}>
+          <Link href="/esqueci-senha" style={{ fontSize: "0.82rem" }}>
+            Esqueceu sua senha?
+          </Link>
+        </div>
       </div>
 
       <button

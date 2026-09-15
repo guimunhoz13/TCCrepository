@@ -66,6 +66,26 @@ def _tabela_html(colunas, linhas, vazio):
     return f'<table style="width:100%; border-collapse:collapse; margin: 10px 0 20px;"><thead><tr>{cabecalho}</tr></thead><tbody>{corpo}</tbody></table>'
 
 
+def montar_email_redefinicao_senha(nome, link, escritorio_nome):
+    corpo_html = f"""
+      <p style="font-size:0.9rem; color:#1c2333; line-height:1.7;">
+        Olá, {nome}. Recebemos uma solicitação para redefinir sua senha.
+        Clique no botão abaixo para escolher uma nova senha. Este link expira em 1 hora.
+      </p>
+      <p style="text-align:center; margin: 24px 0;">
+        <a href="{link}" style="background:#c99a4b; color:#1c2333; padding:12px 24px; border-radius:8px; text-decoration:none; font-weight:600; font-size:0.9rem;">
+          Redefinir minha senha
+        </a>
+      </p>
+      <p style="font-size:0.78rem; color:#80869a;">
+        Se você não solicitou essa alteração, ignore este e-mail — sua senha permanecerá a mesma.
+      </p>
+    """
+    assunto = f"Redefinição de senha — {escritorio_nome}"
+    corpo_texto = f"Acesse {link} para redefinir sua senha. O link expira em 1 hora."
+    return assunto, _casca_html(escritorio_nome, "Redefinição de senha", "Solicitação de nova senha.", corpo_html), corpo_texto
+
+
 def montar_email_relatorio_cliente(dados):
     cliente = dados["cliente"]
     processos = dados.get("processos", [])
