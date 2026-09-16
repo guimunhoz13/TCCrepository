@@ -1,14 +1,14 @@
 import Link from "next/link";
-import { Scale } from "lucide-react";
 import RegisterForm from "@/components/forms/RegisterForm";
 import styles from "../login/page.module.css";
+import Logo from "@/components/ui/Logo";
 
 export default function CadastroPage() {
   return (
     <main className="auth-page">
       <section className="auth-hero">
         <Link href="/" className={styles.backBrand}>
-          <Scale size={18} />
+          <Logo size={18} />
           LexOffice
         </Link>
 

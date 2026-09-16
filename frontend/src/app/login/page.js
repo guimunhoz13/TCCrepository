@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { Scale } from "lucide-react";
 import LoginForm from "@/components/forms/LoginForm";
 import styles from "./page.module.css";
+import Logo from "@/components/ui/Logo";
 
 const previewRows = [
   { name: "Processo nº 0043/2026", status: "Em andamento", tone: "warning" },
@@ -14,7 +14,7 @@ export default function LoginPage() {
     <main className="auth-page">
       <section className="auth-hero">
         <Link href="/" className={styles.backBrand}>
-          <Scale size={18} />
+          <Logo size={18} />
           LexOffice
         </Link>
 

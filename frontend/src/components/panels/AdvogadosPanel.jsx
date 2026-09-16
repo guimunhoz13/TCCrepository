@@ -6,6 +6,7 @@ import { useDashboardData } from "@/contexts/DashboardDataContext";
 import { usePreferences } from "@/contexts/PreferencesContext";
 import OverlayPanel from "@/components/shell/OverlayPanel";
 import Avatar from "@/components/ui/Avatar";
+import { Pencil } from "lucide-react";
 import { formatarCPF, formatarRG, formatarTelefone, formatarOAB } from "@/utils/mascaras";
 import { senhaAtendeRequisitos } from "@/utils/senha";
 import RequisitosSenha from "@/components/ui/RequisitosSenha";
@@ -397,13 +398,17 @@ export default function AdvogadosPanel() {
                     <td>{adv.oab}</td>
                     <td>{adv.especialidade}</td>
                     <td>
-                      <button
-                        type="button"
-                        className="btn btn-secondary btn-sm"
-                        onClick={() => handleIniciarEdicao(adv)}
-                      >
-                        {t("acao_editar")}
-                      </button>
+                      <div className="row-actions">
+                        <button
+                          type="button"
+                          className="row-action"
+                          title={t("acao_editar")}
+                          aria-label={t("acao_editar")}
+                          onClick={() => handleIniciarEdicao(adv)}
+                        >
+                          <Pencil size={15} />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}

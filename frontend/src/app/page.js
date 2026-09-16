@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import Logo from "@/components/ui/Logo";
 import {
-  Scale,
   Users,
   Briefcase,
   CalendarDays,
@@ -161,7 +161,7 @@ export default function HomePage() {
       <header className={styles.nav}>
         <div className={styles.navBrand}>
           <span className={styles.navBrandIcon}>
-            <Scale size={18} />
+            <Logo size={18} />
           </span>
           LexOffice
         </div>
@@ -320,7 +320,7 @@ export default function HomePage() {
 
       <footer className={styles.footer}>
         <div className={styles.footerBrand}>
-          <Scale size={16} />
+          <Logo size={16} />
           LexOffice
         </div>
         <span>© {new Date().getFullYear()} LexOffice — ERP Jurídico</span>

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ShieldCheck, LogOut, Trash2, Moon, Sun } from "lucide-react";
+import { ShieldCheck, LogOut, Trash2, Moon, Sun, Power, PowerOff } from "lucide-react";
 import {
   getMasterLogado,
   masterLogout,
@@ -188,21 +188,24 @@ export default function MasterPainelPage() {
                     </span>
                   </td>
                   <td>
-                    <div style={{ display: "flex", gap: 8 }}>
+                    <div className="row-actions">
                       <button
                         type="button"
-                        className="btn btn-secondary btn-sm"
+                        className="row-action"
+                        title={escritorio.ativo ? "Inativar escritório" : "Ativar escritório"}
+                        aria-label={escritorio.ativo ? "Inativar escritório" : "Ativar escritório"}
                         onClick={() => handleAlternarAtivo(escritorio)}
                       >
-                        {escritorio.ativo ? "Inativar" : "Ativar"}
+                        {escritorio.ativo ? <PowerOff size={15} /> : <Power size={15} />}
                       </button>
                       <button
                         type="button"
-                        className="btn btn-danger btn-sm"
+                        className="row-action row-action-danger"
                         onClick={() => handleExcluir(escritorio)}
                         title="Excluir escritório"
+                        aria-label="Excluir escritório"
                       >
-                        <Trash2 size={14} />
+                        <Trash2 size={15} />
                       </button>
                     </div>
                   </td>

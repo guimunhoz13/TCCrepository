@@ -5,6 +5,7 @@ import { usePanel } from "@/contexts/PanelContext";
 import { useDashboardData } from "@/contexts/DashboardDataContext";
 import { usePreferences } from "@/contexts/PreferencesContext";
 import OverlayPanel from "@/components/shell/OverlayPanel";
+import { ChevronDown, ChevronUp, CircleDollarSign, Trash2 } from "lucide-react";
 import {
   getContratos,
   createContrato,
@@ -222,21 +223,38 @@ export default function ContratosPanel() {
                         <span className="badge badge-muted">{contrato.status}</span>
                       </td>
                       <td>
-                        <div style={{ display: "flex", gap: 8 }}>
+                        <div className="row-actions">
                           <button
                             type="button"
-                            className="btn btn-secondary btn-sm"
+                            className="row-action"
+                            title={
+                              contratoExpandido === contrato.id
+                                ? "Ocultar parcelas"
+                                : "Ver parcelas"
+                            }
+                            aria-label={
+                              contratoExpandido === contrato.id
+                                ? "Ocultar parcelas"
+                                : "Ver parcelas"
+                            }
+                            aria-expanded={contratoExpandido === contrato.id}
                             onClick={() =>
                               setContratoExpandido(
                                 contratoExpandido === contrato.id ? null : contrato.id
                               )
                             }
                           >
-                            {contratoExpandido === contrato.id ? "Ocultar parcelas" : "Ver parcelas"}
+                            {contratoExpandido === contrato.id ? (
+                              <ChevronUp size={15} />
+                            ) : (
+                              <ChevronDown size={15} />
+                            )}
                           </button>
                           <button
                             type="button"
-                            className="btn btn-danger btn-sm"
+                            className="row-action row-action-danger"
+                            title={t("acao_excluir")}
+                            aria-label={t("acao_excluir")}
                             onClick={async () => {
                               if (window.confirm("Excluir contrato?")) {
                                 await deleteContrato(contrato.id);
@@ -245,7 +263,7 @@ export default function ContratosPanel() {
                               }
                             }}
                           >
-                            {t("acao_excluir")}
+                            <Trash2 size={15} />
                           </button>
                         </div>
                       </td>
@@ -288,10 +306,12 @@ export default function ContratosPanel() {
                                     {parcela.status !== "pago" && (
                                       <button
                                         type="button"
-                                        className="btn btn-secondary btn-sm"
+                                        className="row-action row-action-success"
+                                        title={t("acao_marcar_pago")}
+                                        aria-label={t("acao_marcar_pago")}
                                         onClick={() => handleMarcarPago(parcela.id)}
                                       >
-                                        {t("acao_marcar_pago")}
+                                        <CircleDollarSign size={15} />
                                       </button>
                                     )}
                                   </td>

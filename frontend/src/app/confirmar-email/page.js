@@ -1,15 +1,15 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import { Scale } from "lucide-react";
 import ConfirmarEmailForm from "@/components/forms/ConfirmarEmailForm";
 import styles from "../login/page.module.css";
+import Logo from "@/components/ui/Logo";
 
 export default function ConfirmarEmailPage() {
   return (
     <main className="auth-page">
       <section className="auth-hero">
         <Link href="/" className={styles.backBrand}>
-          <Scale size={18} />
+          <Logo size={18} />
           LexOffice
         </Link>
 
