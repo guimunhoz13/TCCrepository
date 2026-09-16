@@ -66,6 +66,26 @@ def _tabela_html(colunas, linhas, vazio):
     return f'<table style="width:100%; border-collapse:collapse; margin: 10px 0 20px;"><thead><tr>{cabecalho}</tr></thead><tbody>{corpo}</tbody></table>'
 
 
+def montar_email_verificacao(nome, link, escritorio_nome):
+    corpo_html = f"""
+      <p style="font-size:0.9rem; color:#1c2333; line-height:1.7;">
+        Olá, {nome}. Falta só um passo para começar a usar o {escritorio_nome} no LexOffice:
+        confirme seu e-mail clicando no botão abaixo. O link expira em 24 horas.
+      </p>
+      <p style="text-align:center; margin: 24px 0;">
+        <a href="{link}" style="background:#c99a4b; color:#1c2333; padding:12px 24px; border-radius:8px; text-decoration:none; font-weight:600; font-size:0.9rem;">
+          Confirmar meu e-mail
+        </a>
+      </p>
+      <p style="font-size:0.78rem; color:#80869a;">
+        Se você não fez esse cadastro, ignore este e-mail.
+      </p>
+    """
+    assunto = f"Confirme seu e-mail — {escritorio_nome}"
+    corpo_texto = f"Acesse {link} para confirmar seu e-mail e liberar o acesso ao sistema. O link expira em 24 horas."
+    return assunto, _casca_html(escritorio_nome, "Confirme seu e-mail", "Falta pouco para começar.", corpo_html), corpo_texto
+
+
 def montar_email_redefinicao_senha(nome, link, escritorio_nome):
     corpo_html = f"""
       <p style="font-size:0.9rem; color:#1c2333; line-height:1.7;">

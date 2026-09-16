@@ -4,7 +4,10 @@ from django.db.models import Count, Q
 from django.http import HttpResponse
 from django.utils import timezone
 import csv
+import logging
 import secrets
+
+logger = logging.getLogger(__name__)
 
 from rest_framework import status, viewsets
 from rest_framework.exceptions import PermissionDenied, ValidationError
@@ -27,6 +30,7 @@ from .validators import validar_email_real, validar_telefone, validar_senha_fort
 from .emails import (
     enviar_email,
     montar_email_redefinicao_senha,
+    montar_email_verificacao,
     montar_email_relatorio_cliente,
     montar_email_relatorio_processo,
 )
@@ -47,6 +51,7 @@ from .models import (
     ConfiguracaoEscritorio,
     RegistroAuditoria,
     TokenRedefinicaoSenha,
+    TokenVerificacaoEmail,
 )
 
 from .serializers import (
@@ -215,6 +220,14 @@ class LoginView(APIView):
                 status=status.HTTP_401_UNAUTHORIZED,
             )
 
+        if not settings.DEBUG and not usuario.email_verificado:
+            return Response(
+                {
+                    "detail": "Confirme seu e-mail antes de fazer login. Verifique sua caixa de entrada (e o spam)."
+                },
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
         if usuario.tentativas_login or usuario.bloqueado_ate:
             usuario.tentativas_login = 0
             usuario.bloqueado_ate = None
@@ -338,7 +351,12 @@ class SolicitarRedefinicaoSenhaView(APIView):
         try:
             enviar_email(usuario.email, assunto, corpo_html, corpo_texto)
         except Exception:
-            pass
+            # A resposta ao cliente é sempre genérica (não revela se o
+            # e-mail existe), mas uma falha real de envio (credenciais SMTP
+            # erradas/ausentes, etc.) precisa aparecer em algum lugar — sem
+            # isso, o problema mais comum ("o e-mail não chega") vira um
+            # mistério sem nenhuma pista nos logs.
+            logger.exception("Falha ao enviar e-mail de redefinição de senha para %s", usuario.email)
 
         return resposta_generica
 
@@ -418,17 +436,77 @@ class EscritorioRegistroView(APIView):
             )
 
         resultado = serializer.save()
+        escritorio = resultado["escritorio"]
+        usuario = resultado["usuario"]
+
+        requer_verificacao = not settings.DEBUG
+        mensagem = "Escritório cadastrado com sucesso."
+
+        if requer_verificacao:
+            usuario.email_verificado = False
+            usuario.save(update_fields=["email_verificado"])
+
+            token = secrets.token_urlsafe(32)
+            TokenVerificacaoEmail.objects.create(
+                usuario=usuario,
+                token=token,
+                expira_em=timezone.now() + timezone.timedelta(hours=24),
+            )
+
+            link = f"{settings.FRONTEND_URL}/confirmar-email?token={token}"
+            assunto, corpo_html, corpo_texto = montar_email_verificacao(
+                usuario.nome, link, escritorio.nome
+            )
+            try:
+                enviar_email(usuario.email, assunto, corpo_html, corpo_texto)
+            except Exception:
+                logger.exception("Falha ao enviar e-mail de confirmação de cadastro para %s", usuario.email)
+
+            mensagem = (
+                "Escritório cadastrado com sucesso. Enviamos um link de "
+                "confirmação para o e-mail do administrador — confirme antes "
+                "de fazer login."
+            )
 
         return Response(
             {
-                "detail": "Escritório cadastrado com sucesso.",
+                "detail": mensagem,
+                "requer_verificacao_email": requer_verificacao,
 
-                "escritorio": EscritorioSerializer(
-                    resultado["escritorio"]
-                ).data,
+                "escritorio": EscritorioSerializer(escritorio).data,
             },
             status=status.HTTP_201_CREATED,
         )
+
+
+class ConfirmarEmailView(APIView):
+
+    permission_classes = [AllowAny]
+    authentication_classes = []
+    throttle_scope = "sensivel"
+
+    def post(self, request):
+        token_valor = request.data.get("token", "").strip()
+
+        if not token_valor:
+            return Response({"detail": "Token inválido."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            token = TokenVerificacaoEmail.objects.select_related("usuario").get(token=token_valor)
+        except TokenVerificacaoEmail.DoesNotExist:
+            return Response({"detail": "Token inválido ou expirado."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if token.usado or token.expira_em < timezone.now():
+            return Response({"detail": "Token inválido ou expirado."}, status=status.HTTP_400_BAD_REQUEST)
+
+        usuario = token.usuario
+        usuario.email_verificado = True
+        usuario.save(update_fields=["email_verificado"])
+
+        token.usado = True
+        token.save(update_fields=["usado"])
+
+        return Response({"detail": "E-mail confirmado com sucesso. Você já pode fazer login."})
 
 
 # =========================================================

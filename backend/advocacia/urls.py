@@ -4,6 +4,7 @@ from rest_framework.routers import DefaultRouter
 from .noticias import NoticiasJuridicasView
 from .views import (
     EscritorioRegistroView,
+    ConfirmarEmailView,
     DashboardStatsView,
     AdvogadoRegistroView,
     VerificarEmailView,
@@ -61,6 +62,7 @@ master_router.register(r"master/auditoria", MasterAuditoriaViewSet, basename="ma
 
 urlpatterns = [
     path("escritorios/registrar/", EscritorioRegistroView.as_view(), name="escritorio-registrar"),
+    path("escritorios/confirmar-email/", ConfirmarEmailView.as_view(), name="confirmar-email"),
     path("dashboard/stats/", DashboardStatsView.as_view(), name="dashboard-stats"),
     path("noticias/", NoticiasJuridicasView.as_view(), name="noticias-juridicas"),
     path("advogados/registrar/", AdvogadoRegistroView.as_view(), name="advogado-registrar"),

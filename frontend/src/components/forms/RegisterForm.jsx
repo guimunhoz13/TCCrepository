@@ -40,11 +40,13 @@ export default function RegisterForm() {
 
     try {
       setCarregando(true);
-      await registrarEscritorio(form);
+      const data = await registrarEscritorio(form);
 
       sessionStorage.setItem(
         "sucessoCadastro",
-        "Escritório cadastrado! Faça login com o e-mail do administrador."
+        data.requer_verificacao_email
+          ? "Escritório cadastrado! Enviamos um link de confirmação para o e-mail do administrador — confirme antes de fazer login."
+          : "Escritório cadastrado! Faça login com o e-mail do administrador."
       );
 
       router.push("/login");

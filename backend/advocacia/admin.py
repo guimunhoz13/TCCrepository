@@ -23,6 +23,7 @@ class UsuarioAdmin(admin.ModelAdmin):
         'email',
         'tipo_usuario',
         'ativo',
+        'email_verificado',
         'criado_em',
     )
 
@@ -34,6 +35,7 @@ class UsuarioAdmin(admin.ModelAdmin):
     list_filter = (
         'tipo_usuario',
         'ativo',
+        'email_verificado',
         'criado_em',
     )
 

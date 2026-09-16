@@ -133,6 +133,13 @@ export async function registrarEscritorio(data) {
   });
 }
 
+export async function confirmarEmail(token) {
+  return request("/escritorios/confirmar-email/", {
+    method: "POST",
+    body: JSON.stringify({ token }),
+  });
+}
+
 function corpoRequisicao(data) {
   return data instanceof FormData ? data : JSON.stringify(data);
 }

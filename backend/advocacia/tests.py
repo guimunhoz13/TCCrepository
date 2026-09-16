@@ -25,6 +25,7 @@ from .models import (
     SuperAdmin,
     RegistroAuditoria,
     TokenRedefinicaoSenha,
+    TokenVerificacaoEmail,
 )
 from .validators import validar_email_real, validar_tamanho_documento, validar_tamanho_imagem
 from .views import SolicitarRedefinicaoSenhaView
@@ -519,6 +520,95 @@ class EscritorioRegistroAPITestCase(APITestCase):
         )
         self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("senha_admin", resposta.data)
+
+    @override_settings(DEBUG=True)
+    def test_em_desenvolvimento_nao_exige_verificacao_de_email(self, _mock_mx):
+        """Com DEBUG=True (o padrão em desenvolvimento), o cadastro fica
+        liberado de imediato — não travar quem usa e-mails fictícios pra
+        testar. O runner de testes do Django força DEBUG=False durante
+        `manage.py test` mesmo com DEBUG=True no .env, então este teste
+        precisa reativar DEBUG=True explicitamente para simular o cenário
+        real de desenvolvimento local."""
+        resposta = self.client.post(
+            "/api/escritorios/registrar/", self._payload_valido(), format="json"
+        )
+        self.assertEqual(resposta.status_code, status.HTTP_201_CREATED)
+        self.assertFalse(resposta.data["requer_verificacao_email"])
+
+        usuario = Usuario.objects.get(email="admin@novoescritorio.com")
+        self.assertTrue(usuario.email_verificado)
+
+        login = self.client.post(
+            "/api/login/",
+            {"email": "admin@novoescritorio.com", "senha": "Senha123!"},
+            format="json",
+        )
+        self.assertEqual(login.status_code, status.HTTP_200_OK)
+
+    @override_settings(DEBUG=False)
+    def test_em_producao_exige_verificacao_de_email_antes_do_login(self, _mock_mx):
+        resposta = self.client.post(
+            "/api/escritorios/registrar/", self._payload_valido(), format="json"
+        )
+        self.assertEqual(resposta.status_code, status.HTTP_201_CREATED)
+        self.assertTrue(resposta.data["requer_verificacao_email"])
+
+        usuario = Usuario.objects.get(email="admin@novoescritorio.com")
+        self.assertFalse(usuario.email_verificado)
+        self.assertTrue(
+            TokenVerificacaoEmail.objects.filter(usuario=usuario).exists()
+        )
+
+        login_antes = self.client.post(
+            "/api/login/",
+            {"email": "admin@novoescritorio.com", "senha": "Senha123!"},
+            format="json",
+        )
+        self.assertEqual(login_antes.status_code, status.HTTP_403_FORBIDDEN)
+
+        token = TokenVerificacaoEmail.objects.get(usuario=usuario)
+        confirmacao = self.client.post(
+            "/api/escritorios/confirmar-email/",
+            {"token": token.token},
+            format="json",
+        )
+        self.assertEqual(confirmacao.status_code, status.HTTP_200_OK)
+
+        usuario.refresh_from_db()
+        self.assertTrue(usuario.email_verificado)
+
+        login_depois = self.client.post(
+            "/api/login/",
+            {"email": "admin@novoescritorio.com", "senha": "Senha123!"},
+            format="json",
+        )
+        self.assertEqual(login_depois.status_code, status.HTTP_200_OK)
+
+    @override_settings(DEBUG=False)
+    def test_confirmar_email_com_token_invalido_e_rejeitado(self, _mock_mx):
+        resposta = self.client.post(
+            "/api/escritorios/confirmar-email/",
+            {"token": "token-que-nao-existe"},
+            format="json",
+        )
+        self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
+
+    @override_settings(DEBUG=False)
+    def test_confirmar_email_com_token_ja_usado_e_rejeitado(self, _mock_mx):
+        self.client.post(
+            "/api/escritorios/registrar/", self._payload_valido(), format="json"
+        )
+        usuario = Usuario.objects.get(email="admin@novoescritorio.com")
+        token = TokenVerificacaoEmail.objects.get(usuario=usuario)
+        token.usado = True
+        token.save(update_fields=["usado"])
+
+        resposta = self.client.post(
+            "/api/escritorios/confirmar-email/",
+            {"token": token.token},
+            format="json",
+        )
+        self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
 
 
 @patch("advocacia.validators._dominio_tem_mx", return_value=True)
