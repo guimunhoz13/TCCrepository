@@ -57,6 +57,36 @@ npm install
 npm run dev
 ```
 
+## Tarefas agendadas
+
+Os lembretes de agenda e o resumo semanal são enviados por um comando que
+precisa ser executado uma vez por dia por um agendador externo (não há
+Celery no projeto):
+
+```bash
+cd backend && python manage.py enviar_lembretes
+```
+
+O comando é idempotente — cada aviso fica registrado em `NotificacaoEnviada`,
+então rodar duas vezes no mesmo dia não reenvia nada. Opções:
+
+- `--dry-run`: mostra o que seria enviado, sem enviar e sem registrar.
+- `--resumo-semanal`: força o resumo fora da segunda-feira (útil para demonstrar).
+
+O que ele envia depende das preferências de cada usuário (Configurações →
+Notificações): `lembrete_audiencia` e `antecedencia_audiencia` para
+compromissos, `lembrete_prazo` para prazos, e `resumo_semanal` para o
+resumo das segundas.
+
+Exemplo de agendamento no cron, todo dia às 7h:
+
+```cron
+0 7 * * * cd /caminho/para/backend && /caminho/para/python manage.py enviar_lembretes
+```
+
+Sem SMTP configurado (`EMAIL_HOST_USER`/`EMAIL_HOST_PASSWORD`), o Django cai
+no backend de console e apenas imprime os e-mails — veja `backend/.env.example`.
+
 ## Testes
 
 ```bash
