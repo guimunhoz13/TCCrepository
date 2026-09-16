@@ -300,6 +300,18 @@ export function getUsuarioLogado() {
 }
 
 export function logout() {
+  // Revoga o refresh token no servidor (best-effort, sem bloquear a saída):
+  // sem isso, uma cópia do token continuaria válida por dias mesmo depois
+  // de "sair".
+  const refreshToken = localStorage.getItem("refresh");
+  if (refreshToken) {
+    fetch(`${API_URL}/logout/`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refresh: refreshToken }),
+    }).catch(() => {});
+  }
+
   localStorage.removeItem("access");
   localStorage.removeItem("refresh");
   localStorage.removeItem("usuarioLogado");
@@ -417,6 +429,15 @@ export async function masterLogin(email, senha) {
 }
 
 export function masterLogout() {
+  const refreshToken = localStorage.getItem("master_refresh");
+  if (refreshToken) {
+    fetch(`${API_URL}/logout/`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refresh: refreshToken }),
+    }).catch(() => {});
+  }
+
   localStorage.removeItem("master_access");
   localStorage.removeItem("master_refresh");
   localStorage.removeItem("masterLogado");

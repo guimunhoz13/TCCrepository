@@ -411,6 +411,7 @@ class RegistroAuditoria(models.Model):
         ("login_sucesso", "Login realizado"),
         ("login_falha", "Tentativa de login falhou"),
         ("login_bloqueado", "Login bloqueado por tentativas excessivas"),
+        ("logout", "Logout realizado"),
         ("criacao", "Registro criado"),
         ("edicao", "Registro editado"),
         ("exclusao", "Registro excluído"),

@@ -7,6 +7,8 @@ import {
   getAuditoria,
   getMasterAuditoria,
   getClientes,
+  logout,
+  masterLogout,
 } from "../api";
 
 describe("normalizarLista", () => {
@@ -207,5 +209,74 @@ describe("renovação automática do access token expirado", () => {
       "Given token not valid for any token type"
     );
     expect(global.fetch).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe("revogação do refresh token no logout", () => {
+  beforeEach(() => {
+    global.window = {};
+    global.localStorage = {
+      _dados: {},
+      getItem(chave) {
+        return Object.prototype.hasOwnProperty.call(this._dados, chave)
+          ? this._dados[chave]
+          : null;
+      },
+      setItem(chave, valor) {
+        this._dados[chave] = valor;
+      },
+      removeItem(chave) {
+        delete this._dados[chave];
+      },
+    };
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ detail: "Sessão encerrada." }),
+    });
+  });
+
+  afterEach(() => {
+    delete global.window;
+    delete global.localStorage;
+    delete global.fetch;
+  });
+
+  test("logout envia o refresh token pra revogação e limpa o localStorage", () => {
+    localStorage.setItem("access", "token-acesso");
+    localStorage.setItem("refresh", "token-refresh");
+    localStorage.setItem("usuarioLogado", "{}");
+
+    logout();
+
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+    const [url, opcoes] = global.fetch.mock.calls[0];
+    expect(url).toMatch(/\/logout\/$/);
+    expect(JSON.parse(opcoes.body)).toEqual({ refresh: "token-refresh" });
+
+    expect(localStorage.getItem("access")).toBeNull();
+    expect(localStorage.getItem("refresh")).toBeNull();
+    expect(localStorage.getItem("usuarioLogado")).toBeNull();
+  });
+
+  test("logout sem refresh token guardado não chama a API", () => {
+    logout();
+    expect(global.fetch).not.toHaveBeenCalled();
+  });
+
+  test("masterLogout envia o master_refresh pra revogação e limpa o localStorage", () => {
+    localStorage.setItem("master_access", "token-acesso-master");
+    localStorage.setItem("master_refresh", "token-refresh-master");
+    localStorage.setItem("masterLogado", "{}");
+
+    masterLogout();
+
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+    const [url, opcoes] = global.fetch.mock.calls[0];
+    expect(url).toMatch(/\/logout\/$/);
+    expect(JSON.parse(opcoes.body)).toEqual({ refresh: "token-refresh-master" });
+
+    expect(localStorage.getItem("master_access")).toBeNull();
+    expect(localStorage.getItem("master_refresh")).toBeNull();
+    expect(localStorage.getItem("masterLogado")).toBeNull();
   });
 });

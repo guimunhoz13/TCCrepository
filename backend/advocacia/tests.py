@@ -290,6 +290,103 @@ class RenovacaoDeTokenAPITestCase(APITestCase):
         self.assertEqual(resposta_clientes.data["count"], 0)
 
 
+class LogoutAPITestCase(APITestCase):
+    """Testa /api/logout/: sem revogar o refresh token, "sair" só apagava
+    os tokens do navegador — uma cópia do refresh token (notebook
+    compartilhado, XSS) continuava válida por até 7 dias mesmo depois do
+    usuário ter clicado em "Sair"."""
+
+    def setUp(self):
+        self.escritorio = _criar_escritorio()
+        self.usuario = _criar_usuario(self.escritorio)
+        self.superadmin = SuperAdmin.objects.create(
+            nome="Dev Master",
+            email="dev.logout@lexoffice.com",
+            senha=make_password("senha-master-123"),
+        )
+
+    def test_logout_revoga_o_refresh_token(self):
+        login = self.client.post(
+            "/api/login/",
+            {"email": "ana@escritorio.com", "senha": "senha12345"},
+            format="json",
+        )
+        refresh_token = login.data["refresh"]
+
+        resposta = self.client.post(
+            "/api/logout/", {"refresh": refresh_token}, format="json"
+        )
+        self.assertEqual(resposta.status_code, status.HTTP_200_OK)
+
+        # O refresh token revogado não pode mais ser usado pra renovar o
+        # access token — é exatamente esse o objetivo do logout de verdade.
+        tentativa_renovacao = self.client.post(
+            "/api/token/refresh/", {"refresh": refresh_token}, format="json"
+        )
+        self.assertEqual(tentativa_renovacao.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_logout_gera_registro_de_auditoria(self):
+        login = self.client.post(
+            "/api/login/",
+            {"email": "ana@escritorio.com", "senha": "senha12345"},
+            format="json",
+        )
+        self.client.post("/api/logout/", {"refresh": login.data["refresh"]}, format="json")
+
+        registro = RegistroAuditoria.objects.filter(acao="logout").latest("id")
+        self.assertEqual(registro.usuario, self.usuario)
+        self.assertEqual(registro.escritorio, self.escritorio)
+
+    def test_logout_do_painel_mestre_revoga_o_refresh_token(self):
+        login = self.client.post(
+            "/api/master/login/",
+            {"email": "dev.logout@lexoffice.com", "senha": "senha-master-123"},
+            format="json",
+        )
+        refresh_token = login.data["refresh"]
+
+        resposta = self.client.post(
+            "/api/logout/", {"refresh": refresh_token}, format="json"
+        )
+        self.assertEqual(resposta.status_code, status.HTTP_200_OK)
+
+        tentativa_renovacao = self.client.post(
+            "/api/token/refresh/", {"refresh": refresh_token}, format="json"
+        )
+        self.assertEqual(tentativa_renovacao.status_code, status.HTTP_401_UNAUTHORIZED)
+
+        registro = RegistroAuditoria.objects.filter(acao="logout", superadmin=self.superadmin).latest("id")
+        self.assertIsNotNone(registro)
+
+    def test_logout_sem_refresh_token_e_rejeitado(self):
+        resposta = self.client.post("/api/logout/", {}, format="json")
+        self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_logout_com_token_ja_invalido_nao_gera_erro(self):
+        resposta = self.client.post(
+            "/api/logout/", {"refresh": "token-invalido"}, format="json"
+        )
+        self.assertEqual(resposta.status_code, status.HTTP_200_OK)
+
+    def test_access_token_emitido_antes_do_logout_continua_valido_ate_expirar(self):
+        """Limitação conhecida e documentada: a blacklist só afeta o
+        refresh token. Um access token já emitido continua funcionando até
+        expirar naturalmente (até 30 min) porque a autenticação é
+        stateless e não consulta a blacklist a cada requisição."""
+        login = self.client.post(
+            "/api/login/",
+            {"email": "ana@escritorio.com", "senha": "senha12345"},
+            format="json",
+        )
+        access_token = login.data["access"]
+
+        self.client.post("/api/logout/", {"refresh": login.data["refresh"]}, format="json")
+
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {access_token}")
+        resposta = self.client.get("/api/clientes/")
+        self.assertEqual(resposta.status_code, status.HTTP_200_OK)
+
+
 class ValidacaoDeSenhaAPITestCase(APITestCase):
     """
     TDD — testes escritos a partir dos requisitos de senha forte pedidos

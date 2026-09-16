@@ -16,7 +16,10 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from rest_framework_simplejwt.exceptions import TokenError
+from rest_framework_simplejwt.settings import api_settings as jwt_settings
+from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken, OutstandingToken
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.utils import datetime_from_epoch
 
 from django.core.exceptions import ValidationError as DjangoValidationError
 
@@ -116,6 +119,88 @@ class RenovarTokenView(APIView):
             )
 
         return Response({"access": str(refresh.access_token)})
+
+
+def _revogar_refresh_token(refresh):
+    """Equivalente a RefreshToken.blacklist(), mas sem a consulta que a
+    própria biblioteca faz a get_user_model().objects.get(id=<user_id>)
+    (auth.User) — este sistema não usa auth.User, e o claim "user_id" nos
+    tokens do painel mestre é uma string ("master-<id>", não numérica).
+    Passada como está, essa consulta da biblioteca levanta um ValueError
+    não tratado (não um DoesNotExist) e derruba a requisição. Como esse
+    FK para auth.User não tem nenhum uso neste sistema, simplesmente
+    deixamos "user" em branco.
+    """
+    jti = refresh.payload[jwt_settings.JTI_CLAIM]
+    exp = refresh.payload["exp"]
+
+    token, _ = OutstandingToken.objects.get_or_create(
+        jti=jti,
+        defaults={
+            "user": None,
+            "created_at": refresh.current_time,
+            "token": str(refresh),
+            "expires_at": datetime_from_epoch(exp),
+        },
+    )
+    BlacklistedToken.objects.get_or_create(token=token)
+
+
+class LogoutView(APIView):
+    """Revoga (blacklista) o refresh token, encerrando a sessão de verdade
+    no servidor. Sem isso, "sair" só apagava os tokens do navegador — uma
+    cópia do refresh token (notebook compartilhado, XSS, etc.) continuava
+    válida por até 7 dias mesmo depois do usuário ter clicado em "Sair".
+    Um access token já emitido continua válido até expirar naturalmente
+    (até 30 minutos): a autenticação é stateless e não consulta a
+    blacklist a cada requisição, só na hora de renovar o token.
+    """
+
+    permission_classes = [AllowAny]
+    authentication_classes = []
+
+    def post(self, request):
+        refresh_str = request.data.get("refresh", "")
+
+        if not refresh_str:
+            return Response(
+                {"detail": "Informe o refresh token."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            refresh = RefreshToken(refresh_str)
+            _revogar_refresh_token(refresh)
+        except TokenError:
+            # Já inválido/expirado/revogado — o objetivo (token inutilizável)
+            # já está garantido, não há nada a fazer.
+            return Response({"detail": "Sessão encerrada."})
+
+        payload = refresh.payload
+
+        if payload.get("is_master"):
+            superadmin = SuperAdmin.objects.filter(id=payload.get("superadmin_id")).first()
+            registrar_auditoria(
+                request,
+                "logout",
+                superadmin=superadmin,
+                descricao="Logout do painel mestre.",
+            )
+        else:
+            usuario = (
+                Usuario.objects.filter(id=payload.get("user_id"))
+                .select_related("escritorio")
+                .first()
+            )
+            registrar_auditoria(
+                request,
+                "logout",
+                usuario=usuario,
+                escritorio=usuario.escritorio if usuario else None,
+                descricao="Logout realizado.",
+            )
+
+        return Response({"detail": "Sessão encerrada."})
 
 
 # =========================================================
