@@ -175,6 +175,16 @@ class Advogado(models.Model):
     oab = models.CharField(max_length=30)
     especialidade = models.CharField(max_length=255)
 
+    # Pré-preenche o valor/hora ao apontar horas; cada apontamento ainda
+    # pode usar um valor próprio.
+    valor_hora_padrao = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(Decimal("0.01"))],
+    )
+
     class Meta:
         unique_together = [["escritorio", "oab"]]
 
@@ -611,3 +621,176 @@ class NotificacaoEnviada(models.Model):
 
     def __str__(self):
         return f"{self.get_tipo_display()} para {self.usuario.nome}"
+
+
+class ApontamentoHora(models.Model):
+    """Horas trabalhadas em um processo.
+
+    O tempo é guardado em minutos inteiros: honorário por hora costuma ser
+    cobrado em frações (0h30, 1h15), e minutos evitam o arredondamento de
+    ponto flutuante que apareceria ao guardar horas decimais.
+    """
+
+    escritorio = models.ForeignKey(
+        Escritorio,
+        on_delete=models.CASCADE,
+        related_name="apontamentos_hora",
+    )
+
+    processo = models.ForeignKey(
+        Processo,
+        on_delete=models.CASCADE,
+        related_name="apontamentos_hora",
+    )
+
+    usuario = models.ForeignKey(
+        Usuario,
+        on_delete=models.PROTECT,
+        related_name="apontamentos_hora",
+    )
+
+    data = models.DateField()
+    minutos = models.PositiveIntegerField(validators=[MinValueValidator(1)])
+    descricao = models.CharField(max_length=255)
+
+    # Horas não faturáveis (retrabalho, cortesia) entram no total trabalhado
+    # mas ficam de fora do valor a cobrar.
+    faturavel = models.BooleanField(default=True)
+
+    valor_hora = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(Decimal("0.01"))],
+    )
+
+    criado_em = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Apontamento de hora"
+        verbose_name_plural = "Apontamentos de hora"
+        ordering = ["-data", "-criado_em"]
+
+    @property
+    def horas(self):
+        return (Decimal(self.minutos) / Decimal("60")).quantize(Decimal("0.01"))
+
+    @property
+    def valor(self):
+        """Valor a cobrar por este apontamento, ou None se não houver como calcular."""
+        if not self.faturavel or self.valor_hora is None:
+            return None
+        return (Decimal(self.minutos) * self.valor_hora / Decimal("60")).quantize(Decimal("0.01"))
+
+    def __str__(self):
+        return f"{self.horas}h em {self.processo.numero_processo}"
+
+
+class Despesa(models.Model):
+    """Custas e despesas de um processo, reembolsáveis ou não pelo cliente."""
+
+    TIPOS = (
+        ("custas", "Custas processuais"),
+        ("diligencia", "Diligência"),
+        ("copias", "Cópias e autenticações"),
+        ("viagem", "Viagem e deslocamento"),
+        ("pericia", "Honorários periciais"),
+        ("outros", "Outros"),
+    )
+
+    escritorio = models.ForeignKey(
+        Escritorio,
+        on_delete=models.CASCADE,
+        related_name="despesas",
+    )
+
+    processo = models.ForeignKey(
+        Processo,
+        on_delete=models.CASCADE,
+        related_name="despesas",
+    )
+
+    tipo = models.CharField(max_length=20, choices=TIPOS, default="custas")
+    descricao = models.CharField(max_length=255)
+    valor = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        validators=[MinValueValidator(Decimal("0.01"))],
+    )
+    data = models.DateField()
+
+    # Despesa adiantada pelo escritório e cobrada do cliente depois.
+    reembolsavel = models.BooleanField(default=True)
+    reembolsada = models.BooleanField(default=False)
+
+    comprovante = models.FileField(
+        upload_to="despesas/comprovantes/",
+        null=True,
+        blank=True,
+        validators=[
+            FileExtensionValidator(["pdf", "jpg", "jpeg", "png"]),
+            validar_tamanho_documento,
+        ],
+    )
+
+    criado_por = models.ForeignKey(
+        Usuario,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="despesas_lancadas",
+    )
+
+    criado_em = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Despesa"
+        verbose_name_plural = "Despesas"
+        ordering = ["-data", "-criado_em"]
+
+    def __str__(self):
+        return f"{self.get_tipo_display()} — {self.processo.numero_processo}"
+
+
+# Intervalo máximo entre dois sinais de atividade para que ainda sejam
+# considerados a mesma sessão. Maior que isso, presume-se que o usuário
+# fechou o sistema e voltou depois.
+JANELA_SESSAO_MINUTOS = 10
+
+
+class SessaoUso(models.Model):
+    """Janela de tempo em que o usuário esteve com o sistema aberto.
+
+    Medida por sinais periódicos enviados pelo front enquanto a aba está
+    visível. Mede tempo de uso do sistema — não é o mesmo que tempo
+    trabalhado em um processo, que é o que ApontamentoHora registra.
+    """
+
+    escritorio = models.ForeignKey(
+        Escritorio,
+        on_delete=models.CASCADE,
+        related_name="sessoes_uso",
+    )
+
+    usuario = models.ForeignKey(
+        Usuario,
+        on_delete=models.CASCADE,
+        related_name="sessoes_uso",
+    )
+
+    inicio = models.DateTimeField()
+    ultima_atividade = models.DateTimeField()
+
+    class Meta:
+        verbose_name = "Sessão de uso"
+        verbose_name_plural = "Sessões de uso"
+        ordering = ["-inicio"]
+        indexes = [models.Index(fields=["usuario", "inicio"])]
+
+    @property
+    def duracao_minutos(self):
+        return int((self.ultima_atividade - self.inicio).total_seconds() // 60)
+
+    def __str__(self):
+        return f"{self.usuario.nome} — {self.duracao_minutos} min"

@@ -1,6 +1,7 @@
 from django.contrib.auth.hashers import make_password
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
+from django.utils import timezone
 from rest_framework import serializers
 
 from .validators import (
@@ -23,6 +24,8 @@ from .models import (
     Agenda,
     Contrato,
     Parcela,
+    ApontamentoHora,
+    Despesa,
     PreferenciasUsuario,
     ConfiguracaoEscritorio,
     RegistroAuditoria,
@@ -283,6 +286,7 @@ class AdvogadoSerializer(serializers.ModelSerializer):
             "nacionalidade",
             "oab",
             "especialidade",
+            "valor_hora_padrao",
         ]
         read_only_fields = ["id", "usuario", "email"]
         extra_kwargs = {
@@ -613,3 +617,83 @@ class ConfiguracaoEscritorioSerializer(serializers.ModelSerializer):
             "atualizado_em",
         ]
         read_only_fields = ["atualizado_em"]
+
+
+class ApontamentoHoraSerializer(serializers.ModelSerializer):
+
+    numero_processo = serializers.CharField(source="processo.numero_processo", read_only=True)
+    usuario_nome = serializers.CharField(source="usuario.nome", read_only=True)
+    horas = serializers.DecimalField(max_digits=8, decimal_places=2, read_only=True)
+    valor = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
+
+    class Meta:
+        model = ApontamentoHora
+        fields = [
+            "id",
+            "processo",
+            "numero_processo",
+            "usuario",
+            "usuario_nome",
+            "data",
+            "minutos",
+            "horas",
+            "descricao",
+            "faturavel",
+            "valor_hora",
+            "valor",
+            "criado_em",
+        ]
+        # O usuário vem sempre do token: horas apontadas precisam ser
+        # rastreáveis a quem as lançou, não a quem o cliente informar.
+        read_only_fields = [
+            "id", "usuario", "numero_processo", "usuario_nome", "horas", "valor", "criado_em",
+        ]
+
+    def validate_minutos(self, valor):
+        if valor > 24 * 60:
+            raise serializers.ValidationError("Um apontamento não pode passar de 24 horas.")
+        return valor
+
+    def validate_data(self, valor):
+        if valor > timezone.localdate():
+            raise serializers.ValidationError("Não é possível apontar horas em uma data futura.")
+        return valor
+
+
+class DespesaSerializer(serializers.ModelSerializer):
+
+    numero_processo = serializers.CharField(source="processo.numero_processo", read_only=True)
+    cliente_nome = serializers.CharField(source="processo.cliente.nome", read_only=True)
+    tipo_display = serializers.CharField(source="get_tipo_display", read_only=True)
+
+    class Meta:
+        model = Despesa
+        fields = [
+            "id",
+            "processo",
+            "numero_processo",
+            "cliente_nome",
+            "tipo",
+            "tipo_display",
+            "descricao",
+            "valor",
+            "data",
+            "reembolsavel",
+            "reembolsada",
+            "comprovante",
+            "criado_em",
+        ]
+        read_only_fields = ["id", "numero_processo", "cliente_nome", "tipo_display", "criado_em"]
+
+    def validate(self, dados):
+        reembolsavel = dados.get(
+            "reembolsavel", getattr(self.instance, "reembolsavel", True)
+        )
+        reembolsada = dados.get(
+            "reembolsada", getattr(self.instance, "reembolsada", False)
+        )
+        if reembolsada and not reembolsavel:
+            raise serializers.ValidationError(
+                {"reembolsada": "Uma despesa não reembolsável não pode ser marcada como reembolsada."}
+            )
+        return dados

@@ -53,6 +53,10 @@ from .models import (
     Agenda,
     Contrato,
     Parcela,
+    ApontamentoHora,
+    Despesa,
+    SessaoUso,
+    JANELA_SESSAO_MINUTOS,
     SuperAdmin,
     PreferenciasUsuario,
     ConfiguracaoEscritorio,
@@ -76,6 +80,8 @@ from .serializers import (
     ContratoSerializer,
     ParcelaSerializer,
     PreferenciasUsuarioSerializer,
+    ApontamentoHoraSerializer,
+    DespesaSerializer,
     ConfiguracaoEscritorioSerializer,
     RegistroAuditoriaSerializer,
 )
@@ -1889,3 +1895,190 @@ class MasterStatsView(APIView):
                 "total_processos": Processo.objects.count(),
             }
         )
+
+
+# =========================================================
+# APONTAMENTO DE HORAS (TIMESHEET)
+# =========================================================
+
+class ApontamentoHoraViewSet(
+    EscritorioScopedMixin,
+    viewsets.ModelViewSet
+):
+
+    queryset = ApontamentoHora.objects.all()
+
+    serializer_class = ApontamentoHoraSerializer
+
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        queryset = super().get_queryset().select_related("processo", "usuario")
+
+        processo = self.request.query_params.get("processo")
+        if processo:
+            queryset = queryset.filter(processo_id=processo)
+
+        usuario = self.request.query_params.get("usuario")
+        if usuario:
+            queryset = queryset.filter(usuario_id=usuario)
+
+        inicio = self.request.query_params.get("inicio")
+        if inicio:
+            queryset = queryset.filter(data__gte=inicio)
+
+        fim = self.request.query_params.get("fim")
+        if fim:
+            queryset = queryset.filter(data__lte=fim)
+
+        return queryset
+
+    def perform_create(self, serializer):
+        escritorio = self.get_escritorio()
+
+        if not escritorio:
+            raise PermissionDenied("Escritório não identificado.")
+
+        # As horas são sempre lançadas em nome de quem está autenticado:
+        # um apontamento de tempo precisa ser rastreável a uma pessoa.
+        self._salvar(serializer, escritorio=escritorio, usuario=self.get_usuario())
+        registrar_auditoria(self.request, "criacao", serializer.instance, escritorio=escritorio)
+
+
+# =========================================================
+# DESPESAS E CUSTAS PROCESSUAIS
+# =========================================================
+
+class DespesaViewSet(
+    EscritorioScopedMixin,
+    viewsets.ModelViewSet
+):
+
+    queryset = Despesa.objects.all()
+
+    serializer_class = DespesaSerializer
+
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        queryset = super().get_queryset().select_related("processo", "processo__cliente")
+
+        processo = self.request.query_params.get("processo")
+        if processo:
+            queryset = queryset.filter(processo_id=processo)
+
+        reembolsavel = self.request.query_params.get("reembolsavel")
+        if reembolsavel in ("true", "false"):
+            queryset = queryset.filter(reembolsavel=reembolsavel == "true")
+
+        reembolsada = self.request.query_params.get("reembolsada")
+        if reembolsada in ("true", "false"):
+            queryset = queryset.filter(reembolsada=reembolsada == "true")
+
+        return queryset
+
+    def perform_create(self, serializer):
+        escritorio = self.get_escritorio()
+
+        if not escritorio:
+            raise PermissionDenied("Escritório não identificado.")
+
+        self._salvar(serializer, escritorio=escritorio, criado_por=self.get_usuario())
+        registrar_auditoria(self.request, "criacao", serializer.instance, escritorio=escritorio)
+
+
+# =========================================================
+# TEMPO DE USO DO SISTEMA
+# =========================================================
+
+class RegistrarAtividadeView(APIView):
+    """Recebe o sinal periódico do front enquanto o sistema está aberto.
+
+    Estende a sessão em aberto do usuário ou começa uma nova, se o último
+    sinal for antigo demais. Como a contagem termina no último sinal
+    recebido, fechar a aba subnotifica alguns minutos — o que é preferível
+    a contar tempo que o usuário não passou no sistema.
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        usuario = get_usuario_from_request(request)
+
+        if not usuario:
+            raise PermissionDenied("Usuário não identificado.")
+
+        agora = timezone.now()
+        corte = agora - timezone.timedelta(minutes=JANELA_SESSAO_MINUTOS)
+
+        sessao = (
+            SessaoUso.objects.filter(usuario=usuario, ultima_atividade__gte=corte)
+            .order_by("-ultima_atividade")
+            .first()
+        )
+
+        if sessao:
+            sessao.ultima_atividade = agora
+            sessao.save(update_fields=["ultima_atividade"])
+        else:
+            sessao = SessaoUso.objects.create(
+                escritorio=usuario.escritorio,
+                usuario=usuario,
+                inicio=agora,
+                ultima_atividade=agora,
+            )
+
+        return Response({"sessao": sessao.id, "minutos": sessao.duracao_minutos})
+
+
+class TempoDeUsoView(APIView):
+    """Total de tempo de uso do sistema por usuário, em um mês."""
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        usuario = get_usuario_from_request(request)
+
+        if not usuario:
+            raise PermissionDenied("Usuário não identificado.")
+
+        mes = request.query_params.get("mes") or timezone.localdate().strftime("%Y-%m")
+
+        try:
+            ano_str, mes_str = mes.split("-")
+            primeiro_dia = date(int(ano_str), int(mes_str), 1)
+        except (ValueError, TypeError):
+            return Response(
+                {"detail": "Informe o mês no formato AAAA-MM."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if primeiro_dia.month == 12:
+            proximo_mes = date(primeiro_dia.year + 1, 1, 1)
+        else:
+            proximo_mes = date(primeiro_dia.year, primeiro_dia.month + 1, 1)
+
+        # Só o administrador enxerga o tempo de uso da equipe inteira.
+        sessoes = SessaoUso.objects.filter(
+            escritorio=usuario.escritorio,
+            inicio__date__gte=primeiro_dia,
+            inicio__date__lt=proximo_mes,
+        )
+
+        if usuario.tipo_usuario != "admin":
+            sessoes = sessoes.filter(usuario=usuario)
+
+        totais = {}
+        for sessao in sessoes.select_related("usuario"):
+            registro = totais.setdefault(
+                sessao.usuario_id,
+                {"usuario": sessao.usuario_id, "usuario_nome": sessao.usuario.nome, "minutos": 0, "sessoes": 0},
+            )
+            registro["minutos"] += sessao.duracao_minutos
+            registro["sessoes"] += 1
+
+        linhas = sorted(totais.values(), key=lambda r: r["minutos"], reverse=True)
+        for linha in linhas:
+            linha["horas"] = round(linha["minutos"] / 60, 2)
+
+        return Response({"mes": mes, "usuarios": linhas})

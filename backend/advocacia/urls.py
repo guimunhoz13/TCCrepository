@@ -22,6 +22,10 @@ from .views import (
     AgendaViewSet,
     ContratoViewSet,
     ParcelaViewSet,
+    ApontamentoHoraViewSet,
+    DespesaViewSet,
+    RegistrarAtividadeView,
+    TempoDeUsoView,
     AuditoriaViewSet,
     MasterAuditoriaViewSet,
     ConfiguracoesView,
@@ -54,6 +58,8 @@ router.register(r"documentos", DocumentoViewSet, basename="documento")
 router.register(r"agenda", AgendaViewSet, basename="agenda")
 router.register(r"contratos", ContratoViewSet, basename="contrato")
 router.register(r"parcelas", ParcelaViewSet, basename="parcela")
+router.register(r"apontamentos", ApontamentoHoraViewSet, basename="apontamento")
+router.register(r"despesas", DespesaViewSet, basename="despesa")
 router.register(r"auditoria", AuditoriaViewSet, basename="auditoria")
 
 master_router = DefaultRouter()
@@ -72,6 +78,8 @@ urlpatterns = [
     path("login/redefinir-senha/", RedefinirSenhaView.as_view(), name="redefinir-senha"),
     path("assistente-ia/", AssistenteIAView.as_view(), name="assistente-ia"),
     path("agenda/calcular-prazo/", CalcularPrazoView.as_view(), name="calcular-prazo"),
+    path("atividade/", RegistrarAtividadeView.as_view(), name="registrar-atividade"),
+    path("relatorios/tempo-uso/", TempoDeUsoView.as_view(), name="tempo-de-uso"),
     path("configuracoes/", ConfiguracoesView.as_view(), name="configuracoes"),
     path("configuracoes/conta/", ConfiguracoesContaView.as_view(), name="configuracoes-conta"),
     path("configuracoes/senha/", ConfiguracoesSenhaView.as_view(), name="configuracoes-senha"),

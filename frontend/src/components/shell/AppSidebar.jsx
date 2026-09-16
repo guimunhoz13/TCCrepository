@@ -13,6 +13,7 @@ import {
   CalendarClock,
   Bot,
   ScrollText,
+  Timer,
 } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
 import { PANELS, usePanel } from "@/contexts/PanelContext";
@@ -64,6 +65,11 @@ const NAV_ITEMS = [
     id: PANELS.CONTRATOS,
     tKey: "nav_contratos",
     icon: ScrollText,
+  },
+  {
+    id: PANELS.HORAS,
+    tKey: "nav_horas",
+    icon: Timer,
   },
   {
     id: PANELS.ADVOGADOS,

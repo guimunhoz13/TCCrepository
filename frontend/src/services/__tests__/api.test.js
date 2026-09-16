@@ -10,6 +10,11 @@ import {
   logout,
   masterLogout,
   calcularPrazo,
+  getApontamentos,
+  createApontamento,
+  getDespesas,
+  registrarAtividade,
+  getTempoDeUso,
 } from "../api";
 
 describe("normalizarLista", () => {
@@ -315,5 +320,88 @@ describe("calcularPrazo", () => {
     await calcularPrazo({ data_inicio: "2026-12-22", dias: 5 });
     const [, opcoes] = global.fetch.mock.calls[0];
     expect(JSON.parse(opcoes.body).dias_uteis).toBe(true);
+  });
+});
+
+
+describe("apontamento de horas e despesas", () => {
+  beforeEach(() => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ results: [] }),
+    });
+  });
+
+  afterEach(() => {
+    delete global.fetch;
+  });
+
+  test("getApontamentos monta a query só com os filtros preenchidos", async () => {
+    await getApontamentos({ processo: 7, usuario: "", inicio: "2026-09-01", fim: null });
+
+    const [url] = global.fetch.mock.calls[0];
+    expect(url).toContain("/apontamentos/?");
+    expect(url).toContain("processo=7");
+    expect(url).toContain("inicio=2026-09-01");
+    expect(url).not.toContain("usuario=");
+    expect(url).not.toContain("fim=");
+  });
+
+  test("getApontamentos sem filtros não acrescenta '?'", async () => {
+    await getApontamentos();
+
+    const [url] = global.fetch.mock.calls[0];
+    expect(url).toMatch(/\/apontamentos\/$/);
+  });
+
+  test("createApontamento envia o corpo em JSON", async () => {
+    await createApontamento({ processo: 1, minutos: 90, descricao: "Petição" });
+
+    const [url, opcoes] = global.fetch.mock.calls[0];
+    expect(url).toMatch(/\/apontamentos\/$/);
+    expect(opcoes.method).toBe("POST");
+    expect(JSON.parse(opcoes.body).minutos).toBe(90);
+  });
+
+  test("getDespesas repassa os filtros booleanos", async () => {
+    await getDespesas({ reembolsavel: "true" });
+
+    const [url] = global.fetch.mock.calls[0];
+    expect(url).toContain("reembolsavel=true");
+  });
+});
+
+describe("tempo de uso do sistema", () => {
+  beforeEach(() => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ mes: "2026-09", usuarios: [] }),
+    });
+  });
+
+  afterEach(() => {
+    delete global.fetch;
+  });
+
+  test("registrarAtividade faz POST no endpoint de atividade", async () => {
+    await registrarAtividade();
+
+    const [url, opcoes] = global.fetch.mock.calls[0];
+    expect(url).toMatch(/\/atividade\/$/);
+    expect(opcoes.method).toBe("POST");
+  });
+
+  test("getTempoDeUso repassa o mês quando informado", async () => {
+    await getTempoDeUso("2026-09");
+
+    const [url] = global.fetch.mock.calls[0];
+    expect(url).toContain("/relatorios/tempo-uso/?mes=2026-09");
+  });
+
+  test("getTempoDeUso sem mês consulta o padrão do servidor", async () => {
+    await getTempoDeUso();
+
+    const [url] = global.fetch.mock.calls[0];
+    expect(url).toMatch(/\/relatorios\/tempo-uso\/$/);
   });
 });
