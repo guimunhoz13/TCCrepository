@@ -10,6 +10,7 @@ from .models import (
     Agenda,
     Contrato,
     Parcela,
+    NotificacaoEnviada,
     RegistroAuditoria,
 )
 
@@ -351,4 +352,35 @@ class RegistroAuditoriaAdmin(admin.ModelAdmin):
         return False
 
     def has_delete_permission(self, request, obj=None):
+        return False
+
+@admin.register(NotificacaoEnviada)
+class NotificacaoEnviadaAdmin(admin.ModelAdmin):
+
+    list_display = (
+        'enviado_em',
+        'usuario',
+        'tipo',
+        'chave',
+    )
+
+    search_fields = (
+        'usuario__nome',
+        'usuario__email',
+        'chave',
+    )
+
+    list_filter = (
+        'tipo',
+        'enviado_em',
+    )
+
+    ordering = (
+        '-enviado_em',
+    )
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
         return False

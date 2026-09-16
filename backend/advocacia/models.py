@@ -562,3 +562,52 @@ class ConfiguracaoEscritorio(models.Model):
 
     def __str__(self):
         return f"Configurações de {self.escritorio.nome}"
+
+
+class NotificacaoEnviada(models.Model):
+    """Registro de que um aviso já foi enviado a um usuário.
+
+    Existe para tornar o comando de envio idempotente: se a tarefa agendada
+    rodar mais de uma vez no mesmo dia, o mesmo lembrete não é reenviado.
+    """
+
+    TIPOS = (
+        ("lembrete_evento", "Lembrete de compromisso ou prazo"),
+        ("resumo_semanal", "Resumo semanal"),
+    )
+
+    usuario = models.ForeignKey(
+        Usuario,
+        on_delete=models.CASCADE,
+        related_name="notificacoes_enviadas",
+    )
+
+    tipo = models.CharField(max_length=20, choices=TIPOS)
+
+    # Identifica o que foi avisado — "lembrete_evento:42", "resumo_semanal:2026-W38".
+    # É o que garante a idempotência junto com o usuário.
+    chave = models.CharField(max_length=120)
+
+    agenda = models.ForeignKey(
+        Agenda,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="notificacoes_enviadas",
+    )
+
+    enviado_em = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Notificação enviada"
+        verbose_name_plural = "Notificações enviadas"
+        ordering = ["-enviado_em"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["usuario", "chave"],
+                name="notificacao_unica_por_usuario",
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.get_tipo_display()} para {self.usuario.nome}"

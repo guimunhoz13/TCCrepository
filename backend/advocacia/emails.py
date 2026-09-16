@@ -1,5 +1,8 @@
+from datetime import datetime
+
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
+from django.utils import timezone
 
 
 def enviar_email(destinatario, assunto, corpo_html, corpo_texto=None):
@@ -24,6 +27,9 @@ def _status_label(status):
 def _formatar_data(valor, com_hora=False):
     if not valor:
         return "—"
+    # Datas/horas são gravadas em UTC; quem lê o e-mail espera o fuso local.
+    if isinstance(valor, datetime) and timezone.is_aware(valor):
+        valor = timezone.localtime(valor)
     return valor.strftime("%d/%m/%Y %H:%M" if com_hora else "%d/%m/%Y")
 
 
@@ -184,3 +190,127 @@ def montar_email_relatorio_processo(dados):
     )
 
     return assunto, _casca_html(escritorio_nome, f"Relatório do processo {processo['numero_processo']}", processo["titulo"], corpo_html), corpo_texto
+
+
+def _rotulo_antecedencia(dias):
+    if dias < 0:
+        return "em atraso"
+    if dias == 0:
+        return "hoje"
+    if dias == 1:
+        return "amanhã"
+    return f"em {dias} dias"
+
+
+def montar_email_lembrete_evento(nome, evento, escritorio_nome, dias_restantes):
+    """Aviso de um compromisso ou prazo que está se aproximando."""
+
+    eh_prazo = evento.tipo == "prazo"
+    rotulo = "Prazo" if eh_prazo else "Compromisso"
+    quando = _rotulo_antecedencia(dias_restantes)
+
+    linhas = [
+        ("Quando", _formatar_data(evento.data_evento, com_hora=True)),
+        ("Tipo", evento.get_tipo_display()),
+    ]
+    if evento.processo_id:
+        linhas.append(("Processo", evento.processo.numero_processo))
+    if evento.local_evento:
+        linhas.append(("Local", evento.local_evento))
+    if eh_prazo and evento.prioridade == "fatal":
+        linhas.append(("Prioridade", "PRAZO FATAL"))
+
+    detalhes = "".join(
+        f'<tr><td style="padding:6px 10px; font-size:0.8rem; color:#80869a; white-space:nowrap;">{r}</td>'
+        f'<td style="padding:6px 10px; font-size:0.88rem; color:#1c2333;"><strong>{v}</strong></td></tr>'
+        for r, v in linhas
+    )
+
+    corpo_html = f"""
+      <p style="font-size:0.95rem; color:#1c2333; margin-top:0;">
+        Olá, {nome}. O {rotulo.lower()} abaixo vence <strong>{quando}</strong>.
+      </p>
+      <div style="border:1px solid #e5decf; border-left:3px solid #a2712e; border-radius:10px; padding:14px 16px; margin:16px 0;">
+        <div style="font-size:1.02rem; font-weight:600; color:#1c2333; margin-bottom:8px;">{evento.titulo}</div>
+        <table style="border-collapse:collapse;">{detalhes}</table>
+      </div>
+      {f'<p style="font-size:0.86rem; color:#4b5468;">{evento.descricao}</p>' if evento.descricao else ""}
+    """
+
+    assunto = f"[{rotulo} {quando}] {evento.titulo} — {escritorio_nome}"
+    corpo_texto = (
+        f"{rotulo}: {evento.titulo}\n"
+        f"Quando: {_formatar_data(evento.data_evento, com_hora=True)} ({quando})\n"
+        f"Acesse o sistema {escritorio_nome} para ver os detalhes."
+    )
+
+    return assunto, _casca_html(escritorio_nome, f"{rotulo} {quando}", "Lembrete automático da sua agenda.", corpo_html), corpo_texto
+
+
+def montar_email_resumo_semanal(nome, escritorio_nome, eventos, processos_novos, parcelas_vencendo):
+    """Resumo do que vem pela frente na semana."""
+
+    corpo_html = f"""
+      <p style="font-size:0.95rem; color:#1c2333; margin-top:0;">
+        Olá, {nome}. Este é o resumo da sua semana no {escritorio_nome}.
+      </p>
+
+      <h3 style="font-size:0.98rem; margin-bottom:4px;">Compromissos e prazos dos próximos 7 dias ({len(eventos)})</h3>
+      {_tabela_html(
+          ["Quando", "Título", "Tipo"],
+          [[_formatar_data(e.data_evento, com_hora=True), e.titulo, e.get_tipo_display()] for e in eventos],
+          "Nada agendado para os próximos 7 dias.",
+      )}
+
+      <h3 style="font-size:0.98rem; margin-bottom:4px;">Processos abertos na última semana ({len(processos_novos)})</h3>
+      {_tabela_html(
+          ["Número", "Título", "Status"],
+          [[p.numero_processo, p.titulo, _status_label(p.status)] for p in processos_novos],
+          "Nenhum processo novo na última semana.",
+      )}
+
+      <h3 style="font-size:0.98rem; margin-bottom:4px;">Parcelas a vencer ({len(parcelas_vencendo)})</h3>
+      {_tabela_html(
+          ["Vencimento", "Processo", "Valor"],
+          [
+              [
+                  _formatar_data(pc.data_vencimento),
+                  pc.contrato.processo.numero_processo,
+                  f"R$ {pc.valor:.2f}".replace(".", ","),
+              ]
+              for pc in parcelas_vencendo
+          ],
+          "Nenhuma parcela a vencer nos próximos 7 dias.",
+      )}
+    """
+
+    assunto = f"Resumo da semana — {escritorio_nome}"
+    corpo_texto = (
+        f"Resumo da semana no {escritorio_nome}\n"
+        f"{len(eventos)} compromisso(s)/prazo(s), {len(processos_novos)} processo(s) novo(s), "
+        f"{len(parcelas_vencendo)} parcela(s) a vencer."
+    )
+
+    return assunto, _casca_html(escritorio_nome, "Resumo da semana", "Enviado automaticamente toda segunda-feira.", corpo_html), corpo_texto
+
+
+def montar_email_aviso(nome, escritorio_nome, titulo, resumo, linhas):
+    """Aviso curto sobre algo que acabou de acontecer no escritório."""
+
+    detalhes = "".join(
+        f'<tr><td style="padding:6px 10px; font-size:0.8rem; color:#80869a; white-space:nowrap;">{r}</td>'
+        f'<td style="padding:6px 10px; font-size:0.88rem; color:#1c2333;"><strong>{v}</strong></td></tr>'
+        for r, v in linhas
+    )
+
+    corpo_html = f"""
+      <p style="font-size:0.95rem; color:#1c2333; margin-top:0;">Olá, {nome}. {resumo}</p>
+      <div style="border:1px solid #e5decf; border-left:3px solid #a2712e; border-radius:10px; padding:14px 16px; margin:16px 0;">
+        <table style="border-collapse:collapse;">{detalhes}</table>
+      </div>
+    """
+
+    assunto = f"{titulo} — {escritorio_nome}"
+    corpo_texto = f"{resumo}\n" + "\n".join(f"{r}: {v}" for r, v in linhas)
+
+    return assunto, _casca_html(escritorio_nome, titulo, resumo, corpo_html), corpo_texto

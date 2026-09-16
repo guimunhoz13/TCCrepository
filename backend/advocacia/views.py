@@ -11,6 +11,7 @@ import secrets
 logger = logging.getLogger(__name__)
 
 from .feriados import calcular_prazo
+from .notificacoes import notificar_escritorio
 
 from rest_framework import status, viewsets
 from rest_framework.exceptions import PermissionDenied, ValidationError
@@ -834,6 +835,16 @@ class ClienteViewSet(
         self._verificar_cpf_duplicado(serializer)
         super().perform_create(serializer)
 
+        cliente = serializer.instance
+        notificar_escritorio(
+            cliente.escritorio,
+            "notificacao_novo_cliente",
+            "Novo cliente cadastrado",
+            "Um novo cliente foi cadastrado no escritório.",
+            [("Nome", cliente.nome), ("CPF", cliente.cpf or "—")],
+            autor=self.get_usuario(),
+        )
+
     def perform_update(self, serializer):
         self._verificar_cpf_duplicado(serializer)
         super().perform_update(serializer)
@@ -953,9 +964,39 @@ class ProcessoViewSet(
         self._verificar_numero_processo_duplicado(serializer)
         super().perform_create(serializer)
 
+        processo = serializer.instance
+        notificar_escritorio(
+            processo.escritorio,
+            "notificacao_novo_processo",
+            "Novo processo cadastrado",
+            "Um novo processo foi cadastrado no escritório.",
+            [
+                ("Número", processo.numero_processo),
+                ("Título", processo.titulo),
+                ("Cliente", processo.cliente.nome if processo.cliente_id else "—"),
+            ],
+            autor=self.get_usuario(),
+        )
+
     def perform_update(self, serializer):
         self._verificar_numero_processo_duplicado(serializer)
+        status_anterior = serializer.instance.status
         super().perform_update(serializer)
+
+        processo = serializer.instance
+        if processo.status != status_anterior:
+            notificar_escritorio(
+                processo.escritorio,
+                "notificacao_status_processo",
+                "Status de processo alterado",
+                "O status de um processo mudou.",
+                [
+                    ("Processo", processo.numero_processo),
+                    ("De", status_anterior),
+                    ("Para", processo.status),
+                ],
+                autor=self.get_usuario(),
+            )
 
 
 # =========================================================
@@ -1022,6 +1063,22 @@ class DocumentoViewSet(
             .order_by(
                 "-enviado_em"
             )
+        )
+
+    def perform_create(self, serializer):
+        super().perform_create(serializer)
+
+        documento = serializer.instance
+        notificar_escritorio(
+            documento.processo.escritorio,
+            "notificacao_novo_documento",
+            "Novo documento anexado",
+            "Um documento foi anexado a um processo.",
+            [
+                ("Arquivo", documento.nome_arquivo),
+                ("Processo", documento.processo.numero_processo),
+            ],
+            autor=self.get_usuario(),
         )
 
 
