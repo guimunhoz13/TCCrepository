@@ -26,7 +26,38 @@ const formularioInicial = {
   advogado: "",
   data_inicio: "",
   data_fim: "",
+  area_direito: "",
+  vara: "",
+  comarca: "",
+  valor_causa: "",
+  nome_parte_contraria: "",
+  nome_advogado_adverso: "",
+  oab_advogado_adverso: "",
+  percentual_honorarios_sucumbencia: "",
 };
+
+const AREAS_DIREITO = [
+  { value: "civel", label: "Cível" },
+  { value: "trabalhista", label: "Trabalhista" },
+  { value: "tributario", label: "Tributário" },
+  { value: "criminal", label: "Criminal" },
+  { value: "familia", label: "Família e Sucessões" },
+  { value: "previdenciario", label: "Previdenciário" },
+  { value: "empresarial", label: "Empresarial" },
+  { value: "administrativo", label: "Administrativo" },
+  { value: "consumidor", label: "Consumidor" },
+  { value: "ambiental", label: "Ambiental" },
+];
+
+function areaDireitoLabel(valor) {
+  return AREAS_DIREITO.find((a) => a.value === valor)?.label || "—";
+}
+
+function formatarMoeda(valor) {
+  if (valor === null || valor === undefined || valor === "") return "—";
+  const numero = Number(valor);
+  return numero.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
 
 export default function ProcessosPanel() {
   const { activePanel, panelTab, setPanelTab } = usePanel();
@@ -101,6 +132,9 @@ export default function ProcessosPanel() {
         advogado: Number(formulario.advogado),
         data_inicio: formulario.data_inicio || null,
         data_fim: formulario.data_fim || null,
+        valor_causa: formulario.valor_causa || null,
+        percentual_honorarios_sucumbencia:
+          formulario.percentual_honorarios_sucumbencia || null,
       });
       setFormulario(formularioInicial);
       setSucesso("Processo cadastrado com sucesso.");
@@ -219,6 +253,104 @@ export default function ProcessosPanel() {
               }
             />
           </div>
+
+          <div className="form-field full">
+            <label style={{ marginTop: 8 }}>Dados jurídicos adicionais</label>
+          </div>
+          <div className="form-field">
+            <label>Área do direito</label>
+            <select
+              value={formulario.area_direito}
+              onChange={(e) =>
+                setFormulario({ ...formulario, area_direito: e.target.value })
+              }
+            >
+              <option value="">Não informado</option>
+              {AREAS_DIREITO.map((area) => (
+                <option key={area.value} value={area.value}>
+                  {area.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="form-field">
+            <label>Vara</label>
+            <input
+              value={formulario.vara}
+              onChange={(e) => setFormulario({ ...formulario, vara: e.target.value })}
+              placeholder="Ex.: 3ª Vara Cível"
+            />
+          </div>
+          <div className="form-field">
+            <label>Comarca</label>
+            <input
+              value={formulario.comarca}
+              onChange={(e) => setFormulario({ ...formulario, comarca: e.target.value })}
+            />
+          </div>
+          <div className="form-field">
+            <label>Valor da causa (R$)</label>
+            <input
+              type="number"
+              step="0.01"
+              min="0"
+              value={formulario.valor_causa}
+              onChange={(e) => setFormulario({ ...formulario, valor_causa: e.target.value })}
+            />
+          </div>
+          <div className="form-field">
+            <label>Parte contrária</label>
+            <input
+              value={formulario.nome_parte_contraria}
+              onChange={(e) =>
+                setFormulario({ ...formulario, nome_parte_contraria: e.target.value })
+              }
+            />
+          </div>
+          <div className="form-field">
+            <label>Advogado adverso</label>
+            <input
+              value={formulario.nome_advogado_adverso}
+              onChange={(e) =>
+                setFormulario({ ...formulario, nome_advogado_adverso: e.target.value })
+              }
+            />
+          </div>
+          <div className="form-field">
+            <label>OAB do advogado adverso</label>
+            <input
+              value={formulario.oab_advogado_adverso}
+              onChange={(e) =>
+                setFormulario({ ...formulario, oab_advogado_adverso: e.target.value })
+              }
+              placeholder="123456/SP"
+            />
+          </div>
+          <div className="form-field">
+            <label>% Honorários de sucumbência</label>
+            <input
+              type="number"
+              step="0.01"
+              min="0"
+              max="100"
+              value={formulario.percentual_honorarios_sucumbencia}
+              onChange={(e) =>
+                setFormulario({
+                  ...formulario,
+                  percentual_honorarios_sucumbencia: e.target.value,
+                })
+              }
+              placeholder="Ex.: 10 (fixado pelo juízo)"
+            />
+            {formulario.valor_causa && formulario.percentual_honorarios_sucumbencia && (
+              <p style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginTop: 6 }}>
+                Estimativa: {formatarMoeda(
+                  (Number(formulario.valor_causa) * Number(formulario.percentual_honorarios_sucumbencia)) / 100
+                )}
+              </p>
+            )}
+          </div>
+
           <div className="form-field full">
             <button className="btn btn-primary" disabled={salvando}>
               {salvando ? t("acao_salvando") : t("acao_cadastrar_processo")}
@@ -271,6 +403,8 @@ export default function ProcessosPanel() {
                 <th>Processo</th>
                 <th>Cliente</th>
                 <th>Advogado</th>
+                <th>Área</th>
+                <th>Valor da causa</th>
                 <th>Status</th>
                 <th>Ações</th>
               </tr>
@@ -278,7 +412,7 @@ export default function ProcessosPanel() {
             <tbody>
               {carregando && (
                 <tr>
-                  <td colSpan="5">Carregando...</td>
+                  <td colSpan="7">Carregando...</td>
                 </tr>
               )}
               {!carregando &&
@@ -287,6 +421,8 @@ export default function ProcessosPanel() {
                     <td>{processo.numero_processo}</td>
                     <td>{processo.cliente_nome}</td>
                     <td>{processo.advogado_nome}</td>
+                    <td>{areaDireitoLabel(processo.area_direito)}</td>
+                    <td>{formatarMoeda(processo.valor_causa)}</td>
                     <td>
                       <span className="badge badge-muted">
                         {processo.status === "Concluido"

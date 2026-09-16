@@ -225,6 +225,13 @@ export async function deleteAgenda(id) {
   return request(`/agenda/${id}/`, { method: "DELETE" });
 }
 
+export async function calcularPrazo({ data_inicio, dias, dias_uteis = true }) {
+  return request("/agenda/calcular-prazo/", {
+    method: "POST",
+    body: JSON.stringify({ data_inicio, dias, dias_uteis }),
+  });
+}
+
 export async function getContratos() {
   return request("/contratos/");
 }

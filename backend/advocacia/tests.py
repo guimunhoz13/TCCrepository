@@ -1,3 +1,4 @@
+from datetime import date
 from unittest.mock import patch
 
 from django.contrib.auth.hashers import check_password, make_password
@@ -12,6 +13,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from django.utils import timezone
 
+from .feriados import calcular_prazo, eh_dia_util, feriados_nacionais
 from .models import (
     Escritorio,
     Usuario,
@@ -907,6 +909,137 @@ class ProcessosAPITestCase(APITestCase):
         self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("numero_processo", resposta.data)
 
+    def test_criar_processo_com_dados_juridicos_adicionais(self):
+        resposta = self.client.post(
+            "/api/processos/",
+            self._payload_valido(
+                area_direito="trabalhista",
+                vara="3ª Vara do Trabalho",
+                comarca="Araçatuba",
+                valor_causa="50000.00",
+                nome_parte_contraria="Empresa Ré Ltda",
+                nome_advogado_adverso="Dr. Advogado Adverso",
+                oab_advogado_adverso="654321/SP",
+                percentual_honorarios_sucumbencia="15.00",
+            ),
+            format="json",
+        )
+        self.assertEqual(resposta.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(resposta.data["area_direito"], "trabalhista")
+        self.assertEqual(resposta.data["vara"], "3ª Vara do Trabalho")
+        self.assertEqual(resposta.data["nome_parte_contraria"], "Empresa Ré Ltda")
+        self.assertEqual(resposta.data["valor_estimado_honorarios_sucumbencia"], "7500.00")
+
+    def test_processo_sem_dados_juridicos_adicionais_tem_estimativa_nula(self):
+        resposta = self.client.post("/api/processos/", self._payload_valido(), format="json")
+        self.assertEqual(resposta.status_code, status.HTTP_201_CREATED)
+        self.assertIsNone(resposta.data["valor_estimado_honorarios_sucumbencia"])
+
+    def test_valor_da_causa_zero_e_rejeitado(self):
+        resposta = self.client.post(
+            "/api/processos/",
+            self._payload_valido(valor_causa="0.00"),
+            format="json",
+        )
+        self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("valor_causa", resposta.data)
+
+    def test_percentual_honorarios_sucumbencia_zero_e_rejeitado(self):
+        resposta = self.client.post(
+            "/api/processos/",
+            self._payload_valido(percentual_honorarios_sucumbencia="0"),
+            format="json",
+        )
+        self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("percentual_honorarios_sucumbencia", resposta.data)
+
+
+class CalculoDePrazoTestCase(TestCase):
+    """Testa o cálculo de prazo em dias úteis/corridos (advocacia/feriados.py),
+    incluindo os feriados nacionais móveis (baseados na Páscoa)."""
+
+    def test_pascoa_bate_com_datas_conhecidas(self):
+        from advocacia.feriados import _pascoa
+        self.assertEqual(_pascoa(2024), date(2024, 3, 31))
+        self.assertEqual(_pascoa(2025), date(2025, 4, 20))
+        self.assertEqual(_pascoa(2026), date(2026, 4, 5))
+
+    def test_feriados_nacionais_inclui_fixos_e_moveis(self):
+        feriados = feriados_nacionais(2026)
+        self.assertIn(date(2026, 1, 1), feriados)  # Confraternização
+        self.assertIn(date(2026, 4, 21), feriados)  # Tiradentes
+        self.assertIn(date(2026, 12, 25), feriados)  # Natal
+        self.assertIn(date(2026, 4, 3), feriados)  # Sexta-feira Santa (Páscoa - 2)
+
+    def test_eh_dia_util_rejeita_fim_de_semana_e_feriado(self):
+        self.assertFalse(eh_dia_util(date(2026, 12, 25)))  # sexta, Natal
+        self.assertFalse(eh_dia_util(date(2026, 12, 26)))  # sábado
+        self.assertFalse(eh_dia_util(date(2026, 12, 27)))  # domingo
+        self.assertTrue(eh_dia_util(date(2026, 12, 28)))  # segunda, útil
+
+    def test_calcular_prazo_em_dias_uteis_pula_feriado_e_fim_de_semana(self):
+        # 22/12/2026 é terça-feira; contando 5 dias úteis, pula o Natal
+        # (25/12, sexta) e o fim de semana seguinte (26 e 27/12).
+        inicio = date(2026, 12, 22)
+        final = calcular_prazo(inicio, 5, dias_uteis=True)
+        self.assertEqual(final, date(2026, 12, 30))
+
+    def test_calcular_prazo_em_dias_corridos_conta_todos_os_dias(self):
+        inicio = date(2026, 12, 22)
+        final = calcular_prazo(inicio, 5, dias_uteis=False)
+        self.assertEqual(final, date(2026, 12, 27))
+
+
+class CalcularPrazoAPITestCase(APITestCase):
+    """Testa /api/agenda/calcular-prazo/, usado para preencher o prazo na
+    agenda a partir de uma data de início e uma quantidade de dias."""
+
+    def setUp(self):
+        self.escritorio = _criar_escritorio()
+        self.admin = _criar_usuario(self.escritorio)
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Bearer {_gerar_token_de_acesso(self.admin)}"
+        )
+
+    def test_calcula_prazo_em_dias_uteis(self):
+        resposta = self.client.post(
+            "/api/agenda/calcular-prazo/",
+            {"data_inicio": "2026-12-22", "dias": 5, "dias_uteis": True},
+            format="json",
+        )
+        self.assertEqual(resposta.status_code, status.HTTP_200_OK)
+        self.assertEqual(resposta.data["data_final"], "2026-12-30")
+
+    def test_calcula_prazo_em_dias_corridos(self):
+        resposta = self.client.post(
+            "/api/agenda/calcular-prazo/",
+            {"data_inicio": "2026-12-22", "dias": 5, "dias_uteis": False},
+            format="json",
+        )
+        self.assertEqual(resposta.status_code, status.HTTP_200_OK)
+        self.assertEqual(resposta.data["data_final"], "2026-12-27")
+
+    def test_sem_dados_e_rejeitado(self):
+        resposta = self.client.post("/api/agenda/calcular-prazo/", {}, format="json")
+        self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_dias_zero_e_rejeitado(self):
+        resposta = self.client.post(
+            "/api/agenda/calcular-prazo/",
+            {"data_inicio": "2026-12-22", "dias": 0},
+            format="json",
+        )
+        self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_sem_autenticacao_e_negado(self):
+        self.client.credentials()
+        resposta = self.client.post(
+            "/api/agenda/calcular-prazo/",
+            {"data_inicio": "2026-12-22", "dias": 5},
+            format="json",
+        )
+        self.assertEqual(resposta.status_code, status.HTTP_401_UNAUTHORIZED)
+
 
 class AdvogadosAPITestCase(APITestCase):
     """Testa a edição de advogados, incluindo o erro de OAB duplicada."""
@@ -1141,6 +1274,24 @@ class AgendaPrazoAPITestCase(APITestCase):
         self.assertEqual(resposta.status_code, status.HTTP_201_CREATED)
         self.assertEqual(resposta.data["tipo"], "prazo")
         self.assertTrue(resposta.data["atrasado"])
+        self.assertEqual(resposta.data["prioridade"], "normal")
+
+    def test_criar_prazo_fatal(self):
+        resposta = self.client.post(
+            "/api/agenda/",
+            {
+                "processo": self.processo.id,
+                "tipo": "prazo",
+                "prioridade": "fatal",
+                "titulo": "Prazo fatal recursal",
+                "descricao": "Descrição.",
+                "data_evento": "2030-01-01T10:00:00Z",
+                "local_evento": "",
+            },
+            format="json",
+        )
+        self.assertEqual(resposta.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(resposta.data["prioridade"], "fatal")
 
     def test_prazo_cumprido_nao_e_sinalizado_como_atrasado(self):
         evento = Agenda.objects.create(
