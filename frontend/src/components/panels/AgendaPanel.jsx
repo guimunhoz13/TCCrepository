@@ -5,6 +5,7 @@ import { usePanel } from "@/contexts/PanelContext";
 import { useDashboardData } from "@/contexts/DashboardDataContext";
 import { usePreferences } from "@/contexts/PreferencesContext";
 import OverlayPanel from "@/components/shell/OverlayPanel";
+import { Check, Trash2 } from "lucide-react";
 import {
   getAgenda,
   createAgenda,
@@ -326,21 +327,27 @@ export default function AgendaPanel() {
                       )}
                     </td>
                     <td>
-                      <div style={{ display: "flex", gap: 8 }}>
+                      <div className="row-actions">
                         {!evento.cumprido && (
                           <button
-                            className="btn btn-secondary btn-sm"
+                            type="button"
+                            className="row-action row-action-success"
+                            title="Marcar como cumprido"
+                            aria-label="Marcar como cumprido"
                             onClick={async () => {
                               await updateAgenda(evento.id, { cumprido: true });
                               carregarDados();
                               refreshDashboard().catch(() => {});
                             }}
                           >
-                            Marcar cumprido
+                            <Check size={15} />
                           </button>
                         )}
                         <button
-                          className="btn btn-danger btn-sm"
+                          type="button"
+                          className="row-action row-action-danger"
+                          title={t("acao_excluir")}
+                          aria-label={t("acao_excluir")}
                           onClick={async () => {
                             if (window.confirm("Excluir evento?")) {
                               await deleteAgenda(evento.id);
@@ -349,7 +356,7 @@ export default function AgendaPanel() {
                             }
                           }}
                         >
-                          {t("acao_excluir")}
+                          <Trash2 size={15} />
                         </button>
                       </div>
                     </td>

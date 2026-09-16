@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { FileDown, Paperclip } from "lucide-react";
+import { FileDown, Paperclip, Trash2 } from "lucide-react";
 import { usePanel } from "@/contexts/PanelContext";
 import { useDashboardData } from "@/contexts/DashboardDataContext";
 import { usePreferences } from "@/contexts/PreferencesContext";
@@ -158,20 +158,24 @@ export default function DocumentosPanel() {
                       {new Date(doc.enviado_em).toLocaleString("pt-BR")}
                     </td>
                     <td>
-                      <div style={{ display: "flex", gap: 8 }}>
+                      <div className="row-actions">
                         {doc.arquivo && (
                           <a
                             href={doc.arquivo}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="btn btn-secondary btn-sm"
+                            className="row-action"
+                            title={t("acao_abrir")}
+                            aria-label={t("acao_abrir")}
                           >
-                            <FileDown size={14} />
-                            {t("acao_abrir")}
+                            <FileDown size={15} />
                           </a>
                         )}
                         <button
-                          className="btn btn-danger btn-sm"
+                          type="button"
+                          className="row-action row-action-danger"
+                          title={t("acao_excluir")}
+                          aria-label={t("acao_excluir")}
                           onClick={async () => {
                             if (window.confirm("Excluir documento?")) {
                               await deleteDocumento(doc.id);
@@ -180,7 +184,7 @@ export default function DocumentosPanel() {
                             }
                           }}
                         >
-                          {t("acao_excluir")}
+                          <Trash2 size={15} />
                         </button>
                       </div>
                     </td>

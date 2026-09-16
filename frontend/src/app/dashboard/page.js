@@ -56,6 +56,12 @@ function formatarPrazo(dataISO) {
   return `Em ${diffDias} dias`;
 }
 
+function statusBadge(status) {
+  if (status === "Concluido") return "badge-success";
+  if (status === "Em andamento") return "badge-warning";
+  return "badge-muted";
+}
+
 function StatCard({ icon: Icon, label, valor, novos, carregando, pulsar, onVerTodos }) {
   return (
     <div className={`stat-card ${pulsar ? "updated" : ""}`}>
@@ -353,7 +359,7 @@ function DashboardContent() {
                           </span>
                         </td>
                         <td>
-                          <span className="badge badge-muted">
+                          <span className={`badge ${statusBadge(processo.status)}`}>
                             {processo.status === "Concluido"
                               ? "Concluído"
                               : processo.status}

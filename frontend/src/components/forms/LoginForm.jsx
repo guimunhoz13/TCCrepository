@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Scale } from "lucide-react";
+import { LogIn } from "lucide-react";
 import { login, verificarEmail } from "@/services/api";
 
 export default function LoginForm() {
@@ -114,7 +114,7 @@ export default function LoginForm() {
             onClick={handleLoginAdvogado}
             disabled={carregando || !senha}
           >
-            <Scale size={16} />
+            <LogIn size={16} />
             {carregando
               ? "Entrando..."
               : `Entrar como advogado — ${advogadoInfo.nome.split(" ")[0]}`}

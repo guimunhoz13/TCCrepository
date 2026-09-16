@@ -11,13 +11,12 @@ import {
   XAxis,
   YAxis,
   Tooltip,
-  Legend,
 } from "recharts";
 
 // Paleta categórica validada (contraste + distinção sob daltonismo) para o
 // fundo escuro do painel — não os tokens de marca (--accent etc.), que são
 // usados nos elementos interativos e ficariam confusos numa legenda.
-const CORES = ["#3987e5", "#d95926", "#199e70", "#c98500"];
+const CORES = ["#4c7fb8", "#c2603a", "#3f8f6b", "#8a7bb8"];
 
 function CustomTooltip({ active, payload }) {
   if (!active || !payload?.length) return null;
@@ -59,6 +58,7 @@ export default function ChartsSection({ processosPorStatus = [], totais = {} }) 
 
   const fatiaSelecionada = fatiaAtiva !== null ? pieData[fatiaAtiva] : null;
   const barraSelecionada = barraAtiva !== null ? barData[barraAtiva] : null;
+  const totalProcessos = pieData.reduce((soma, item) => soma + item.value, 0);
 
   return (
     <div className="dashboard-grid">
@@ -68,7 +68,11 @@ export default function ChartsSection({ processosPorStatus = [], totais = {} }) 
           <div className="empty-state">Sem dados de processos ainda.</div>
         ) : (
           <>
-            <div style={{ width: "100%", height: 260 }}>
+            <div style={{ width: "100%", height: 260, position: "relative" }}>
+              <div className="donut-center">
+                <strong>{totalProcessos}</strong>
+                <span>{totalProcessos === 1 ? "processo" : "processos"}</span>
+              </div>
               <ResponsiveContainer>
                 <PieChart>
                   <Pie
@@ -96,13 +100,6 @@ export default function ChartsSection({ processosPorStatus = [], totais = {} }) 
                     ))}
                   </Pie>
                   <Tooltip content={<CustomTooltip />} />
-                  <Legend
-                    formatter={(value) => (
-                      <span style={{ color: "var(--text-secondary)", fontSize: 12 }}>
-                        {value}
-                      </span>
-                    )}
-                  />
                 </PieChart>
               </ResponsiveContainer>
             </div>
@@ -162,9 +159,7 @@ export default function ChartsSection({ processosPorStatus = [], totais = {} }) 
                   <Cell
                     key={index}
                     fill={
-                      barraAtiva === null || barraAtiva === index
-                        ? "var(--accent)"
-                        : "var(--text-muted)"
+                      barraAtiva === index ? "var(--accent)" : "var(--chart-bar)"
                     }
                     opacity={
                       barraAtiva === null || barraAtiva === index ? 1 : 0.4

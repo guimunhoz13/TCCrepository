@@ -5,7 +5,7 @@ import { usePanel } from "@/contexts/PanelContext";
 import { useDashboardData } from "@/contexts/DashboardDataContext";
 import { usePreferences } from "@/contexts/PreferencesContext";
 import OverlayPanel from "@/components/shell/OverlayPanel";
-import { MessageCircle } from "lucide-react";
+import { MessageCircle, Pencil, Trash2, UserCheck, UserX } from "lucide-react";
 import Avatar from "@/components/ui/Avatar";
 import { abrirWhatsApp, montarMensagemCliente } from "@/utils/whatsapp";
 import { formatarCPF, formatarRG, formatarTelefone } from "@/utils/mascaras";
@@ -373,29 +373,34 @@ export default function ClientesPanel() {
                       </span>
                     </td>
                     <td>
-                      <div style={{ display: "flex", gap: 8 }}>
+                      <div className="row-actions">
                         <button
                           type="button"
-                          className="btn btn-secondary btn-sm"
+                          className="row-action"
+                          title={t("acao_editar")}
+                          aria-label={t("acao_editar")}
                           onClick={() => handleIniciarEdicao(cliente)}
                         >
-                          {t("acao_editar")}
+                          <Pencil size={15} />
                         </button>
                         {cliente.telefone && (
                           <button
                             type="button"
-                            className="btn btn-secondary btn-sm"
+                            className="row-action"
                             title={t("acao_enviar_whatsapp")}
+                            aria-label={t("acao_enviar_whatsapp")}
                             onClick={() =>
                               abrirWhatsApp(cliente.telefone, montarMensagemCliente(cliente))
                             }
                           >
-                            <MessageCircle size={14} />
+                            <MessageCircle size={15} />
                           </button>
                         )}
                         <button
                           type="button"
-                          className="btn btn-secondary btn-sm"
+                          className="row-action"
+                          title={cliente.ativo ? t("acao_inativar") : t("acao_ativar")}
+                          aria-label={cliente.ativo ? t("acao_inativar") : t("acao_ativar")}
                           onClick={async () => {
                             await updateCliente(cliente.id, {
                               ativo: !cliente.ativo,
@@ -404,11 +409,13 @@ export default function ClientesPanel() {
                             refreshDashboard().catch(() => {});
                           }}
                         >
-                          {cliente.ativo ? t("acao_inativar") : t("acao_ativar")}
+                          {cliente.ativo ? <UserX size={15} /> : <UserCheck size={15} />}
                         </button>
                         <button
                           type="button"
-                          className="btn btn-danger btn-sm"
+                          className="row-action row-action-danger"
+                          title={t("acao_excluir")}
+                          aria-label={t("acao_excluir")}
                           onClick={async () => {
                             if (
                               window.confirm(`Excluir ${cliente.nome}?`)
@@ -419,7 +426,7 @@ export default function ClientesPanel() {
                             }
                           }}
                         >
-                          {t("acao_excluir")}
+                          <Trash2 size={15} />
                         </button>
                       </div>
                     </td>

@@ -8,7 +8,6 @@ import {
   CalendarDays,
   Phone,
   Settings,
-  Scale,
   UserPlus,
   CreditCard,
   CalendarClock,
@@ -20,6 +19,7 @@ import { PANELS, usePanel } from "@/contexts/PanelContext";
 import { usePreferences } from "@/contexts/PreferencesContext";
 import { getUsuarioLogado } from "@/services/api";
 import { useEffect, useState } from "react";
+import Logo from "@/components/ui/Logo";
 
 const NAV_ITEMS = [
   {
@@ -126,7 +126,7 @@ export default function AppSidebar() {
     <aside className="sidebar">
       <div className="sidebar-brand">
         <div className="sidebar-brand-icon">
-          <Scale size={20} />
+          <Logo size={22} />
         </div>
 
         <div>

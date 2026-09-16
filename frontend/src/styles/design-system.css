@@ -42,6 +42,7 @@
   --rule-soft: rgba(28, 35, 51, 0.16);
   --chart-tooltip-bg: #fffefb;
   --chart-tooltip-border: rgba(28, 35, 51, 0.16);
+  --chart-bar: #6b7488;
   --focus-ring: #a2712e;
   --sidebar-bg: #1c2333;
   --shadow-glow: 0 0 0 4px rgba(162, 113, 46, 0.14);
@@ -83,6 +84,7 @@
   --rule-soft: rgba(242, 238, 226, 0.14);
   --chart-tooltip-bg: #1c2131;
   --chart-tooltip-border: rgba(242, 238, 226, 0.14);
+  --chart-bar: #5d6782;
   --focus-ring: #c99a4b;
   --sidebar-bg: #1c2333; /* fixa — a sidebar não muda com o tema */
   --shadow-glow: 0 0 0 4px rgba(201, 154, 75, 0.18);
@@ -244,8 +246,8 @@ textarea {
 }
 
 .nav-item.active {
-  background: rgba(201, 154, 75, 0.1);
-  color: var(--accent);
+  background: rgba(255, 255, 255, 0.07);
+  color: #f2eee2;
   border-left-color: var(--accent);
   font-weight: 600;
 }
@@ -528,8 +530,8 @@ textarea {
   border-radius: 11px;
   display: grid;
   place-items: center;
-  background: var(--accent-soft);
-  color: var(--accent);
+  background: var(--ink-soft);
+  color: var(--text-secondary);
   flex-shrink: 0;
 }
 
@@ -686,14 +688,77 @@ tbody tr:hover {
   color: var(--warning);
 }
 
+/* Estado neutro/inativo: cinza. O dourado é reservado às ações primárias,
+   então um registro inativo não pode ser o elemento mais chamativo da tabela. */
 .badge-muted {
-  background: var(--accent-soft);
-  color: var(--accent);
+  background: var(--ink-soft);
+  color: var(--text-muted);
+  box-shadow: inset 0 0 0 1px var(--border);
 }
 
 .badge-danger {
   background: var(--danger-soft);
   color: var(--danger);
+}
+
+/* ==========================================================================
+   AÇÕES DE LINHA (tabelas)
+   Botões só de ícone com tooltip nativo: a coluna "Ações" deixa de competir
+   em peso visual com os dados da linha.
+   ========================================================================== */
+
+.row-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.row-action {
+  width: 30px;
+  height: 30px;
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  padding: 0;
+  border-radius: 7px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.row-action:hover {
+  background: var(--ink-soft);
+  border-color: var(--border);
+  color: var(--text-primary);
+}
+
+.row-action:active {
+  transform: scale(0.92);
+}
+
+.row-action:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.row-action-danger:hover {
+  background: var(--danger-soft);
+  border-color: transparent;
+  color: var(--danger);
+}
+
+.row-action-success:hover {
+  background: var(--success-soft);
+  border-color: transparent;
+  color: var(--success);
+}
+
+[data-density="compact"] .row-action {
+  width: 26px;
+  height: 26px;
 }
 
 /* Select/input soltos dentro de células de tabela (sem o wrapper
@@ -980,9 +1045,8 @@ tbody tr:hover {
 }
 
 .calendar-cell.has-event {
-  background: var(--accent-soft);
-  color: var(--accent);
-  border-color: var(--accent-border);
+  background: transparent;
+  border-color: var(--border-strong);
   font-weight: 700;
   position: relative;
 }
@@ -1121,6 +1185,34 @@ tbody tr:hover {
   margin-top: 12px;
 }
 
+/* Total no miolo da rosca. Fica sobreposto por HTML em vez de <text> no SVG
+   porque o Recharts 3 não renderiza <Label> como filho de <Pie>. */
+.donut-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  pointer-events: none;
+}
+
+.donut-center strong {
+  font-family: "Fraunces", serif;
+  font-size: 1.95rem;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--text-primary);
+}
+
+.donut-center span {
+  font-size: 0.66rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
 .chart-legend-item {
   display: flex;
   align-items: center;
@@ -1134,8 +1226,12 @@ tbody tr:hover {
   transition: 0.15s ease;
 }
 
-.chart-legend-item.active,
 .chart-legend-item:hover {
+  border-color: var(--border-strong);
+  color: var(--text-primary);
+}
+
+.chart-legend-item.active {
   border-color: var(--accent-border);
   background: var(--accent-soft);
   color: var(--accent);
@@ -1268,7 +1364,7 @@ tbody tr:hover {
   border-radius: 12px;
   background: var(--bg-secondary);
   border: 1px solid var(--border);
-  border-left: 2px solid var(--accent);
+  border-left: 2px solid var(--border-strong);
   margin-bottom: 12px;
   transition: box-shadow 0.2s ease, border-left-color 0.2s ease;
 }
@@ -1280,7 +1376,7 @@ tbody tr:hover {
 .compromisso-date {
   font-size: 0.76rem;
   font-weight: 700;
-  color: var(--accent);
+  color: var(--text-secondary);
   margin-bottom: 6px;
 }
 
@@ -1305,8 +1401,9 @@ tbody tr:hover {
   gap: 6px;
   padding: 6px 14px;
   border-radius: 999px;
-  background: var(--accent-soft);
-  color: var(--accent);
+  background: var(--ink-soft);
+  box-shadow: inset 0 0 0 1px var(--border);
+  color: var(--text-secondary);
   font-size: 0.83rem;
   font-weight: 600;
   margin-bottom: 8px;
@@ -2350,7 +2447,7 @@ tbody tr {
   display: flex;
   align-items: center;
   gap: 10px;
-  color: var(--accent);
+  color: var(--text-secondary);
   margin-bottom: 16px;
 }
 
@@ -2388,7 +2485,7 @@ tbody tr {
   border-radius: 12px;
   background: var(--bg-secondary);
   border: 1px solid var(--border);
-  border-left: 2px solid var(--accent);
+  border-left: 2px solid var(--border-strong);
   text-decoration: none;
   color: inherit;
   transition: box-shadow 0.18s ease, transform 0.18s ease, border-left-color 0.18s ease;
@@ -2405,7 +2502,7 @@ tbody tr {
   gap: 10px;
   font-size: 0.74rem;
   font-weight: 700;
-  color: var(--accent);
+  color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.02em;
   margin-bottom: 6px;
@@ -2809,6 +2906,11 @@ tbody tr {
 }
 
 .quick-action-btn svg {
+  color: var(--text-muted);
+  transition: color 0.15s ease;
+}
+
+.quick-action-btn:hover svg {
   color: var(--accent);
 }
 
@@ -2864,8 +2966,8 @@ tbody tr {
   border-radius: 9px;
   display: grid;
   place-items: center;
-  background: var(--accent-soft);
-  color: var(--accent);
+  background: var(--ink-soft);
+  color: var(--text-secondary);
   flex-shrink: 0;
 }
 
