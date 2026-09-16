@@ -102,6 +102,11 @@ class Usuario(models.Model):
     ativo = models.BooleanField(default=True)
     tentativas_login = models.PositiveSmallIntegerField(default=0)
     bloqueado_ate = models.DateTimeField(null=True, blank=True)
+    # Padrão True: só o auto-cadastro público de escritório (EscritorioRegistroView)
+    # exige confirmação, e só em produção (DEBUG=False) — advogados cadastrados
+    # por um administrador já autenticado são vouched for por ele, e em
+    # desenvolvimento/teste isso quebraria o uso de e-mails fictícios.
+    email_verificado = models.BooleanField(default=True)
     criado_em = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -466,6 +471,23 @@ class TokenRedefinicaoSenha(models.Model):
 
     def __str__(self):
         return f"Token de {self.usuario.nome}"
+
+
+class TokenVerificacaoEmail(models.Model):
+
+    usuario = models.ForeignKey(
+        Usuario,
+        on_delete=models.CASCADE,
+        related_name="tokens_verificacao_email",
+    )
+
+    token = models.CharField(max_length=64, unique=True)
+    criado_em = models.DateTimeField(auto_now_add=True)
+    expira_em = models.DateTimeField()
+    usado = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"Token de verificação de {self.usuario.nome}"
 
 
 class ConfiguracaoEscritorio(models.Model):
