@@ -3,7 +3,7 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path, include
 
-from advocacia.views import LoginView, RenovarTokenView
+from advocacia.views import LoginView, LogoutView, RenovarTokenView
 
 
 urlpatterns = [
@@ -23,6 +23,12 @@ urlpatterns = [
         "api/token/refresh/",
         RenovarTokenView.as_view(),
         name="token_refresh"
+    ),
+
+    path(
+        "api/logout/",
+        LogoutView.as_view(),
+        name="logout"
     ),
 
     path(
