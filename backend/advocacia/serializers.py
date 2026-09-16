@@ -307,6 +307,9 @@ class ProcessoSerializer(serializers.ModelSerializer):
         source="advogado.usuario.nome",
         read_only=True,
     )
+    valor_estimado_honorarios_sucumbencia = serializers.DecimalField(
+        max_digits=14, decimal_places=2, read_only=True
+    )
 
     class Meta:
         model = Processo
@@ -324,6 +327,15 @@ class ProcessoSerializer(serializers.ModelSerializer):
             "advogado_nome",
             "data_inicio",
             "data_fim",
+            "area_direito",
+            "vara",
+            "comarca",
+            "valor_causa",
+            "nome_parte_contraria",
+            "nome_advogado_adverso",
+            "oab_advogado_adverso",
+            "percentual_honorarios_sucumbencia",
+            "valor_estimado_honorarios_sucumbencia",
             "criado_em",
         ]
         read_only_fields = [
@@ -332,6 +344,7 @@ class ProcessoSerializer(serializers.ModelSerializer):
             "cliente_email",
             "cliente_foto",
             "advogado_nome",
+            "valor_estimado_honorarios_sucumbencia",
             "criado_em",
         ]
 
@@ -419,6 +432,7 @@ class AgendaSerializer(serializers.ModelSerializer):
             "cliente_nome",
             "advogado_nome",
             "tipo",
+            "prioridade",
             "titulo",
             "descricao",
             "data_evento",

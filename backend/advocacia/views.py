@@ -3,11 +3,14 @@ from django.contrib.auth.hashers import check_password, make_password
 from django.db.models import Count, Q
 from django.http import HttpResponse
 from django.utils import timezone
+from datetime import date
 import csv
 import logging
 import secrets
 
 logger = logging.getLogger(__name__)
+
+from .feriados import calcular_prazo
 
 from rest_framework import status, viewsets
 from rest_framework.exceptions import PermissionDenied, ValidationError
@@ -1025,6 +1028,46 @@ class DocumentoViewSet(
 # =========================================================
 # AGENDA
 # =========================================================
+
+class CalcularPrazoView(APIView):
+    """Calcula a data final de um prazo a partir de uma data de início e
+    uma quantidade de dias, contando em dias úteis (pulando fins de semana
+    e feriados nacionais) ou em dias corridos, conforme solicitado. Apoia
+    o preenchimento da agenda ao cadastrar um prazo processual (RN — CPC
+    art. 219: prazos processuais cíveis contam em dias úteis)."""
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        data_inicio_str = request.data.get("data_inicio", "")
+        dias = request.data.get("dias")
+        dias_uteis = request.data.get("dias_uteis", True)
+
+        if not data_inicio_str or dias in (None, ""):
+            return Response(
+                {"detail": "Informe a data de início e a quantidade de dias."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            data_inicio = date.fromisoformat(data_inicio_str)
+            dias = int(dias)
+        except (ValueError, TypeError):
+            return Response(
+                {"detail": "Data de início ou quantidade de dias inválida."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if dias <= 0:
+            return Response(
+                {"detail": "A quantidade de dias deve ser maior que zero."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        data_final = calcular_prazo(data_inicio, dias, dias_uteis=bool(dias_uteis))
+
+        return Response({"data_final": data_final.isoformat()})
+
 
 class AgendaViewSet(
     EscritorioScopedMixin,

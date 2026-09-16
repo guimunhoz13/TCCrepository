@@ -9,6 +9,7 @@ import {
   getClientes,
   logout,
   masterLogout,
+  calcularPrazo,
 } from "../api";
 
 describe("normalizarLista", () => {
@@ -278,5 +279,41 @@ describe("revogação do refresh token no logout", () => {
     expect(localStorage.getItem("master_access")).toBeNull();
     expect(localStorage.getItem("master_refresh")).toBeNull();
     expect(localStorage.getItem("masterLogado")).toBeNull();
+  });
+});
+
+describe("calcularPrazo", () => {
+  beforeEach(() => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ data_final: "2026-12-30" }),
+    });
+  });
+
+  afterEach(() => {
+    delete global.fetch;
+  });
+
+  test("consulta o endpoint de cálculo de prazo com os parâmetros corretos", async () => {
+    const resultado = await calcularPrazo({
+      data_inicio: "2026-12-22",
+      dias: 5,
+      dias_uteis: true,
+    });
+
+    expect(resultado.data_final).toBe("2026-12-30");
+    const [url, opcoes] = global.fetch.mock.calls[0];
+    expect(url).toMatch(/\/agenda\/calcular-prazo\/$/);
+    expect(JSON.parse(opcoes.body)).toEqual({
+      data_inicio: "2026-12-22",
+      dias: 5,
+      dias_uteis: true,
+    });
+  });
+
+  test("assume dias_uteis=true quando não informado", async () => {
+    await calcularPrazo({ data_inicio: "2026-12-22", dias: 5 });
+    const [, opcoes] = global.fetch.mock.calls[0];
+    expect(JSON.parse(opcoes.body).dias_uteis).toBe(true);
   });
 });

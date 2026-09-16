@@ -191,6 +191,19 @@ class Processo(models.Model):
         ("Arquivado", "Arquivado"),
     )
 
+    AREAS_DIREITO = (
+        ("civel", "Cível"),
+        ("trabalhista", "Trabalhista"),
+        ("tributario", "Tributário"),
+        ("criminal", "Criminal"),
+        ("familia", "Família e Sucessões"),
+        ("previdenciario", "Previdenciário"),
+        ("empresarial", "Empresarial"),
+        ("administrativo", "Administrativo"),
+        ("consumidor", "Consumidor"),
+        ("ambiental", "Ambiental"),
+    )
+
     escritorio = models.ForeignKey(
         Escritorio,
         on_delete=models.CASCADE,
@@ -220,6 +233,37 @@ class Processo(models.Model):
 
     data_inicio = models.DateField(null=True, blank=True)
     data_fim = models.DateField(null=True, blank=True)
+
+    area_direito = models.CharField(max_length=20, choices=AREAS_DIREITO, blank=True, default="")
+    vara = models.CharField(max_length=255, blank=True, default="")
+    comarca = models.CharField(max_length=255, blank=True, default="")
+    valor_causa = models.DecimalField(
+        max_digits=14,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(Decimal("0.01"))],
+    )
+
+    # A parte contrária e seu advogado não são um Cliente/Advogado do
+    # próprio escritório — são texto livre, já que pertencem à outra parte
+    # do processo e não têm login nem qualquer outro vínculo com o sistema.
+    nome_parte_contraria = models.CharField(max_length=255, blank=True, default="")
+    nome_advogado_adverso = models.CharField(max_length=255, blank=True, default="")
+    oab_advogado_adverso = models.CharField(max_length=30, blank=True, default="")
+
+    # Percentual de honorários de sucumbência fixado pelo juízo (CPC art.
+    # 85) — não é calculado automaticamente pelo sistema, pois depende de
+    # decisão judicial; apenas guarda o percentual já definido para
+    # estimar o valor (percentual × valor_causa).
+    percentual_honorarios_sucumbencia = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(Decimal("0.01"))],
+    )
+
     criado_em = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -227,6 +271,12 @@ class Processo(models.Model):
 
     def __str__(self):
         return self.titulo
+
+    @property
+    def valor_estimado_honorarios_sucumbencia(self):
+        if self.valor_causa is None or self.percentual_honorarios_sucumbencia is None:
+            return None
+        return (self.valor_causa * self.percentual_honorarios_sucumbencia / Decimal("100")).quantize(Decimal("0.01"))
 
 
 class Movimentacao(models.Model):
@@ -281,6 +331,11 @@ class Agenda(models.Model):
         ("prazo", "Prazo"),
     )
 
+    PRIORIDADES = (
+        ("normal", "Normal"),
+        ("fatal", "Prazo fatal"),
+    )
+
     processo = models.ForeignKey(
         Processo,
         on_delete=models.CASCADE,
@@ -288,6 +343,10 @@ class Agenda(models.Model):
     )
 
     tipo = models.CharField(max_length=20, choices=TIPOS_EVENTO, default="compromisso")
+    # Só tem sentido para tipo="prazo": um prazo fatal (peremptório) não
+    # admite prorrogação, e perdê-lo pode significar perda de direito —
+    # merece destaque visual diferente de um prazo comum.
+    prioridade = models.CharField(max_length=10, choices=PRIORIDADES, default="normal")
     titulo = models.CharField(max_length=255)
     descricao = models.TextField()
     data_evento = models.DateTimeField()
