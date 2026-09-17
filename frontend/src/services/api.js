@@ -489,3 +489,57 @@ export async function getMasterAuditoria(params) {
 export async function getAuditoria(params) {
   return request(`/auditoria/${buildQuery(params)}`);
 }
+
+// ---------------------------------------------------------------
+// Apontamento de horas (timesheet)
+// ---------------------------------------------------------------
+
+export async function getApontamentos(filtros = {}) {
+  const busca = new URLSearchParams(
+    Object.entries(filtros).filter(([, valor]) => valor !== "" && valor != null)
+  ).toString();
+  return request(`/apontamentos/${busca ? `?${busca}` : ""}`);
+}
+
+export async function createApontamento(data) {
+  return request("/apontamentos/", { method: "POST", body: corpoRequisicao(data) });
+}
+
+export async function deleteApontamento(id) {
+  return request(`/apontamentos/${id}/`, { method: "DELETE" });
+}
+
+// ---------------------------------------------------------------
+// Despesas e custas processuais
+// ---------------------------------------------------------------
+
+export async function getDespesas(filtros = {}) {
+  const busca = new URLSearchParams(
+    Object.entries(filtros).filter(([, valor]) => valor !== "" && valor != null)
+  ).toString();
+  return request(`/despesas/${busca ? `?${busca}` : ""}`);
+}
+
+export async function createDespesa(data) {
+  return request("/despesas/", { method: "POST", body: corpoRequisicao(data) });
+}
+
+export async function updateDespesa(id, data) {
+  return request(`/despesas/${id}/`, { method: "PATCH", body: corpoRequisicao(data) });
+}
+
+export async function deleteDespesa(id) {
+  return request(`/despesas/${id}/`, { method: "DELETE" });
+}
+
+// ---------------------------------------------------------------
+// Tempo de uso do sistema
+// ---------------------------------------------------------------
+
+export async function registrarAtividade() {
+  return request("/atividade/", { method: "POST", body: JSON.stringify({}) });
+}
+
+export async function getTempoDeUso(mes) {
+  return request(`/relatorios/tempo-uso/${mes ? `?mes=${mes}` : ""}`);
+}

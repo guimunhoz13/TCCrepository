@@ -29,6 +29,7 @@ import ProcessosPanel from "@/components/panels/ProcessosPanel";
 import AgendaPanel from "@/components/panels/AgendaPanel";
 import DocumentosPanel from "@/components/panels/DocumentosPanel";
 import ContratosPanel from "@/components/panels/ContratosPanel";
+import HorasPanel from "@/components/panels/HorasPanel";
 import ContatoPanel from "@/components/panels/ContatoPanel";
 import ConfigPanel from "@/components/panels/ConfigPanel";
 import AdvogadosPanel from "@/components/panels/AdvogadosPanel";
@@ -37,6 +38,7 @@ import Avatar from "@/components/ui/Avatar";
 import { PanelProvider, usePanel, PANELS } from "@/contexts/PanelContext";
 import { DashboardDataProvider, useDashboardData } from "@/contexts/DashboardDataContext";
 import { PreferencesProvider } from "@/contexts/PreferencesContext";
+import useRegistroDeAtividade from "@/hooks/useRegistroDeAtividade";
 
 function contarUltimosDias(lista, campoData, dias) {
   const limite = Date.now() - dias * 24 * 60 * 60 * 1000;
@@ -84,6 +86,7 @@ function StatCard({ icon: Icon, label, valor, novos, carregando, pulsar, onVerTo
 
 function DashboardContent() {
   const router = useRouter();
+  useRegistroDeAtividade();
   const {
     stats,
     processos,
@@ -422,6 +425,7 @@ function DashboardContent() {
       <AgendaPanel />
       <DocumentosPanel />
       <ContratosPanel />
+      <HorasPanel />
       <ContatoPanel />
       <ConfigPanel />
       <AdvogadosPanel />

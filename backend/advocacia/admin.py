@@ -10,7 +10,10 @@ from .models import (
     Agenda,
     Contrato,
     Parcela,
+    ApontamentoHora,
+    Despesa,
     NotificacaoEnviada,
+    SessaoUso,
     RegistroAuditoria,
 )
 
@@ -377,6 +380,93 @@ class NotificacaoEnviadaAdmin(admin.ModelAdmin):
 
     ordering = (
         '-enviado_em',
+    )
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(ApontamentoHora)
+class ApontamentoHoraAdmin(admin.ModelAdmin):
+
+    list_display = (
+        'data',
+        'processo',
+        'usuario',
+        'minutos',
+        'faturavel',
+        'valor_hora',
+    )
+
+    search_fields = (
+        'processo__numero_processo',
+        'usuario__nome',
+        'descricao',
+    )
+
+    list_filter = (
+        'faturavel',
+        'data',
+    )
+
+    ordering = (
+        '-data',
+    )
+
+
+@admin.register(Despesa)
+class DespesaAdmin(admin.ModelAdmin):
+
+    list_display = (
+        'data',
+        'processo',
+        'tipo',
+        'valor',
+        'reembolsavel',
+        'reembolsada',
+    )
+
+    search_fields = (
+        'processo__numero_processo',
+        'descricao',
+    )
+
+    list_filter = (
+        'tipo',
+        'reembolsavel',
+        'reembolsada',
+        'data',
+    )
+
+    ordering = (
+        '-data',
+    )
+
+
+@admin.register(SessaoUso)
+class SessaoUsoAdmin(admin.ModelAdmin):
+
+    list_display = (
+        'usuario',
+        'inicio',
+        'ultima_atividade',
+        'duracao_minutos',
+    )
+
+    search_fields = (
+        'usuario__nome',
+        'usuario__email',
+    )
+
+    list_filter = (
+        'inicio',
+    )
+
+    ordering = (
+        '-inicio',
     )
 
     def has_add_permission(self, request):
