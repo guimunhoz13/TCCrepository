@@ -1,6 +1,6 @@
 from django.conf import settings
 from django.contrib.auth.hashers import check_password, make_password
-from django.db.models import Count, Q
+from django.db.models import Count, Q, Sum
 from django.http import HttpResponse
 from django.utils import timezone
 from datetime import date
@@ -614,6 +614,58 @@ class ConfirmarEmailView(APIView):
 # DASHBOARD
 # =========================================================
 
+def _indicadores_financeiros(escritorio):
+    """Números do dia a dia financeiro do escritório.
+
+    Todos olham para o escritório inteiro, não para um cliente: é o que a
+    dashboard precisa responder logo na abertura — quanto há a receber,
+    quanto entrou no mês e o que já passou do vencimento.
+    """
+
+    zero = Decimal("0.00")
+    hoje = timezone.localdate()
+    inicio_do_mes = hoje.replace(day=1)
+
+    parcelas = Parcela.objects.filter(contrato__escritorio=escritorio)
+
+    a_receber = parcelas.exclude(status="pago").aggregate(total=Sum("valor"))["total"] or zero
+
+    recebido_no_mes = (
+        parcelas
+        .filter(status="pago", pago_em__date__gte=inicio_do_mes)
+        .aggregate(total=Sum("valor"))["total"]
+        or zero
+    )
+
+    # O status "atrasado" da parcela existe no modelo mas nada o atribui:
+    # o vencimento é comparado com a data de hoje na hora da consulta.
+    vencidas = parcelas.exclude(status="pago").filter(data_vencimento__lt=hoje)
+    vencidas_resumo = vencidas.aggregate(quantidade=Count("id"), total=Sum("valor"))
+
+    horas_do_mes = ApontamentoHora.objects.filter(
+        escritorio=escritorio, faturavel=True, data__gte=inicio_do_mes
+    )
+    minutos_do_mes = horas_do_mes.aggregate(total=Sum("minutos"))["total"] or 0
+    valor_horas_do_mes = sum((a.valor or zero) for a in horas_do_mes)
+
+    despesas_a_reembolsar = (
+        Despesa.objects
+        .filter(escritorio=escritorio, reembolsavel=True, reembolsada=False)
+        .aggregate(total=Sum("valor"))["total"]
+        or zero
+    )
+
+    return {
+        "a_receber": a_receber,
+        "recebido_no_mes": recebido_no_mes,
+        "parcelas_vencidas": vencidas_resumo["quantidade"] or 0,
+        "valor_vencido": vencidas_resumo["total"] or zero,
+        "minutos_faturaveis_no_mes": minutos_do_mes,
+        "valor_horas_faturaveis_no_mes": valor_horas_do_mes or zero,
+        "despesas_a_reembolsar": despesas_a_reembolsar,
+    }
+
+
 class DashboardStatsView(APIView):
 
     permission_classes = [IsAuthenticated]
@@ -671,6 +723,8 @@ class DashboardStatsView(APIView):
                 "processos_por_status": list(
                     processos_por_status
                 ),
+
+                "financeiro": _indicadores_financeiros(escritorio),
             }
         )
 

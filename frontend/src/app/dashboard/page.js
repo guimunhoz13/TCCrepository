@@ -22,6 +22,7 @@ import AppSidebar from "@/components/shell/AppSidebar";
 import TopBar from "@/components/shell/TopBar";
 import AppFooter from "@/components/shell/AppFooter";
 import ChartsSection from "@/components/dashboard/ChartsSection";
+import FinanceiroSection from "@/components/dashboard/FinanceiroSection";
 import MiniCalendar from "@/components/dashboard/MiniCalendar";
 import NoticiasSection from "@/components/dashboard/NoticiasSection";
 import ClientesPanel from "@/components/panels/ClientesPanel";
@@ -270,6 +271,8 @@ function DashboardContent() {
             onVerTodos={() => openPanel(PANELS.DOCUMENTOS, "lista")}
           />
         </div>
+
+        <FinanceiroSection financeiro={stats?.financeiro} carregando={carregando} />
 
         <div className="dashboard-grid" style={{ marginTop: 18 }}>
           <div className="panel-card">
