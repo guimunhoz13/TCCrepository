@@ -3177,3 +3177,79 @@ tbody tr {
   margin-top: 2px;
   line-height: 1.4;
 }
+
+/* Estado pausado (processo suspenso): nem sucesso, nem alerta, nem
+   inativo. Ganha uma cor própria para não se confundir com "Arquivado",
+   que é cinza — os dois compartilhavam o mesmo selo e ficavam
+   indistinguíveis na tabela e no gráfico. */
+.badge-info {
+  background: rgba(122, 75, 158, 0.12);
+  color: #7a4b9e;
+  box-shadow: inset 0 0 0 1px rgba(122, 75, 158, 0.3);
+}
+
+[data-theme="dark"] .badge-info {
+  background: rgba(143, 102, 194, 0.18);
+  color: #a684d1;
+  box-shadow: inset 0 0 0 1px rgba(143, 102, 194, 0.35);
+}
+
+/* As tarefas do dia ocupam a linha inteira da dashboard e se dividem em
+   duas colunas: numa coluna só, o cartão ficava estreito e sobrava metade
+   da linha vazia ao lado. */
+.tarefas-widget {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+@media (max-width: 900px) {
+  .tarefas-widget {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ===== Blocos de carregamento =====
+   Substituem o "..." que os cartões mostravam enquanto os dados não
+   chegavam: a página já nasce com a forma final e não pula quando o
+   conteúdo entra. */
+
+@keyframes carregandoPulso {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 0.85; }
+}
+
+.skeleton {
+  display: block;
+  border-radius: 7px;
+  background: var(--ink-soft);
+  animation: carregandoPulso 1.4s ease-in-out infinite;
+}
+
+/* Quem prefere menos movimento vê o bloco parado, não piscando. */
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+  }
+}
+
+.skeleton-valor {
+  width: 68px;
+  height: 30px;
+  margin: 2px 0;
+}
+
+.skeleton-texto {
+  width: 100%;
+  height: 12px;
+}
+
+/* Um estado vazio que oferece a ação seguinte precisa empilhar o texto e
+   o botão; sem isso o botão fica colado no texto e some no centro. */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+}

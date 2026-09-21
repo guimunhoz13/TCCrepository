@@ -65,15 +65,24 @@ export default function FinanceiroSection({ financeiro, carregando }) {
   return (
     <div className="panel-card" style={{ marginTop: 18 }}>
       <h3>Financeiro do escritório</h3>
-      {carregando ? (
-        <div className="empty-state">Carregando indicadores...</div>
-      ) : (
-        <div className="financeiro-grid">
-          {indicadores.map((item) => (
+      <div className="financeiro-grid">
+        {indicadores.map((item) =>
+          carregando ? (
+            <div key={item.rotulo} className="financeiro-card">
+              <span className="financeiro-card-icon">
+                <item.icon size={17} />
+              </span>
+              <div className="financeiro-card-rotulo">{item.rotulo}</div>
+              <span className="skeleton skeleton-valor" />
+              <div className="financeiro-card-detalhe">
+                <span className="skeleton skeleton-texto" />
+              </div>
+            </div>
+          ) : (
             <Indicador key={item.rotulo} {...item} />
-          ))}
-        </div>
-      )}
+          )
+        )}
+      </div>
     </div>
   );
 }

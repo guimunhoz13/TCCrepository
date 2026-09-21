@@ -87,22 +87,24 @@ export default function NoticiasSection() {
         <h3>Notícias do mundo jurídico e criminal</h3>
       </div>
 
-      {erro && (
-        <div className="alert alert-error" style={{ marginBottom: 16 }}>
-          {erro}
-        </div>
-      )}
-      {!erro && aviso && (
-        <div className="alert alert-error" style={{ marginBottom: 16 }}>
+      {/* Fonte que não respondeu não é erro do sistema: quando ainda veio
+          alguma notícia, o aviso entra discreto ao lado do que carregou. */}
+      {!carregando && aviso && noticias.length > 0 && (
+        <div className="alert alert-warning" style={{ marginBottom: 16 }}>
           {aviso}
         </div>
       )}
 
       {carregando && <div className="empty-state">Carregando notícias...</div>}
 
-      {!carregando && !erro && noticias.length === 0 && (
+      {/* Sem nenhuma notícia, um único bloco explica o porquê — antes
+          apareciam dois empilhados, o aviso e o vazio, e a seção parecia
+          quebrada. */}
+      {!carregando && noticias.length === 0 && (
         <div className="empty-state">
-          Nenhuma notícia disponível no momento.
+          {erro || aviso
+            ? "As fontes de notícias não responderam agora. Tente novamente mais tarde."
+            : "Nenhuma notícia disponível no momento."}
         </div>
       )}
 

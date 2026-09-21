@@ -7,6 +7,7 @@ import { usePreferences } from "@/contexts/PreferencesContext";
 import OverlayPanel from "@/components/shell/OverlayPanel";
 import { Landmark, MessageCircle, RefreshCw, Trash2 } from "lucide-react";
 import { abrirWhatsApp, montarMensagemProcesso } from "@/utils/whatsapp";
+import { badgeStatus, rotuloStatus } from "@/lib/statusProcesso";
 import {
   consultarDataJud,
   getProcessos,
@@ -58,12 +59,6 @@ function formatarMoeda(valor) {
   if (valor === null || valor === undefined || valor === "") return "—";
   const numero = Number(valor);
   return numero.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-}
-
-function statusBadge(status) {
-  if (status === "Concluido") return "badge-success";
-  if (status === "Em andamento") return "badge-warning";
-  return "badge-muted";
 }
 
 export default function ProcessosPanel() {
@@ -438,10 +433,8 @@ export default function ProcessosPanel() {
                     <td>{areaDireitoLabel(processo.area_direito)}</td>
                     <td>{formatarMoeda(processo.valor_causa)}</td>
                     <td>
-                      <span className={`badge ${statusBadge(processo.status)}`}>
-                        {processo.status === "Concluido"
-                          ? "Concluído"
-                          : processo.status}
+                      <span className={`badge ${badgeStatus(processo.status)}`}>
+                        {rotuloStatus(processo.status)}
                       </span>
                     </td>
                     <td>

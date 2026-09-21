@@ -42,6 +42,7 @@ import { PanelProvider, usePanel, PANELS } from "@/contexts/PanelContext";
 import { DashboardDataProvider, useDashboardData } from "@/contexts/DashboardDataContext";
 import { PreferencesProvider } from "@/contexts/PreferencesContext";
 import useRegistroDeAtividade from "@/hooks/useRegistroDeAtividade";
+import { badgeStatus, rotuloStatus } from "@/lib/statusProcesso";
 
 function contarUltimosDias(lista, campoData, dias) {
   const limite = Date.now() - dias * 24 * 60 * 60 * 1000;
@@ -74,12 +75,6 @@ function formatarPrazoTarefa(prazo) {
   return `Vence em ${dias} dias`;
 }
 
-function statusBadge(status) {
-  if (status === "Concluido") return "badge-success";
-  if (status === "Em andamento") return "badge-warning";
-  return "badge-muted";
-}
-
 function StatCard({ icon: Icon, label, valor, novos, carregando, pulsar, onVerTodos }) {
   return (
     <div className={`stat-card ${pulsar ? "updated" : ""}`}>
@@ -92,7 +87,9 @@ function StatCard({ icon: Icon, label, valor, novos, carregando, pulsar, onVerTo
         </button>
       </div>
       <div className="stat-card-label">{label}</div>
-      <div className="stat-card-value">{carregando ? "..." : valor ?? 0}</div>
+      <div className="stat-card-value">
+        {carregando ? <span className="skeleton skeleton-valor" /> : valor ?? 0}
+      </div>
       <div className={`stat-card-trend ${novos > 0 ? "up" : ""}`}>
         {novos > 0 ? `+${novos} nesta semana` : "sem novidades esta semana"}
       </div>
@@ -297,7 +294,17 @@ function DashboardContent() {
           <div className="panel-card">
             <h3>Próximos compromissos</h3>
             {proximosCompromissos.length === 0 ? (
-              <div className="empty-state">Nenhum compromisso agendado.</div>
+              <div className="empty-state">
+                Nenhum compromisso agendado.
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  style={{ marginTop: 12 }}
+                  onClick={() => openPanel(PANELS.AGENDA, "novo")}
+                >
+                  Agendar compromisso
+                </button>
+              </div>
             ) : (
               <div className="list-widget">
                 {proximosCompromissos.map((evento) => (
@@ -352,13 +359,27 @@ function DashboardContent() {
               </div>
             )}
           </div>
+        </div>
 
+        {/* Linha própria: como terceiro filho de um grid de duas colunas,
+            este cartão ocupava a esquerda e deixava a direita vazia. */}
+        <div style={{ marginTop: 18 }}>
           <div className="panel-card">
             <h3>Minhas tarefas</h3>
             {minhasTarefas.length === 0 ? (
-              <div className="empty-state">Nenhuma tarefa em aberto para você.</div>
+              <div className="empty-state">
+                Nenhuma tarefa em aberto para você.
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  style={{ marginTop: 12 }}
+                  onClick={() => openPanel(PANELS.TAREFAS, "nova")}
+                >
+                  Criar tarefa
+                </button>
+              </div>
             ) : (
-              <div className="list-widget">
+              <div className="list-widget tarefas-widget">
                 {minhasTarefas.map((tarefa) => (
                   <div
                     key={tarefa.id}
@@ -384,14 +405,17 @@ function DashboardContent() {
                     </span>
                   </div>
                 ))}
-                <button
-                  type="button"
-                  className="stat-card-link"
-                  onClick={() => openPanel(PANELS.TAREFAS, "minhas")}
-                >
-                  Ver todas <ArrowUpRight size={13} />
-                </button>
               </div>
+            )}
+            {minhasTarefas.length > 0 && (
+              <button
+                type="button"
+                className="stat-card-link"
+                style={{ marginTop: 12 }}
+                onClick={() => openPanel(PANELS.TAREFAS, "minhas")}
+              >
+                Ver todas <ArrowUpRight size={13} />
+              </button>
             )}
           </div>
         </div>
@@ -427,10 +451,8 @@ function DashboardContent() {
                           </span>
                         </td>
                         <td>
-                          <span className={`badge ${statusBadge(processo.status)}`}>
-                            {processo.status === "Concluido"
-                              ? "Concluído"
-                              : processo.status}
+                          <span className={`badge ${badgeStatus(processo.status)}`}>
+                            {rotuloStatus(processo.status)}
                           </span>
                         </td>
                       </tr>
@@ -448,7 +470,17 @@ function DashboardContent() {
           <div className="panel-card">
             <h3>Últimos documentos</h3>
             {ultimosDocumentos.length === 0 ? (
-              <div className="empty-state">Nenhum documento enviado ainda.</div>
+              <div className="empty-state">
+                Nenhum documento enviado ainda.
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  style={{ marginTop: 12 }}
+                  onClick={() => openPanel(PANELS.DOCUMENTOS, "novo")}
+                >
+                  Enviar documento
+                </button>
+              </div>
             ) : (
               <div className="list-widget">
                 {ultimosDocumentos.map((doc) => (
