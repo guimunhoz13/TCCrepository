@@ -78,10 +78,26 @@ Notificações): `lembrete_audiencia` e `antecedencia_audiencia` para
 compromissos, `lembrete_prazo` para prazos, e `resumo_semanal` para o
 resumo das segundas.
 
-Exemplo de agendamento no cron, todo dia às 7h:
+Há também a consulta automática ao DataJud, que percorre os processos
+ativos, importa os andamentos novos e avisa quem optou por receber:
+
+```bash
+cd backend && python manage.py sincronizar_datajud
+```
+
+Ela é um comando separado de propósito: cada processo é uma chamada HTTP a
+um serviço externo, então a rotina é lenta e sujeita a falhas que não devem
+atrapalhar o envio dos lembretes. Opções: `--dry-run`, `--limite N`
+(máximo de processos por execução, padrão 50) e `--intervalo-horas N`
+(não reconsulta um processo visto há menos de N horas, padrão 12).
+Processos concluídos ou arquivados não são consultados, e a rotina exige
+`DATAJUD_API_KEY` configurada.
+
+Exemplo de agendamento no cron — lembretes às 7h, sincronização às 5h:
 
 ```cron
 0 7 * * * cd /caminho/para/backend && /caminho/para/python manage.py enviar_lembretes
+0 5 * * * cd /caminho/para/backend && /caminho/para/python manage.py sincronizar_datajud
 ```
 
 Sem SMTP configurado (`EMAIL_HOST_USER`/`EMAIL_HOST_PASSWORD`), o Django cai

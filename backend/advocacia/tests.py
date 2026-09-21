@@ -3291,3 +3291,180 @@ class ConsultaDataJudAPITestCase(APITestCase):
         )
 
         self.assertEqual(resposta.status_code, status.HTTP_404_NOT_FOUND)
+
+
+class SincronizacaoDataJudTestCase(TestCase):
+    """Testa a rotina agendada que consulta o DataJud e avisa sobre andamentos."""
+
+    def setUp(self):
+        self.escritorio = _criar_escritorio()
+        self.usuario = _criar_usuario(self.escritorio)
+        PreferenciasUsuario.objects.create(
+            usuario=self.usuario, notificacao_movimentacao=True
+        )
+        cliente = Cliente.objects.create(
+            escritorio=self.escritorio,
+            nome="Cliente Sync",
+            cpf="10101010101",
+            email="cliente.sync@teste.com",
+            telefone="11911112222",
+            endereco="Rua S",
+        )
+        usuario_advogado = Usuario.objects.create(
+            escritorio=self.escritorio,
+            nome="Advogado Sync",
+            email="advogado.sync@teste.com",
+            senha=make_password("senha12345"),
+            tipo_usuario="advogado",
+        )
+        self.advogado = Advogado.objects.create(
+            escritorio=self.escritorio,
+            usuario=usuario_advogado,
+            oab="787878/SP",
+            especialidade="Civil",
+        )
+        self.processo = Processo.objects.create(
+            escritorio=self.escritorio,
+            numero_processo="0005678-90.2026.8.26.0032",
+            titulo="Processo Sync",
+            descricao="Descrição.",
+            cliente=cliente,
+            advogado=self.advogado,
+            status="Em andamento",
+        )
+
+    def _processo_extra(self, numero, status):
+        return Processo.objects.create(
+            escritorio=self.escritorio,
+            numero_processo=numero,
+            titulo=f"Processo {status}",
+            descricao="Descrição.",
+            cliente=self.processo.cliente,
+            advogado=self.advogado,
+            status=status,
+        )
+
+    @override_settings(DATAJUD_API_KEY="chave-de-teste")
+    def test_importa_andamentos_e_avisa(self):
+        with patch("advocacia.datajud._chamar_api", return_value=_resposta_datajud()):
+            call_command("sincronizar_datajud")
+
+        self.assertEqual(Movimentacao.objects.filter(processo=self.processo).count(), 2)
+        avisos = [m for m in mail.outbox if "Andamento novo" in m.subject]
+        self.assertEqual(len(avisos), 1)
+        self.assertEqual(avisos[0].to, [self.usuario.email])
+
+    @override_settings(DATAJUD_API_KEY="chave-de-teste")
+    def test_sem_andamento_novo_nao_avisa(self):
+        with patch("advocacia.datajud._chamar_api", return_value=_resposta_datajud()):
+            call_command("sincronizar_datajud")
+            Processo.objects.update(datajud_sincronizado_em=None)
+            mail.outbox.clear()
+            call_command("sincronizar_datajud")
+
+        self.assertEqual(len(mail.outbox), 0)
+        self.assertEqual(Movimentacao.objects.filter(processo=self.processo).count(), 2)
+
+    @override_settings(DATAJUD_API_KEY="chave-de-teste")
+    def test_processo_concluido_nao_e_consultado(self):
+        Processo.objects.filter(pk=self.processo.pk).update(status="Concluido")
+
+        with patch("advocacia.datajud._chamar_api", return_value=_resposta_datajud()) as chamada:
+            call_command("sincronizar_datajud")
+
+        chamada.assert_not_called()
+
+    @override_settings(DATAJUD_API_KEY="chave-de-teste")
+    def test_processo_suspenso_continua_sendo_acompanhado(self):
+        Processo.objects.filter(pk=self.processo.pk).update(status="Suspenso")
+
+        with patch("advocacia.datajud._chamar_api", return_value=_resposta_datajud()) as chamada:
+            call_command("sincronizar_datajud")
+
+        self.assertTrue(chamada.called)
+
+    @override_settings(DATAJUD_API_KEY="chave-de-teste")
+    def test_nao_reconsulta_antes_do_intervalo(self):
+        Processo.objects.filter(pk=self.processo.pk).update(
+            datajud_sincronizado_em=timezone.now()
+        )
+
+        with patch("advocacia.datajud._chamar_api", return_value=_resposta_datajud()) as chamada:
+            call_command("sincronizar_datajud", "--intervalo-horas", "12")
+
+        chamada.assert_not_called()
+
+    @override_settings(DATAJUD_API_KEY="chave-de-teste")
+    def test_falha_em_um_processo_nao_interrompe_os_demais(self):
+        """Um número fora do padrão não pode abortar a varredura inteira."""
+        Processo.objects.create(
+            escritorio=self.escritorio,
+            numero_processo="numero-invalido",
+            titulo="Processo com número ruim",
+            descricao="Descrição.",
+            cliente=self.processo.cliente,
+            advogado=self.advogado,
+            status="Em andamento",
+        )
+
+        with patch("advocacia.datajud._chamar_api", return_value=_resposta_datajud()):
+            call_command("sincronizar_datajud")
+
+        # O processo válido foi sincronizado mesmo com o outro falhando.
+        self.processo.refresh_from_db()
+        self.assertIsNotNone(self.processo.datajud_sincronizado_em)
+        self.assertEqual(Movimentacao.objects.filter(processo=self.processo).count(), 2)
+
+    @override_settings(DATAJUD_API_KEY="chave-de-teste")
+    def test_limite_restringe_a_quantidade_por_execucao(self):
+        for indice in range(3):
+            self._processo_extra(f"000000{indice}-90.2026.8.26.0032", "Em andamento")
+
+        with patch("advocacia.datajud._chamar_api", return_value=_resposta_datajud()) as chamada:
+            call_command("sincronizar_datajud", "--limite", "2")
+
+        self.assertEqual(chamada.call_count, 2)
+
+    @override_settings(DATAJUD_API_KEY="chave-de-teste")
+    def test_processo_nunca_sincronizado_tem_prioridade_na_fila(self):
+        """No Postgres, ASC põe NULL por último: sem nulls_first, um processo
+        novo ficaria no fim da fila e o limite nunca o alcançaria."""
+        Processo.objects.filter(pk=self.processo.pk).update(
+            datajud_sincronizado_em=timezone.now() - timezone.timedelta(days=5)
+        )
+        novo_processo = self._processo_extra("0007777-90.2026.8.26.0032", "Em andamento")
+
+        with patch("advocacia.datajud._chamar_api", return_value=_resposta_datajud()):
+            call_command("sincronizar_datajud", "--limite", "1")
+
+        novo_processo.refresh_from_db()
+        self.assertIsNotNone(novo_processo.datajud_sincronizado_em)
+
+    @override_settings(DATAJUD_API_KEY="chave-de-teste")
+    def test_dry_run_nao_consulta_nem_grava(self):
+        with patch("advocacia.datajud._chamar_api") as chamada:
+            call_command("sincronizar_datajud", "--dry-run")
+
+        chamada.assert_not_called()
+        self.processo.refresh_from_db()
+        self.assertIsNone(self.processo.datajud_sincronizado_em)
+
+    @override_settings(DATAJUD_API_KEY="chave-de-teste")
+    def test_preferencia_desligada_nao_recebe_aviso(self):
+        self.usuario.preferencias.notificacao_movimentacao = False
+        self.usuario.preferencias.save()
+
+        with patch("advocacia.datajud._chamar_api", return_value=_resposta_datajud()):
+            call_command("sincronizar_datajud")
+
+        self.assertEqual(len(mail.outbox), 0)
+        self.assertEqual(Movimentacao.objects.filter(processo=self.processo).count(), 2)
+
+    @override_settings(DATAJUD_API_KEY="chave-de-teste")
+    def test_escritorio_inativo_nao_e_sincronizado(self):
+        Escritorio.objects.filter(pk=self.escritorio.pk).update(ativo=False)
+
+        with patch("advocacia.datajud._chamar_api", return_value=_resposta_datajud()) as chamada:
+            call_command("sincronizar_datajud")
+
+        chamada.assert_not_called()

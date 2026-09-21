@@ -53,6 +53,7 @@ const PREF_DEFAULT = {
   notificacao_novo_processo: true,
   notificacao_novo_documento: true,
   notificacao_status_processo: false,
+  notificacao_movimentacao: true,
   notificacao_novo_cliente: false,
   lembrete_audiencia: true,
   antecedencia_audiencia: 2,
@@ -282,6 +283,7 @@ function NotificacoesTab({ preferencias, setDados, feedback }) {
       <ToggleRow label="Novo processo cadastrado" checked={p.notificacao_novo_processo} onChange={(v) => salvar({ notificacao_novo_processo: v })}/>
       <ToggleRow label="Novo documento anexado" checked={p.notificacao_novo_documento} onChange={(v) => salvar({ notificacao_novo_documento: v })}/>
       <ToggleRow label="Alteração de status em processo" checked={p.notificacao_status_processo} onChange={(v) => salvar({ notificacao_status_processo: v })}/>
+      <ToggleRow label="Andamento novo encontrado no tribunal" checked={p.notificacao_movimentacao} onChange={(v) => salvar({ notificacao_movimentacao: v })}/>
       <ToggleRow label="Novo cliente cadastrado" checked={p.notificacao_novo_cliente} onChange={(v) => salvar({ notificacao_novo_cliente: v })}/>
     </Section>
     <Section title="Prazos e audiências">

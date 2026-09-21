@@ -572,6 +572,7 @@ class PreferenciasUsuarioSerializer(serializers.ModelSerializer):
             "notificacao_novo_processo",
             "notificacao_novo_documento",
             "notificacao_status_processo",
+            "notificacao_movimentacao",
             "notificacao_novo_cliente",
             "lembrete_audiencia",
             "antecedencia_audiencia",
