@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { useTheme } from "@/contexts/ThemeContext";
+import { corStatus, ordemStatus, rotuloStatus } from "@/lib/statusProcesso";
 import {
   PieChart,
   Pie,
@@ -12,11 +14,6 @@ import {
   YAxis,
   Tooltip,
 } from "recharts";
-
-// Paleta categórica validada (contraste + distinção sob daltonismo) para o
-// fundo escuro do painel — não os tokens de marca (--accent etc.), que são
-// usados nos elementos interativos e ficariam confusos numa legenda.
-const CORES = ["#4c7fb8", "#c2603a", "#3f8f6b", "#8a7bb8"];
 
 function CustomTooltip({ active, payload }) {
   if (!active || !payload?.length) return null;
@@ -43,11 +40,22 @@ function CustomTooltip({ active, payload }) {
 export default function ChartsSection({ processosPorStatus = [], totais = {} }) {
   const [fatiaAtiva, setFatiaAtiva] = useState(null);
   const [barraAtiva, setBarraAtiva] = useState(null);
+  const { theme } = useTheme();
 
-  const pieData = processosPorStatus.map((item) => ({
-    name: item.status === "Concluido" ? "Concluído" : item.status,
-    value: item.total,
-  }));
+  // A cor sai do status, nunca da posição na lista: um escritório sem
+  // processos suspensos não pode fazer "Arquivado" herdar outra cor. A
+  // ordem é a mesma da legenda e mantém as fatias vizinhas distinguíveis.
+  const pieData = useMemo(
+    () =>
+      [...processosPorStatus]
+        .sort((a, b) => ordemStatus(a.status) - ordemStatus(b.status))
+        .map((item) => ({
+          name: rotuloStatus(item.status),
+          value: item.total,
+          cor: corStatus(item.status, theme),
+        })),
+    [processosPorStatus, theme]
+  );
 
   const barData = [
     { nome: "Clientes", total: totais.clientes || 0 },
@@ -90,7 +98,7 @@ export default function ChartsSection({ processosPorStatus = [], totais = {} }) 
                     {pieData.map((_, index) => (
                       <Cell
                         key={index}
-                        fill={CORES[index % CORES.length]}
+                        fill={pieData[index].cor}
                         opacity={
                           fatiaAtiva === null || fatiaAtiva === index ? 1 : 0.35
                         }
@@ -118,7 +126,7 @@ export default function ChartsSection({ processosPorStatus = [], totais = {} }) 
                 >
                   <span
                     className="chart-legend-dot"
-                    style={{ background: CORES[index % CORES.length] }}
+                    style={{ background: item.cor }}
                   />
                   {item.name}: {item.value}
                 </button>
