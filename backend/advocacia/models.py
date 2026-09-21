@@ -2,6 +2,7 @@ from decimal import Decimal
 
 from django.core.validators import FileExtensionValidator, MinValueValidator
 from django.db import models
+from django.utils import timezone
 
 from .validators import validar_tamanho_documento, validar_tamanho_imagem
 
@@ -276,6 +277,10 @@ class Processo(models.Model):
 
     criado_em = models.DateTimeField(auto_now_add=True)
 
+    # Última consulta bem-sucedida ao DataJud, para a interface mostrar se a
+    # informação está fresca.
+    datajud_sincronizado_em = models.DateTimeField(null=True, blank=True)
+
     class Meta:
         unique_together = [["escritorio", "numero_processo"]]
 
@@ -305,8 +310,27 @@ class Movimentacao(models.Model):
         related_name="movimentacoes_criadas",
     )
 
+    ORIGENS = (
+        ("manual", "Lançada no sistema"),
+        ("datajud", "Importada do DataJud"),
+    )
+
     descricao = models.TextField()
-    data_movimentacao = models.DateTimeField(auto_now_add=True)
+
+    # Era auto_now_add, o que impedia gravar a data real de um andamento
+    # vindo do tribunal. Com default, o lançamento manual continua caindo
+    # em "agora" e a importação preserva a data de origem.
+    data_movimentacao = models.DateTimeField(default=timezone.now)
+
+    origem = models.CharField(max_length=10, choices=ORIGENS, default="manual")
+
+    # Chave do movimento no tribunal, para não importar o mesmo andamento
+    # duas vezes. Fica vazio nos lançamentos manuais.
+    identificador_externo = models.CharField(max_length=120, blank=True, default="")
+
+    class Meta:
+        ordering = ["-data_movimentacao"]
+        indexes = [models.Index(fields=["processo", "identificador_externo"])]
 
     def __str__(self):
         return f"Movimentação - {self.processo.titulo}"

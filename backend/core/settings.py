@@ -45,6 +45,11 @@ ALLOWED_HOSTS = [
 # enviados por e-mail.
 FRONTEND_URL = os.environ.get('FRONTEND_URL', 'http://localhost:3000')
 
+# Chave pública da API do DataJud (CNJ), divulgada pelo próprio CNJ.
+# Sem ela, a consulta de processo é recusada com uma mensagem explicativa.
+DATAJUD_API_KEY = os.getenv("DATAJUD_API_KEY", "")
+DATAJUD_URL_BASE = os.getenv("DATAJUD_URL_BASE", "")
+
 
 # APPLICATIONS
 

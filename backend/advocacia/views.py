@@ -12,6 +12,7 @@ logger = logging.getLogger(__name__)
 
 from .feriados import calcular_prazo
 from .modelos_documento import VARIAVEIS_DISPONIVEIS, montar_contexto, preencher
+from .datajud import ErroDataJud, consultar_processo, importar_movimentacoes
 from .notificacoes import notificar_escritorio
 
 from rest_framework import status, viewsets
@@ -987,6 +988,50 @@ class ProcessoViewSet(
             ],
             autor=self.get_usuario(),
         )
+
+    @action(detail=True, methods=["post"], url_path="consultar-datajud")
+    def consultar_datajud(self, request, pk=None):
+        """Consulta o processo na API pública do CNJ e importa os andamentos novos."""
+
+        processo = self.get_object()
+
+        try:
+            dados = consultar_processo(processo.numero_processo)
+        except ErroDataJud as erro:
+            return Response({"detail": str(erro)}, status=status.HTTP_400_BAD_REQUEST)
+
+        if dados is None:
+            return Response(
+                {"detail": "O tribunal não retornou nenhum processo com esse número."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        importadas, ignoradas = importar_movimentacoes(processo, dados["movimentos"])
+
+        processo.datajud_sincronizado_em = timezone.now()
+        processo.save(update_fields=["datajud_sincronizado_em"])
+
+        registrar_auditoria(
+            request,
+            "edicao",
+            processo,
+            descricao=f"Consulta ao DataJud: {importadas} movimentação(ões) importada(s).",
+            escritorio=processo.escritorio,
+        )
+
+        return Response({
+            "capa": {
+                "classe": dados["classe"],
+                "orgao_julgador": dados["orgao_julgador"],
+                "tribunal": dados["tribunal"],
+                "grau": dados["grau"],
+                "data_ajuizamento": dados["data_ajuizamento"],
+                "ultima_atualizacao": dados["ultima_atualizacao"],
+            },
+            "movimentacoes_importadas": importadas,
+            "movimentacoes_ignoradas": ignoradas,
+            "sincronizado_em": processo.datajud_sincronizado_em,
+        })
 
     def perform_update(self, serializer):
         self._verificar_numero_processo_duplicado(serializer)

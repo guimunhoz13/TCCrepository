@@ -18,6 +18,7 @@ import {
   getVariaveisDocumento,
   gerarDocumento,
   createModeloDocumento,
+  consultarDataJud,
 } from "../api";
 
 describe("normalizarLista", () => {
@@ -451,5 +452,28 @@ describe("modelos de documento", () => {
     const [url, opcoes] = global.fetch.mock.calls[0];
     expect(url).toMatch(/\/modelos-documento\/$/);
     expect(JSON.parse(opcoes.body).conteudo).toBe("{{cliente.nome}}");
+  });
+});
+
+
+describe("consulta ao DataJud", () => {
+  beforeEach(() => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ movimentacoes_importadas: 2, movimentacoes_ignoradas: 0 }),
+    });
+  });
+
+  afterEach(() => {
+    delete global.fetch;
+  });
+
+  test("consultarDataJud faz POST no endpoint do processo", async () => {
+    const dados = await consultarDataJud(12);
+
+    const [url, opcoes] = global.fetch.mock.calls[0];
+    expect(url).toMatch(/\/processos\/12\/consultar-datajud\/$/);
+    expect(opcoes.method).toBe("POST");
+    expect(dados.movimentacoes_importadas).toBe(2);
   });
 });
