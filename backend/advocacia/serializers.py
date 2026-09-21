@@ -26,6 +26,7 @@ from .models import (
     Parcela,
     ApontamentoHora,
     Despesa,
+    Tarefa,
     ModeloDocumento,
     PreferenciasUsuario,
     ConfiguracaoEscritorio,
@@ -574,6 +575,7 @@ class PreferenciasUsuarioSerializer(serializers.ModelSerializer):
             "notificacao_status_processo",
             "notificacao_movimentacao",
             "notificacao_novo_cliente",
+            "notificacao_tarefa_atribuida",
             "lembrete_audiencia",
             "antecedencia_audiencia",
             "lembrete_prazo",
@@ -619,6 +621,81 @@ class ConfiguracaoEscritorioSerializer(serializers.ModelSerializer):
             "atualizado_em",
         ]
         read_only_fields = ["atualizado_em"]
+
+
+class TarefaSerializer(serializers.ModelSerializer):
+
+    numero_processo = serializers.CharField(source="processo.numero_processo", read_only=True)
+    cliente_nome = serializers.CharField(source="processo.cliente.nome", read_only=True)
+    responsavel_nome = serializers.CharField(source="responsavel.nome", read_only=True)
+    criado_por_nome = serializers.CharField(source="criado_por.nome", read_only=True)
+    status_display = serializers.CharField(source="get_status_display", read_only=True)
+    prioridade_display = serializers.CharField(source="get_prioridade_display", read_only=True)
+    atrasada = serializers.BooleanField(read_only=True)
+
+    class Meta:
+        model = Tarefa
+        fields = [
+            "id",
+            "titulo",
+            "descricao",
+            "processo",
+            "numero_processo",
+            "cliente_nome",
+            "responsavel",
+            "responsavel_nome",
+            "status",
+            "status_display",
+            "prioridade",
+            "prioridade_display",
+            "prazo",
+            "atrasada",
+            "concluida_em",
+            "criado_por",
+            "criado_por_nome",
+            "criado_em",
+            "atualizado_em",
+        ]
+        read_only_fields = [
+            "id",
+            "numero_processo",
+            "cliente_nome",
+            "responsavel_nome",
+            "status_display",
+            "prioridade_display",
+            "atrasada",
+            # A data de conclusão é gravada pela view quando o status muda,
+            # não informada por quem edita.
+            "concluida_em",
+            "criado_por",
+            "criado_por_nome",
+            "criado_em",
+            "atualizado_em",
+        ]
+
+    def validate_titulo(self, valor):
+        valor = (valor or "").strip()
+        if not valor:
+            raise serializers.ValidationError("Informe um título para a tarefa.")
+        return valor
+
+    def validate_responsavel(self, usuario):
+        escritorio = self.context.get("escritorio")
+        if escritorio and usuario.escritorio_id != escritorio.id:
+            raise serializers.ValidationError(
+                "O responsável precisa ser um usuário do próprio escritório."
+            )
+        if not usuario.ativo:
+            raise serializers.ValidationError(
+                "Não é possível atribuir uma tarefa a um usuário inativo."
+            )
+        return usuario
+
+    def validate_processo(self, processo):
+        escritorio = self.context.get("escritorio")
+        if processo and escritorio and processo.escritorio_id != escritorio.id:
+            raise serializers.ValidationError("Processo não encontrado neste escritório.")
+        return processo
 
 
 class ApontamentoHoraSerializer(serializers.ModelSerializer):

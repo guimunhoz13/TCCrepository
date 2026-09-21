@@ -44,6 +44,7 @@ from .emails import (
     montar_email_verificacao,
     montar_email_relatorio_cliente,
     montar_email_relatorio_processo,
+    montar_email_aviso,
 )
 
 from .models import (
@@ -59,6 +60,8 @@ from .models import (
     Parcela,
     ApontamentoHora,
     Despesa,
+    Tarefa,
+    ordenacao_de_trabalho,
     ModeloDocumento,
     SessaoUso,
     JANELA_SESSAO_MINUTOS,
@@ -87,6 +90,7 @@ from .serializers import (
     PreferenciasUsuarioSerializer,
     ApontamentoHoraSerializer,
     DespesaSerializer,
+    TarefaSerializer,
     ModeloDocumentoSerializer,
     ConfiguracaoEscritorioSerializer,
     RegistroAuditoriaSerializer,
@@ -2166,6 +2170,133 @@ class DespesaViewSet(
 
         self._salvar(serializer, escritorio=escritorio, criado_por=self.get_usuario())
         registrar_auditoria(self.request, "criacao", serializer.instance, escritorio=escritorio)
+
+
+# =========================================================
+# TAREFAS
+# =========================================================
+
+def _avisar_responsavel(request, tarefa, escritorio, autor):
+    """Avisa por e-mail quem acabou de receber a tarefa.
+
+    Atribuir uma tarefa sem avisar é o mesmo que não atribuir. Quem se
+    atribui uma tarefa não recebe aviso de si mesmo.
+    """
+
+    responsavel = tarefa.responsavel
+
+    if autor is not None and responsavel.pk == autor.pk:
+        return
+    if not responsavel.email or not responsavel.ativo:
+        return
+
+    preferencias = getattr(responsavel, "preferencias", None)
+    if preferencias is not None and not preferencias.notificacao_tarefa_atribuida:
+        return
+
+    linhas = [("Tarefa", tarefa.titulo), ("Prioridade", tarefa.get_prioridade_display())]
+    if tarefa.prazo:
+        linhas.append(("Prazo", tarefa.prazo.strftime("%d/%m/%Y")))
+    if tarefa.processo_id:
+        linhas.append(("Processo", tarefa.processo.numero_processo))
+    if autor is not None:
+        linhas.append(("Atribuída por", autor.nome))
+
+    assunto, corpo_html, corpo_texto = montar_email_aviso(
+        responsavel.nome,
+        escritorio.nome,
+        "Nova tarefa atribuída a você",
+        "Uma tarefa foi atribuída a você no sistema.",
+        linhas,
+    )
+
+    try:
+        enviar_email(responsavel.email, assunto, corpo_html, corpo_texto)
+    except Exception:
+        # O aviso nunca pode derrubar a criação da tarefa: sem fila de
+        # tarefas no projeto, o envio acontece dentro da própria requisição.
+        logger.exception("Falha ao avisar %s sobre a tarefa %s", responsavel.email, tarefa.id)
+
+
+class TarefaViewSet(
+    EscritorioScopedMixin,
+    viewsets.ModelViewSet
+):
+
+    queryset = Tarefa.objects.all()
+
+    serializer_class = TarefaSerializer
+
+    permission_classes = [IsAuthenticated]
+
+    def get_serializer_context(self):
+        contexto = super().get_serializer_context()
+        contexto["escritorio"] = self.get_escritorio()
+        return contexto
+
+    def get_queryset(self):
+        queryset = ordenacao_de_trabalho(
+            super()
+            .get_queryset()
+            .select_related("processo", "processo__cliente", "responsavel", "criado_por")
+        )
+
+        responsavel = self.request.query_params.get("responsavel")
+        if responsavel == "eu":
+            usuario = self.get_usuario()
+            queryset = queryset.filter(responsavel=usuario) if usuario else queryset.none()
+        elif responsavel:
+            queryset = queryset.filter(responsavel_id=responsavel)
+
+        processo = self.request.query_params.get("processo")
+        if processo:
+            queryset = queryset.filter(processo_id=processo)
+
+        status_filtro = self.request.query_params.get("status")
+        if status_filtro == "abertas":
+            queryset = queryset.exclude(status__in=Tarefa.STATUS_ENCERRADOS)
+        elif status_filtro:
+            queryset = queryset.filter(status=status_filtro)
+
+        prioridade = self.request.query_params.get("prioridade")
+        if prioridade:
+            queryset = queryset.filter(prioridade=prioridade)
+
+        return queryset
+
+    def perform_create(self, serializer):
+        escritorio = self.get_escritorio()
+
+        if not escritorio:
+            raise PermissionDenied("Escritório não identificado.")
+
+        autor = self.get_usuario()
+        self._salvar(serializer, escritorio=escritorio, criado_por=autor)
+        registrar_auditoria(self.request, "criacao", serializer.instance, escritorio=escritorio)
+        _avisar_responsavel(self.request, serializer.instance, escritorio, autor)
+
+    def perform_update(self, serializer):
+        escritorio = self.get_escritorio()
+        tarefa = serializer.instance
+        status_anterior = tarefa.status
+        responsavel_anterior_id = tarefa.responsavel_id
+
+        novo_status = serializer.validated_data.get("status", status_anterior)
+
+        extras = {}
+        if novo_status == "concluida" and status_anterior != "concluida":
+            extras["concluida_em"] = timezone.now()
+        elif novo_status != "concluida" and status_anterior == "concluida":
+            # Tarefa reaberta: a data de conclusão anterior não vale mais.
+            extras["concluida_em"] = None
+
+        self._salvar(serializer, **extras)
+        registrar_auditoria(self.request, "edicao", serializer.instance, escritorio=escritorio)
+
+        if serializer.instance.responsavel_id != responsavel_anterior_id:
+            _avisar_responsavel(
+                self.request, serializer.instance, escritorio, self.get_usuario()
+            )
 
 
 # =========================================================

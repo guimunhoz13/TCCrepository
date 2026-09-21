@@ -31,6 +31,7 @@ import AgendaPanel from "@/components/panels/AgendaPanel";
 import DocumentosPanel from "@/components/panels/DocumentosPanel";
 import ContratosPanel from "@/components/panels/ContratosPanel";
 import HorasPanel from "@/components/panels/HorasPanel";
+import TarefasPanel from "@/components/panels/TarefasPanel";
 import ModelosPanel from "@/components/panels/ModelosPanel";
 import ContatoPanel from "@/components/panels/ContatoPanel";
 import ConfigPanel from "@/components/panels/ConfigPanel";
@@ -58,6 +59,19 @@ function formatarPrazo(dataISO) {
   if (diffDias <= 0) return "Vence hoje";
   if (diffDias === 1) return "Em 1 dia";
   return `Em ${diffDias} dias`;
+}
+
+function formatarPrazoTarefa(prazo) {
+  // "2026-09-21" montado com hora zero local: sem isso o fuso de Brasília
+  // mostraria o dia anterior.
+  const data = new Date(`${prazo}T00:00:00`);
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+  const dias = Math.round((data - hoje) / 86400000);
+  if (dias < 0) return `Venceu ${data.toLocaleDateString("pt-BR")}`;
+  if (dias === 0) return "Vence hoje";
+  if (dias === 1) return "Vence amanhã";
+  return `Vence em ${dias} dias`;
 }
 
 function statusBadge(status) {
@@ -95,6 +109,7 @@ function DashboardContent() {
     agenda,
     clientes,
     documentos,
+    tarefas,
     carregando,
     erro,
     atualizadoEm,
@@ -129,6 +144,10 @@ function DashboardContent() {
   }, [atualizadoEm]);
 
   const totais = stats?.totais || {};
+
+  // A lista já vem do back-end filtrada (minhas, em aberto) e ordenada por
+  // prioridade e prazo; aqui só se corta o que cabe no cartão.
+  const minhasTarefas = useMemo(() => tarefas.slice(0, 5), [tarefas]);
 
   const proximosCompromissos = useMemo(() => {
     const agora = Date.now();
@@ -333,6 +352,48 @@ function DashboardContent() {
               </div>
             )}
           </div>
+
+          <div className="panel-card">
+            <h3>Minhas tarefas</h3>
+            {minhasTarefas.length === 0 ? (
+              <div className="empty-state">Nenhuma tarefa em aberto para você.</div>
+            ) : (
+              <div className="list-widget">
+                {minhasTarefas.map((tarefa) => (
+                  <div
+                    key={tarefa.id}
+                    className={`compromisso-card ${tarefa.atrasada ? "urgente" : ""}`}
+                  >
+                    <div>
+                      <h4 style={{ marginBottom: 4 }}>{tarefa.titulo}</h4>
+                      <div className="compromisso-meta">
+                        {tarefa.numero_processo && <span>Proc. {tarefa.numero_processo}</span>}
+                        <span>{tarefa.prazo ? formatarPrazoTarefa(tarefa.prazo) : "Sem prazo"}</span>
+                      </div>
+                    </div>
+                    <span
+                      className={`badge ${tarefa.atrasada ? "badge-danger" : "badge-muted"}`}
+                    >
+                      {tarefa.atrasada ? (
+                        <>
+                          <AlertTriangle size={12} /> Atrasada
+                        </>
+                      ) : (
+                        tarefa.prioridade_display
+                      )}
+                    </span>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  className="stat-card-link"
+                  onClick={() => openPanel(PANELS.TAREFAS, "minhas")}
+                >
+                  Ver todas <ArrowUpRight size={13} />
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
         <div style={{ marginTop: 18 }}>
@@ -430,6 +491,7 @@ function DashboardContent() {
       <DocumentosPanel />
       <ContratosPanel />
       <HorasPanel />
+      <TarefasPanel />
       <ModelosPanel />
       <ContatoPanel />
       <ConfigPanel />

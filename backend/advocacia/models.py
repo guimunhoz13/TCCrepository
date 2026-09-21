@@ -1,6 +1,7 @@
 from decimal import Decimal
 
 from django.core.validators import FileExtensionValidator, MinValueValidator
+from django.db.models import Case, F, IntegerField, Value, When
 from django.db import models
 from django.utils import timezone
 
@@ -473,6 +474,130 @@ class Parcela(models.Model):
         return f"Parcela {self.numero} — {self.contrato}"
 
 
+class Tarefa(models.Model):
+    """Uma unidade de trabalho com dono, prazo e acompanhamento.
+
+    A Agenda guarda compromissos e prazos com data e hora marcadas —
+    audiência, protocolo, vencimento. Não dá conta do trabalho interno do
+    escritório: "levantar jurisprudência", "ligar para a testemunha",
+    "revisar a minuta". Esse trabalho tem responsável e tem estado, e é
+    isso que a Tarefa representa.
+    """
+
+    STATUS = (
+        ("aberta", "Aberta"),
+        ("em_andamento", "Em andamento"),
+        ("concluida", "Concluída"),
+        ("cancelada", "Cancelada"),
+    )
+
+    # Uma vez cancelada ou concluída, a tarefa sai da fila de trabalho: não
+    # conta como atrasada nem aparece no que há para fazer.
+    STATUS_ENCERRADOS = ("concluida", "cancelada")
+
+    PRIORIDADES = (
+        ("baixa", "Baixa"),
+        ("media", "Média"),
+        ("alta", "Alta"),
+    )
+
+    escritorio = models.ForeignKey(
+        Escritorio,
+        on_delete=models.CASCADE,
+        related_name="tarefas",
+    )
+
+    # Nem toda tarefa nasce de um processo: há trabalho administrativo que
+    # não se prende a nenhum.
+    processo = models.ForeignKey(
+        Processo,
+        on_delete=models.CASCADE,
+        related_name="tarefas",
+        null=True,
+        blank=True,
+    )
+
+    titulo = models.CharField(max_length=200)
+    descricao = models.TextField(blank=True, default="")
+
+    # O responsável é o ponto da funcionalidade: tarefa sem dono é tarefa
+    # que ninguém faz. PROTECT porque apagar o usuário apagaria o histórico
+    # de quem fez o quê.
+    responsavel = models.ForeignKey(
+        Usuario,
+        on_delete=models.PROTECT,
+        related_name="tarefas",
+    )
+
+    status = models.CharField(max_length=20, choices=STATUS, default="aberta")
+    prioridade = models.CharField(max_length=10, choices=PRIORIDADES, default="media")
+    prazo = models.DateField(null=True, blank=True)
+
+    concluida_em = models.DateTimeField(null=True, blank=True)
+
+    criado_por = models.ForeignKey(
+        Usuario,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="tarefas_criadas",
+    )
+
+    criado_em = models.DateTimeField(auto_now_add=True)
+    atualizado_em = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Tarefa"
+        verbose_name_plural = "Tarefas"
+        # Ordem de fallback. A ordem que interessa a quem trabalha (aberta
+        # antes de encerrada, alta antes de baixa) não cabe aqui porque
+        # status e prioridade são texto e ordenariam em ordem alfabética —
+        # "media" viria antes de "alta". Quem precisa dela usa
+        # ordenacao_de_trabalho().
+        ordering = ["-criado_em"]
+
+    @property
+    def atrasada(self):
+        if self.status in self.STATUS_ENCERRADOS or not self.prazo:
+            return False
+        return self.prazo < timezone.localdate()
+
+    def __str__(self):
+        return self.titulo
+
+
+def ordenacao_de_trabalho(queryset):
+    """Ordena tarefas pela urgência de quem vai executá-las.
+
+    Primeiro o que ainda está em aberto, depois a prioridade mais alta,
+    depois o prazo mais próximo. Tarefa sem prazo fica no fim: não é
+    urgente só por não ter data.
+
+    A ordenação precisa ser anotada porque status e prioridade são campos
+    de texto — ordená-los direto daria a ordem alfabética, em que "media"
+    vem antes de "alta" e "cancelada" antes de "em_andamento".
+    """
+
+    return queryset.annotate(
+        _encerrada=Case(
+            When(status__in=Tarefa.STATUS_ENCERRADOS, then=Value(1)),
+            default=Value(0),
+            output_field=IntegerField(),
+        ),
+        _peso_prioridade=Case(
+            When(prioridade="alta", then=Value(0)),
+            When(prioridade="media", then=Value(1)),
+            default=Value(2),
+            output_field=IntegerField(),
+        ),
+    ).order_by(
+        "_encerrada",
+        "_peso_prioridade",
+        F("prazo").asc(nulls_last=True),
+        "-criado_em",
+    )
+
+
 class PreferenciasUsuario(models.Model):
     TEMAS = (("light", "Claro"), ("dark", "Escuro"))
     DENSIDADES = (("comfortable", "Confortável"), ("compact", "Compacta"))
@@ -490,6 +615,9 @@ class PreferenciasUsuario(models.Model):
     # Aviso de andamento novo trazido da sincronização com o DataJud.
     notificacao_movimentacao = models.BooleanField(default=True)
     notificacao_novo_cliente = models.BooleanField(default=False)
+    # Aviso para quem recebeu uma tarefa: atribuir sem avisar é o mesmo
+    # que não atribuir.
+    notificacao_tarefa_atribuida = models.BooleanField(default=True)
     lembrete_audiencia = models.BooleanField(default=True)
     antecedencia_audiencia = models.PositiveSmallIntegerField(default=2)
     lembrete_prazo = models.BooleanField(default=True)

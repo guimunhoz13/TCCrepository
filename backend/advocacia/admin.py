@@ -12,6 +12,7 @@ from .models import (
     Parcela,
     ApontamentoHora,
     Despesa,
+    Tarefa,
     ModeloDocumento,
     NotificacaoEnviada,
     SessaoUso,
@@ -415,6 +416,35 @@ class ApontamentoHoraAdmin(admin.ModelAdmin):
 
     ordering = (
         '-data',
+    )
+
+
+@admin.register(Tarefa)
+class TarefaAdmin(admin.ModelAdmin):
+
+    list_display = (
+        'titulo',
+        'responsavel',
+        'status',
+        'prioridade',
+        'prazo',
+        'processo',
+    )
+
+    search_fields = (
+        'titulo',
+        'descricao',
+        'processo__numero_processo',
+        'responsavel__nome',
+    )
+
+    list_filter = (
+        'status',
+        'prioridade',
+    )
+
+    ordering = (
+        '-criado_em',
     )
 
 

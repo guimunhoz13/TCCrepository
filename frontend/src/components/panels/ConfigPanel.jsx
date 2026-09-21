@@ -55,6 +55,7 @@ const PREF_DEFAULT = {
   notificacao_status_processo: false,
   notificacao_movimentacao: true,
   notificacao_novo_cliente: false,
+  notificacao_tarefa_atribuida: true,
   lembrete_audiencia: true,
   antecedencia_audiencia: 2,
   lembrete_prazo: true,
@@ -285,6 +286,7 @@ function NotificacoesTab({ preferencias, setDados, feedback }) {
       <ToggleRow label="Alteração de status em processo" checked={p.notificacao_status_processo} onChange={(v) => salvar({ notificacao_status_processo: v })}/>
       <ToggleRow label="Andamento novo encontrado no tribunal" checked={p.notificacao_movimentacao} onChange={(v) => salvar({ notificacao_movimentacao: v })}/>
       <ToggleRow label="Novo cliente cadastrado" checked={p.notificacao_novo_cliente} onChange={(v) => salvar({ notificacao_novo_cliente: v })}/>
+      <ToggleRow label="Tarefa atribuída a mim" checked={p.notificacao_tarefa_atribuida} onChange={(v) => salvar({ notificacao_tarefa_atribuida: v })}/>
     </Section>
     <Section title="Prazos e audiências">
       <ToggleRow label="Lembrete de audiência" checked={p.lembrete_audiencia} onChange={(v) => salvar({ lembrete_audiencia: v })}/>
