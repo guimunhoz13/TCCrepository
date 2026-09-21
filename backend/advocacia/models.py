@@ -487,6 +487,8 @@ class PreferenciasUsuario(models.Model):
     notificacao_novo_processo = models.BooleanField(default=True)
     notificacao_novo_documento = models.BooleanField(default=True)
     notificacao_status_processo = models.BooleanField(default=False)
+    # Aviso de andamento novo trazido da sincronização com o DataJud.
+    notificacao_movimentacao = models.BooleanField(default=True)
     notificacao_novo_cliente = models.BooleanField(default=False)
     lembrete_audiencia = models.BooleanField(default=True)
     antecedencia_audiencia = models.PositiveSmallIntegerField(default=2)

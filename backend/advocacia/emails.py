@@ -314,3 +314,35 @@ def montar_email_aviso(nome, escritorio_nome, titulo, resumo, linhas):
     corpo_texto = f"{resumo}\n" + "\n".join(f"{r}: {v}" for r, v in linhas)
 
     return assunto, _casca_html(escritorio_nome, titulo, resumo, corpo_html), corpo_texto
+
+
+def montar_email_movimentacoes(nome, escritorio_nome, processo, movimentos):
+    """Aviso de que o tribunal registrou andamentos novos em um processo."""
+
+    corpo_html = f"""
+      <p style="font-size:0.95rem; color:#1c2333; margin-top:0;">
+        Olá, {nome}. A consulta automática encontrou
+        <strong>{len(movimentos)} andamento(s) novo(s)</strong> no processo abaixo.
+      </p>
+      <div style="border:1px solid #e5decf; border-left:3px solid #a2712e; border-radius:10px; padding:14px 16px; margin:16px 0;">
+        <div style="font-size:1.02rem; font-weight:600; color:#1c2333;">{processo.numero_processo}</div>
+        <div style="font-size:0.86rem; color:#4b5468; margin-top:4px;">{processo.titulo}</div>
+      </div>
+      {_tabela_html(
+          ["Data", "Andamento"],
+          [[_formatar_data(m.data_movimentacao, com_hora=True), m.descricao] for m in movimentos],
+          "Nenhum andamento novo.",
+      )}
+      <p style="font-size:0.78rem; color:#80869a;">
+        Os andamentos vêm da base pública do CNJ (DataJud) e não substituem a
+        consulta ao diário oficial.
+      </p>
+    """
+
+    assunto = f"Andamento novo — {processo.numero_processo} — {escritorio_nome}"
+    corpo_texto = (
+        f"{len(movimentos)} andamento(s) novo(s) no processo {processo.numero_processo}.\n"
+        + "\n".join(f"- {m.descricao}" for m in movimentos)
+    )
+
+    return assunto, _casca_html(escritorio_nome, "Andamento novo no processo", "Encontrado pela consulta automática ao DataJud.", corpo_html), corpo_texto
