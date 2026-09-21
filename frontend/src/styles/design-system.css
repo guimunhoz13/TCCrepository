@@ -3092,3 +3092,79 @@ tbody tr {
   max-height: 460px;
   overflow-y: auto;
 }
+
+/* ===== Indicadores financeiros da dashboard ===== */
+
+.financeiro-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.financeiro-card {
+  padding: 16px 18px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.financeiro-card.alerta {
+  border-color: var(--danger);
+  background: var(--danger-soft);
+}
+
+.financeiro-card-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  margin-bottom: 10px;
+}
+
+.financeiro-card.alerta .financeiro-card-icon {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.financeiro-card-rotulo {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.financeiro-card-valor {
+  font-family: "Fraunces", serif;
+  font-size: 1.22rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+
+.financeiro-card.alerta .financeiro-card-valor {
+  color: var(--danger);
+}
+
+.financeiro-card-detalhe {
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+  line-height: 1.4;
+}
+
+@media (max-width: 1200px) {
+  .financeiro-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .financeiro-grid {
+    grid-template-columns: 1fr;
+  }
+}
