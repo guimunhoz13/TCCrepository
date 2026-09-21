@@ -585,3 +585,30 @@ export async function consultarDataJud(processoId) {
     body: JSON.stringify({}),
   });
 }
+
+// ---------------------------------------------------------------
+// Tarefas
+// ---------------------------------------------------------------
+
+export async function getTarefas(filtros = {}) {
+  const busca = new URLSearchParams(
+    Object.entries(filtros).filter(([, valor]) => valor !== "" && valor != null)
+  ).toString();
+  return request(`/tarefas/${busca ? `?${busca}` : ""}`);
+}
+
+export async function createTarefa(data) {
+  return request("/tarefas/", { method: "POST", body: corpoRequisicao(data) });
+}
+
+export async function updateTarefa(id, data) {
+  return request(`/tarefas/${id}/`, { method: "PATCH", body: corpoRequisicao(data) });
+}
+
+export async function deleteTarefa(id) {
+  return request(`/tarefas/${id}/`, { method: "DELETE" });
+}
+
+export async function getUsuarios() {
+  return request("/usuarios/");
+}

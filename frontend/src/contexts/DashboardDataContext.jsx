@@ -7,6 +7,7 @@ import {
   getAgenda,
   getClientes,
   getDocumentos,
+  getTarefas,
   normalizarLista,
 } from "@/services/api";
 
@@ -18,6 +19,7 @@ export function DashboardDataProvider({ children }) {
   const [agenda, setAgenda] = useState([]);
   const [clientes, setClientes] = useState([]);
   const [documentos, setDocumentos] = useState([]);
+  const [tarefas, setTarefas] = useState([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState("");
   const [atualizadoEm, setAtualizadoEm] = useState(null);
@@ -25,19 +27,29 @@ export function DashboardDataProvider({ children }) {
 
   const refresh = useCallback(async () => {
     try {
-      const [dadosStats, dadosProcessos, dadosAgenda, dadosClientes, dadosDocumentos] =
-        await Promise.all([
-          getDashboardStats(),
-          getProcessos(),
-          getAgenda(),
-          getClientes(),
-          getDocumentos(),
-        ]);
+      const [
+        dadosStats,
+        dadosProcessos,
+        dadosAgenda,
+        dadosClientes,
+        dadosDocumentos,
+        dadosTarefas,
+      ] = await Promise.all([
+        getDashboardStats(),
+        getProcessos(),
+        getAgenda(),
+        getClientes(),
+        getDocumentos(),
+        // Só o que está pendente para quem abriu a dashboard: tarefa dos
+        // outros ou já resolvida não é "o que eu tenho para fazer".
+        getTarefas({ responsavel: "eu", status: "abertas" }),
+      ]);
       setStats(dadosStats);
       setProcessos(normalizarLista(dadosProcessos));
       setAgenda(normalizarLista(dadosAgenda));
       setClientes(normalizarLista(dadosClientes));
       setDocumentos(normalizarLista(dadosDocumentos));
+      setTarefas(normalizarLista(dadosTarefas));
       setAtualizadoEm(Date.now());
       setErro("");
       return true;
@@ -64,6 +76,7 @@ export function DashboardDataProvider({ children }) {
         agenda,
         clientes,
         documentos,
+        tarefas,
         carregando,
         erro,
         atualizadoEm,

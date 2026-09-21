@@ -3168,3 +3168,12 @@ tbody tr {
     grid-template-columns: 1fr;
   }
 }
+
+/* Linha de apoio dentro de uma célula de tabela (detalhe de uma tarefa,
+   por exemplo), sem competir com o texto principal. */
+.celula-secundaria {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+  line-height: 1.4;
+}

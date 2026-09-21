@@ -11,6 +11,7 @@ export const PANELS = {
   AGENDA: "agenda",
   CONTRATOS: "contratos",
   HORAS: "horas",
+  TAREFAS: "tarefas",
   MODELOS: "modelos",
   CONTATO: "contato",
   CONFIG: "config",
