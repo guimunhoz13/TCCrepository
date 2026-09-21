@@ -4,6 +4,7 @@ from django.db.models import Count, Q
 from django.http import HttpResponse
 from django.utils import timezone
 from datetime import date
+from decimal import Decimal, ROUND_HALF_UP
 import csv
 import logging
 import secrets
@@ -1232,8 +1233,6 @@ def _somar_meses(data, meses):
 
 
 def _gerar_parcelas(contrato):
-    from decimal import Decimal, ROUND_HALF_UP
-
     total_parcelas = contrato.numero_parcelas if contrato.forma_pagamento == "parcelado" else 1
     total_parcelas = max(1, total_parcelas)
 
@@ -1579,6 +1578,41 @@ class ConfiguracoesDesativarEscritorioView(APIView):
         return Response({"detail": "Escritório desativado com sucesso."})
 
 
+def _resumo_financeiro(contratos, apontamentos, despesas):
+    """Consolida o quadro financeiro de um cliente ou processo.
+
+    O tempo é somado em minutos e só vira valor quando a hora é faturável e
+    tem valor/hora informado — hora de cortesia entra no total trabalhado
+    mas não no que há a cobrar.
+    """
+
+    zero = Decimal("0.00")
+
+    minutos_total = sum(a.minutos for a in apontamentos)
+    minutos_faturaveis = sum(a.minutos for a in apontamentos if a.faturavel)
+    valor_horas = sum((a.valor or zero) for a in apontamentos)
+
+    total_despesas = sum(d.valor for d in despesas)
+    despesas_a_reembolsar = sum(
+        d.valor for d in despesas if d.reembolsavel and not d.reembolsada
+    )
+
+    valor_contratado = sum(c.valor_total for c in contratos)
+    parcelas = [parcela for contrato in contratos for parcela in contrato.parcelas.all()]
+    valor_pago = sum(p.valor for p in parcelas if p.status == "pago")
+
+    return {
+        "minutos_trabalhados": minutos_total,
+        "minutos_faturaveis": minutos_faturaveis,
+        "valor_horas_faturaveis": valor_horas or zero,
+        "total_despesas": total_despesas or zero,
+        "despesas_a_reembolsar": despesas_a_reembolsar or zero,
+        "valor_contratado": valor_contratado or zero,
+        "valor_pago": valor_pago or zero,
+        "valor_pendente": (valor_contratado or zero) - (valor_pago or zero),
+    }
+
+
 def _montar_dados_relatorio_cliente(usuario, cliente_id, request=None):
     """Monta o payload de relatório de um cliente. Levanta Cliente.DoesNotExist
     quando o cliente não existe ou não pertence ao escritório do usuário."""
@@ -1604,6 +1638,26 @@ def _montar_dados_relatorio_cliente(usuario, cliente_id, request=None):
         .order_by("data_evento")
     )
 
+    contratos = list(
+        Contrato.objects
+        .filter(processo__cliente=cliente)
+        .select_related("processo")
+        .prefetch_related("parcelas")
+        .order_by("-criado_em")
+    )
+    apontamentos = list(
+        ApontamentoHora.objects
+        .filter(processo__cliente=cliente)
+        .select_related("processo", "usuario")
+        .order_by("-data")
+    )
+    despesas = list(
+        Despesa.objects
+        .filter(processo__cliente=cliente)
+        .select_related("processo")
+        .order_by("-data")
+    )
+
     contexto = {"request": request} if request else {}
 
     return {
@@ -1613,6 +1667,9 @@ def _montar_dados_relatorio_cliente(usuario, cliente_id, request=None):
         "processos": ProcessoSerializer(processos, many=True, context=contexto).data,
         "documentos": DocumentoSerializer(documentos, many=True, context=contexto).data,
         "agenda": AgendaSerializer(agenda, many=True, context=contexto).data,
+        "contratos": ContratoSerializer(contratos, many=True, context=contexto).data,
+        "apontamentos": ApontamentoHoraSerializer(apontamentos, many=True, context=contexto).data,
+        "despesas": DespesaSerializer(despesas, many=True, context=contexto).data,
         "resumo": {
             "total_processos": processos.count(),
             "total_documentos": documentos.count(),
@@ -1620,6 +1677,7 @@ def _montar_dados_relatorio_cliente(usuario, cliente_id, request=None):
             "processos_por_status": list(
                 processos.values("status").annotate(total=Count("id")).order_by("status")
             ),
+            **_resumo_financeiro(contratos, apontamentos, despesas),
         },
     }
 
@@ -1638,6 +1696,22 @@ def _montar_dados_relatorio_processo(usuario, processo_id, request=None):
     movimentacoes = Movimentacao.objects.filter(processo=processo).order_by("-data_movimentacao")
     agenda = Agenda.objects.filter(processo=processo).order_by("data_evento")
 
+    contratos = list(
+        Contrato.objects
+        .filter(processo=processo)
+        .select_related("processo")
+        .prefetch_related("parcelas")
+    )
+    apontamentos = list(
+        ApontamentoHora.objects
+        .filter(processo=processo)
+        .select_related("processo", "usuario")
+        .order_by("-data")
+    )
+    despesas = list(
+        Despesa.objects.filter(processo=processo).select_related("processo").order_by("-data")
+    )
+
     contexto = {"request": request} if request else {}
 
     return {
@@ -1648,6 +1722,10 @@ def _montar_dados_relatorio_processo(usuario, processo_id, request=None):
         "documentos": DocumentoSerializer(documentos, many=True, context=contexto).data,
         "movimentacoes": MovimentacaoSerializer(movimentacoes, many=True, context=contexto).data,
         "agenda": AgendaSerializer(agenda, many=True, context=contexto).data,
+        "contratos": ContratoSerializer(contratos, many=True, context=contexto).data,
+        "apontamentos": ApontamentoHoraSerializer(apontamentos, many=True, context=contexto).data,
+        "despesas": DespesaSerializer(despesas, many=True, context=contexto).data,
+        "resumo": _resumo_financeiro(contratos, apontamentos, despesas),
     }
 
 
