@@ -12,6 +12,7 @@ const PANEL_TITLE_KEYS = {
   agenda: "painel_agenda",
   contratos: "painel_contratos",
   horas: "painel_horas",
+  modelos: "painel_modelos",
   contato: "painel_contato",
   config: "painel_config",
   advogados: "painel_advogados",

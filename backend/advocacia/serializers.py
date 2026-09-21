@@ -26,6 +26,7 @@ from .models import (
     Parcela,
     ApontamentoHora,
     Despesa,
+    ModeloDocumento,
     PreferenciasUsuario,
     ConfiguracaoEscritorio,
     RegistroAuditoria,
@@ -697,3 +698,21 @@ class DespesaSerializer(serializers.ModelSerializer):
                 {"reembolsada": "Uma despesa não reembolsável não pode ser marcada como reembolsada."}
             )
         return dados
+
+
+class ModeloDocumentoSerializer(serializers.ModelSerializer):
+
+    tipo_display = serializers.CharField(source="get_tipo_display", read_only=True)
+
+    class Meta:
+        model = ModeloDocumento
+        fields = [
+            "id",
+            "nome",
+            "tipo",
+            "tipo_display",
+            "conteudo",
+            "criado_em",
+            "atualizado_em",
+        ]
+        read_only_fields = ["id", "tipo_display", "criado_em", "atualizado_em"]

@@ -30,6 +30,7 @@ import AgendaPanel from "@/components/panels/AgendaPanel";
 import DocumentosPanel from "@/components/panels/DocumentosPanel";
 import ContratosPanel from "@/components/panels/ContratosPanel";
 import HorasPanel from "@/components/panels/HorasPanel";
+import ModelosPanel from "@/components/panels/ModelosPanel";
 import ContatoPanel from "@/components/panels/ContatoPanel";
 import ConfigPanel from "@/components/panels/ConfigPanel";
 import AdvogadosPanel from "@/components/panels/AdvogadosPanel";
@@ -426,6 +427,7 @@ function DashboardContent() {
       <DocumentosPanel />
       <ContratosPanel />
       <HorasPanel />
+      <ModelosPanel />
       <ContatoPanel />
       <ConfigPanel />
       <AdvogadosPanel />

@@ -14,6 +14,7 @@ import {
   Bot,
   ScrollText,
   Timer,
+  FileSignature,
 } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
 import { PANELS, usePanel } from "@/contexts/PanelContext";
@@ -70,6 +71,11 @@ const NAV_ITEMS = [
     id: PANELS.HORAS,
     tKey: "nav_horas",
     icon: Timer,
+  },
+  {
+    id: PANELS.MODELOS,
+    tKey: "nav_modelos",
+    icon: FileSignature,
   },
   {
     id: PANELS.ADVOGADOS,

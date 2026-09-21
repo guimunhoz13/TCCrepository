@@ -12,6 +12,7 @@ from .models import (
     Parcela,
     ApontamentoHora,
     Despesa,
+    ModeloDocumento,
     NotificacaoEnviada,
     SessaoUso,
     RegistroAuditoria,
@@ -474,3 +475,27 @@ class SessaoUsoAdmin(admin.ModelAdmin):
 
     def has_change_permission(self, request, obj=None):
         return False
+
+
+@admin.register(ModeloDocumento)
+class ModeloDocumentoAdmin(admin.ModelAdmin):
+
+    list_display = (
+        'nome',
+        'tipo',
+        'escritorio',
+        'atualizado_em',
+    )
+
+    search_fields = (
+        'nome',
+        'escritorio__nome',
+    )
+
+    list_filter = (
+        'tipo',
+    )
+
+    ordering = (
+        'nome',
+    )
