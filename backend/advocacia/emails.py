@@ -1,4 +1,5 @@
 from datetime import datetime
+from decimal import Decimal
 
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
@@ -27,6 +28,13 @@ def _status_label(status):
 def _formatar_data(valor, com_hora=False):
     if not valor:
         return "—"
+    # Os relatórios chegam aqui já serializados, com as datas em texto ISO;
+    # os lembretes chegam com objetos do banco. Aceitam-se os dois.
+    if isinstance(valor, str):
+        try:
+            valor = datetime.fromisoformat(valor)
+        except ValueError:
+            return valor
     # Datas/horas são gravadas em UTC; quem lê o e-mail espera o fuso local.
     if isinstance(valor, datetime) and timezone.is_aware(valor):
         valor = timezone.localtime(valor)
@@ -72,6 +80,49 @@ def _tabela_html(colunas, linhas, vazio):
     return f'<table style="width:100%; border-collapse:collapse; margin: 10px 0 20px;"><thead><tr>{cabecalho}</tr></thead><tbody>{corpo}</tbody></table>'
 
 
+TIPOS_HONORARIO = {
+    "fixo": "Valor fixo",
+    "exito": "Percentual de êxito",
+    "hora": "Por hora trabalhada",
+}
+
+
+def _moeda(valor):
+    """Formata um valor em reais no padrão brasileiro (R$ 1.234,56)."""
+
+    if valor is None:
+        return "—"
+    inteiro = f"{Decimal(str(valor)):,.2f}"
+    # O format() do Python usa vírgula para milhar e ponto para decimal;
+    # o padrão brasileiro é o contrário, então troca-se um pelo outro.
+    return "R$ " + inteiro.replace(",", "_").replace(".", ",").replace("_", ".")
+
+
+def _horas(minutos):
+    """Converte minutos em uma leitura de horas e minutos (2h30)."""
+
+    minutos = int(minutos or 0)
+    return f"{minutos // 60}h{minutos % 60:02d}"
+
+
+def _tiras_resumo(itens):
+    """Faixa de números-chave exibida no topo de uma seção do relatório."""
+
+    if not itens:
+        return ""
+    celulas = "".join(
+        f'<td style="padding:10px 12px; border:1px solid #e5decf; border-radius:10px;">'
+        f'<div style="font-size:0.68rem; text-transform:uppercase; letter-spacing:0.04em; color:#80869a;">{rotulo}</div>'
+        f'<div style="font-size:1.02rem; font-weight:600; color:#1c2333; margin-top:2px;">{valor}</div>'
+        f'</td>'
+        for rotulo, valor in itens
+    )
+    return (
+        '<table style="width:100%; border-collapse:separate; border-spacing:6px 0; margin:10px 0 20px;">'
+        f"<tr>{celulas}</tr></table>"
+    )
+
+
 def montar_email_verificacao(nome, link, escritorio_nome):
     corpo_html = f"""
       <p style="font-size:0.9rem; color:#1c2333; line-height:1.7;">
@@ -112,11 +163,84 @@ def montar_email_redefinicao_senha(nome, link, escritorio_nome):
     return assunto, _casca_html(escritorio_nome, "Redefinição de senha", "Solicitação de nova senha.", corpo_html), corpo_texto
 
 
+def _secoes_financeiras(contratos, apontamentos, despesas, resumo, com_processo):
+    """Blocos de contratos, horas e despesas — comuns aos dois relatórios.
+
+    ``com_processo`` liga a coluna do número do processo, que só faz sentido
+    no relatório do cliente: no do processo ela repetiria o mesmo valor em
+    todas as linhas.
+    """
+
+    def linha(*valores):
+        return list(valores)
+
+    colunas_contrato = ["Processo"] if com_processo else []
+    colunas_hora = ["Processo"] if com_processo else []
+    colunas_despesa = ["Processo"] if com_processo else []
+
+    return f"""
+      {_tiras_resumo([
+          ("Contratado", _moeda(resumo.get("valor_contratado"))),
+          ("Recebido", _moeda(resumo.get("valor_pago"))),
+          ("A receber", _moeda(resumo.get("valor_pendente"))),
+      ])}
+
+      <h3 style="font-size:0.98rem; margin-bottom:4px;">Contratos ({len(contratos)})</h3>
+      {_tabela_html(
+          colunas_contrato + ["Honorário", "Valor", "Pago", "Situação"],
+          [
+              linha(*([c["numero_processo"]] if com_processo else []),
+                    TIPOS_HONORARIO.get(c["tipo_honorario"], c["tipo_honorario"]),
+                    _moeda(c["valor_total"]),
+                    _moeda(c["valor_pago"]),
+                    c["status"].capitalize())
+              for c in contratos
+          ],
+          "Nenhum contrato registrado.",
+      )}
+
+      <h3 style="font-size:0.98rem; margin-bottom:4px;">Horas trabalhadas ({_horas(resumo.get("minutos_trabalhados"))})</h3>
+      {_tabela_html(
+          colunas_hora + ["Data", "Descrição", "Responsável", "Tempo", "Valor"],
+          [
+              linha(*([a["numero_processo"]] if com_processo else []),
+                    _formatar_data(a["data"]),
+                    a["descricao"],
+                    a["usuario_nome"],
+                    _horas(a["minutos"]),
+                    _moeda(a["valor"]) if a["faturavel"] else "não faturável")
+              for a in apontamentos
+          ],
+          "Nenhuma hora apontada.",
+      )}
+
+      <h3 style="font-size:0.98rem; margin-bottom:4px;">Despesas ({_moeda(resumo.get("total_despesas"))})</h3>
+      {_tabela_html(
+          colunas_despesa + ["Data", "Tipo", "Descrição", "Valor", "Reembolso"],
+          [
+              linha(*([d["numero_processo"]] if com_processo else []),
+                    _formatar_data(d["data"]),
+                    d["tipo_display"],
+                    d["descricao"],
+                    _moeda(d["valor"]),
+                    "reembolsada" if d["reembolsada"]
+                    else ("a reembolsar" if d["reembolsavel"] else "não reembolsável"))
+              for d in despesas
+          ],
+          "Nenhuma despesa lançada.",
+      )}
+    """
+
+
 def montar_email_relatorio_cliente(dados):
     cliente = dados["cliente"]
     processos = dados.get("processos", [])
     documentos = dados.get("documentos", [])
     agenda = dados.get("agenda", [])
+    contratos = dados.get("contratos", [])
+    apontamentos = dados.get("apontamentos", [])
+    despesas = dados.get("despesas", [])
+    resumo = dados.get("resumo", {})
     escritorio_nome = dados["escritorio"]["nome"]
 
     corpo_html = f"""
@@ -140,16 +264,21 @@ def montar_email_relatorio_cliente(dados):
           [[d['nome_arquivo'], d['numero_processo']] for d in documentos],
           "Nenhum documento anexado.",
       )}
+
+      {_secoes_financeiras(contratos, apontamentos, despesas, resumo, com_processo=True)}
     """
 
     assunto = f"Relatório do cliente {cliente['nome']} — {escritorio_nome}"
     corpo_texto = (
         f"Relatório do cliente {cliente['nome']}\n"
         f"{len(processos)} processo(s), {len(documentos)} documento(s), {len(agenda)} evento(s) de agenda.\n"
+        f"{_horas(resumo.get('minutos_trabalhados'))} apontadas, "
+        f"{_moeda(resumo.get('total_despesas'))} em despesas, "
+        f"{_moeda(resumo.get('valor_pendente'))} a receber.\n"
         f"Consulte o sistema {escritorio_nome} para o relatório completo."
     )
 
-    return assunto, _casca_html(escritorio_nome, f"Relatório do cliente {cliente['nome']}", "Resumo de processos e documentos vinculados.", corpo_html), corpo_texto
+    return assunto, _casca_html(escritorio_nome, f"Relatório do cliente {cliente['nome']}", "Processos, documentos e situação financeira.", corpo_html), corpo_texto
 
 
 def montar_email_relatorio_processo(dados):
@@ -157,6 +286,10 @@ def montar_email_relatorio_processo(dados):
     cliente = dados["cliente"]
     documentos = dados.get("documentos", [])
     movimentacoes = dados.get("movimentacoes", [])
+    contratos = dados.get("contratos", [])
+    apontamentos = dados.get("apontamentos", [])
+    despesas = dados.get("despesas", [])
+    resumo = dados.get("resumo", {})
     escritorio_nome = dados["escritorio"]["nome"]
 
     corpo_html = f"""
@@ -180,12 +313,17 @@ def montar_email_relatorio_processo(dados):
           [[d['nome_arquivo']] for d in documentos],
           "Nenhum documento anexado a este processo.",
       )}
+
+      {_secoes_financeiras(contratos, apontamentos, despesas, resumo, com_processo=False)}
     """
 
     assunto = f"Relatório do processo {processo['numero_processo']} — {escritorio_nome}"
     corpo_texto = (
         f"Relatório do processo {processo['numero_processo']} ({processo['titulo']})\n"
         f"Cliente: {cliente['nome']} · Status: {_status_label(processo['status'])}\n"
+        f"{_horas(resumo.get('minutos_trabalhados'))} apontadas, "
+        f"{_moeda(resumo.get('total_despesas'))} em despesas, "
+        f"{_moeda(resumo.get('valor_pendente'))} a receber.\n"
         f"Consulte o sistema {escritorio_nome} para o relatório completo."
     )
 

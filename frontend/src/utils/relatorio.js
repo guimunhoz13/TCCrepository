@@ -1,8 +1,114 @@
 function formatarData(valor, comHora = false) {
   if (!valor) return "—";
+  // Campos de data pura ("2026-09-21") seriam lidos pelo Date como meia-noite
+  // em UTC e, no fuso de Brasília, voltariam um dia. Para esses, basta
+  // reordenar os pedaços do texto.
+  const soData = /^\d{4}-\d{2}-\d{2}$/.exec(String(valor));
+  if (soData) {
+    const [ano, mes, dia] = valor.split("-");
+    return `${dia}/${mes}/${ano}`;
+  }
   const data = new Date(valor);
   if (Number.isNaN(data.getTime())) return "—";
   return comHora ? data.toLocaleString("pt-BR") : data.toLocaleDateString("pt-BR");
+}
+
+const TIPOS_HONORARIO = {
+  fixo: "Valor fixo",
+  exito: "Percentual de êxito",
+  hora: "Por hora trabalhada",
+};
+
+function moeda(valor) {
+  // O back-end manda os campos de serializer como texto ("1234.50") e os
+  // totais do resumo como número; os dois passam por aqui.
+  if (valor === null || valor === undefined || valor === "") return "—";
+  const numero = Number(valor);
+  if (Number.isNaN(numero)) return "—";
+  return numero.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
+
+function horas(minutos) {
+  const total = Number(minutos) || 0;
+  return `${Math.floor(total / 60)}h${String(total % 60).padStart(2, "0")}`;
+}
+
+function situacaoDespesa(despesa) {
+  if (despesa.reembolsada) return "Reembolsada";
+  return despesa.reembolsavel ? "A reembolsar" : "Não reembolsável";
+}
+
+function secoesFinanceiras({ contratos, apontamentos, despesas, resumo, comProcesso }) {
+  // A coluna do processo só entra no relatório do cliente: no do processo
+  // ela repetiria o mesmo número em todas as linhas.
+  const colunaProcesso = comProcesso ? ["Processo"] : [];
+  const celulaProcesso = (item) => (comProcesso ? [escapar(item.numero_processo)] : []);
+
+  return `
+    <section>
+      <h2>Situação financeira</h2>
+      <div class="resumo-tiras">
+        <div class="resumo-tira"><strong>${moeda(resumo.valor_contratado)}</strong><span>Contratado</span></div>
+        <div class="resumo-tira"><strong>${moeda(resumo.valor_pago)}</strong><span>Recebido</span></div>
+        <div class="resumo-tira"><strong>${moeda(resumo.valor_pendente)}</strong><span>A receber</span></div>
+      </div>
+      <div class="grid">
+        <div><span>Horas trabalhadas</span>${horas(resumo.minutos_trabalhados)}</div>
+        <div><span>Horas faturáveis</span>${horas(resumo.minutos_faturaveis)}</div>
+        <div><span>Valor das horas faturáveis</span>${moeda(resumo.valor_horas_faturaveis)}</div>
+        <div><span>Despesas lançadas</span>${moeda(resumo.total_despesas)}</div>
+        <div><span>Despesas a reembolsar</span>${moeda(resumo.despesas_a_reembolsar)}</div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Contratos</h2>
+      ${tabela(
+        [...colunaProcesso, "Honorário", "Valor total", "Pago", "Pendente", "Situação"],
+        contratos.map((c) => [
+          ...celulaProcesso(c),
+          escapar(TIPOS_HONORARIO[c.tipo_honorario] || c.tipo_honorario),
+          moeda(c.valor_total),
+          moeda(c.valor_pago),
+          moeda(c.valor_pendente),
+          escapar(c.status ? c.status[0].toUpperCase() + c.status.slice(1) : "—"),
+        ]),
+        "Nenhum contrato registrado."
+      )}
+    </section>
+
+    <section>
+      <h2>Horas trabalhadas</h2>
+      ${tabela(
+        [...colunaProcesso, "Data", "Descrição", "Responsável", "Tempo", "Valor"],
+        apontamentos.map((a) => [
+          ...celulaProcesso(a),
+          formatarData(a.data),
+          escapar(a.descricao),
+          escapar(a.usuario_nome),
+          horas(a.minutos),
+          a.faturavel ? moeda(a.valor) : "Não faturável",
+        ]),
+        "Nenhuma hora apontada."
+      )}
+    </section>
+
+    <section>
+      <h2>Despesas e custas</h2>
+      ${tabela(
+        [...colunaProcesso, "Data", "Tipo", "Descrição", "Valor", "Reembolso"],
+        despesas.map((d) => [
+          ...celulaProcesso(d),
+          formatarData(d.data),
+          escapar(d.tipo_display),
+          escapar(d.descricao),
+          moeda(d.valor),
+          escapar(situacaoDespesa(d)),
+        ]),
+        "Nenhuma despesa lançada."
+      )}
+    </section>
+  `;
 }
 
 function statusLabel(status) {
@@ -126,7 +232,17 @@ function casca({ titulo, subtitulo, escritorio, geradoEm, corpo }) {
 }
 
 export function gerarHtmlRelatorioCliente(dados) {
-  const { cliente, processos = [], documentos = [], agenda = [], resumo = {}, escritorio } = dados;
+  const {
+    cliente,
+    processos = [],
+    documentos = [],
+    agenda = [],
+    contratos = [],
+    apontamentos = [],
+    despesas = [],
+    resumo = {},
+    escritorio,
+  } = dados;
   const geradoEm = formatarData(dados.gerado_em, true);
 
   const corpo = `
@@ -179,11 +295,13 @@ export function gerarHtmlRelatorioCliente(dados) {
         "Nenhum evento de agenda vinculado."
       )}
     </section>
+
+    ${secoesFinanceiras({ contratos, apontamentos, despesas, resumo, comProcesso: true })}
   `;
 
   return casca({
     titulo: `Relatório do cliente — ${cliente.nome}`,
-    subtitulo: "Resumo completo de processos, documentos e agenda vinculados a este cliente.",
+    subtitulo: "Processos, documentos, agenda e situação financeira deste cliente.",
     escritorio: escritorio?.nome || "Escritório",
     geradoEm,
     corpo,
@@ -191,7 +309,18 @@ export function gerarHtmlRelatorioCliente(dados) {
 }
 
 export function gerarHtmlRelatorioProcesso(dados) {
-  const { processo, cliente, documentos = [], movimentacoes = [], agenda = [], escritorio } = dados;
+  const {
+    processo,
+    cliente,
+    documentos = [],
+    movimentacoes = [],
+    agenda = [],
+    contratos = [],
+    apontamentos = [],
+    despesas = [],
+    resumo = {},
+    escritorio,
+  } = dados;
   const geradoEm = formatarData(dados.gerado_em, true);
 
   const corpo = `
@@ -240,6 +369,8 @@ export function gerarHtmlRelatorioProcesso(dados) {
         "Nenhum evento de agenda vinculado."
       )}
     </section>
+
+    ${secoesFinanceiras({ contratos, apontamentos, despesas, resumo, comProcesso: false })}
   `;
 
   return casca({
