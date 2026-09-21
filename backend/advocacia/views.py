@@ -11,9 +11,11 @@ import secrets
 logger = logging.getLogger(__name__)
 
 from .feriados import calcular_prazo
+from .modelos_documento import VARIAVEIS_DISPONIVEIS, montar_contexto, preencher
 from .notificacoes import notificar_escritorio
 
 from rest_framework import status, viewsets
+from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -55,6 +57,7 @@ from .models import (
     Parcela,
     ApontamentoHora,
     Despesa,
+    ModeloDocumento,
     SessaoUso,
     JANELA_SESSAO_MINUTOS,
     SuperAdmin,
@@ -82,6 +85,7 @@ from .serializers import (
     PreferenciasUsuarioSerializer,
     ApontamentoHoraSerializer,
     DespesaSerializer,
+    ModeloDocumentoSerializer,
     ConfiguracaoEscritorioSerializer,
     RegistroAuditoriaSerializer,
 )
@@ -2082,3 +2086,77 @@ class TempoDeUsoView(APIView):
             linha["horas"] = round(linha["minutos"] / 60, 2)
 
         return Response({"mes": mes, "usuarios": linhas})
+
+
+# =========================================================
+# MODELOS DE DOCUMENTO (automação)
+# =========================================================
+
+class ModeloDocumentoViewSet(
+    EscritorioScopedMixin,
+    viewsets.ModelViewSet
+):
+
+    queryset = ModeloDocumento.objects.all()
+
+    serializer_class = ModeloDocumentoSerializer
+
+    permission_classes = [IsAuthenticated]
+
+    @action(detail=False, methods=["get"], url_path="variaveis")
+    def variaveis(self, request):
+        """Catálogo do que pode ser usado nos modelos, para a interface listar."""
+        return Response(
+            [{"chave": chave, "descricao": descricao}
+             for chave, descricao in VARIAVEIS_DISPONIVEIS.items()]
+        )
+
+    @action(detail=True, methods=["post"], url_path="gerar")
+    def gerar(self, request, pk=None):
+        modelo = self.get_object()
+        escritorio = self.get_escritorio()
+
+        processo_id = request.data.get("processo")
+        cliente_id = request.data.get("cliente")
+
+        if not processo_id and not cliente_id:
+            return Response(
+                {"detail": "Informe um processo ou um cliente para preencher o modelo."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        processo = None
+        cliente = None
+
+        # O escritório entra no filtro para que um id de outro escritório
+        # não seja usado para preencher — e vazar — dados alheios.
+        if processo_id:
+            processo = (
+                Processo.objects.filter(pk=processo_id, escritorio=escritorio)
+                .select_related("cliente", "advogado__usuario")
+                .first()
+            )
+            if not processo:
+                return Response(
+                    {"detail": "Processo não encontrado."},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+
+        if cliente_id:
+            cliente = Cliente.objects.filter(pk=cliente_id, escritorio=escritorio).first()
+            if not cliente:
+                return Response(
+                    {"detail": "Cliente não encontrado."},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+
+        contexto = montar_contexto(escritorio, cliente=cliente, processo=processo)
+        conteudo, nao_encontradas, vazias = preencher(modelo.conteudo, contexto)
+
+        return Response({
+            "modelo": modelo.id,
+            "nome": modelo.nome,
+            "conteudo": conteudo,
+            "variaveis_desconhecidas": nao_encontradas,
+            "variaveis_vazias": vazias,
+        })

@@ -543,3 +543,34 @@ export async function registrarAtividade() {
 export async function getTempoDeUso(mes) {
   return request(`/relatorios/tempo-uso/${mes ? `?mes=${mes}` : ""}`);
 }
+
+// ---------------------------------------------------------------
+// Modelos de documento (automação)
+// ---------------------------------------------------------------
+
+export async function getModelosDocumento() {
+  return request("/modelos-documento/");
+}
+
+export async function createModeloDocumento(data) {
+  return request("/modelos-documento/", { method: "POST", body: corpoRequisicao(data) });
+}
+
+export async function updateModeloDocumento(id, data) {
+  return request(`/modelos-documento/${id}/`, { method: "PATCH", body: corpoRequisicao(data) });
+}
+
+export async function deleteModeloDocumento(id) {
+  return request(`/modelos-documento/${id}/`, { method: "DELETE" });
+}
+
+export async function getVariaveisDocumento() {
+  return request("/modelos-documento/variaveis/");
+}
+
+export async function gerarDocumento(id, { processo, cliente }) {
+  return request(`/modelos-documento/${id}/gerar/`, {
+    method: "POST",
+    body: JSON.stringify({ processo: processo || null, cliente: cliente || null }),
+  });
+}

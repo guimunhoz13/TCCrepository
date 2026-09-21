@@ -794,3 +794,41 @@ class SessaoUso(models.Model):
 
     def __str__(self):
         return f"{self.usuario.nome} — {self.duracao_minutos} min"
+
+
+class ModeloDocumento(models.Model):
+    """Modelo de documento do escritório, com variáveis a preencher.
+
+    O conteúdo é escrito pelo próprio escritório e tratado como dado: as
+    variáveis são resolvidas por um catálogo fechado em modelos_documento.py,
+    nunca por um motor de templates.
+    """
+
+    TIPOS = (
+        ("procuracao", "Procuração"),
+        ("contrato", "Contrato de honorários"),
+        ("declaracao", "Declaração"),
+        ("peticao", "Petição"),
+        ("outros", "Outros"),
+    )
+
+    escritorio = models.ForeignKey(
+        Escritorio,
+        on_delete=models.CASCADE,
+        related_name="modelos_documento",
+    )
+
+    nome = models.CharField(max_length=120)
+    tipo = models.CharField(max_length=20, choices=TIPOS, default="outros")
+    conteudo = models.TextField()
+    criado_em = models.DateTimeField(auto_now_add=True)
+    atualizado_em = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Modelo de documento"
+        verbose_name_plural = "Modelos de documento"
+        ordering = ["nome"]
+        unique_together = [["escritorio", "nome"]]
+
+    def __str__(self):
+        return self.nome

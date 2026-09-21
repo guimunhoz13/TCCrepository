@@ -15,6 +15,9 @@ import {
   getDespesas,
   registrarAtividade,
   getTempoDeUso,
+  getVariaveisDocumento,
+  gerarDocumento,
+  createModeloDocumento,
 } from "../api";
 
 describe("normalizarLista", () => {
@@ -403,5 +406,50 @@ describe("tempo de uso do sistema", () => {
 
     const [url] = global.fetch.mock.calls[0];
     expect(url).toMatch(/\/relatorios\/tempo-uso\/$/);
+  });
+});
+
+
+describe("modelos de documento", () => {
+  beforeEach(() => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ conteudo: "texto", variaveis_vazias: [] }),
+    });
+  });
+
+  afterEach(() => {
+    delete global.fetch;
+  });
+
+  test("getVariaveisDocumento consulta o catálogo de variáveis", async () => {
+    await getVariaveisDocumento();
+
+    const [url] = global.fetch.mock.calls[0];
+    expect(url).toMatch(/\/modelos-documento\/variaveis\/$/);
+  });
+
+  test("gerarDocumento envia o processo e deixa o cliente nulo", async () => {
+    await gerarDocumento(3, { processo: 7 });
+
+    const [url, opcoes] = global.fetch.mock.calls[0];
+    expect(url).toMatch(/\/modelos-documento\/3\/gerar\/$/);
+    expect(opcoes.method).toBe("POST");
+    expect(JSON.parse(opcoes.body)).toEqual({ processo: 7, cliente: null });
+  });
+
+  test("gerarDocumento envia o cliente e deixa o processo nulo", async () => {
+    await gerarDocumento(3, { cliente: 9 });
+
+    const [, opcoes] = global.fetch.mock.calls[0];
+    expect(JSON.parse(opcoes.body)).toEqual({ processo: null, cliente: 9 });
+  });
+
+  test("createModeloDocumento envia o conteúdo em JSON", async () => {
+    await createModeloDocumento({ nome: "Procuração", tipo: "procuracao", conteudo: "{{cliente.nome}}" });
+
+    const [url, opcoes] = global.fetch.mock.calls[0];
+    expect(url).toMatch(/\/modelos-documento\/$/);
+    expect(JSON.parse(opcoes.body).conteudo).toBe("{{cliente.nome}}");
   });
 });

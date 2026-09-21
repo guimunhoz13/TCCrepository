@@ -920,6 +920,12 @@ tbody tr:hover {
   border-left-color: var(--success);
 }
 
+.alert-warning {
+  background: var(--warning-soft);
+  color: var(--warning);
+  border-left-color: var(--warning);
+}
+
 /* ==========================================================================
    AUTH PAGE
    ========================================================================== */
@@ -3024,4 +3030,65 @@ tbody tr {
 
 .resumo-linha strong {
   color: var(--text-primary);
+}
+
+
+/* ==========================================================================
+   MODELOS DE DOCUMENTO
+   ========================================================================== */
+
+.variaveis-ajuda {
+  margin: 8px 0 18px;
+  padding: 14px 16px;
+  border-radius: 10px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+}
+
+.variaveis-ajuda strong {
+  font-size: 0.88rem;
+}
+
+.variaveis-ajuda p {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin: 4px 0 12px;
+}
+
+.variaveis-lista {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.variavel-chip {
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.74rem;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.variavel-chip:hover {
+  border-color: var(--border-strong);
+  color: var(--text-primary);
+}
+
+/* O documento gerado preserva a formatação escrita no modelo. */
+.documento-preview {
+  margin-top: 18px;
+  padding: 28px 32px;
+  border-radius: 10px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 0.92rem;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  max-height: 460px;
+  overflow-y: auto;
 }
