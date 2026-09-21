@@ -2021,12 +2021,15 @@ class EnvioDeLembretesTestCase(TestCase):
     def setUp(self):
         self.escritorio = _criar_escritorio()
         self.usuario = _criar_usuario(self.escritorio)
+        # O resumo semanal fica desligado por padrão de propósito: o comando
+        # o envia sozinho às segundas-feiras, e deixá-lo ligado aqui faria a
+        # contagem de e-mails destes testes depender do dia da execução.
         self.preferencias = PreferenciasUsuario.objects.create(
             usuario=self.usuario,
             lembrete_audiencia=True,
             lembrete_prazo=True,
             antecedencia_audiencia=2,
-            resumo_semanal=True,
+            resumo_semanal=False,
         )
         cliente = Cliente.objects.create(
             escritorio=self.escritorio,
@@ -2128,6 +2131,9 @@ class EnvioDeLembretesTestCase(TestCase):
         self.assertEqual(len(mail.outbox), 0)
 
     def test_resumo_semanal_e_enviado_uma_vez_por_semana(self):
+        self.preferencias.resumo_semanal = True
+        self.preferencias.save()
+
         call_command("enviar_lembretes", "--resumo-semanal")
         call_command("enviar_lembretes", "--resumo-semanal")
 
@@ -2138,6 +2144,7 @@ class EnvioDeLembretesTestCase(TestCase):
     def test_resumo_semanal_lista_eventos_da_semana(self):
         self.preferencias.lembrete_audiencia = False
         self.preferencias.lembrete_prazo = False
+        self.preferencias.resumo_semanal = True
         self.preferencias.save()
         self._criar_evento(3, tipo="compromisso")
 
