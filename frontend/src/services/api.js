@@ -574,3 +574,14 @@ export async function gerarDocumento(id, { processo, cliente }) {
     body: JSON.stringify({ processo: processo || null, cliente: cliente || null }),
   });
 }
+
+// ---------------------------------------------------------------
+// Consulta processual no DataJud (CNJ)
+// ---------------------------------------------------------------
+
+export async function consultarDataJud(processoId) {
+  return request(`/processos/${processoId}/consultar-datajud/`, {
+    method: "POST",
+    body: JSON.stringify({}),
+  });
+}

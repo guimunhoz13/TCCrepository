@@ -5,9 +5,10 @@ import { usePanel } from "@/contexts/PanelContext";
 import { useDashboardData } from "@/contexts/DashboardDataContext";
 import { usePreferences } from "@/contexts/PreferencesContext";
 import OverlayPanel from "@/components/shell/OverlayPanel";
-import { MessageCircle, RefreshCw, Trash2 } from "lucide-react";
+import { Landmark, MessageCircle, RefreshCw, Trash2 } from "lucide-react";
 import { abrirWhatsApp, montarMensagemProcesso } from "@/utils/whatsapp";
 import {
+  consultarDataJud,
   getProcessos,
   createProcesso,
   updateProcesso,
@@ -73,6 +74,8 @@ export default function ProcessosPanel() {
   const [clientes, setClientes] = useState([]);
   const [advogados, setAdvogados] = useState([]);
   const [busca, setBusca] = useState("");
+  const [consultando, setConsultando] = useState(null);
+  const [avisoDataJud, setAvisoDataJud] = useState(null);
   const [filtroStatus, setFiltroStatus] = useState("");
   const [filtroAdvogado, setFiltroAdvogado] = useState("");
   const [formulario, setFormulario] = useState(formularioInicial);
@@ -165,6 +168,11 @@ export default function ProcessosPanel() {
     >
       {erro && <div className="alert alert-error">{erro}</div>}
       {sucesso && <div className="alert alert-success">{sucesso}</div>}
+      {avisoDataJud && (
+        <div className={`alert ${avisoDataJud.erro ? "alert-error" : "alert-success"}`}>
+          {avisoDataJud.texto}
+        </div>
+      )}
 
       {panelTab === "novo" ? (
         <form className="form-grid" onSubmit={handleSubmit}>
@@ -455,6 +463,37 @@ export default function ProcessosPanel() {
                           }}
                         >
                           <RefreshCw size={15} />
+                        </button>
+                        <button
+                          type="button"
+                          className="row-action"
+                          title="Consultar andamentos no DataJud (CNJ)"
+                          aria-label="Consultar andamentos no DataJud"
+                          disabled={consultando === processo.id}
+                          onClick={async () => {
+                            setConsultando(processo.id);
+                            setAvisoDataJud(null);
+                            try {
+                              const dados = await consultarDataJud(processo.id);
+                              setAvisoDataJud({
+                                erro: false,
+                                texto:
+                                  `${processo.numero_processo}: ` +
+                                  `${dados.movimentacoes_importadas} andamento(s) importado(s)` +
+                                  (dados.movimentacoes_ignoradas
+                                    ? `, ${dados.movimentacoes_ignoradas} já conhecido(s)`
+                                    : "") +
+                                  (dados.capa?.orgao_julgador ? ` — ${dados.capa.orgao_julgador}` : ""),
+                              });
+                              carregarDados();
+                            } catch (e) {
+                              setAvisoDataJud({ erro: true, texto: e.message });
+                            } finally {
+                              setConsultando(null);
+                            }
+                          }}
+                        >
+                          <Landmark size={15} />
                         </button>
                         {(() => {
                           const clienteDoProcesso = clientes.find((c) => c.id === processo.cliente);
