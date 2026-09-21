@@ -107,6 +107,10 @@ function DashboardContent() {
     clientes,
     documentos,
     tarefas,
+    tarefasBusca,
+    contratos,
+    apontamentos,
+    modelos,
     carregando,
     erro,
     atualizadoEm,
@@ -174,10 +178,9 @@ function DashboardContent() {
     [documentos]
   );
 
-  function abrirResultadoBusca(tipo, item) {
-    if (tipo === "clientes") openPanel(PANELS.CLIENTES, "lista");
-    else if (tipo === "processos") openPanel(PANELS.PROCESSOS, "lista");
-    else if (tipo === "documentos") openPanel(PANELS.DOCUMENTOS, "lista");
+  // Cada grupo de resultado já sabe a que painel pertence.
+  function abrirResultadoBusca(painel) {
+    openPanel(painel, "lista");
   }
 
   return (
@@ -192,7 +195,16 @@ function DashboardContent() {
               ? `${stats.escritorio.nome} — visão geral`
               : "Visão geral do escritório"
           }
-          searchData={{ clientes, processos, documentos }}
+          searchData={{
+            clientes,
+            processos,
+            documentos,
+            agenda,
+            tarefas: tarefasBusca,
+            contratos,
+            apontamentos,
+            modelos,
+          }}
           onSelectSearchResult={abrirResultadoBusca}
           notificacoes={prazosVencendo}
           onSelectNotificacao={() => openPanel(PANELS.AGENDA, "lista")}

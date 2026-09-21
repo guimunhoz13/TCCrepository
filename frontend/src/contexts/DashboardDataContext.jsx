@@ -8,6 +8,9 @@ import {
   getClientes,
   getDocumentos,
   getTarefas,
+  getContratos,
+  getApontamentos,
+  getModelosDocumento,
   normalizarLista,
 } from "@/services/api";
 
@@ -20,6 +23,14 @@ export function DashboardDataProvider({ children }) {
   const [clientes, setClientes] = useState([]);
   const [documentos, setDocumentos] = useState([]);
   const [tarefas, setTarefas] = useState([]);
+  // Coleções que a dashboard não desenha, mas que a busca do topo
+  // precisa para achar contrato, hora apontada e modelo. Vêm no mesmo
+  // lote das outras: são requisições paralelas, então não atrasam a
+  // abertura.
+  const [tarefasBusca, setTarefasBusca] = useState([]);
+  const [contratos, setContratos] = useState([]);
+  const [apontamentos, setApontamentos] = useState([]);
+  const [modelos, setModelos] = useState([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState("");
   const [atualizadoEm, setAtualizadoEm] = useState(null);
@@ -34,6 +45,10 @@ export function DashboardDataProvider({ children }) {
         dadosClientes,
         dadosDocumentos,
         dadosTarefas,
+        dadosTarefasBusca,
+        dadosContratos,
+        dadosApontamentos,
+        dadosModelos,
       ] = await Promise.all([
         getDashboardStats(),
         getProcessos(),
@@ -43,6 +58,13 @@ export function DashboardDataProvider({ children }) {
         // Só o que está pendente para quem abriu a dashboard: tarefa dos
         // outros ou já resolvida não é "o que eu tenho para fazer".
         getTarefas({ responsavel: "eu", status: "abertas" }),
+        // A busca precisa achar a tarefa de qualquer pessoa, inclusive as
+        // já concluídas — por isso uma consulta sem filtro, separada da
+        // que alimenta o cartão.
+        getTarefas(),
+        getContratos(),
+        getApontamentos(),
+        getModelosDocumento(),
       ]);
       setStats(dadosStats);
       setProcessos(normalizarLista(dadosProcessos));
@@ -50,6 +72,10 @@ export function DashboardDataProvider({ children }) {
       setClientes(normalizarLista(dadosClientes));
       setDocumentos(normalizarLista(dadosDocumentos));
       setTarefas(normalizarLista(dadosTarefas));
+      setTarefasBusca(normalizarLista(dadosTarefasBusca));
+      setContratos(normalizarLista(dadosContratos));
+      setApontamentos(normalizarLista(dadosApontamentos));
+      setModelos(normalizarLista(dadosModelos));
       setAtualizadoEm(Date.now());
       setErro("");
       return true;
@@ -77,6 +103,10 @@ export function DashboardDataProvider({ children }) {
         clientes,
         documentos,
         tarefas,
+        tarefasBusca,
+        contratos,
+        apontamentos,
+        modelos,
         carregando,
         erro,
         atualizadoEm,

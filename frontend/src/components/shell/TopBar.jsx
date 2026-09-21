@@ -66,12 +66,7 @@ export default function TopBar({
 
       <div className="topbar-actions">
         {searchData && (
-          <GlobalSearch
-            clientes={searchData.clientes}
-            processos={searchData.processos}
-            documentos={searchData.documentos}
-            onSelect={onSelectSearchResult}
-          />
+          <GlobalSearch colecoes={searchData} onSelect={onSelectSearchResult} />
         )}
 
         {notificacoes && (

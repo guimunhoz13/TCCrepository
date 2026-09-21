@@ -1,17 +1,14 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Search, User, Briefcase, FileText, X } from "lucide-react";
+import { Search, X } from "lucide-react";
+import {
+  MINIMO_CARACTERES,
+  buscarEmTudo,
+  contarResultados,
+} from "@/lib/busca";
 
-function normalizar(valor) {
-  return (valor || "")
-    .toString()
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .toLowerCase();
-}
-
-export default function GlobalSearch({ clientes = [], processos = [], documentos = [], onSelect }) {
+export default function GlobalSearch({ colecoes = {}, onSelect }) {
   const [termo, setTermo] = useState("");
   const [aberto, setAberto] = useState(false);
   const containerRef = useRef(null);
@@ -26,44 +23,13 @@ export default function GlobalSearch({ clientes = [], processos = [], documentos
     return () => document.removeEventListener("mousedown", aoClicarFora);
   }, []);
 
-  const resultados = useMemo(() => {
-    const alvo = normalizar(termo.trim());
-    if (alvo.length < 2) return { clientes: [], processos: [], documentos: [] };
+  const grupos = useMemo(() => buscarEmTudo(termo, colecoes), [termo, colecoes]);
+  const total = contarResultados(grupos);
 
-    return {
-      clientes: clientes
-        .filter(
-          (c) =>
-            normalizar(c.nome).includes(alvo) ||
-            normalizar(c.cpf).includes(alvo) ||
-            normalizar(c.email).includes(alvo)
-        )
-        .slice(0, 4),
-      processos: processos
-        .filter(
-          (p) =>
-            normalizar(p.numero_processo).includes(alvo) ||
-            normalizar(p.titulo).includes(alvo) ||
-            normalizar(p.cliente_nome).includes(alvo)
-        )
-        .slice(0, 4),
-      documentos: documentos
-        .filter(
-          (d) =>
-            normalizar(d.nome_arquivo).includes(alvo) ||
-            normalizar(d.numero_processo).includes(alvo)
-        )
-        .slice(0, 4),
-    };
-  }, [termo, clientes, processos, documentos]);
-
-  const totalResultados =
-    resultados.clientes.length + resultados.processos.length + resultados.documentos.length;
-
-  function selecionar(tipo, item) {
+  function selecionar(painel, item) {
     setTermo("");
     setAberto(false);
-    onSelect?.(tipo, item);
+    onSelect?.(painel, item);
   }
 
   return (
@@ -71,7 +37,7 @@ export default function GlobalSearch({ clientes = [], processos = [], documentos
       <Search size={16} className="global-search-icon" />
       <input
         type="text"
-        placeholder="Buscar clientes, processos, documentos..."
+        placeholder="Buscar em todo o escritório..."
         value={termo}
         onChange={(e) => {
           setTermo(e.target.value);
@@ -93,72 +59,35 @@ export default function GlobalSearch({ clientes = [], processos = [], documentos
         </button>
       )}
 
-      {aberto && termo.trim().length >= 2 && (
+      {aberto && termo.trim().length >= MINIMO_CARACTERES && (
         <div className="global-search-results">
-          {totalResultados === 0 ? (
-            <div className="global-search-empty">Nada encontrado para &quot;{termo}&quot;.</div>
+          {total === 0 ? (
+            <div className="global-search-empty">
+              Nada encontrado para &quot;{termo}&quot;.
+            </div>
           ) : (
-            <>
-              {resultados.clientes.length > 0 && (
-                <div className="global-search-group">
-                  <span className="global-search-group-label">Clientes</span>
-                  {resultados.clientes.map((c) => (
+            grupos.map((grupo) => {
+              const Icone = grupo.icone;
+              return (
+                <div className="global-search-group" key={grupo.chave}>
+                  <span className="global-search-group-label">{grupo.rotulo}</span>
+                  {grupo.itens.map((item) => (
                     <button
                       type="button"
-                      key={`cliente-${c.id}`}
+                      key={`${grupo.chave}-${item.id}`}
                       className="global-search-item"
-                      onClick={() => selecionar("clientes", c)}
+                      onClick={() => selecionar(grupo.painel, item)}
                     >
-                      <User size={15} />
+                      <Icone size={15} />
                       <span>
-                        <strong>{c.nome}</strong>
-                        <small>{c.cpf}</small>
+                        <strong>{grupo.titulo(item)}</strong>
+                        <small>{grupo.detalhe(item)}</small>
                       </span>
                     </button>
                   ))}
                 </div>
-              )}
-
-              {resultados.processos.length > 0 && (
-                <div className="global-search-group">
-                  <span className="global-search-group-label">Processos</span>
-                  {resultados.processos.map((p) => (
-                    <button
-                      type="button"
-                      key={`processo-${p.id}`}
-                      className="global-search-item"
-                      onClick={() => selecionar("processos", p)}
-                    >
-                      <Briefcase size={15} />
-                      <span>
-                        <strong>{p.numero_processo}</strong>
-                        <small>{p.titulo}</small>
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              {resultados.documentos.length > 0 && (
-                <div className="global-search-group">
-                  <span className="global-search-group-label">Documentos</span>
-                  {resultados.documentos.map((d) => (
-                    <button
-                      type="button"
-                      key={`documento-${d.id}`}
-                      className="global-search-item"
-                      onClick={() => selecionar("documentos", d)}
-                    >
-                      <FileText size={15} />
-                      <span>
-                        <strong>{d.nome_arquivo}</strong>
-                        <small>{d.numero_processo}</small>
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </>
+              );
+            })
           )}
         </div>
       )}
