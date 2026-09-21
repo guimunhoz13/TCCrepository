@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect } from "react";
-import { X } from "lucide-react";
+import { HelpCircle, X } from "lucide-react";
 import { usePanel } from "@/contexts/PanelContext";
 import { usePreferences } from "@/contexts/PreferencesContext";
+import { useAjuda } from "@/contexts/AjudaContext";
 
 const PANEL_TITLE_KEYS = {
   clientes: "painel_clientes",
@@ -31,6 +32,7 @@ export default function OverlayPanel({
     setPanelTab,
   } = usePanel();
   const { t } = usePreferences();
+  const { abrirAjuda } = useAjuda();
 
   useEffect(() => {
     function onKeyDown(event) {
@@ -73,14 +75,28 @@ export default function OverlayPanel({
             {t(PANEL_TITLE_KEYS[activePanel]) || activePanel}
           </h3>
 
-          <button
-            type="button"
-            className="icon-btn"
-            onClick={closePanel}
-            aria-label={t("acao_fechar")}
-          >
-            <X size={18} />
-          </button>
+          <div style={{ display: "flex", gap: 4 }}>
+            {/* O painel cobre a barra superior: sem este botão, a ajuda
+                ficaria inalcançável justamente quando é mais útil. */}
+            <button
+              type="button"
+              className="icon-btn"
+              onClick={() => abrirAjuda(activePanel)}
+              aria-label="Abrir a ajuda desta aba"
+              title="Como esta aba funciona"
+            >
+              <HelpCircle size={18} />
+            </button>
+
+            <button
+              type="button"
+              className="icon-btn"
+              onClick={closePanel}
+              aria-label={t("acao_fechar")}
+            >
+              <X size={18} />
+            </button>
+          </div>
         </div>
 
         {tabs.length > 0 && (

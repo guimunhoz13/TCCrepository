@@ -3253,3 +3253,192 @@ tbody tr {
   justify-content: center;
   gap: 0;
 }
+
+/* ==========================================================================
+   CENTRAL DE AJUDA
+   Abre por cima de qualquer painel — a ajuda é contextual ao que está
+   aberto —, por isso tem z-index acima do overlay comum.
+   ========================================================================== */
+
+.ajuda-backdrop {
+  z-index: 200;
+}
+
+.ajuda-painel {
+  position: fixed;
+  z-index: 201;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(960px, calc(100vw - 48px));
+  height: min(680px, calc(100vh - 64px));
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-strong);
+  border-radius: 18px;
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+}
+
+.ajuda-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--border);
+}
+
+.ajuda-header-titulo {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--accent);
+}
+
+.ajuda-header-titulo h3 {
+  font-family: "Fraunces", serif;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.ajuda-busca {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--bg-input);
+  color: var(--text-muted);
+  max-width: 320px;
+  margin-left: auto;
+}
+
+.ajuda-busca input {
+  flex: 1;
+  border: none;
+  background: none;
+  outline: none;
+  padding: 9px 0;
+  font-size: 0.88rem;
+  font-family: inherit;
+  color: var(--text-primary);
+}
+
+.ajuda-corpo {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 224px 1fr;
+  min-height: 0;
+}
+
+.ajuda-indice {
+  border-right: 1px solid var(--border);
+  padding: 14px 10px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ajuda-indice-item {
+  text-align: left;
+  padding: 9px 12px;
+  border: none;
+  border-radius: 8px;
+  background: none;
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 0.86rem;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.ajuda-indice-item:hover {
+  background: var(--ink-soft);
+  color: var(--text-primary);
+}
+
+.ajuda-indice-item.active {
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.ajuda-conteudo {
+  padding: 24px 28px 32px;
+  overflow-y: auto;
+}
+
+.ajuda-conteudo h4 {
+  font-family: "Fraunces", serif;
+  font-size: 1.28rem;
+  font-weight: 600;
+  margin: 0 0 6px;
+}
+
+.ajuda-resumo {
+  color: var(--text-secondary);
+  font-size: 0.93rem;
+  line-height: 1.6;
+  margin: 0 0 22px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--border);
+}
+
+.ajuda-topico {
+  margin-bottom: 20px;
+}
+
+.ajuda-topico strong {
+  display: block;
+  font-size: 0.92rem;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.ajuda-topico p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.89rem;
+  line-height: 1.65;
+}
+
+@media (max-width: 760px) {
+  .ajuda-painel {
+    width: calc(100vw - 24px);
+    height: calc(100vh - 32px);
+  }
+
+  .ajuda-header {
+    flex-wrap: wrap;
+  }
+
+  .ajuda-busca {
+    max-width: none;
+    order: 3;
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .ajuda-corpo {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+  }
+
+  .ajuda-indice {
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    flex-direction: row;
+    overflow-x: auto;
+    padding: 10px;
+  }
+
+  .ajuda-indice-item {
+    white-space: nowrap;
+  }
+}

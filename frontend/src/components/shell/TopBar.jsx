@@ -1,6 +1,6 @@
 "use client";
 
-import { Moon, Sun, LogOut } from "lucide-react";
+import { Moon, Sun, LogOut, HelpCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTheme } from "@/contexts/ThemeContext";
 import { usePreferences } from "@/contexts/PreferencesContext";
@@ -10,6 +10,7 @@ import NotificationBell from "@/components/shell/NotificationBell";
 import { getUsuarioLogado, logout } from "@/services/api";
 import { getSaudacaoCompleta } from "@/utils/greeting";
 import { useEffect, useState } from "react";
+import { useAjuda } from "@/contexts/AjudaContext";
 
 export default function TopBar({
   title,
@@ -21,6 +22,7 @@ export default function TopBar({
   onSelectNotificacao,
 }) {
   const { theme, toggleTheme } = useTheme();
+  const { abrirAjuda } = useAjuda();
   const { t } = usePreferences();
   const router = useRouter();
 
@@ -87,6 +89,16 @@ export default function TopBar({
           </span>
           {usuario && <Avatar src={usuario.foto} nome={usuario.nome} size={30} />}
         </span>
+
+        <button
+          type="button"
+          className="icon-btn"
+          onClick={abrirAjuda}
+          aria-label="Abrir a central de ajuda"
+          title="Como o sistema funciona"
+        >
+          <HelpCircle size={18} />
+        </button>
 
         <button
           type="button"
