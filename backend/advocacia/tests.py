@@ -1,3 +1,5 @@
+import csv
+import io
 from datetime import date, timedelta
 from decimal import Decimal
 from unittest.mock import patch
@@ -5,6 +7,7 @@ import urllib.error
 
 from django.contrib.auth.hashers import check_password, make_password
 from django.core import mail
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management import call_command
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
@@ -26,6 +29,7 @@ from .models import (
     Cliente,
     Advogado,
     Processo,
+    Documento,
     Movimentacao,
     Agenda,
     Contrato,
@@ -43,7 +47,12 @@ from .models import (
     TokenRedefinicaoSenha,
     TokenVerificacaoEmail,
 )
-from .validators import validar_email_real, validar_tamanho_documento, validar_tamanho_imagem
+from .validators import (
+    validar_assinatura_arquivo,
+    validar_email_real,
+    validar_tamanho_documento,
+    validar_tamanho_imagem,
+)
 from .views import SolicitarRedefinicaoSenhaView
 
 
@@ -1367,6 +1376,99 @@ class AgendaPrazoAPITestCase(APITestCase):
         self.assertEqual(len(resposta.data["results"]), 1)
         self.assertEqual(resposta.data["results"][0]["titulo"], "Prazo X")
 
+    def test_criar_compromisso_sem_processo(self):
+        resposta = self.client.post(
+            "/api/agenda/",
+            {
+                "tipo": "compromisso",
+                "titulo": "Reunião interna",
+                "descricao": "Descrição.",
+                "data_evento": "2030-01-01T10:00:00Z",
+                "local_evento": "",
+            },
+            format="json",
+        )
+        self.assertEqual(resposta.status_code, status.HTTP_201_CREATED)
+        self.assertIsNone(resposta.data["processo"])
+        self.assertIsNone(resposta.data["numero_processo"])
+        self.assertIsNone(resposta.data["cliente_nome"])
+
+    def test_compromisso_sem_processo_e_gravado_no_escritorio_de_quem_criou(self):
+        Agenda.objects.create(
+            escritorio=self.escritorio,
+            tipo="compromisso",
+            titulo="Reunião sem processo",
+            descricao="Descrição.",
+            data_evento=timezone.now() + timezone.timedelta(days=1),
+        )
+        resposta = self.client.get("/api/agenda/")
+        titulos = [item["titulo"] for item in resposta.data["results"]]
+        self.assertIn("Reunião sem processo", titulos)
+
+    def test_compromisso_sem_processo_de_outro_escritorio_fica_isolado(self):
+        outro_escritorio = _criar_escritorio(nome="Outro Escritório Agenda", cnpj="22222222000122")
+        Agenda.objects.create(
+            escritorio=outro_escritorio,
+            tipo="compromisso",
+            titulo="Reunião de outro escritório",
+            descricao="Descrição.",
+            data_evento=timezone.now() + timezone.timedelta(days=1),
+        )
+        resposta = self.client.get("/api/agenda/")
+        titulos = [item["titulo"] for item in resposta.data["results"]]
+        self.assertNotIn("Reunião de outro escritório", titulos)
+
+    def test_editar_titulo_e_reagendar_data_do_evento(self):
+        evento = Agenda.objects.create(
+            processo=self.processo,
+            tipo="compromisso",
+            titulo="Audiência",
+            descricao="Descrição.",
+            data_evento=timezone.now() + timezone.timedelta(days=1),
+        )
+        nova_data = "2031-05-20T14:30:00Z"
+        resposta = self.client.patch(
+            f"/api/agenda/{evento.id}/",
+            {"titulo": "Audiência remarcada", "data_evento": nova_data},
+            format="json",
+        )
+        self.assertEqual(resposta.status_code, status.HTTP_200_OK)
+        evento.refresh_from_db()
+        self.assertEqual(evento.titulo, "Audiência remarcada")
+        self.assertEqual(evento.data_evento.isoformat(), "2031-05-20T14:30:00+00:00")
+
+    def test_reabrir_evento_marcado_como_cumprido(self):
+        evento = Agenda.objects.create(
+            processo=self.processo,
+            tipo="compromisso",
+            titulo="Audiência",
+            descricao="Descrição.",
+            data_evento=timezone.now() + timezone.timedelta(days=1),
+            cumprido=True,
+        )
+        resposta = self.client.patch(
+            f"/api/agenda/{evento.id}/", {"cumprido": False}, format="json"
+        )
+        self.assertEqual(resposta.status_code, status.HTTP_200_OK)
+        evento.refresh_from_db()
+        self.assertFalse(evento.cumprido)
+
+    def test_remover_vinculo_de_processo_de_um_evento_existente(self):
+        evento = Agenda.objects.create(
+            processo=self.processo,
+            tipo="compromisso",
+            titulo="Audiência",
+            descricao="Descrição.",
+            data_evento=timezone.now() + timezone.timedelta(days=1),
+        )
+        resposta = self.client.patch(
+            f"/api/agenda/{evento.id}/", {"processo": None}, format="json"
+        )
+        self.assertEqual(resposta.status_code, status.HTTP_200_OK)
+        evento.refresh_from_db()
+        self.assertIsNone(evento.processo)
+        self.assertEqual(evento.escritorio_id, self.escritorio.id)
+
 
 class ContratoHonorarioAPITestCase(APITestCase):
     """Testa a criação de contratos e a geração automática de parcelas."""
@@ -1583,6 +1685,51 @@ class ValidadoresDeUploadTestCase(TestCase):
     def test_documento_acima_de_10mb_levanta_erro(self):
         with self.assertRaises(ValidationError):
             validar_tamanho_documento(self._ArquivoFalso(11 * 1024 * 1024))
+
+    def test_pdf_com_assinatura_correta_passa(self):
+        arquivo = SimpleUploadedFile("contrato.pdf", b"%PDF-1.4\n%\xe2\xe3\xcf\xd3 resto do arquivo")
+        validar_assinatura_arquivo(arquivo)
+
+    def test_jpeg_com_assinatura_correta_passa(self):
+        arquivo = SimpleUploadedFile("foto.jpg", b"\xff\xd8\xff\xe0resto")
+        validar_assinatura_arquivo(arquivo)
+
+    def test_png_com_assinatura_correta_passa(self):
+        arquivo = SimpleUploadedFile("foto.png", b"\x89PNG\r\n\x1a\nresto")
+        validar_assinatura_arquivo(arquivo)
+
+    def test_webp_com_assinatura_correta_passa(self):
+        arquivo = SimpleUploadedFile("foto.webp", b"RIFF\x00\x00\x00\x00WEBPresto")
+        validar_assinatura_arquivo(arquivo)
+
+    def test_docx_com_assinatura_correta_passa(self):
+        arquivo = SimpleUploadedFile("peticao.docx", b"PK\x03\x04resto")
+        validar_assinatura_arquivo(arquivo)
+
+    def test_executavel_renomeado_para_pdf_e_recusado(self):
+        arquivo = SimpleUploadedFile("malicioso.pdf", b"MZ\x90\x00\x03\x00\x00\x00resto de um executavel")
+        with self.assertRaises(ValidationError):
+            validar_assinatura_arquivo(arquivo)
+
+    def test_texto_renomeado_para_jpg_e_recusado(self):
+        arquivo = SimpleUploadedFile("nao-e-foto.jpg", b"isso aqui e so um texto qualquer")
+        with self.assertRaises(ValidationError):
+            validar_assinatura_arquivo(arquivo)
+
+    def test_riff_que_nao_e_webp_e_recusado(self):
+        # RIFF é o contêiner de vários formatos (WAV, AVI...); só o
+        # marcador WEBP no offset 8 confirma que é mesmo uma imagem WebP.
+        arquivo = SimpleUploadedFile("audio.webp", b"RIFF\x00\x00\x00\x00WAVEresto")
+        with self.assertRaises(ValidationError):
+            validar_assinatura_arquivo(arquivo)
+
+    def test_validador_devolve_o_ponteiro_do_arquivo_para_o_inicio(self):
+        # O upload real é lido de novo (tamanho, salvamento) depois deste
+        # validador — se o ponteiro não voltar ao início, o arquivo salvo
+        # sai truncado.
+        arquivo = SimpleUploadedFile("contrato.pdf", b"%PDF-1.4\nresto do conteudo")
+        validar_assinatura_arquivo(arquivo)
+        self.assertEqual(arquivo.tell(), 0)
 
 
 class ContratoValorMinimoAPITestCase(APITestCase):
@@ -4907,3 +5054,182 @@ class ProximoPrazoDoProcessoAPITestCase(APITestCase):
 
         self.assertEqual(resposta.status_code, status.HTTP_200_OK, resposta.data)
         self.assertIsNotNone(resposta.data["proximo_prazo"])
+
+
+class ExportacaoCSVSeguraAPITestCase(APITestCase):
+    """Um nome ou endereço de cliente que comece com =, +, -, @, tab ou CR
+    vira fórmula executável ao abrir o CSV exportado no Excel/Sheets. A
+    exportação precisa neutralizar isso sem estragar valores normais."""
+
+    def setUp(self):
+        self.escritorio = _criar_escritorio()
+        self.admin = _criar_usuario(self.escritorio)
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Bearer {_gerar_token_de_acesso(self.admin)}"
+        )
+
+    def _linhas_csv(self, resposta):
+        texto = resposta.content.decode("utf-8-sig")
+        return list(csv.reader(io.StringIO(texto), delimiter=";"))
+
+    def test_exportacao_de_clientes_neutraliza_nome_com_formula(self):
+        Cliente.objects.create(
+            escritorio=self.escritorio, nome="=CMD|'/c calc'!A1", cpf="11122233344",
+            email="injecao@teste.com", telefone="11988887777", endereco="+SOMA(A1:A9)",
+        )
+        Cliente.objects.create(
+            escritorio=self.escritorio, nome="Cliente Normal", cpf="22233344455",
+            email="normal@teste.com", telefone="11977776666", endereco="Rua Normal, 10",
+        )
+
+        resposta = self.client.get("/api/configuracoes/exportar/clientes/")
+        self.assertEqual(resposta.status_code, status.HTTP_200_OK)
+
+        linhas = self._linhas_csv(resposta)
+        linha_injecao = next(l for l in linhas if "CMD" in l[0])
+        self.assertTrue(linha_injecao[0].startswith("'="))
+        self.assertTrue(linha_injecao[4].startswith("'+"))
+
+        linha_normal = next(l for l in linhas if "Normal" in l[0])
+        self.assertEqual(linha_normal[0], "Cliente Normal")
+        self.assertEqual(linha_normal[4], "Rua Normal, 10")
+
+    def test_exportacao_de_processos_neutraliza_titulo_com_formula(self):
+        cliente = Cliente.objects.create(
+            escritorio=self.escritorio, nome="Cliente Proc", cpf="33344455566",
+            email="clienteproc@teste.com", telefone="11966665555", endereco="Rua P",
+        )
+        usuario_adv = Usuario.objects.create(
+            escritorio=self.escritorio, nome="Advogado Proc", email="advproc@teste.com",
+            senha=make_password("senha12345"), tipo_usuario="advogado",
+        )
+        advogado = Advogado.objects.create(
+            escritorio=self.escritorio, usuario=usuario_adv, oab="111222/SP", especialidade="Cível",
+        )
+        Processo.objects.create(
+            escritorio=self.escritorio, numero_processo="PROC-CSV-1",
+            titulo="@SUM(1+1)*cmd|' /c calc'!A0", descricao="d",
+            cliente=cliente, advogado=advogado,
+        )
+
+        resposta = self.client.get("/api/configuracoes/exportar/processos/")
+        self.assertEqual(resposta.status_code, status.HTTP_200_OK)
+
+        linhas = self._linhas_csv(resposta)
+        linha = next(l for l in linhas if "SUM" in l[1])
+        self.assertTrue(linha[1].startswith("'@"))
+
+
+class DownloadAutenticadoAPITestCase(APITestCase):
+    """Documento e o documento de identidade de cliente/usuário não saem
+    mais como URL direta no serializer — só por uma rota autenticada que
+    confere o escritório (e, para usuário, também quem está pedindo)."""
+
+    def setUp(self):
+        self.escritorio_a = _criar_escritorio()
+        self.admin_a = _criar_usuario(self.escritorio_a)
+        self.escritorio_b = _criar_escritorio(
+            nome="Outro Escritorio", cnpj="99999999000199", email="outro@teste.com"
+        )
+        self.admin_b = _criar_usuario(self.escritorio_b, email="admin.b@teste.com")
+
+        self.cliente = Cliente.objects.create(
+            escritorio=self.escritorio_a, nome="Cliente Download", cpf="11122233344",
+            email="download@teste.com", telefone="11988887777", endereco="Rua D",
+            documento_identidade=SimpleUploadedFile("rg.pdf", b"%PDF-1.4\nconteudo do rg"),
+        )
+        usuario_adv = Usuario.objects.create(
+            escritorio=self.escritorio_a, nome="Advogado Download", email="advdownload@teste.com",
+            senha=make_password("senha12345"), tipo_usuario="advogado",
+        )
+        self.advogado = Advogado.objects.create(
+            escritorio=self.escritorio_a, usuario=usuario_adv, oab="999999/SP", especialidade="Cível",
+        )
+        self.processo = Processo.objects.create(
+            escritorio=self.escritorio_a, numero_processo="PROC-DOWNLOAD-1",
+            titulo="Processo Download", descricao="d", cliente=self.cliente, advogado=self.advogado,
+        )
+        self.documento = Documento.objects.create(
+            processo=self.processo, nome_arquivo="peticao.pdf",
+            arquivo=SimpleUploadedFile("peticao.pdf", b"%PDF-1.4\nconteudo da peticao"),
+        )
+
+    def _entrar_como(self, usuario):
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {_gerar_token_de_acesso(usuario)}")
+
+    # ---------- documentos do processo ----------
+
+    def test_serializer_de_documento_nao_expoe_url_do_arquivo(self):
+        self._entrar_como(self.admin_a)
+        resposta = self.client.get(f"/api/documentos/{self.documento.id}/")
+        self.assertNotIn("arquivo", resposta.data)
+
+    def test_download_de_documento_do_proprio_escritorio_funciona(self):
+        self._entrar_como(self.admin_a)
+        resposta = self.client.get(f"/api/documentos/{self.documento.id}/download/")
+        self.assertEqual(resposta.status_code, status.HTTP_200_OK)
+        conteudo = b"".join(resposta.streaming_content)
+        self.assertEqual(conteudo, b"%PDF-1.4\nconteudo da peticao")
+
+    def test_download_de_documento_de_outro_escritorio_e_404(self):
+        self._entrar_como(self.admin_b)
+        resposta = self.client.get(f"/api/documentos/{self.documento.id}/download/")
+        self.assertEqual(resposta.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_download_de_documento_sem_autenticacao_e_negado(self):
+        resposta = self.client.get(f"/api/documentos/{self.documento.id}/download/")
+        self.assertIn(resposta.status_code, (status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN))
+
+    # ---------- documento de identidade do cliente ----------
+
+    def test_serializer_de_cliente_nao_expoe_url_mas_avisa_que_ha_documento(self):
+        self._entrar_como(self.admin_a)
+        resposta = self.client.get(f"/api/clientes/{self.cliente.id}/")
+        self.assertNotIn("documento_identidade", resposta.data)
+        self.assertTrue(resposta.data["documento_identidade_enviado"])
+
+    def test_download_do_documento_de_identidade_do_cliente_funciona(self):
+        self._entrar_como(self.admin_a)
+        resposta = self.client.get(f"/api/clientes/{self.cliente.id}/documento-identidade/")
+        self.assertEqual(resposta.status_code, status.HTTP_200_OK)
+
+    def test_download_do_documento_de_identidade_de_cliente_de_outro_escritorio_e_404(self):
+        self._entrar_como(self.admin_b)
+        resposta = self.client.get(f"/api/clientes/{self.cliente.id}/documento-identidade/")
+        self.assertEqual(resposta.status_code, status.HTTP_404_NOT_FOUND)
+
+    # ---------- documento de identidade do usuário ----------
+
+    def test_advogado_baixa_o_proprio_documento_de_identidade(self):
+        usuario_com_doc = Usuario.objects.create(
+            escritorio=self.escritorio_a, nome="Advogado com Doc", email="advcomdoc@teste.com",
+            senha=make_password("senha12345"), tipo_usuario="advogado",
+            documento_identidade=SimpleUploadedFile("oab.pdf", b"%PDF-1.4\ndoc do advogado"),
+        )
+        self._entrar_como(usuario_com_doc)
+        resposta = self.client.get(f"/api/usuarios/{usuario_com_doc.id}/documento-identidade/")
+        self.assertEqual(resposta.status_code, status.HTTP_200_OK)
+
+    def test_advogado_nao_baixa_documento_de_identidade_de_outro_advogado(self):
+        outro_adv = Usuario.objects.create(
+            escritorio=self.escritorio_a, nome="Outro Advogado", email="outroadv@teste.com",
+            senha=make_password("senha12345"), tipo_usuario="advogado",
+            documento_identidade=SimpleUploadedFile("oab2.pdf", b"%PDF-1.4\ndoc do outro"),
+        )
+        usuario_solicitante = Usuario.objects.create(
+            escritorio=self.escritorio_a, nome="Advogado Solicitante", email="solicitante@teste.com",
+            senha=make_password("senha12345"), tipo_usuario="advogado",
+        )
+        self._entrar_como(usuario_solicitante)
+        resposta = self.client.get(f"/api/usuarios/{outro_adv.id}/documento-identidade/")
+        self.assertEqual(resposta.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_admin_baixa_documento_de_identidade_de_qualquer_usuario_do_escritorio(self):
+        usuario_com_doc = Usuario.objects.create(
+            escritorio=self.escritorio_a, nome="Advogado com Doc 2", email="advcomdoc2@teste.com",
+            senha=make_password("senha12345"), tipo_usuario="advogado",
+            documento_identidade=SimpleUploadedFile("oab3.pdf", b"%PDF-1.4\ndoc"),
+        )
+        self._entrar_como(self.admin_a)
+        resposta = self.client.get(f"/api/usuarios/{usuario_com_doc.id}/documento-identidade/")
+        self.assertEqual(resposta.status_code, status.HTTP_200_OK)

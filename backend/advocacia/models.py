@@ -5,7 +5,11 @@ from django.db.models import Case, F, IntegerField, Value, When
 from django.db import models
 from django.utils import timezone
 
-from .validators import validar_tamanho_documento, validar_tamanho_imagem
+from .validators import (
+    validar_assinatura_arquivo,
+    validar_tamanho_documento,
+    validar_tamanho_imagem,
+)
 
 
 ESTADOS_CIVIS = (
@@ -85,6 +89,7 @@ class Usuario(models.Model):
         validators=[
             FileExtensionValidator(["jpg", "jpeg", "png", "webp"]),
             validar_tamanho_imagem,
+            validar_assinatura_arquivo,
         ],
     )
     documento_identidade = models.FileField(
@@ -94,6 +99,7 @@ class Usuario(models.Model):
         validators=[
             FileExtensionValidator(["pdf", "jpg", "jpeg", "png"]),
             validar_tamanho_documento,
+            validar_assinatura_arquivo,
         ],
     )
     cpf = models.CharField(max_length=14, blank=True, default="")
@@ -146,6 +152,7 @@ class Cliente(models.Model):
         validators=[
             FileExtensionValidator(["jpg", "jpeg", "png", "webp"]),
             validar_tamanho_imagem,
+            validar_assinatura_arquivo,
         ],
     )
     documento_identidade = models.FileField(
@@ -155,6 +162,7 @@ class Cliente(models.Model):
         validators=[
             FileExtensionValidator(["pdf", "jpg", "jpeg", "png"]),
             validar_tamanho_documento,
+            validar_assinatura_arquivo,
         ],
     )
     ativo = models.BooleanField(default=True)
@@ -363,6 +371,7 @@ class Documento(models.Model):
         validators=[
             FileExtensionValidator(["pdf", "jpg", "jpeg", "png", "doc", "docx"]),
             validar_tamanho_documento,
+            validar_assinatura_arquivo,
         ],
     )
     enviado_em = models.DateTimeField(auto_now_add=True)
@@ -383,8 +392,20 @@ class Agenda(models.Model):
         ("fatal", "Prazo fatal"),
     )
 
+    # Um prazo/audiência quase sempre pertence a um processo, mas nem todo
+    # compromisso é processual (reunião interna, ligação com o cliente
+    # antes de haver processo). Por isso o vínculo é opcional, e o
+    # isolamento por escritório passa a depender do campo `escritorio`
+    # abaixo em vez de sempre atravessar o processo.
     processo = models.ForeignKey(
         Processo,
+        on_delete=models.CASCADE,
+        related_name="eventos_agenda",
+        null=True,
+        blank=True,
+    )
+    escritorio = models.ForeignKey(
+        Escritorio,
         on_delete=models.CASCADE,
         related_name="eventos_agenda",
     )
@@ -400,6 +421,11 @@ class Agenda(models.Model):
     local_evento = models.CharField(max_length=255, blank=True, default="")
     cumprido = models.BooleanField(default=False)
     criado_em = models.DateTimeField(auto_now_add=True)
+
+    def save(self, *args, **kwargs):
+        if self.escritorio_id is None and self.processo_id is not None:
+            self.escritorio_id = self.processo.escritorio_id
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.titulo
@@ -897,6 +923,7 @@ class Despesa(models.Model):
         validators=[
             FileExtensionValidator(["pdf", "jpg", "jpeg", "png"]),
             validar_tamanho_documento,
+            validar_assinatura_arquivo,
         ],
     )
 

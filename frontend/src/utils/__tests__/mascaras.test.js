@@ -4,6 +4,7 @@ import {
   formatarTelefone,
   formatarRG,
   formatarOAB,
+  formatarCEP,
 } from "../mascaras";
 
 describe("formatarCPF", () => {
@@ -71,5 +72,15 @@ describe("formatarOAB", () => {
 
   test("limita o número a 6 dígitos e a UF a 2 letras", () => {
     expect(formatarOAB("1234567890spx")).toBe("123456/SP");
+  });
+});
+
+describe("formatarCEP", () => {
+  test("organiza os dígitos em #####-###", () => {
+    expect(formatarCEP("01310200")).toBe("01310-200");
+  });
+
+  test("ignora caracteres não numéricos e limita a 8 dígitos", () => {
+    expect(formatarCEP("01310-200999")).toBe("01310-200");
   });
 });

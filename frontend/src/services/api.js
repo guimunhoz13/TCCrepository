@@ -357,14 +357,30 @@ export async function desativarEscritorio(data) {
   });
 }
 
-async function downloadArquivo(endpoint, nomeArquivo) {
+// Um <a href> comum não consegue mandar o header Authorization, então
+// arquivos protegidos (documentos do processo, documento de identidade)
+// precisam ser buscados via fetch autenticado e entregues como blob — com
+// a mesma renovação de token em cima de um 401 que request() já faz.
+async function buscarArquivoAutenticado(endpoint) {
   const token = typeof window !== "undefined" ? localStorage.getItem("access") : null;
-  const response = await fetch(`${API_URL}${endpoint}`, {
-    headers: { ...(token && { Authorization: `Bearer ${token}` }) },
-  });
+
+  async function buscar(tokenAtual) {
+    return fetch(`${API_URL}${endpoint}`, {
+      headers: { ...(tokenAtual && { Authorization: `Bearer ${tokenAtual}` }) },
+    });
+  }
+
+  let response = await buscar(token);
+
+  if (response.status === 401 && token) {
+    const novoToken = await renovarAccessToken("access");
+    if (novoToken) {
+      response = await buscar(novoToken);
+    }
+  }
 
   if (!response.ok) {
-    let mensagem = "Não foi possível exportar os dados.";
+    let mensagem = "Não foi possível obter o arquivo.";
     try {
       const data = await response.json();
       mensagem = data?.detail || mensagem;
@@ -372,7 +388,11 @@ async function downloadArquivo(endpoint, nomeArquivo) {
     throw new Error(mensagem);
   }
 
-  const blob = await response.blob();
+  return response.blob();
+}
+
+async function downloadArquivo(endpoint, nomeArquivo) {
+  const blob = await buscarArquivoAutenticado(endpoint);
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
@@ -381,6 +401,31 @@ async function downloadArquivo(endpoint, nomeArquivo) {
   a.click();
   a.remove();
   URL.revokeObjectURL(url);
+}
+
+// Para abrir o arquivo numa nova aba (visualizar PDF/imagem) em vez de
+// forçar o download, como os antigos <a href={...} target="_blank"> faziam.
+export async function abrirArquivoEmNovaAba(endpoint) {
+  const blob = await buscarArquivoAutenticado(endpoint);
+  const url = URL.createObjectURL(blob);
+  window.open(url, "_blank");
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
+}
+
+export function baixarDocumento(documentoId, nomeArquivo) {
+  return downloadArquivo(`/documentos/${documentoId}/download/`, nomeArquivo || "documento");
+}
+
+export function abrirDocumento(documentoId) {
+  return abrirArquivoEmNovaAba(`/documentos/${documentoId}/download/`);
+}
+
+export function abrirDocumentoIdentidadeCliente(clienteId) {
+  return abrirArquivoEmNovaAba(`/clientes/${clienteId}/documento-identidade/`);
+}
+
+export function abrirDocumentoIdentidadeUsuario(usuarioId) {
+  return abrirArquivoEmNovaAba(`/usuarios/${usuarioId}/documento-identidade/`);
 }
 
 export function exportarClientesCSV() {

@@ -151,6 +151,52 @@ def validar_tamanho_documento(arquivo):
         raise ValidationError("O arquivo não pode ultrapassar 10 MB.")
 
 
+# Primeiros bytes de cada formato aceito no sistema. FileExtensionValidator
+# olha só o nome do arquivo — um .exe renomeado para .pdf passava por ele
+# sem problema. Aqui confere-se o conteúdo de verdade.
+_ASSINATURAS_POR_EXTENSAO = {
+    "pdf": (b"%PDF-",),
+    "jpg": (b"\xff\xd8\xff",),
+    "jpeg": (b"\xff\xd8\xff",),
+    "png": (b"\x89PNG\r\n\x1a\n",),
+    "doc": (b"\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1",),
+    "docx": (b"PK\x03\x04",),
+}
+
+
+def validar_assinatura_arquivo(arquivo):
+    """Recusa um arquivo cujo conteúdo não bate com a extensão do nome.
+
+    WEBP é conferido à parte porque a assinatura não fica só nos
+    primeiros bytes (RIFF genérico) — precisa também do marcador "WEBP"
+    a partir do byte 8 do contêiner RIFF.
+    """
+    if not arquivo:
+        return
+
+    nome = getattr(arquivo, "name", "") or ""
+    extensao = nome.rsplit(".", 1)[-1].lower() if "." in nome else ""
+
+    posicao = arquivo.tell()
+    inicio = arquivo.read(16)
+    arquivo.seek(posicao)
+
+    if extensao == "webp":
+        valido = inicio.startswith(b"RIFF") and inicio[8:12] == b"WEBP"
+    else:
+        assinaturas = _ASSINATURAS_POR_EXTENSAO.get(extensao)
+        if not assinaturas:
+            # Extensão fora do mapa: quem decide se ela é aceita é o
+            # FileExtensionValidator, não esta checagem de conteúdo.
+            return
+        valido = any(inicio.startswith(assinatura) for assinatura in assinaturas)
+
+    if not valido:
+        raise ValidationError(
+            "O conteúdo do arquivo não corresponde à extensão informada."
+        )
+
+
 def validar_senha_forte(valor):
     """Senha forte: mínimo 8 caracteres, 1 maiúscula, 1 número, 1 caractere especial.
 

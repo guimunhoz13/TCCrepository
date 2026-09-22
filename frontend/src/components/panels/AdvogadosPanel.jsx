@@ -16,6 +16,7 @@ import {
   updateAdvogado,
   getAdvogados,
   normalizarLista,
+  abrirDocumentoIdentidadeUsuario,
 } from "@/services/api";
 
 const FORM_ADVOGADO_INICIAL = {
@@ -324,16 +325,19 @@ export default function AdvogadosPanel() {
           </div>
           <div className="form-field">
             <label>Documento (RG/CPF/CNH) — opcional</label>
-            {advogadoEditando?.documento_identidade && !documentoIdentidade && (
-              <a
-                href={advogadoEditando.documento_identidade}
-                target="_blank"
-                rel="noopener noreferrer"
+            {advogadoEditando?.documento_identidade_enviado && !documentoIdentidade && (
+              <button
+                type="button"
                 className="btn btn-secondary btn-sm"
                 style={{ marginBottom: 8, alignSelf: "flex-start" }}
+                onClick={() =>
+                  abrirDocumentoIdentidadeUsuario(advogadoEditando.usuario).catch((error) =>
+                    setErro(error.message)
+                  )
+                }
               >
                 Ver documento atual
-              </a>
+              </button>
             )}
             <input
               type="file"

@@ -43,6 +43,7 @@ import { DashboardDataProvider, useDashboardData } from "@/contexts/DashboardDat
 import { PreferencesProvider } from "@/contexts/PreferencesContext";
 import useRegistroDeAtividade from "@/hooks/useRegistroDeAtividade";
 import { badgeStatus, rotuloStatus } from "@/lib/statusProcesso";
+import { abrirDocumento } from "@/services/api";
 
 function contarUltimosDias(lista, campoData, dias) {
   const limite = Date.now() - dias * 24 * 60 * 60 * 1000;
@@ -511,15 +512,11 @@ function DashboardContent() {
             ) : (
               <div className="list-widget">
                 {ultimosDocumentos.map((doc) => (
-                  <a
+                  <button
                     key={doc.id}
-                    href={doc.arquivo || undefined}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    type="button"
                     className="doc-mini-card"
-                    onClick={(e) => {
-                      if (!doc.arquivo) e.preventDefault();
-                    }}
+                    onClick={() => abrirDocumento(doc.id).catch((error) => alert(error.message))}
                   >
                     <span className="doc-mini-icon">
                       <FileText size={16} />
@@ -528,7 +525,7 @@ function DashboardContent() {
                       <strong>{doc.nome_arquivo}</strong>
                       <span>Proc. {doc.numero_processo}</span>
                     </span>
-                  </a>
+                  </button>
                 ))}
               </div>
             )}

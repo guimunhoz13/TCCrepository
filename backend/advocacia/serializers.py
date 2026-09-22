@@ -180,6 +180,9 @@ class UsuarioSerializer(serializers.ModelSerializer):
         source="escritorio.nome",
         read_only=True,
     )
+    # Mesma lógica do ClienteSerializer: a URL do documento de identidade
+    # não sai na leitura, só a confirmação de que existe um enviado.
+    documento_identidade_enviado = serializers.SerializerMethodField()
 
     class Meta:
         model = Usuario
@@ -193,6 +196,7 @@ class UsuarioSerializer(serializers.ModelSerializer):
             "tipo_usuario",
             "foto",
             "documento_identidade",
+            "documento_identidade_enviado",
             "cpf",
             "rg",
             "data_nascimento",
@@ -208,12 +212,17 @@ class UsuarioSerializer(serializers.ModelSerializer):
             "criado_em",
             "tipo_usuario",
             "ativo",
+            "documento_identidade_enviado",
         ]
         extra_kwargs = {
             "cpf": {"validators": [validar_cpf]},
             "rg": {"validators": [validar_rg]},
             "telefone": {"validators": [validar_telefone]},
+            "documento_identidade": {"write_only": True},
         }
+
+    def get_documento_identidade_enviado(self, obj):
+        return bool(obj.documento_identidade)
 
     def validate(self, dados):
         # Campo ignorado em silêncio é armadilha: quem enviasse uma senha
@@ -292,6 +301,11 @@ class AdvogadoRegistroSerializer(serializers.Serializer):
 class ClienteSerializer(serializers.ModelSerializer):
 
     email = serializers.EmailField(validators=[validar_email_real])
+    # O documento de identidade é sensível — a URL direta do arquivo não
+    # sai mais na leitura (só na escrita, ao enviar um novo). Este campo
+    # avisa a tela se há um documento sem devolver onde ele está; o
+    # download passa pela rota autenticada em ClienteViewSet.
+    documento_identidade_enviado = serializers.SerializerMethodField()
 
     class Meta:
         model = Cliente
@@ -308,15 +322,20 @@ class ClienteSerializer(serializers.ModelSerializer):
             "nacionalidade",
             "foto",
             "documento_identidade",
+            "documento_identidade_enviado",
             "ativo",
             "criado_em",
         ]
-        read_only_fields = ["id", "criado_em"]
+        read_only_fields = ["id", "criado_em", "documento_identidade_enviado"]
         extra_kwargs = {
             "cpf": {"validators": [validar_cpf]},
             "rg": {"validators": [validar_rg]},
             "telefone": {"validators": [validar_telefone]},
+            "documento_identidade": {"write_only": True},
         }
+
+    def get_documento_identidade_enviado(self, obj):
+        return bool(obj.documento_identidade)
 
 
 class AdvogadoSerializer(serializers.ModelSerializer):
@@ -328,8 +347,9 @@ class AdvogadoSerializer(serializers.ModelSerializer):
     )
     foto = serializers.ImageField(source="usuario.foto", required=False, allow_null=True)
     documento_identidade = serializers.FileField(
-        source="usuario.documento_identidade", required=False, allow_null=True
+        source="usuario.documento_identidade", required=False, allow_null=True, write_only=True
     )
+    documento_identidade_enviado = serializers.SerializerMethodField()
     cpf = serializers.CharField(
         source="usuario.cpf", required=False, allow_blank=True, validators=[validar_cpf]
     )
@@ -356,6 +376,7 @@ class AdvogadoSerializer(serializers.ModelSerializer):
             "telefone",
             "foto",
             "documento_identidade",
+            "documento_identidade_enviado",
             "cpf",
             "rg",
             "data_nascimento",
@@ -365,10 +386,13 @@ class AdvogadoSerializer(serializers.ModelSerializer):
             "especialidade",
             "valor_hora_padrao",
         ]
-        read_only_fields = ["id", "usuario", "email"]
+        read_only_fields = ["id", "usuario", "email", "documento_identidade_enviado"]
         extra_kwargs = {
             "oab": {"validators": [validar_oab]},
         }
+
+    def get_documento_identidade_enviado(self, obj):
+        return bool(obj.usuario.documento_identidade)
 
     def update(self, instance, validated_data):
         dados_usuario = validated_data.pop("usuario", {})
@@ -530,6 +554,13 @@ class DocumentoSerializer(EscopoDoEscritorioMixin, serializers.ModelSerializer):
             "numero_processo",
             "enviado_em",
         ]
+        extra_kwargs = {
+            # A URL direta do arquivo não sai mais na leitura — o
+            # download passa pela rota autenticada em DocumentoViewSet,
+            # que confere que quem pede pertence ao escritório do
+            # processo. Continua aceito normalmente no envio.
+            "arquivo": {"write_only": True},
+        }
 
 
 class AgendaSerializer(EscopoDoEscritorioMixin, serializers.ModelSerializer):
@@ -537,19 +568,14 @@ class AgendaSerializer(EscopoDoEscritorioMixin, serializers.ModelSerializer):
     campos_do_escritorio = ("processo",)
 
 
-    processo_titulo = serializers.CharField(source="processo.titulo", read_only=True)
-    numero_processo = serializers.CharField(
-        source="processo.numero_processo",
-        read_only=True,
-    )
-    cliente_nome = serializers.CharField(
-        source="processo.cliente.nome",
-        read_only=True,
-    )
-    advogado_nome = serializers.CharField(
-        source="processo.advogado.usuario.nome",
-        read_only=True,
-    )
+    # Compromisso sem processo vinculado (reunião interna, contato antes de
+    # haver processo) é permitido — daí esses quatro campos virarem
+    # SerializerMethodField em vez de CharField com `source="processo..."`:
+    # um CharField tentaria atravessar o atributo mesmo com processo nulo.
+    processo_titulo = serializers.SerializerMethodField()
+    numero_processo = serializers.SerializerMethodField()
+    cliente_nome = serializers.SerializerMethodField()
+    advogado_nome = serializers.SerializerMethodField()
     atrasado = serializers.SerializerMethodField()
 
     class Meta:
@@ -580,6 +606,21 @@ class AgendaSerializer(EscopoDoEscritorioMixin, serializers.ModelSerializer):
             "atrasado",
             "criado_em",
         ]
+        extra_kwargs = {
+            "processo": {"required": False, "allow_null": True},
+        }
+
+    def get_processo_titulo(self, obj):
+        return obj.processo.titulo if obj.processo else None
+
+    def get_numero_processo(self, obj):
+        return obj.processo.numero_processo if obj.processo else None
+
+    def get_cliente_nome(self, obj):
+        return obj.processo.cliente.nome if obj.processo else None
+
+    def get_advogado_nome(self, obj):
+        return obj.processo.advogado.usuario.nome if obj.processo else None
 
     def get_atrasado(self, obj):
         from django.utils import timezone

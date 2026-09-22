@@ -2,7 +2,7 @@ from django.conf import settings
 from django.contrib.auth.hashers import check_password, make_password
 from django.db.models import Count, Q, Sum
 from django.db.models import Prefetch
-from django.http import HttpResponse
+from django.http import FileResponse, Http404, HttpResponse
 from django.utils import timezone
 from datetime import date
 from decimal import Decimal, ROUND_HALF_UP
@@ -720,7 +720,7 @@ class DashboardStatsView(APIView):
                     ).count(),
 
                     "agenda": Agenda.objects.filter(
-                        processo__escritorio=escritorio
+                        escritorio=escritorio
                     ).count(),
                 },
 
@@ -820,6 +820,18 @@ class UsuarioViewSet(
             self._exigir_admin()
 
         super().perform_update(serializer)
+
+    @action(detail=True, methods=["get"], url_path="documento-identidade")
+    def documento_identidade_download(self, request, pk=None):
+        usuario = self.get_usuario()
+        alvo = self.get_object()
+
+        # Mesma regra do perform_update: os próprios dados são livres,
+        # os de outra pessoa exigem administrador.
+        if alvo.pk != usuario.pk:
+            self._exigir_admin()
+
+        return _resposta_download_arquivo(alvo.documento_identidade)
 
     def perform_destroy(self, instance):
         admin = self._exigir_admin()
@@ -1041,6 +1053,11 @@ class ClienteViewSet(
     def perform_update(self, serializer):
         self._verificar_cpf_duplicado(serializer)
         super().perform_update(serializer)
+
+    @action(detail=True, methods=["get"], url_path="documento-identidade")
+    def documento_identidade_download(self, request, pk=None):
+        cliente = self.get_object()
+        return _resposta_download_arquivo(cliente.documento_identidade)
 
 
 # =========================================================
@@ -1357,6 +1374,16 @@ class MovimentacaoViewSet(
 # DOCUMENTOS
 # =========================================================
 
+def _resposta_download_arquivo(arquivo, nome_sugerido=None):
+    """Serve um FileField como download, para as rotas autenticadas de
+    documento/identidade — nunca a partir da URL direta do arquivo, que
+    não confere quem está pedindo nem a que escritório pertence."""
+    if not arquivo:
+        raise Http404("Arquivo não encontrado.")
+    nome = nome_sugerido or arquivo.name.rsplit("/", 1)[-1]
+    return FileResponse(arquivo.open("rb"), as_attachment=True, filename=nome)
+
+
 class DocumentoViewSet(
     EscritorioScopedMixin,
     viewsets.ModelViewSet
@@ -1396,6 +1423,11 @@ class DocumentoViewSet(
             ],
             autor=self.get_usuario(),
         )
+
+    @action(detail=True, methods=["get"], url_path="download")
+    def download(self, request, pk=None):
+        documento = self.get_object()
+        return _resposta_download_arquivo(documento.arquivo, documento.nome_arquivo)
 
 
 # =========================================================
@@ -2104,6 +2136,25 @@ class RelatorioProcessoEmailView(APIView):
         return Response({"detail": f"Relatório enviado para {destinatario}."})
 
 
+# Um valor de célula que começa com um desses caracteres é lido como
+# fórmula por Excel, Sheets e LibreOffice ao abrir o CSV — um nome ou
+# endereço de cliente digitado como "=CMD|'/c calc'!A1" executaria ao
+# abrir a planilha. Prefixar com aspas simples faz o texto aparecer como
+# está, sem virar fórmula.
+_CARACTERES_FORMULA_CSV = ("=", "+", "-", "@", "\t", "\r")
+
+
+def _celula_csv_segura(valor):
+    texto = "" if valor is None else str(valor)
+    if texto.startswith(_CARACTERES_FORMULA_CSV):
+        return "'" + texto
+    return texto
+
+
+def _linha_csv_segura(valores):
+    return [_celula_csv_segura(valor) for valor in valores]
+
+
 class ExportarClientesCSVView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -2117,7 +2168,10 @@ class ExportarClientesCSVView(APIView):
         writer = csv.writer(response, delimiter=";")
         writer.writerow(["Nome", "CPF", "E-mail", "Telefone", "Endereço", "Status", "Criado em"])
         for cliente in Cliente.objects.filter(escritorio=usuario.escritorio).order_by("nome"):
-            writer.writerow([cliente.nome, cliente.cpf, cliente.email, cliente.telefone, cliente.endereco, "Ativo" if cliente.ativo else "Inativo", cliente.criado_em.strftime("%d/%m/%Y %H:%M")])
+            writer.writerow(_linha_csv_segura([
+                cliente.nome, cliente.cpf, cliente.email, cliente.telefone, cliente.endereco,
+                "Ativo" if cliente.ativo else "Inativo", cliente.criado_em.strftime("%d/%m/%Y %H:%M"),
+            ]))
         return response
 
 
@@ -2135,7 +2189,11 @@ class ExportarProcessosCSVView(APIView):
         writer.writerow(["Número", "Título", "Status", "Cliente", "Advogado", "Data início", "Data fim"])
         queryset = Processo.objects.filter(escritorio=usuario.escritorio).select_related("cliente", "advogado__usuario").order_by("numero_processo")
         for processo in queryset:
-            writer.writerow([processo.numero_processo, processo.titulo, processo.get_status_display(), processo.cliente.nome, processo.advogado.usuario.nome, processo.data_inicio or "", processo.data_fim or ""])
+            writer.writerow(_linha_csv_segura([
+                processo.numero_processo, processo.titulo, processo.get_status_display(),
+                processo.cliente.nome, processo.advogado.usuario.nome,
+                processo.data_inicio or "", processo.data_fim or "",
+            ]))
         return response
 
 

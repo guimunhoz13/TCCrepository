@@ -2981,6 +2981,13 @@ tbody tr {
   transform: translateX(2px);
 }
 
+button.doc-mini-card {
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  width: 100%;
+}
+
 .doc-mini-icon {
   width: 34px;
   height: 34px;
