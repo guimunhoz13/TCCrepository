@@ -17,7 +17,7 @@ import {
   FileText,
   FileSignature,
 } from "lucide-react";
-import { getFichaProcesso, createMovimentacao, deleteMovimentacao } from "@/services/api";
+import { getFichaProcesso, createMovimentacao, deleteMovimentacao, abrirDocumento } from "@/services/api";
 import { badgeStatus, rotuloStatus } from "@/lib/statusProcesso";
 import { areaDireitoLabel } from "@/lib/areaDireito";
 import { TIPO_HONORARIO_LABEL, situacaoDespesa } from "@/lib/contrato";
@@ -509,14 +509,16 @@ export default function FichaProcesso({ processoId, onVoltar, onEditar }) {
           ) : (
             <div className="list-widget">
               {documentos.map((doc) => (
-                <a
+                <button
                   key={doc.id}
-                  href={doc.arquivo || undefined}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  type="button"
                   className="doc-mini-card"
-                  onClick={(e) => {
-                    if (!doc.arquivo) e.preventDefault();
+                  onClick={async () => {
+                    try {
+                      await abrirDocumento(doc.id);
+                    } catch (error) {
+                      setErro(error.message);
+                    }
                   }}
                 >
                   <span className="doc-mini-icon">
@@ -526,7 +528,7 @@ export default function FichaProcesso({ processoId, onVoltar, onEditar }) {
                     <strong>{doc.nome_arquivo}</strong>
                     <span>{formatarData(doc.enviado_em, true)}</span>
                   </span>
-                </a>
+                </button>
               ))}
             </div>
           )}

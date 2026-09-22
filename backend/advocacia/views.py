@@ -2,7 +2,7 @@ from django.conf import settings
 from django.contrib.auth.hashers import check_password, make_password
 from django.db.models import Count, Q, Sum
 from django.db.models import Prefetch
-from django.http import HttpResponse
+from django.http import FileResponse, Http404, HttpResponse
 from django.utils import timezone
 from datetime import date
 from decimal import Decimal, ROUND_HALF_UP
@@ -821,6 +821,18 @@ class UsuarioViewSet(
 
         super().perform_update(serializer)
 
+    @action(detail=True, methods=["get"], url_path="documento-identidade")
+    def documento_identidade_download(self, request, pk=None):
+        usuario = self.get_usuario()
+        alvo = self.get_object()
+
+        # Mesma regra do perform_update: os próprios dados são livres,
+        # os de outra pessoa exigem administrador.
+        if alvo.pk != usuario.pk:
+            self._exigir_admin()
+
+        return _resposta_download_arquivo(alvo.documento_identidade)
+
     def perform_destroy(self, instance):
         admin = self._exigir_admin()
 
@@ -1041,6 +1053,11 @@ class ClienteViewSet(
     def perform_update(self, serializer):
         self._verificar_cpf_duplicado(serializer)
         super().perform_update(serializer)
+
+    @action(detail=True, methods=["get"], url_path="documento-identidade")
+    def documento_identidade_download(self, request, pk=None):
+        cliente = self.get_object()
+        return _resposta_download_arquivo(cliente.documento_identidade)
 
 
 # =========================================================
@@ -1357,6 +1374,16 @@ class MovimentacaoViewSet(
 # DOCUMENTOS
 # =========================================================
 
+def _resposta_download_arquivo(arquivo, nome_sugerido=None):
+    """Serve um FileField como download, para as rotas autenticadas de
+    documento/identidade — nunca a partir da URL direta do arquivo, que
+    não confere quem está pedindo nem a que escritório pertence."""
+    if not arquivo:
+        raise Http404("Arquivo não encontrado.")
+    nome = nome_sugerido or arquivo.name.rsplit("/", 1)[-1]
+    return FileResponse(arquivo.open("rb"), as_attachment=True, filename=nome)
+
+
 class DocumentoViewSet(
     EscritorioScopedMixin,
     viewsets.ModelViewSet
@@ -1396,6 +1423,11 @@ class DocumentoViewSet(
             ],
             autor=self.get_usuario(),
         )
+
+    @action(detail=True, methods=["get"], url_path="download")
+    def download(self, request, pk=None):
+        documento = self.get_object()
+        return _resposta_download_arquivo(documento.arquivo, documento.nome_arquivo)
 
 
 # =========================================================

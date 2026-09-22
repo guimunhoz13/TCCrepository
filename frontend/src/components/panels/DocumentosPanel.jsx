@@ -12,6 +12,7 @@ import {
   deleteDocumento,
   getProcessos,
   normalizarLista,
+  abrirDocumento,
 } from "@/services/api";
 
 export default function DocumentosPanel() {
@@ -159,18 +160,15 @@ export default function DocumentosPanel() {
                     </td>
                     <td>
                       <div className="row-actions">
-                        {doc.arquivo && (
-                          <a
-                            href={doc.arquivo}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="row-action"
-                            title={t("acao_abrir")}
-                            aria-label={t("acao_abrir")}
-                          >
-                            <FileDown size={15} />
-                          </a>
-                        )}
+                        <button
+                          type="button"
+                          className="row-action"
+                          title={t("acao_abrir")}
+                          aria-label={t("acao_abrir")}
+                          onClick={() => abrirDocumento(doc.id).catch((error) => setErro(error.message))}
+                        >
+                          <FileDown size={15} />
+                        </button>
                         <button
                           type="button"
                           className="row-action row-action-danger"

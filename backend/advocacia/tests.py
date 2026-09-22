@@ -29,6 +29,7 @@ from .models import (
     Cliente,
     Advogado,
     Processo,
+    Documento,
     Movimentacao,
     Agenda,
     Contrato,
@@ -5024,3 +5025,118 @@ class ExportacaoCSVSeguraAPITestCase(APITestCase):
         linhas = self._linhas_csv(resposta)
         linha = next(l for l in linhas if "SUM" in l[1])
         self.assertTrue(linha[1].startswith("'@"))
+
+
+class DownloadAutenticadoAPITestCase(APITestCase):
+    """Documento e o documento de identidade de cliente/usuário não saem
+    mais como URL direta no serializer — só por uma rota autenticada que
+    confere o escritório (e, para usuário, também quem está pedindo)."""
+
+    def setUp(self):
+        self.escritorio_a = _criar_escritorio()
+        self.admin_a = _criar_usuario(self.escritorio_a)
+        self.escritorio_b = _criar_escritorio(
+            nome="Outro Escritorio", cnpj="99999999000199", email="outro@teste.com"
+        )
+        self.admin_b = _criar_usuario(self.escritorio_b, email="admin.b@teste.com")
+
+        self.cliente = Cliente.objects.create(
+            escritorio=self.escritorio_a, nome="Cliente Download", cpf="11122233344",
+            email="download@teste.com", telefone="11988887777", endereco="Rua D",
+            documento_identidade=SimpleUploadedFile("rg.pdf", b"%PDF-1.4\nconteudo do rg"),
+        )
+        usuario_adv = Usuario.objects.create(
+            escritorio=self.escritorio_a, nome="Advogado Download", email="advdownload@teste.com",
+            senha=make_password("senha12345"), tipo_usuario="advogado",
+        )
+        self.advogado = Advogado.objects.create(
+            escritorio=self.escritorio_a, usuario=usuario_adv, oab="999999/SP", especialidade="Cível",
+        )
+        self.processo = Processo.objects.create(
+            escritorio=self.escritorio_a, numero_processo="PROC-DOWNLOAD-1",
+            titulo="Processo Download", descricao="d", cliente=self.cliente, advogado=self.advogado,
+        )
+        self.documento = Documento.objects.create(
+            processo=self.processo, nome_arquivo="peticao.pdf",
+            arquivo=SimpleUploadedFile("peticao.pdf", b"%PDF-1.4\nconteudo da peticao"),
+        )
+
+    def _entrar_como(self, usuario):
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {_gerar_token_de_acesso(usuario)}")
+
+    # ---------- documentos do processo ----------
+
+    def test_serializer_de_documento_nao_expoe_url_do_arquivo(self):
+        self._entrar_como(self.admin_a)
+        resposta = self.client.get(f"/api/documentos/{self.documento.id}/")
+        self.assertNotIn("arquivo", resposta.data)
+
+    def test_download_de_documento_do_proprio_escritorio_funciona(self):
+        self._entrar_como(self.admin_a)
+        resposta = self.client.get(f"/api/documentos/{self.documento.id}/download/")
+        self.assertEqual(resposta.status_code, status.HTTP_200_OK)
+        conteudo = b"".join(resposta.streaming_content)
+        self.assertEqual(conteudo, b"%PDF-1.4\nconteudo da peticao")
+
+    def test_download_de_documento_de_outro_escritorio_e_404(self):
+        self._entrar_como(self.admin_b)
+        resposta = self.client.get(f"/api/documentos/{self.documento.id}/download/")
+        self.assertEqual(resposta.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_download_de_documento_sem_autenticacao_e_negado(self):
+        resposta = self.client.get(f"/api/documentos/{self.documento.id}/download/")
+        self.assertIn(resposta.status_code, (status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN))
+
+    # ---------- documento de identidade do cliente ----------
+
+    def test_serializer_de_cliente_nao_expoe_url_mas_avisa_que_ha_documento(self):
+        self._entrar_como(self.admin_a)
+        resposta = self.client.get(f"/api/clientes/{self.cliente.id}/")
+        self.assertNotIn("documento_identidade", resposta.data)
+        self.assertTrue(resposta.data["documento_identidade_enviado"])
+
+    def test_download_do_documento_de_identidade_do_cliente_funciona(self):
+        self._entrar_como(self.admin_a)
+        resposta = self.client.get(f"/api/clientes/{self.cliente.id}/documento-identidade/")
+        self.assertEqual(resposta.status_code, status.HTTP_200_OK)
+
+    def test_download_do_documento_de_identidade_de_cliente_de_outro_escritorio_e_404(self):
+        self._entrar_como(self.admin_b)
+        resposta = self.client.get(f"/api/clientes/{self.cliente.id}/documento-identidade/")
+        self.assertEqual(resposta.status_code, status.HTTP_404_NOT_FOUND)
+
+    # ---------- documento de identidade do usuário ----------
+
+    def test_advogado_baixa_o_proprio_documento_de_identidade(self):
+        usuario_com_doc = Usuario.objects.create(
+            escritorio=self.escritorio_a, nome="Advogado com Doc", email="advcomdoc@teste.com",
+            senha=make_password("senha12345"), tipo_usuario="advogado",
+            documento_identidade=SimpleUploadedFile("oab.pdf", b"%PDF-1.4\ndoc do advogado"),
+        )
+        self._entrar_como(usuario_com_doc)
+        resposta = self.client.get(f"/api/usuarios/{usuario_com_doc.id}/documento-identidade/")
+        self.assertEqual(resposta.status_code, status.HTTP_200_OK)
+
+    def test_advogado_nao_baixa_documento_de_identidade_de_outro_advogado(self):
+        outro_adv = Usuario.objects.create(
+            escritorio=self.escritorio_a, nome="Outro Advogado", email="outroadv@teste.com",
+            senha=make_password("senha12345"), tipo_usuario="advogado",
+            documento_identidade=SimpleUploadedFile("oab2.pdf", b"%PDF-1.4\ndoc do outro"),
+        )
+        usuario_solicitante = Usuario.objects.create(
+            escritorio=self.escritorio_a, nome="Advogado Solicitante", email="solicitante@teste.com",
+            senha=make_password("senha12345"), tipo_usuario="advogado",
+        )
+        self._entrar_como(usuario_solicitante)
+        resposta = self.client.get(f"/api/usuarios/{outro_adv.id}/documento-identidade/")
+        self.assertEqual(resposta.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_admin_baixa_documento_de_identidade_de_qualquer_usuario_do_escritorio(self):
+        usuario_com_doc = Usuario.objects.create(
+            escritorio=self.escritorio_a, nome="Advogado com Doc 2", email="advcomdoc2@teste.com",
+            senha=make_password("senha12345"), tipo_usuario="advogado",
+            documento_identidade=SimpleUploadedFile("oab3.pdf", b"%PDF-1.4\ndoc"),
+        )
+        self._entrar_como(self.admin_a)
+        resposta = self.client.get(f"/api/usuarios/{usuario_com_doc.id}/documento-identidade/")
+        self.assertEqual(resposta.status_code, status.HTTP_200_OK)

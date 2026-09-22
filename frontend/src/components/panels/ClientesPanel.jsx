@@ -15,6 +15,7 @@ import {
   updateCliente,
   deleteCliente,
   normalizarLista,
+  abrirDocumentoIdentidadeCliente,
 } from "@/services/api";
 
 const formularioInicial = {
@@ -289,16 +290,19 @@ export default function ClientesPanel() {
           </div>
           <div className="form-field">
             <label>Documento (RG/CPF/CNH) — opcional</label>
-            {clienteEditando?.documento_identidade && !documentoIdentidade && (
-              <a
-                href={clienteEditando.documento_identidade}
-                target="_blank"
-                rel="noopener noreferrer"
+            {clienteEditando?.documento_identidade_enviado && !documentoIdentidade && (
+              <button
+                type="button"
                 className="btn btn-secondary btn-sm"
                 style={{ marginBottom: 8, alignSelf: "flex-start" }}
+                onClick={() =>
+                  abrirDocumentoIdentidadeCliente(clienteEditando.id).catch((error) =>
+                    setErro(error.message)
+                  )
+                }
               >
                 Ver documento atual
-              </a>
+              </button>
             )}
             <input
               type="file"
