@@ -231,15 +231,20 @@ class Processo(models.Model):
         default="Em andamento",
     )
 
+    # PROTECT, e não CASCADE: excluir um cliente apagava em silêncio os
+    # processos dele — e, com eles, movimentações, documentos, agenda,
+    # contrato e horas. Um escritório não perde o histórico de um caso
+    # porque alguém removeu um cadastro. Para tirar o cliente de vista, o
+    # caminho é inativá-lo.
     cliente = models.ForeignKey(
         Cliente,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name="processos",
     )
 
     advogado = models.ForeignKey(
         Advogado,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name="processos",
     )
 

@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 from .feriados import calcular_prazo
 from .modelos_documento import VARIAVEIS_DISPONIVEIS, montar_contexto, preencher
 from .datajud import ErroDataJud, consultar_processo, importar_movimentacoes
+from .autenticacao import conta_ativa
 from .notificacoes import notificar_escritorio
 
 from rest_framework import status, viewsets
@@ -23,6 +24,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from rest_framework.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.settings import api_settings as jwt_settings
 from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken, OutstandingToken
@@ -103,6 +105,34 @@ from .ia_service import montar_contexto_sistema, gerar_resposta_ia
 # RENOVAÇÃO DE TOKEN
 # =========================================================
 
+def _data_do_filtro(params, nome):
+    """Lê um parâmetro de data da query string, recusando lixo com 400.
+
+    Sem isso, a data malformada chegava ao ORM e virava uma exceção não
+    tratada — ou seja, erro 500 para um erro do cliente.
+    """
+
+    valor = params.get(nome)
+    if not valor:
+        return None
+    try:
+        return date.fromisoformat(valor)
+    except ValueError:
+        raise ValidationError({nome: ["Informe uma data no formato AAAA-MM-DD."]})
+
+
+def _id_do_filtro(params, nome):
+    """Lê um parâmetro de identificador, recusando o que não for número."""
+
+    valor = params.get(nome)
+    if not valor:
+        return None
+    try:
+        return int(valor)
+    except (TypeError, ValueError):
+        raise ValidationError({nome: ["Informe um identificador numérico."]})
+
+
 class RenovarTokenView(APIView):
     """Emite um novo access token a partir de um refresh token válido.
 
@@ -137,6 +167,14 @@ class RenovarTokenView(APIView):
                 {"detail": "Token inválido ou expirado."},
                 status=status.HTTP_401_UNAUTHORIZED,
             )
+
+        # Um refresh válido não basta: a conta pode ter sido desativada
+        # depois de ele ser emitido. Sem esta checagem, desativar um
+        # usuário não o tirava do ar — ele seguia renovando o acesso.
+        try:
+            conta_ativa(refresh)
+        except AuthenticationFailed as exc:
+            return Response({"detail": exc.detail}, status=status.HTTP_401_UNAUTHORIZED)
 
         return Response({"access": str(refresh.access_token)})
 
@@ -768,6 +806,14 @@ class UsuarioViewSet(
     EscritorioScopedMixin,
     viewsets.ModelViewSet
 ):
+    """Usuários do escritório.
+
+    Todo mundo autenticado lê a lista — ela alimenta o seletor de
+    responsável por uma tarefa. Escrever é outra história: só o
+    administrador altera outro usuário, e ninguém altera o próprio perfil
+    de acesso. A restrição da tela de advogados não bastava, porque esta
+    rota continuava aberta por baixo dela.
+    """
 
     queryset = Usuario.objects.all()
 
@@ -785,6 +831,121 @@ class UsuarioViewSet(
             )
             .order_by("-criado_em")
         )
+
+    def _exigir_admin(self):
+        usuario = self.get_usuario()
+        if not usuario or usuario.tipo_usuario != "admin":
+            raise PermissionDenied(
+                "Apenas o administrador do escritório pode gerenciar usuários."
+            )
+        return usuario
+
+    def create(self, request, *args, **kwargs):
+        # O cadastro de advogado tem fluxo próprio (AdvogadoRegistroView),
+        # que define a senha e cria o registro profissional. Criar usuário
+        # solto por aqui geraria conta sem senha utilizável.
+        raise PermissionDenied(
+            "Use o cadastro de advogado para incluir um novo usuário no escritório."
+        )
+
+    def perform_update(self, serializer):
+        usuario = self.get_usuario()
+        alvo = serializer.instance
+
+        # Editar os próprios dados de contato é livre; mexer em outra
+        # pessoa exige ser administrador.
+        if alvo.pk != usuario.pk:
+            self._exigir_admin()
+
+        super().perform_update(serializer)
+
+    def perform_destroy(self, instance):
+        admin = self._exigir_admin()
+
+        if instance.pk == admin.pk:
+            raise ValidationError(
+                {"detail": "Você não pode excluir a própria conta."}
+            )
+
+        super().perform_destroy(instance)
+
+    @action(detail=True, methods=["post"], url_path="alternar-ativo")
+    def alternar_ativo(self, request, pk=None):
+        """Ativa ou desativa um usuário do escritório.
+
+        Fica fora do serializer de propósito: 'ativo' escrito junto com os
+        demais campos permitia que qualquer pessoa reativasse a própria
+        conta em um PATCH comum.
+        """
+
+        admin = self._exigir_admin()
+        alvo = self.get_object()
+
+        if alvo.pk == admin.pk:
+            return Response(
+                {"detail": "Você não pode desativar a própria conta."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        alvo.ativo = not alvo.ativo
+        alvo.save(update_fields=["ativo"])
+        registrar_auditoria(
+            request,
+            "edicao",
+            alvo,
+            descricao=f"Usuário {'ativado' if alvo.ativo else 'desativado'}.",
+            escritorio=admin.escritorio,
+        )
+        return Response(UsuarioSerializer(alvo).data)
+
+    @action(detail=True, methods=["post"], url_path="definir-perfil")
+    def definir_perfil(self, request, pk=None):
+        """Troca o perfil de acesso (administrador/advogado) de outra pessoa.
+
+        Nunca do próprio solicitante: era exatamente assim que um advogado
+        se promovia a administrador. O escritório também não pode ficar
+        sem nenhum administrador ativo.
+        """
+
+        admin = self._exigir_admin()
+        alvo = self.get_object()
+
+        if alvo.pk == admin.pk:
+            return Response(
+                {"detail": "Você não pode alterar o próprio perfil de acesso."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        novo_perfil = request.data.get("tipo_usuario")
+        if novo_perfil not in ("admin", "advogado"):
+            return Response(
+                {"tipo_usuario": ["Informe 'admin' ou 'advogado'."]},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if alvo.tipo_usuario == "admin" and novo_perfil != "admin":
+            outros_admins = (
+                Usuario.objects
+                .filter(escritorio=admin.escritorio, tipo_usuario="admin", ativo=True)
+                .exclude(pk=alvo.pk)
+                .exists()
+            )
+            if not outros_admins:
+                return Response(
+                    {"detail": "O escritório precisa de ao menos um administrador ativo."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+        alvo.tipo_usuario = novo_perfil
+        alvo.save(update_fields=["tipo_usuario"])
+        registrar_auditoria(
+            request,
+            "edicao",
+            alvo,
+            descricao=f"Perfil de acesso alterado para {novo_perfil}.",
+            escritorio=admin.escritorio,
+        )
+        return Response(UsuarioSerializer(alvo).data)
 
 
 # =========================================================
@@ -999,19 +1160,19 @@ class ProcessoViewSet(
         if status_filtro:
             queryset = queryset.filter(status=status_filtro)
 
-        cliente_id = params.get("cliente")
+        cliente_id = _id_do_filtro(params, "cliente")
         if cliente_id:
             queryset = queryset.filter(cliente_id=cliente_id)
 
-        advogado_id = params.get("advogado")
+        advogado_id = _id_do_filtro(params, "advogado")
         if advogado_id:
             queryset = queryset.filter(advogado_id=advogado_id)
 
-        data_inicio_de = params.get("data_inicio_de")
+        data_inicio_de = _data_do_filtro(params, "data_inicio_de")
         if data_inicio_de:
             queryset = queryset.filter(data_inicio__gte=data_inicio_de)
 
-        data_inicio_ate = params.get("data_inicio_ate")
+        data_inicio_ate = _data_do_filtro(params, "data_inicio_ate")
         if data_inicio_ate:
             queryset = queryset.filter(data_inicio__lte=data_inicio_ate)
 
@@ -2228,11 +2389,6 @@ class TarefaViewSet(
     serializer_class = TarefaSerializer
 
     permission_classes = [IsAuthenticated]
-
-    def get_serializer_context(self):
-        contexto = super().get_serializer_context()
-        contexto["escritorio"] = self.get_escritorio()
-        return contexto
 
     def get_queryset(self):
         queryset = ordenacao_de_trabalho(

@@ -35,6 +35,53 @@ from .models import (
 )
 
 
+class EscopoDoEscritorioMixin:
+    """Recusa vínculo com registro de outro escritório.
+
+    O EscritorioScopedMixin filtra a LEITURA por escritório, e isso dava a
+    impressão de que o isolamento estava resolvido. Não estava: os campos
+    de chave estrangeira aceitavam qualquer id existente, então era
+    possível criar um processo apontando para o cliente de outro
+    escritório, lançar movimentação em processo alheio e por aí adiante.
+
+    Cada serializer declara em `campos_do_escritorio` quais vínculos
+    precisam pertencer ao escritório de quem está autenticado. O
+    escritório chega pelo contexto, posto lá pelo EscritorioScopedMixin.
+    """
+
+    campos_do_escritorio = ()
+
+    def _escritorio_do_pedido(self):
+        return self.context.get("escritorio")
+
+    def validate(self, dados):
+        dados = super().validate(dados)
+        escritorio = self._escritorio_do_pedido()
+
+        if escritorio is None:
+            return dados
+
+        erros = {}
+        for campo in self.campos_do_escritorio:
+            valor = dados.get(campo)
+            if valor is None:
+                continue
+            # O processo é a via indireta mais comum: documento, agenda e
+            # apontamento pertencem ao escritório através dele.
+            dono = getattr(valor, "escritorio_id", None)
+            if dono is None:
+                dono = getattr(getattr(valor, "processo", None), "escritorio_id", None)
+            if dono is not None and dono != escritorio.id:
+                # Mensagem de "não encontrado", e não de "sem permissão":
+                # confirmar a existência de um id alheio já é informação.
+                erros[campo] = ["Registro não encontrado neste escritório."]
+
+        if erros:
+            raise serializers.ValidationError(erros)
+
+        return dados
+
+
 class EscritorioSerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -102,9 +149,32 @@ class EscritorioRegistroSerializer(serializers.Serializer):
         return {"escritorio": escritorio, "usuario": usuario}
 
 
-class UsuarioSerializer(serializers.ModelSerializer):
+DESTINO_POR_CAMPO = {
+    "senha": "A senha não é alterada por aqui: use a troca de senha nas configurações "
+             "(exige a senha atual) ou a recuperação por e-mail.",
+    "tipo_usuario": "O perfil de acesso é alterado pelo administrador, em "
+                    "/api/usuarios/<id>/definir-perfil/.",
+    "ativo": "A ativação é feita pelo administrador, em "
+             "/api/usuarios/<id>/alternar-ativo/.",
+}
 
-    senha = serializers.CharField(write_only=True, required=True)
+
+class UsuarioSerializer(serializers.ModelSerializer):
+    """Serializer da rota genérica de usuários.
+
+    Três campos ficaram deliberadamente de fora da escrita aqui:
+
+    - senha, porque esta rota não confere a senha atual nem aplica a
+      política de senha forte. A troca própria passa por
+      ConfiguracoesSenhaView (que exige a senha atual) e a recuperação,
+      por RedefinirSenhaView. Aceitar senha aqui permitia gravar uma senha
+      de um caractere.
+    - tipo_usuario e ativo, porque mudar o próprio perfil para admin, ou
+      reativar a própria conta, é escalada de privilégio. Quem promove,
+      rebaixa, ativa ou desativa é o administrador, pelas ações dedicadas
+      do UsuarioViewSet.
+    """
+
     email = serializers.EmailField(validators=[validar_email_real])
     escritorio_nome = serializers.CharField(
         source="escritorio.nome",
@@ -120,7 +190,6 @@ class UsuarioSerializer(serializers.ModelSerializer):
             "nome",
             "email",
             "telefone",
-            "senha",
             "tipo_usuario",
             "foto",
             "documento_identidade",
@@ -132,28 +201,34 @@ class UsuarioSerializer(serializers.ModelSerializer):
             "ativo",
             "criado_em",
         ]
-        read_only_fields = ["id", "escritorio", "escritorio_nome", "criado_em"]
+        read_only_fields = [
+            "id",
+            "escritorio",
+            "escritorio_nome",
+            "criado_em",
+            "tipo_usuario",
+            "ativo",
+        ]
         extra_kwargs = {
             "cpf": {"validators": [validar_cpf]},
             "rg": {"validators": [validar_rg]},
             "telefone": {"validators": [validar_telefone]},
         }
 
-    def create(self, validated_data):
-        senha = validated_data.pop("senha")
-        return Usuario.objects.create(
-            senha=make_password(senha),
-            **validated_data,
-        )
+    def validate(self, dados):
+        # Campo ignorado em silêncio é armadilha: quem enviasse uma senha
+        # aqui receberia 200 e sairia achando que a trocou.
+        enviados = getattr(self, "initial_data", {}) or {}
+        recusados = [campo for campo in ("senha", "tipo_usuario", "ativo") if campo in enviados]
+        if recusados:
+            raise serializers.ValidationError({
+                campo: [DESTINO_POR_CAMPO[campo]] for campo in recusados
+            })
+        return dados
 
     def update(self, instance, validated_data):
-        senha = validated_data.pop("senha", None)
-
         for campo, valor in validated_data.items():
             setattr(instance, campo, valor)
-
-        if senha:
-            instance.senha = make_password(senha)
 
         instance.save()
         return instance
@@ -304,7 +379,10 @@ class AdvogadoSerializer(serializers.ModelSerializer):
         return super().update(instance, validated_data)
 
 
-class ProcessoSerializer(serializers.ModelSerializer):
+class ProcessoSerializer(EscopoDoEscritorioMixin, serializers.ModelSerializer):
+
+    campos_do_escritorio = ("cliente", "advogado")
+
 
     cliente_nome = serializers.CharField(source="cliente.nome", read_only=True)
     cliente_email = serializers.EmailField(source="cliente.email", read_only=True)
@@ -355,7 +433,10 @@ class ProcessoSerializer(serializers.ModelSerializer):
         ]
 
 
-class MovimentacaoSerializer(serializers.ModelSerializer):
+class MovimentacaoSerializer(EscopoDoEscritorioMixin, serializers.ModelSerializer):
+
+    campos_do_escritorio = ("processo",)
+
 
     processo_titulo = serializers.CharField(source="processo.titulo", read_only=True)
     numero_processo = serializers.CharField(
@@ -384,7 +465,10 @@ class MovimentacaoSerializer(serializers.ModelSerializer):
         ]
 
 
-class DocumentoSerializer(serializers.ModelSerializer):
+class DocumentoSerializer(EscopoDoEscritorioMixin, serializers.ModelSerializer):
+
+    campos_do_escritorio = ("processo",)
+
 
     processo_titulo = serializers.CharField(source="processo.titulo", read_only=True)
     numero_processo = serializers.CharField(
@@ -411,7 +495,10 @@ class DocumentoSerializer(serializers.ModelSerializer):
         ]
 
 
-class AgendaSerializer(serializers.ModelSerializer):
+class AgendaSerializer(EscopoDoEscritorioMixin, serializers.ModelSerializer):
+
+    campos_do_escritorio = ("processo",)
+
 
     processo_titulo = serializers.CharField(source="processo.titulo", read_only=True)
     numero_processo = serializers.CharField(
@@ -516,7 +603,10 @@ class ParcelaSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "contrato", "numero", "valor", "data_vencimento", "pago_em"]
 
 
-class ContratoSerializer(serializers.ModelSerializer):
+class ContratoSerializer(EscopoDoEscritorioMixin, serializers.ModelSerializer):
+
+    campos_do_escritorio = ("processo",)
+
 
     numero_processo = serializers.CharField(source="processo.numero_processo", read_only=True)
     processo_titulo = serializers.CharField(source="processo.titulo", read_only=True)
@@ -698,7 +788,10 @@ class TarefaSerializer(serializers.ModelSerializer):
         return processo
 
 
-class ApontamentoHoraSerializer(serializers.ModelSerializer):
+class ApontamentoHoraSerializer(EscopoDoEscritorioMixin, serializers.ModelSerializer):
+
+    campos_do_escritorio = ("processo",)
+
 
     numero_processo = serializers.CharField(source="processo.numero_processo", read_only=True)
     usuario_nome = serializers.CharField(source="usuario.nome", read_only=True)
@@ -739,7 +832,10 @@ class ApontamentoHoraSerializer(serializers.ModelSerializer):
         return valor
 
 
-class DespesaSerializer(serializers.ModelSerializer):
+class DespesaSerializer(EscopoDoEscritorioMixin, serializers.ModelSerializer):
+
+    campos_do_escritorio = ("processo",)
+
 
     numero_processo = serializers.CharField(source="processo.numero_processo", read_only=True)
     cliente_nome = serializers.CharField(source="processo.cliente.nome", read_only=True)
@@ -765,6 +861,11 @@ class DespesaSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "numero_processo", "cliente_nome", "tipo_display", "criado_em"]
 
     def validate(self, dados):
+        # O super() é o que mantém a checagem de escritório do mixin: sem
+        # ele, este validate a sobrescreveria em silêncio e a despesa
+        # voltaria a aceitar processo de outro escritório.
+        dados = super().validate(dados)
+
         reembolsavel = dados.get(
             "reembolsavel", getattr(self.instance, "reembolsavel", True)
         )
