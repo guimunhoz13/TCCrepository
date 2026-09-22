@@ -1,13 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { usePanel } from "@/contexts/PanelContext";
+import { usePanel, PANELS } from "@/contexts/PanelContext";
 import { useDashboardData } from "@/contexts/DashboardDataContext";
 import { usePreferences } from "@/contexts/PreferencesContext";
 import OverlayPanel from "@/components/shell/OverlayPanel";
-import { Landmark, MessageCircle, RefreshCw, Trash2 } from "lucide-react";
+import { Landmark, MessageCircle, RefreshCw, Trash2, AlertTriangle, Clock } from "lucide-react";
 import { abrirWhatsApp, montarMensagemProcesso } from "@/utils/whatsapp";
 import { badgeStatus, rotuloStatus } from "@/lib/statusProcesso";
+import { AREAS_DIREITO } from "@/lib/areaDireito";
+import { formatarMoeda } from "@/utils/formato";
+import FichaProcesso from "./FichaProcesso";
 import {
   consultarDataJud,
   getProcessos,
@@ -38,31 +41,23 @@ const formularioInicial = {
   percentual_honorarios_sucumbencia: "",
 };
 
-const AREAS_DIREITO = [
-  { value: "civel", label: "Cível" },
-  { value: "trabalhista", label: "Trabalhista" },
-  { value: "tributario", label: "Tributário" },
-  { value: "criminal", label: "Criminal" },
-  { value: "familia", label: "Família e Sucessões" },
-  { value: "previdenciario", label: "Previdenciário" },
-  { value: "empresarial", label: "Empresarial" },
-  { value: "administrativo", label: "Administrativo" },
-  { value: "consumidor", label: "Consumidor" },
-  { value: "ambiental", label: "Ambiental" },
-];
-
-function areaDireitoLabel(valor) {
-  return AREAS_DIREITO.find((a) => a.value === valor)?.label || "—";
-}
-
-function formatarMoeda(valor) {
-  if (valor === null || valor === undefined || valor === "") return "—";
-  const numero = Number(valor);
-  return numero.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+/** O prazo pendente mais próximo, resumido pro selo de urgência da
+ * listagem — a mesma leitura de `atrasado`/dias que a dashboard já faz
+ * pros "Prazos vencendo", só que a partir do campo já calculado no
+ * processo em vez de uma lista de eventos. */
+function rotuloUrgencia(prazo) {
+  if (prazo.atrasado) return "Atrasado";
+  const diffDias = Math.round(
+    (new Date(prazo.data_evento).setHours(0, 0, 0, 0) - new Date().setHours(0, 0, 0, 0)) /
+      86400000
+  );
+  if (diffDias <= 0) return "Vence hoje";
+  if (diffDias === 1) return "Vence amanhã";
+  return `Vence em ${diffDias} dias`;
 }
 
 export default function ProcessosPanel() {
-  const { activePanel, panelTab, setPanelTab } = usePanel();
+  const { activePanel, panelTab, panelParams, openPanel, setPanelTab } = usePanel();
   const { refresh: refreshDashboard } = useDashboardData();
   const { t } = usePreferences();
   const [processos, setProcessos] = useState([]);
@@ -360,12 +355,17 @@ export default function ProcessosPanel() {
             )}
           </div>
 
-          <div className="form-field full">
+          <div className="form-sticky-footer">
             <button className="btn btn-primary" disabled={salvando}>
               {salvando ? t("acao_salvando") : t("acao_cadastrar_processo")}
             </button>
           </div>
         </form>
+      ) : panelTab === "ficha" ? (
+        <FichaProcesso
+          processoId={panelParams.processoId}
+          onVoltar={() => setPanelTab("lista")}
+        />
       ) : (
         <div className="table-wrap">
           <div
@@ -406,14 +406,21 @@ export default function ProcessosPanel() {
               </select>
             </div>
           </div>
+          {!carregando && (
+            <p className="celula-secundaria" style={{ marginBottom: 10 }}>
+              {processos.length === 0
+                ? "Nenhum processo encontrado."
+                : `${processos.length} processo${processos.length > 1 ? "s" : ""} encontrado${
+                    processos.length > 1 ? "s" : ""
+                  }.`}
+            </p>
+          )}
           <table>
             <thead>
               <tr>
                 <th>Processo</th>
                 <th>Cliente</th>
                 <th>Advogado</th>
-                <th>Área</th>
-                <th>Valor da causa</th>
                 <th>Status</th>
                 <th>Ações</th>
               </tr>
@@ -421,23 +428,61 @@ export default function ProcessosPanel() {
             <tbody>
               {carregando && (
                 <tr>
-                  <td colSpan="7">Carregando...</td>
+                  <td colSpan="5">Carregando...</td>
                 </tr>
               )}
               {!carregando &&
                 processos.map((processo) => (
-                  <tr key={processo.id}>
-                    <td>{processo.numero_processo}</td>
-                    <td>{processo.cliente_nome}</td>
-                    <td>{processo.advogado_nome}</td>
-                    <td>{areaDireitoLabel(processo.area_direito)}</td>
-                    <td>{formatarMoeda(processo.valor_causa)}</td>
+                  <tr
+                    key={processo.id}
+                    className="tr-clicavel"
+                    tabIndex={0}
+                    role="button"
+                    aria-label={`Ver ficha do processo ${processo.numero_processo}`}
+                    onClick={() =>
+                      openPanel(PANELS.PROCESSOS, "ficha", { processoId: processo.id })
+                    }
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        openPanel(PANELS.PROCESSOS, "ficha", { processoId: processo.id });
+                      }
+                    }}
+                  >
+                    <td>
+                      <strong>{processo.numero_processo}</strong>
+                      {processo.titulo && (
+                        <div className="celula-secundaria">{processo.titulo}</div>
+                      )}
+                      {processo.proximo_prazo && (
+                        <div style={{ marginTop: 5 }}>
+                          <span
+                            className={`badge ${
+                              processo.proximo_prazo.atrasado ? "badge-danger" : "badge-warning"
+                            }`}
+                          >
+                            {processo.proximo_prazo.atrasado ? (
+                              <AlertTriangle size={11} />
+                            ) : (
+                              <Clock size={11} />
+                            )}{" "}
+                            {rotuloUrgencia(processo.proximo_prazo)}
+                          </span>
+                        </div>
+                      )}
+                    </td>
+                    <td>
+                      <span className="celula-secundaria">{processo.cliente_nome}</span>
+                    </td>
+                    <td>
+                      <span className="celula-secundaria">{processo.advogado_nome}</span>
+                    </td>
                     <td>
                       <span className={`badge ${badgeStatus(processo.status)}`}>
                         {rotuloStatus(processo.status)}
                       </span>
                     </td>
-                    <td>
+                    <td onClick={(e) => e.stopPropagation()}>
                       <div className="row-actions">
                         <button
                           type="button"

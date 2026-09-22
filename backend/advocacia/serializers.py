@@ -394,6 +394,32 @@ class ProcessoSerializer(EscopoDoEscritorioMixin, serializers.ModelSerializer):
     valor_estimado_honorarios_sucumbencia = serializers.DecimalField(
         max_digits=14, decimal_places=2, read_only=True
     )
+    proximo_prazo = serializers.SerializerMethodField()
+
+    def get_proximo_prazo(self, obj):
+        """O prazo pendente mais próximo do processo, para a listagem
+        sinalizar urgência sem abrir a ficha.
+
+        Lê de `prazos_pendentes_ordenados`, preenchido pelo prefetch do
+        ProcessoViewSet para a página inteira numa única consulta. Fora
+        dele — ao serializar um único processo recém-criado, por exemplo
+        — cai para uma consulta direta, que aí é só uma e não N.
+        """
+        prazos = getattr(obj, "prazos_pendentes_ordenados", None)
+        if prazos is None:
+            prazos = list(
+                obj.eventos_agenda
+                .filter(tipo="prazo", cumprido=False)
+                .order_by("data_evento", "pk")[:1]
+            )
+        if not prazos:
+            return None
+        prazo = prazos[0]
+        return {
+            "data_evento": prazo.data_evento,
+            "prioridade": prazo.prioridade,
+            "atrasado": prazo.data_evento <= timezone.now(),
+        }
 
     class Meta:
         model = Processo
@@ -420,10 +446,14 @@ class ProcessoSerializer(EscopoDoEscritorioMixin, serializers.ModelSerializer):
             "oab_advogado_adverso",
             "percentual_honorarios_sucumbencia",
             "valor_estimado_honorarios_sucumbencia",
+            "datajud_sincronizado_em",
+            "proximo_prazo",
             "criado_em",
         ]
         read_only_fields = [
             "id",
+            "datajud_sincronizado_em",
+            "proximo_prazo",
             "cliente_nome",
             "cliente_email",
             "cliente_foto",
@@ -444,6 +474,9 @@ class MovimentacaoSerializer(EscopoDoEscritorioMixin, serializers.ModelSerialize
         read_only=True,
     )
     criado_por_nome = serializers.CharField(source="criado_por.nome", read_only=True, default=None)
+    # Distinguir o andamento lançado à mão do importado do tribunal é o
+    # que permite à linha do tempo mostrar de onde veio cada item.
+    origem_display = serializers.CharField(source="get_origem_display", read_only=True)
 
     class Meta:
         model = Movimentacao
@@ -455,6 +488,8 @@ class MovimentacaoSerializer(EscopoDoEscritorioMixin, serializers.ModelSerialize
             "descricao",
             "data_movimentacao",
             "criado_por_nome",
+            "origem",
+            "origem_display",
         ]
         read_only_fields = [
             "id",
@@ -462,6 +497,8 @@ class MovimentacaoSerializer(EscopoDoEscritorioMixin, serializers.ModelSerialize
             "numero_processo",
             "data_movimentacao",
             "criado_por_nome",
+            "origem",
+            "origem_display",
         ]
 
 

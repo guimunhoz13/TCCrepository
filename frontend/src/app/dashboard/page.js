@@ -454,7 +454,22 @@ function DashboardContent() {
                 <tbody>
                   {!carregando &&
                     processos.slice(0, 5).map((processo) => (
-                      <tr key={processo.id}>
+                      <tr
+                        key={processo.id}
+                        className="tr-clicavel"
+                        tabIndex={0}
+                        role="button"
+                        aria-label={`Ver ficha do processo ${processo.numero_processo}`}
+                        onClick={() =>
+                          openPanel(PANELS.PROCESSOS, "ficha", { processoId: processo.id })
+                        }
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            openPanel(PANELS.PROCESSOS, "ficha", { processoId: processo.id });
+                          }
+                        }}
+                      >
                         <td>{processo.numero_processo}</td>
                         <td>
                           <span className="avatar-cell">

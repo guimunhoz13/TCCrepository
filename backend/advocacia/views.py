@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.contrib.auth.hashers import check_password, make_password
 from django.db.models import Count, Q, Sum
+from django.db.models import Prefetch
 from django.http import HttpResponse
 from django.utils import timezone
 from datetime import date
@@ -1143,6 +1144,18 @@ class ProcessoViewSet(
                 "cliente",
                 "advogado__usuario",
             )
+            # O prazo mais próximo de cada processo, pré-carregado numa
+            # única consulta para toda a página: é o que permite à listagem
+            # sinalizar urgência sem uma consulta por linha.
+            .prefetch_related(
+                Prefetch(
+                    "eventos_agenda",
+                    queryset=Agenda.objects
+                    .filter(tipo="prazo", cumprido=False)
+                    .order_by("data_evento", "pk"),
+                    to_attr="prazos_pendentes_ordenados",
+                )
+            )
             .order_by("-criado_em")
         )
 
@@ -1208,6 +1221,62 @@ class ProcessoViewSet(
             ],
             autor=self.get_usuario(),
         )
+
+    @action(detail=True, methods=["get"], url_path="ficha")
+    def ficha(self, request, pk=None):
+        """Tudo o que o sistema sabe sobre um processo, numa resposta só.
+
+        Antes desta rota, a informação de um caso estava repartida em sete
+        painéis — movimentações num, documentos em outro, tarefas, agenda,
+        contrato, horas e despesas cada um no seu. Responder "como está o
+        processo da Maria?" exigia abrir tudo e juntar na cabeça.
+
+        Uma requisição em vez de sete também evita que a tela precise
+        orquestrar chamadas paralelas e lidar com o caso de uma delas
+        falhar sozinha.
+        """
+
+        processo = self.get_object()
+        contexto = {"request": request}
+
+        movimentacoes = (
+            Movimentacao.objects
+            .filter(processo=processo)
+            .select_related("criado_por")
+            .order_by("-data_movimentacao")
+        )
+        documentos = Documento.objects.filter(processo=processo).order_by("-enviado_em")
+        agenda = Agenda.objects.filter(processo=processo).order_by("data_evento")
+        tarefas = ordenacao_de_trabalho(
+            Tarefa.objects.filter(processo=processo).select_related("responsavel")
+        )
+        apontamentos = (
+            ApontamentoHora.objects
+            .filter(processo=processo)
+            .select_related("usuario")
+            .order_by("-data")
+        )
+        despesas = Despesa.objects.filter(processo=processo).order_by("-data")
+        contrato = (
+            Contrato.objects
+            .filter(processo=processo)
+            .prefetch_related("parcelas")
+            .first()
+        )
+
+        return Response({
+            "processo": ProcessoSerializer(processo, context=contexto).data,
+            "movimentacoes": MovimentacaoSerializer(movimentacoes, many=True, context=contexto).data,
+            "documentos": DocumentoSerializer(documentos, many=True, context=contexto).data,
+            "agenda": AgendaSerializer(agenda, many=True, context=contexto).data,
+            "tarefas": TarefaSerializer(tarefas, many=True, context=contexto).data,
+            "apontamentos": ApontamentoHoraSerializer(apontamentos, many=True, context=contexto).data,
+            "despesas": DespesaSerializer(despesas, many=True, context=contexto).data,
+            "contrato": ContratoSerializer(contrato, context=contexto).data if contrato else None,
+            "resumo": _resumo_financeiro(
+                [contrato] if contrato else [], apontamentos, despesas
+            ),
+        })
 
     @action(detail=True, methods=["post"], url_path="consultar-datajud")
     def consultar_datajud(self, request, pk=None):

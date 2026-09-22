@@ -22,15 +22,21 @@ export const PANELS = {
 export function PanelProvider({ children }) {
   const [activePanel, setActivePanel] = useState(null);
   const [panelTab, setPanelTab] = useState("lista");
+  // Dados extras da aba atual (ex.: qual registro abrir numa aba de
+  // detalhe oculta, como a ficha do processo) — genérico de propósito,
+  // pra servir qualquer painel sem crescer um campo por caso de uso.
+  const [panelParams, setPanelParams] = useState({});
 
-  const openPanel = useCallback((panel, tab = "lista") => {
+  const openPanel = useCallback((panel, tab = "lista", params = {}) => {
     setActivePanel(panel);
     setPanelTab(tab);
+    setPanelParams(params);
   }, []);
 
   const closePanel = useCallback(() => {
     setActivePanel(null);
     setPanelTab("lista");
+    setPanelParams({});
   }, []);
 
   return (
@@ -38,6 +44,7 @@ export function PanelProvider({ children }) {
       value={{
         activePanel,
         panelTab,
+        panelParams,
         openPanel,
         closePanel,
         setPanelTab,

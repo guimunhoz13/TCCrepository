@@ -4457,3 +4457,275 @@ class IsolamentoEAutorizacaoTestCase(APITestCase):
         )
 
         self.assertEqual(resposta.status_code, status.HTTP_200_OK)
+
+
+class FichaDoProcessoAPITestCase(APITestCase):
+    """A ficha reúne, numa resposta só, tudo o que estava espalhado em sete
+    painéis — movimentações, documentos, agenda, tarefas, horas, despesas
+    e contrato. Existir a rota não bastava: cada bloco precisa vir com o
+    formato certo e nenhum vazar de outro escritório."""
+
+    def setUp(self):
+        self.escritorio = _criar_escritorio()
+        self.admin = _criar_usuario(self.escritorio)
+        self.cliente = Cliente.objects.create(
+            escritorio=self.escritorio,
+            nome="Cliente Ficha",
+            cpf="33344455566",
+            email="cliente.ficha@teste.com",
+            telefone="11977776666",
+            endereco="Rua Ficha, 1",
+        )
+        usuario_advogado = Usuario.objects.create(
+            escritorio=self.escritorio,
+            nome="Advogado Ficha",
+            email="advogado.ficha@teste.com",
+            senha=make_password("senha12345"),
+            tipo_usuario="advogado",
+        )
+        self.advogado = Advogado.objects.create(
+            escritorio=self.escritorio,
+            usuario=usuario_advogado,
+            oab="222222/SP",
+            especialidade="Cível",
+        )
+        self.processo = Processo.objects.create(
+            escritorio=self.escritorio,
+            numero_processo="PROC-FICHA-1",
+            titulo="Processo da Ficha",
+            descricao="Descrição.",
+            cliente=self.cliente,
+            advogado=self.advogado,
+        )
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Bearer {_gerar_token_de_acesso(self.admin)}"
+        )
+
+    def test_ficha_de_processo_vazio_traz_listas_vazias_e_sem_contrato(self):
+        resposta = self.client.get(f"/api/processos/{self.processo.id}/ficha/")
+
+        self.assertEqual(resposta.status_code, status.HTTP_200_OK, resposta.data)
+        self.assertEqual(resposta.data["processo"]["id"], self.processo.id)
+        self.assertEqual(resposta.data["movimentacoes"], [])
+        self.assertEqual(resposta.data["documentos"], [])
+        self.assertEqual(resposta.data["agenda"], [])
+        self.assertEqual(resposta.data["tarefas"], [])
+        self.assertEqual(resposta.data["apontamentos"], [])
+        self.assertEqual(resposta.data["despesas"], [])
+        self.assertIsNone(resposta.data["contrato"])
+        self.assertEqual(Decimal(str(resposta.data["resumo"]["valor_contratado"])), Decimal("0.00"))
+
+    def test_ficha_reune_todos_os_blocos_do_processo(self):
+        Movimentacao.objects.create(
+            processo=self.processo,
+            descricao="Juntada de petição.", criado_por=self.admin,
+        )
+        Agenda.objects.create(
+            processo=self.processo,
+            titulo="Audiência", tipo="compromisso", data_evento=timezone.now(),
+        )
+        Tarefa.objects.create(
+            escritorio=self.escritorio, processo=self.processo,
+            titulo="Revisar minuta", responsavel=self.admin,
+        )
+        ApontamentoHora.objects.create(
+            escritorio=self.escritorio, processo=self.processo, usuario=self.admin,
+            data=timezone.localdate(), minutos=90, descricao="Audiência.",
+        )
+        Despesa.objects.create(
+            escritorio=self.escritorio, processo=self.processo, tipo="custas",
+            descricao="Guia de custas.", valor=Decimal("312.45"), data=timezone.localdate(),
+        )
+        contrato = Contrato.objects.create(
+            escritorio=self.escritorio, processo=self.processo,
+            tipo_honorario="fixo", valor_total=Decimal("5000.00"),
+        )
+
+        resposta = self.client.get(f"/api/processos/{self.processo.id}/ficha/")
+
+        self.assertEqual(resposta.status_code, status.HTTP_200_OK, resposta.data)
+        self.assertEqual(len(resposta.data["movimentacoes"]), 1)
+        self.assertEqual(len(resposta.data["agenda"]), 1)
+        self.assertEqual(len(resposta.data["tarefas"]), 1)
+        self.assertEqual(len(resposta.data["apontamentos"]), 1)
+        self.assertEqual(len(resposta.data["despesas"]), 1)
+        self.assertIsNotNone(resposta.data["contrato"])
+        self.assertEqual(resposta.data["contrato"]["id"], contrato.id)
+        self.assertEqual(
+            Decimal(str(resposta.data["resumo"]["valor_contratado"])), Decimal("5000.00")
+        )
+
+    def test_ficha_expoe_a_origem_da_movimentacao(self):
+        Movimentacao.objects.create(
+            processo=self.processo,
+            descricao="Lançada à mão.", criado_por=self.admin, origem="manual",
+        )
+        Movimentacao.objects.create(
+            processo=self.processo,
+            descricao="Importada do tribunal.", origem="datajud",
+            identificador_externo="123:2026-01-01T00:00:00",
+        )
+
+        resposta = self.client.get(f"/api/processos/{self.processo.id}/ficha/")
+
+        origens = {m["origem"] for m in resposta.data["movimentacoes"]}
+        self.assertEqual(origens, {"manual", "datajud"})
+
+    def test_ficha_nao_alcanca_processo_de_outro_escritorio(self):
+        outro_escritorio = _criar_escritorio(nome="Escritório Alheio", cnpj="11222333000181")
+        outro_cliente = Cliente.objects.create(
+            escritorio=outro_escritorio, nome="Cliente Alheio", cpf="99988877766",
+            email="alheio@teste.com", telefone="11966665555", endereco="Rua Alheia, 1",
+        )
+        outro_usuario_adv = Usuario.objects.create(
+            escritorio=outro_escritorio, nome="Advogado Alheio",
+            email="advogado.alheio@teste.com", senha=make_password("senha12345"),
+            tipo_usuario="advogado",
+        )
+        outro_advogado = Advogado.objects.create(
+            escritorio=outro_escritorio, usuario=outro_usuario_adv,
+            oab="333333/SP", especialidade="Cível",
+        )
+        processo_alheio = Processo.objects.create(
+            escritorio=outro_escritorio, numero_processo="PROC-ALHEIO-1",
+            titulo="Processo Alheio", descricao="d",
+            cliente=outro_cliente, advogado=outro_advogado,
+        )
+
+        resposta = self.client.get(f"/api/processos/{processo_alheio.id}/ficha/")
+
+        self.assertEqual(resposta.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_ficha_exige_autenticacao(self):
+        self.client.credentials()
+
+        resposta = self.client.get(f"/api/processos/{self.processo.id}/ficha/")
+
+        self.assertEqual(resposta.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_processo_serializado_traz_data_de_sincronizacao_com_datajud(self):
+        agora = timezone.now()
+        self.processo.datajud_sincronizado_em = agora
+        self.processo.save()
+
+        resposta = self.client.get(f"/api/processos/{self.processo.id}/ficha/")
+
+        self.assertIsNotNone(resposta.data["processo"]["datajud_sincronizado_em"])
+
+
+class ProximoPrazoDoProcessoAPITestCase(APITestCase):
+    """A listagem de processos precisa sinalizar urgência sem que quem usa
+    a tela tenha que abrir a ficha de cada um para descobrir se há prazo
+    vencendo."""
+
+    def setUp(self):
+        self.escritorio = _criar_escritorio()
+        self.admin = _criar_usuario(self.escritorio)
+        self.cliente = Cliente.objects.create(
+            escritorio=self.escritorio, nome="Cliente Prazo", cpf="44455566677",
+            email="cliente.prazo@teste.com", telefone="11966665555", endereco="Rua P",
+        )
+        usuario_advogado = Usuario.objects.create(
+            escritorio=self.escritorio, nome="Advogado Prazo",
+            email="advogado.prazo@teste.com", senha=make_password("senha12345"),
+            tipo_usuario="advogado",
+        )
+        self.advogado = Advogado.objects.create(
+            escritorio=self.escritorio, usuario=usuario_advogado,
+            oab="555555/SP", especialidade="Cível",
+        )
+        self.processo = Processo.objects.create(
+            escritorio=self.escritorio, numero_processo="PROC-PRAZO-1",
+            titulo="Processo com prazo", descricao="d",
+            cliente=self.cliente, advogado=self.advogado,
+        )
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Bearer {_gerar_token_de_acesso(self.admin)}"
+        )
+
+    def _processo_na_listagem(self):
+        resposta = self.client.get("/api/processos/")
+        self.assertEqual(resposta.status_code, status.HTTP_200_OK, resposta.data)
+        (item,) = [p for p in resposta.data["results"] if p["id"] == self.processo.id]
+        return item
+
+    def test_processo_sem_prazo_nao_tem_proximo_prazo(self):
+        item = self._processo_na_listagem()
+        self.assertIsNone(item["proximo_prazo"])
+
+    def test_prazo_futuro_aparece_e_nao_esta_atrasado(self):
+        Agenda.objects.create(
+            processo=self.processo,
+            titulo="Contestação", tipo="prazo",
+            data_evento=timezone.now() + timedelta(days=3),
+        )
+
+        item = self._processo_na_listagem()
+
+        self.assertIsNotNone(item["proximo_prazo"])
+        self.assertFalse(item["proximo_prazo"]["atrasado"])
+
+    def test_prazo_vencido_aparece_como_atrasado(self):
+        Agenda.objects.create(
+            processo=self.processo,
+            titulo="Contestação", tipo="prazo",
+            data_evento=timezone.now() - timedelta(days=1),
+        )
+
+        item = self._processo_na_listagem()
+
+        self.assertTrue(item["proximo_prazo"]["atrasado"])
+
+    def test_prazo_cumprido_nao_conta_como_proximo_prazo(self):
+        Agenda.objects.create(
+            processo=self.processo,
+            titulo="Contestação", tipo="prazo",
+            data_evento=timezone.now() - timedelta(days=1), cumprido=True,
+        )
+
+        item = self._processo_na_listagem()
+
+        self.assertIsNone(item["proximo_prazo"])
+
+    def test_compromisso_nao_e_confundido_com_prazo(self):
+        Agenda.objects.create(
+            processo=self.processo,
+            titulo="Reunião", tipo="compromisso",
+            data_evento=timezone.now() + timedelta(days=1),
+        )
+
+        item = self._processo_na_listagem()
+
+        self.assertIsNone(item["proximo_prazo"])
+
+    def test_com_varios_prazos_traz_o_mais_proximo(self):
+        Agenda.objects.create(
+            processo=self.processo,
+            titulo="Prazo distante", tipo="prazo",
+            data_evento=timezone.now() + timedelta(days=30), prioridade="normal",
+        )
+        Agenda.objects.create(
+            processo=self.processo,
+            titulo="Prazo fatal próximo", tipo="prazo",
+            data_evento=timezone.now() + timedelta(days=1), prioridade="fatal",
+        )
+
+        item = self._processo_na_listagem()
+
+        self.assertEqual(item["proximo_prazo"]["prioridade"], "fatal")
+
+    def test_processo_recem_criado_tambem_traz_proximo_prazo(self):
+        # Fora da listagem paginada (sem o prefetch), o serializer cai para
+        # a consulta direta — este teste cobre esse caminho.
+        Agenda.objects.create(
+            processo=self.processo,
+            titulo="Contestação", tipo="prazo",
+            data_evento=timezone.now() + timedelta(days=2),
+        )
+
+        resposta = self.client.patch(
+            f"/api/processos/{self.processo.id}/", {"titulo": "Novo título"}, format="json"
+        )
+
+        self.assertEqual(resposta.status_code, status.HTTP_200_OK, resposta.data)
+        self.assertIsNotNone(resposta.data["proximo_prazo"])
