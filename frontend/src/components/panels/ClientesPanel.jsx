@@ -8,7 +8,8 @@ import OverlayPanel from "@/components/shell/OverlayPanel";
 import { MessageCircle, Pencil, Trash2, UserCheck, UserX } from "lucide-react";
 import Avatar from "@/components/ui/Avatar";
 import { abrirWhatsApp, montarMensagemCliente } from "@/utils/whatsapp";
-import { formatarCPF, formatarRG, formatarTelefone } from "@/utils/mascaras";
+import { formatarCEP, formatarCPF, formatarRG, formatarTelefone } from "@/utils/mascaras";
+import { buscarEnderecoPorCep } from "@/utils/cep";
 import {
   getClientes,
   createCliente,
@@ -47,6 +48,8 @@ export default function ClientesPanel() {
   const [clientes, setClientes] = useState([]);
   const [busca, setBusca] = useState("");
   const [formulario, setFormulario] = useState(formularioInicial);
+  const [cep, setCep] = useState("");
+  const [buscandoCep, setBuscandoCep] = useState(false);
   const [foto, setFoto] = useState(null);
   const [documentoIdentidade, setDocumentoIdentidade] = useState(null);
   const [clienteEditando, setClienteEditando] = useState(null);
@@ -101,12 +104,33 @@ export default function ClientesPanel() {
     });
     setFoto(null);
     setDocumentoIdentidade(null);
+    setCep("");
     setPanelTab("novo");
+  }
+
+  async function handleBuscarCep(valor) {
+    if ((valor || "").replace(/\D/g, "").length !== 8) return;
+
+    try {
+      setBuscandoCep(true);
+      const endereco = await buscarEnderecoPorCep(valor);
+      if (!endereco) return;
+
+      const partes = [endereco.logradouro, endereco.bairro].filter(Boolean).join(", ");
+      const cidadeUf = [endereco.cidade, endereco.estado].filter(Boolean).join("/");
+      setFormulario((atual) => ({
+        ...atual,
+        endereco: [partes, cidadeUf].filter(Boolean).join(" - "),
+      }));
+    } finally {
+      setBuscandoCep(false);
+    }
   }
 
   function handleCancelarEdicao() {
     setClienteEditando(null);
     setFormulario(formularioInicial);
+    setCep("");
     setFoto(null);
     setDocumentoIdentidade(null);
     setPanelTab("lista");
@@ -144,6 +168,7 @@ export default function ClientesPanel() {
       }
 
       setFormulario(formularioInicial);
+      setCep("");
       setFoto(null);
       setDocumentoIdentidade(null);
       setClienteEditando(null);
@@ -220,6 +245,21 @@ export default function ClientesPanel() {
               }
               required
             />
+          </div>
+          <div className="form-field">
+            <label>CEP</label>
+            <input
+              value={cep}
+              onChange={(e) => setCep(formatarCEP(e.target.value))}
+              onBlur={(e) => handleBuscarCep(e.target.value)}
+              placeholder="00000-000"
+              maxLength={9}
+            />
+            {buscandoCep && (
+              <span style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>
+                Buscando endereço...
+              </span>
+            )}
           </div>
           <div className="form-field full">
             <label>Endereço</label>

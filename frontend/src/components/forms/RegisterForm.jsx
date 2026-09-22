@@ -4,7 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { registrarEscritorio } from "@/services/api";
-import { formatarCNPJ, formatarTelefone } from "@/utils/mascaras";
+import { formatarCEP, formatarCNPJ, formatarTelefone } from "@/utils/mascaras";
+import { buscarEnderecoPorCep } from "@/utils/cep";
 import { senhaAtendeRequisitos } from "@/utils/senha";
 import RequisitosSenha from "@/components/ui/RequisitosSenha";
 
@@ -22,11 +23,34 @@ export default function RegisterForm() {
     email_admin: "",
     senha_admin: "",
   });
+  const [cep, setCep] = useState("");
+  const [buscandoCep, setBuscandoCep] = useState(false);
   const [erro, setErro] = useState("");
   const [carregando, setCarregando] = useState(false);
 
   function alterarCampo(campo, valor) {
     setForm((atual) => ({ ...atual, [campo]: valor }));
+  }
+
+  async function handleBuscarCep(valor) {
+    if ((valor || "").replace(/\D/g, "").length !== 8) return;
+
+    try {
+      setBuscandoCep(true);
+      const endereco = await buscarEnderecoPorCep(valor);
+      if (!endereco) return;
+
+      setForm((atual) => ({
+        ...atual,
+        endereco_escritorio: [endereco.logradouro, endereco.bairro]
+          .filter(Boolean)
+          .join(", "),
+        cidade: endereco.cidade || atual.cidade,
+        estado: endereco.estado || atual.estado,
+      }));
+    } finally {
+      setBuscandoCep(false);
+    }
   }
 
   async function handleSubmit(event) {
@@ -101,6 +125,21 @@ export default function RegisterForm() {
             onChange={(e) => alterarCampo("email_escritorio", e.target.value)}
             required
           />
+        </div>
+        <div className="form-field">
+          <label>CEP</label>
+          <input
+            value={cep}
+            onChange={(e) => setCep(formatarCEP(e.target.value))}
+            onBlur={(e) => handleBuscarCep(e.target.value)}
+            placeholder="00000-000"
+            maxLength={9}
+          />
+          {buscandoCep && (
+            <span style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>
+              Buscando endereço...
+            </span>
+          )}
         </div>
         <div className="form-field">
           <label>Cidade</label>

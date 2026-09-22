@@ -30,6 +30,11 @@ export function formatarTelefone(valor) {
     .replace(/(\d{5})(\d)/, "$1-$2");
 }
 
+export function formatarCEP(valor) {
+  const numeros = valor.replace(/\D/g, "").slice(0, 8);
+  return numeros.replace(/^(\d{5})(\d)/, "$1-$2");
+}
+
 // RG varia de formato entre estados (não há padrão nacional), mas a forma
 // mais comum é XX.XXX.XXX-D, com D sendo o dígito verificador (0-9 ou X).
 export function formatarRG(valor) {

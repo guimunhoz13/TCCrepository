@@ -29,7 +29,8 @@ import {
 } from "@/services/api";
 import { gerarHtmlRelatorioCliente, gerarHtmlRelatorioProcesso, abrirRelatorio } from "@/utils/relatorio";
 import { abrirWhatsApp, montarMensagemCliente, montarMensagemProcesso } from "@/utils/whatsapp";
-import { formatarCNPJ, formatarTelefone } from "@/utils/mascaras";
+import { formatarCEP, formatarCNPJ, formatarTelefone } from "@/utils/mascaras";
+import { buscarEnderecoPorCep } from "@/utils/cep";
 import { senhaAtendeRequisitos } from "@/utils/senha";
 import RequisitosSenha from "@/components/ui/RequisitosSenha";
 import Avatar from "@/components/ui/Avatar";
@@ -244,6 +245,27 @@ function EscritorioTab({ dados, setDados, feedback }) {
     timezone: cfg.timezone || "America/Sao_Paulo",
     formato_data: cfg.formato_data || "dmy",
   });
+  const [cep, setCep] = useState("");
+  const [buscandoCep, setBuscandoCep] = useState(false);
+
+  async function handleBuscarCep(valor) {
+    if ((valor || "").replace(/\D/g, "").length !== 8) return;
+
+    try {
+      setBuscandoCep(true);
+      const endereco = await buscarEnderecoPorCep(valor);
+      if (!endereco) return;
+
+      setForm((atual) => ({
+        ...atual,
+        endereco: [endereco.logradouro, endereco.bairro].filter(Boolean).join(", "),
+        cidade: endereco.cidade || atual.cidade,
+        estado: endereco.estado || atual.estado,
+      }));
+    } finally {
+      setBuscandoCep(false);
+    }
+  }
 
   async function salvar() {
     try {
@@ -262,6 +284,22 @@ function EscritorioTab({ dados, setDados, feedback }) {
         <Field label="CNPJ"><input value={form.cnpj ? formatarCNPJ(form.cnpj) : ""} disabled /></Field>
         <Field label="E-mail"><input value={form.email || ""} disabled={!admin} onChange={(e) => setForm({ ...form, email: e.target.value })}/></Field>
         <Field label="Telefone"><input value={form.telefone || ""} disabled={!admin} onChange={(e) => setForm({ ...form, telefone: formatarTelefone(e.target.value) })}/></Field>
+        {admin && (
+          <Field label="CEP">
+            <input
+              value={cep}
+              onChange={(e) => setCep(formatarCEP(e.target.value))}
+              onBlur={(e) => handleBuscarCep(e.target.value)}
+              placeholder="00000-000"
+              maxLength={9}
+            />
+            {buscandoCep && (
+              <span style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>
+                Buscando endereço...
+              </span>
+            )}
+          </Field>
+        )}
         <Field label="Endereço" full><input value={form.endereco || ""} disabled={!admin} onChange={(e) => setForm({ ...form, endereco: e.target.value })}/></Field>
         <Field label="Cidade"><input value={form.cidade || ""} disabled={!admin} onChange={(e) => setForm({ ...form, cidade: e.target.value })}/></Field>
         <Field label="Estado"><input maxLength={2} value={form.estado || ""} disabled={!admin} onChange={(e) => setForm({ ...form, estado: e.target.value.toUpperCase() })}/></Field>
