@@ -105,13 +105,6 @@ export async function login(email, senha) {
   });
 }
 
-export async function verificarEmail(email) {
-  return request("/login/verificar-email/", {
-    method: "POST",
-    body: JSON.stringify({ email }),
-  });
-}
-
 export async function solicitarRedefinicaoSenha(email) {
   return request("/login/esqueci-senha/", {
     method: "POST",
@@ -588,6 +581,14 @@ export async function consultarDataJud(processoId) {
 
 export async function getFichaProcesso(processoId) {
   return request(`/processos/${processoId}/ficha/`);
+}
+
+export async function createMovimentacao(data) {
+  return request("/movimentacoes/", { method: "POST", body: corpoRequisicao(data) });
+}
+
+export async function deleteMovimentacao(id) {
+  return request(`/movimentacoes/${id}/`, { method: "DELETE" });
 }
 
 // ---------------------------------------------------------------

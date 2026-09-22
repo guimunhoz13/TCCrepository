@@ -393,6 +393,7 @@ class LoginView(APIView):
         refresh["tipo_usuario"] = usuario.tipo_usuario
         refresh["escritorio_id"] = usuario.escritorio_id
         refresh["escritorio_nome"] = usuario.escritorio.nome
+        refresh["session_version"] = usuario.session_version
 
         return Response(
             {
@@ -409,47 +410,6 @@ class LoginView(APIView):
                     "escritorio_nome": usuario.escritorio.nome,
                     "foto": request.build_absolute_uri(usuario.foto.url) if usuario.foto else None,
                 },
-            },
-            status=status.HTTP_200_OK,
-        )
-
-
-class VerificarEmailView(APIView):
-
-    permission_classes = [AllowAny]
-    authentication_classes = []
-    throttle_scope = "sensivel"
-
-    def post(self, request):
-
-        email = request.data.get("email", "").strip()
-
-        if not email:
-            return Response(
-                {"detail": "Informe o e-mail."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        try:
-            usuario = (
-                Usuario.objects
-                .select_related("escritorio")
-                .get(email__iexact=email)
-            )
-        except Usuario.DoesNotExist:
-            return Response(
-                {
-                    "existe": False,
-                },
-                status=status.HTTP_200_OK,
-            )
-
-        return Response(
-            {
-                "existe": True,
-                "tipo_usuario": usuario.tipo_usuario,
-                "nome": usuario.nome,
-                "escritorio_nome": usuario.escritorio.nome,
             },
             status=status.HTTP_200_OK,
         )
@@ -539,7 +499,8 @@ class RedefinirSenhaView(APIView):
         usuario.senha = make_password(nova_senha)
         usuario.tentativas_login = 0
         usuario.bloqueado_ate = None
-        usuario.save(update_fields=["senha", "tentativas_login", "bloqueado_ate"])
+        usuario.session_version += 1
+        usuario.save(update_fields=["senha", "tentativas_login", "bloqueado_ate", "session_version"])
 
         token.usado = True
         token.save(update_fields=["usado"])
@@ -1380,6 +1341,17 @@ class MovimentacaoViewSet(
         self._salvar(serializer, criado_por=self.get_usuario())
         registrar_auditoria(self.request, "criacao", serializer.instance, escritorio=escritorio)
 
+    def perform_destroy(self, instance):
+        # Uma movimentação importada do DataJud é registro oficial do
+        # andamento processual — apagá-la deixaria a linha do tempo
+        # incompleta sem que o tribunal soubesse. Só o que foi lançado à
+        # mão pode ser removido.
+        if instance.origem != "manual":
+            raise ValidationError(
+                "Só é possível excluir movimentações lançadas manualmente."
+            )
+        super().perform_destroy(instance)
+
 
 # =========================================================
 # DOCUMENTOS
@@ -1782,8 +1754,27 @@ class ConfiguracoesSenhaView(APIView):
             return Response({"detail": "A confirmação da nova senha não confere."}, status=status.HTTP_400_BAD_REQUEST)
 
         usuario.senha = make_password(nova_senha)
-        usuario.save(update_fields=["senha"])
-        return Response({"detail": "Senha alterada com sucesso."})
+        usuario.session_version += 1
+        usuario.save(update_fields=["senha", "session_version"])
+
+        # A troca de senha invalida todo token emitido antes dela — inclusive
+        # o desta própria requisição, já autenticada com o token antigo. Sem
+        # devolver um par novo aqui, a página que acabou de trocar a senha
+        # cairia deslogada na primeira ação seguinte.
+        refresh = RefreshToken()
+        refresh["user_id"] = usuario.id
+        refresh["nome"] = usuario.nome
+        refresh["email"] = usuario.email
+        refresh["tipo_usuario"] = usuario.tipo_usuario
+        refresh["escritorio_id"] = usuario.escritorio_id
+        refresh["escritorio_nome"] = usuario.escritorio.nome
+        refresh["session_version"] = usuario.session_version
+
+        return Response({
+            "detail": "Senha alterada com sucesso.",
+            "access": str(refresh.access_token),
+            "refresh": str(refresh),
+        })
 
 
 class ConfiguracoesPreferenciasView(APIView):

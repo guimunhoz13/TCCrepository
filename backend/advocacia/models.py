@@ -104,6 +104,13 @@ class Usuario(models.Model):
     ativo = models.BooleanField(default=True)
     tentativas_login = models.PositiveSmallIntegerField(default=0)
     bloqueado_ate = models.DateTimeField(null=True, blank=True)
+    # Incrementado a cada troca de senha (própria ou por recuperação por
+    # e-mail). O access token carrega o valor vigente no momento em que
+    # foi emitido; a autenticação recusa qualquer token com um valor
+    # diferente do atual. Sem isso, um token roubado antes da troca de
+    # senha continuava funcionando até expirar sozinho — a troca de senha
+    # não tirava ninguém do ar.
+    session_version = models.PositiveIntegerField(default=1)
     # Padrão True: só o auto-cadastro público de escritório (EscritorioRegistroView)
     # exige confirmação, e só em produção (DEBUG=False) — advogados cadastrados
     # por um administrador já autenticado são vouched for por ele, e em

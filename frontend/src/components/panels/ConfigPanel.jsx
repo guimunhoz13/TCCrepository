@@ -184,6 +184,11 @@ function ContaTab({ usuario, setDados, feedback, t }) {
     try {
       setSalvando(true);
       const res = await alterarSenha(senha);
+      // A troca de senha invalida qualquer token emitido antes dela —
+      // inclusive o desta aba. O backend devolve um par novo para não
+      // derrubar quem acabou de trocar a própria senha.
+      if (res.access) localStorage.setItem("access", res.access);
+      if (res.refresh) localStorage.setItem("refresh", res.refresh);
       setSenha({ senha_atual: "", nova_senha: "", confirmar_senha: "" });
       feedback(res.detail);
     } catch (e) { feedback(e.message, true); }

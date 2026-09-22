@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import {
   ArrowLeft,
+  Pencil,
+  Trash2,
   Briefcase,
   Wallet,
   TrendingUp,
@@ -15,7 +17,7 @@ import {
   FileText,
   FileSignature,
 } from "lucide-react";
-import { getFichaProcesso } from "@/services/api";
+import { getFichaProcesso, createMovimentacao, deleteMovimentacao } from "@/services/api";
 import { badgeStatus, rotuloStatus } from "@/lib/statusProcesso";
 import { areaDireitoLabel } from "@/lib/areaDireito";
 import { TIPO_HONORARIO_LABEL, situacaoDespesa } from "@/lib/contrato";
@@ -65,10 +67,14 @@ function Campo({ rotulo, children }) {
   );
 }
 
-export default function FichaProcesso({ processoId, onVoltar }) {
+export default function FichaProcesso({ processoId, onVoltar, onEditar }) {
   const [dados, setDados] = useState(null);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState("");
+  const [novaMovimentacao, setNovaMovimentacao] = useState("");
+  const [lancando, setLancando] = useState(false);
+  const [erroMovimentacao, setErroMovimentacao] = useState("");
+  const [excluindoMovId, setExcluindoMovId] = useState(null);
 
   useEffect(() => {
     if (!processoId) return;
@@ -89,6 +95,40 @@ export default function FichaProcesso({ processoId, onVoltar }) {
       cancelado = true;
     };
   }, [processoId]);
+
+  async function recarregarMovimentacoes() {
+    const resposta = await getFichaProcesso(processoId);
+    setDados((atual) => ({ ...atual, movimentacoes: resposta.movimentacoes }));
+  }
+
+  async function handleLancarMovimentacao(event) {
+    event.preventDefault();
+    if (!novaMovimentacao.trim()) return;
+    setErroMovimentacao("");
+    try {
+      setLancando(true);
+      await createMovimentacao({ processo: processoId, descricao: novaMovimentacao.trim() });
+      setNovaMovimentacao("");
+      await recarregarMovimentacoes();
+    } catch (error) {
+      setErroMovimentacao(error.message);
+    } finally {
+      setLancando(false);
+    }
+  }
+
+  async function handleExcluirMovimentacao(id) {
+    if (!window.confirm("Excluir esta movimentação?")) return;
+    setExcluindoMovId(id);
+    try {
+      await deleteMovimentacao(id);
+      await recarregarMovimentacoes();
+    } catch (error) {
+      setErroMovimentacao(error.message);
+    } finally {
+      setExcluindoMovId(null);
+    }
+  }
 
   const VoltarBtn = () => (
     <button
@@ -144,7 +184,14 @@ export default function FichaProcesso({ processoId, onVoltar }) {
 
   return (
     <div>
-      <VoltarBtn />
+      <div style={{ display: "flex", gap: 10, marginBottom: 18 }}>
+        <button type="button" className="btn btn-secondary" onClick={onVoltar}>
+          <ArrowLeft size={15} /> Voltar à lista
+        </button>
+        <button type="button" className="btn btn-secondary" onClick={() => onEditar(processo)}>
+          <Pencil size={15} /> Editar processo
+        </button>
+      </div>
 
       <div className="ficha-identidade">
         <div>
@@ -317,6 +364,30 @@ export default function FichaProcesso({ processoId, onVoltar }) {
 
         <div className="panel-card">
           <TituloSecao icon={History}>Movimentações</TituloSecao>
+          <form onSubmit={handleLancarMovimentacao} style={{ marginBottom: 16 }}>
+            <div className="form-field">
+              <label>Lançar movimentação</label>
+              <textarea
+                value={novaMovimentacao}
+                onChange={(e) => setNovaMovimentacao(e.target.value)}
+                placeholder="Ex.: Audiência realizada, cliente enviou documentos..."
+                style={{ minHeight: 70 }}
+              />
+            </div>
+            {erroMovimentacao && (
+              <p style={{ color: "var(--danger)", fontSize: "0.84rem", marginTop: 6 }}>
+                {erroMovimentacao}
+              </p>
+            )}
+            <button
+              type="submit"
+              className="btn btn-secondary btn-sm"
+              style={{ marginTop: 10 }}
+              disabled={lancando || !novaMovimentacao.trim()}
+            >
+              {lancando ? "Lançando..." : "Lançar"}
+            </button>
+          </form>
           {movimentacoes.length === 0 ? (
             <div className="empty-state">Nenhuma movimentação registrada.</div>
           ) : (
@@ -339,6 +410,18 @@ export default function FichaProcesso({ processoId, onVoltar }) {
                       {mov.criado_por_nome && <span>Lançado por {mov.criado_por_nome}</span>}
                     </div>
                   </div>
+                  {mov.origem === "manual" && (
+                    <button
+                      type="button"
+                      className="row-action row-action-danger"
+                      title="Excluir movimentação"
+                      aria-label="Excluir movimentação"
+                      disabled={excluindoMovId === mov.id}
+                      onClick={() => handleExcluirMovimentacao(mov.id)}
+                    >
+                      <Trash2 size={15} />
+                    </button>
+                  )}
                 </div>
               ))}
             </div>
