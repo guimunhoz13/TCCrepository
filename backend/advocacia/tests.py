@@ -80,6 +80,7 @@ def _gerar_token_de_acesso(usuario):
     refresh["tipo_usuario"] = usuario.tipo_usuario
     refresh["escritorio_id"] = usuario.escritorio_id
     refresh["escritorio_nome"] = usuario.escritorio.nome
+    refresh["session_version"] = usuario.session_version
     return str(refresh.access_token)
 
 
@@ -92,6 +93,7 @@ def _gerar_refresh_token(usuario):
     refresh["tipo_usuario"] = usuario.tipo_usuario
     refresh["escritorio_id"] = usuario.escritorio_id
     refresh["escritorio_nome"] = usuario.escritorio.nome
+    refresh["session_version"] = usuario.session_version
     return str(refresh)
 
 
@@ -1951,6 +1953,125 @@ class RedefinicaoSenhaAPITestCase(APITestCase):
             format="json",
         )
         self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
+
+
+class SessaoInvalidadaNaTrocaDeSenhaAPITestCase(APITestCase):
+    """A troca de senha — própria ou por link de recuperação — precisa
+    derrubar qualquer token emitido antes dela. Sem isso um token roubado
+    antes da troca continuava valendo até expirar sozinho (documentado em
+    RenovacaoDeTokenAPITestCase.test_access_token_emitido_antes_do_logout_
+    continua_valido_ate_expirar — aquele é sobre logout; este é sobre
+    troca de senha, que agora usa um mecanismo diferente: session_version)."""
+
+    def setUp(self):
+        self.escritorio = _criar_escritorio()
+        self.usuario = _criar_usuario(self.escritorio)
+
+    def test_access_token_emitido_antes_da_troca_de_senha_propria_e_rejeitado(self):
+        token_antigo = _gerar_token_de_acesso(self.usuario)
+
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {token_antigo}")
+        resposta_troca = self.client.post(
+            "/api/configuracoes/senha/",
+            {
+                "senha_atual": "senha12345",
+                "nova_senha": "NovaSenha@123",
+                "confirmar_senha": "NovaSenha@123",
+            },
+            format="json",
+        )
+        self.assertEqual(resposta_troca.status_code, status.HTTP_200_OK, resposta_troca.data)
+
+        # O mesmo token, usado de novo, já não vale mais — mesmo sendo
+        # bem formado e ainda dentro do prazo de expiração.
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {token_antigo}")
+        resposta_depois = self.client.get("/api/clientes/")
+        self.assertEqual(resposta_depois.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_troca_de_senha_propria_devolve_tokens_novos_que_funcionam(self):
+        token_antigo = _gerar_token_de_acesso(self.usuario)
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {token_antigo}")
+
+        resposta_troca = self.client.post(
+            "/api/configuracoes/senha/",
+            {
+                "senha_atual": "senha12345",
+                "nova_senha": "NovaSenha@123",
+                "confirmar_senha": "NovaSenha@123",
+            },
+            format="json",
+        )
+        self.assertIn("access", resposta_troca.data)
+        self.assertIn("refresh", resposta_troca.data)
+
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {resposta_troca.data['access']}")
+        resposta_depois = self.client.get("/api/clientes/")
+        self.assertEqual(resposta_depois.status_code, status.HTTP_200_OK)
+
+    def test_refresh_token_emitido_antes_da_troca_de_senha_propria_nao_renova_mais(self):
+        refresh_antigo = _gerar_refresh_token(self.usuario)
+
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Bearer {_gerar_token_de_acesso(self.usuario)}"
+        )
+        self.client.post(
+            "/api/configuracoes/senha/",
+            {
+                "senha_atual": "senha12345",
+                "nova_senha": "NovaSenha@123",
+                "confirmar_senha": "NovaSenha@123",
+            },
+            format="json",
+        )
+
+        resposta = self.client.post(
+            "/api/token/refresh/", {"refresh": refresh_antigo}, format="json"
+        )
+        self.assertEqual(resposta.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_quem_nao_trocou_a_senha_continua_com_o_token_valendo(self):
+        outro_usuario = _criar_usuario(self.escritorio, email="outro@escritorio.com")
+        token = _gerar_token_de_acesso(outro_usuario)
+
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Bearer {_gerar_token_de_acesso(self.usuario)}"
+        )
+        self.client.post(
+            "/api/configuracoes/senha/",
+            {
+                "senha_atual": "senha12345",
+                "nova_senha": "NovaSenha@123",
+                "confirmar_senha": "NovaSenha@123",
+            },
+            format="json",
+        )
+
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {token}")
+        resposta = self.client.get("/api/clientes/")
+        self.assertEqual(resposta.status_code, status.HTTP_200_OK)
+
+    def test_access_token_emitido_antes_da_redefinicao_por_link_e_rejeitado(self):
+        token_antigo = _gerar_token_de_acesso(self.usuario)
+
+        token_redefinicao = TokenRedefinicaoSenha.objects.create(
+            usuario=self.usuario,
+            token="token-sessao-123",
+            expira_em=timezone.now() + timezone.timedelta(hours=1),
+        )
+        resposta_redefinicao = self.client.post(
+            "/api/login/redefinir-senha/",
+            {
+                "token": token_redefinicao.token,
+                "nova_senha": "NovaSenha@123",
+                "confirmar_senha": "NovaSenha@123",
+            },
+            format="json",
+        )
+        self.assertEqual(resposta_redefinicao.status_code, status.HTTP_200_OK)
+
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {token_antigo}")
+        resposta_depois = self.client.get("/api/clientes/")
+        self.assertEqual(resposta_depois.status_code, status.HTTP_401_UNAUTHORIZED)
 
 
 class PaginacaoAPITestCase(APITestCase):

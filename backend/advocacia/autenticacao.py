@@ -42,11 +42,21 @@ def conta_ativa(token):
         return (
             Usuario.objects
             .select_related("escritorio")
-            .get(id=user_id, ativo=True, escritorio__ativo=True)
+            .get(
+                id=user_id,
+                ativo=True,
+                escritorio__ativo=True,
+                # Um token emitido antes da senha ser trocada carrega a
+                # versão antiga e some daqui — é o que faz a troca de
+                # senha derrubar quem já estava com acesso, sem esperar o
+                # token expirar sozinho.
+                session_version=token.get("session_version"),
+            )
         )
     except Usuario.DoesNotExist:
-        # Mesma resposta para usuário desativado, escritório desativado e
-        # usuário removido: quem perdeu o acesso não precisa saber por quê.
+        # Mesma resposta para usuário desativado, escritório desativado,
+        # usuário removido e token de sessão trocada: quem perdeu o
+        # acesso não precisa saber por qual desses motivos.
         raise AuthenticationFailed("Conta ou escritório inativo. Faça login novamente.")
 
 

@@ -393,6 +393,7 @@ class LoginView(APIView):
         refresh["tipo_usuario"] = usuario.tipo_usuario
         refresh["escritorio_id"] = usuario.escritorio_id
         refresh["escritorio_nome"] = usuario.escritorio.nome
+        refresh["session_version"] = usuario.session_version
 
         return Response(
             {
@@ -498,7 +499,8 @@ class RedefinirSenhaView(APIView):
         usuario.senha = make_password(nova_senha)
         usuario.tentativas_login = 0
         usuario.bloqueado_ate = None
-        usuario.save(update_fields=["senha", "tentativas_login", "bloqueado_ate"])
+        usuario.session_version += 1
+        usuario.save(update_fields=["senha", "tentativas_login", "bloqueado_ate", "session_version"])
 
         token.usado = True
         token.save(update_fields=["usado"])
@@ -1741,8 +1743,27 @@ class ConfiguracoesSenhaView(APIView):
             return Response({"detail": "A confirmação da nova senha não confere."}, status=status.HTTP_400_BAD_REQUEST)
 
         usuario.senha = make_password(nova_senha)
-        usuario.save(update_fields=["senha"])
-        return Response({"detail": "Senha alterada com sucesso."})
+        usuario.session_version += 1
+        usuario.save(update_fields=["senha", "session_version"])
+
+        # A troca de senha invalida todo token emitido antes dela — inclusive
+        # o desta própria requisição, já autenticada com o token antigo. Sem
+        # devolver um par novo aqui, a página que acabou de trocar a senha
+        # cairia deslogada na primeira ação seguinte.
+        refresh = RefreshToken()
+        refresh["user_id"] = usuario.id
+        refresh["nome"] = usuario.nome
+        refresh["email"] = usuario.email
+        refresh["tipo_usuario"] = usuario.tipo_usuario
+        refresh["escritorio_id"] = usuario.escritorio_id
+        refresh["escritorio_nome"] = usuario.escritorio.nome
+        refresh["session_version"] = usuario.session_version
+
+        return Response({
+            "detail": "Senha alterada com sucesso.",
+            "access": str(refresh.access_token),
+            "refresh": str(refresh),
+        })
 
 
 class ConfiguracoesPreferenciasView(APIView):
