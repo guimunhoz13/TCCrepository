@@ -5,7 +5,11 @@ from django.db.models import Case, F, IntegerField, Value, When
 from django.db import models
 from django.utils import timezone
 
-from .validators import validar_tamanho_documento, validar_tamanho_imagem
+from .validators import (
+    validar_assinatura_arquivo,
+    validar_tamanho_documento,
+    validar_tamanho_imagem,
+)
 
 
 ESTADOS_CIVIS = (
@@ -85,6 +89,7 @@ class Usuario(models.Model):
         validators=[
             FileExtensionValidator(["jpg", "jpeg", "png", "webp"]),
             validar_tamanho_imagem,
+            validar_assinatura_arquivo,
         ],
     )
     documento_identidade = models.FileField(
@@ -94,6 +99,7 @@ class Usuario(models.Model):
         validators=[
             FileExtensionValidator(["pdf", "jpg", "jpeg", "png"]),
             validar_tamanho_documento,
+            validar_assinatura_arquivo,
         ],
     )
     cpf = models.CharField(max_length=14, blank=True, default="")
@@ -146,6 +152,7 @@ class Cliente(models.Model):
         validators=[
             FileExtensionValidator(["jpg", "jpeg", "png", "webp"]),
             validar_tamanho_imagem,
+            validar_assinatura_arquivo,
         ],
     )
     documento_identidade = models.FileField(
@@ -155,6 +162,7 @@ class Cliente(models.Model):
         validators=[
             FileExtensionValidator(["pdf", "jpg", "jpeg", "png"]),
             validar_tamanho_documento,
+            validar_assinatura_arquivo,
         ],
     )
     ativo = models.BooleanField(default=True)
@@ -363,6 +371,7 @@ class Documento(models.Model):
         validators=[
             FileExtensionValidator(["pdf", "jpg", "jpeg", "png", "doc", "docx"]),
             validar_tamanho_documento,
+            validar_assinatura_arquivo,
         ],
     )
     enviado_em = models.DateTimeField(auto_now_add=True)
@@ -897,6 +906,7 @@ class Despesa(models.Model):
         validators=[
             FileExtensionValidator(["pdf", "jpg", "jpeg", "png"]),
             validar_tamanho_documento,
+            validar_assinatura_arquivo,
         ],
     )
 

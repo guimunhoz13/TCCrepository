@@ -1,3 +1,5 @@
+import csv
+import io
 from datetime import date, timedelta
 from decimal import Decimal
 from unittest.mock import patch
@@ -5,6 +7,7 @@ import urllib.error
 
 from django.contrib.auth.hashers import check_password, make_password
 from django.core import mail
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management import call_command
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
@@ -43,7 +46,12 @@ from .models import (
     TokenRedefinicaoSenha,
     TokenVerificacaoEmail,
 )
-from .validators import validar_email_real, validar_tamanho_documento, validar_tamanho_imagem
+from .validators import (
+    validar_assinatura_arquivo,
+    validar_email_real,
+    validar_tamanho_documento,
+    validar_tamanho_imagem,
+)
 from .views import SolicitarRedefinicaoSenhaView
 
 
@@ -1583,6 +1591,51 @@ class ValidadoresDeUploadTestCase(TestCase):
     def test_documento_acima_de_10mb_levanta_erro(self):
         with self.assertRaises(ValidationError):
             validar_tamanho_documento(self._ArquivoFalso(11 * 1024 * 1024))
+
+    def test_pdf_com_assinatura_correta_passa(self):
+        arquivo = SimpleUploadedFile("contrato.pdf", b"%PDF-1.4\n%\xe2\xe3\xcf\xd3 resto do arquivo")
+        validar_assinatura_arquivo(arquivo)
+
+    def test_jpeg_com_assinatura_correta_passa(self):
+        arquivo = SimpleUploadedFile("foto.jpg", b"\xff\xd8\xff\xe0resto")
+        validar_assinatura_arquivo(arquivo)
+
+    def test_png_com_assinatura_correta_passa(self):
+        arquivo = SimpleUploadedFile("foto.png", b"\x89PNG\r\n\x1a\nresto")
+        validar_assinatura_arquivo(arquivo)
+
+    def test_webp_com_assinatura_correta_passa(self):
+        arquivo = SimpleUploadedFile("foto.webp", b"RIFF\x00\x00\x00\x00WEBPresto")
+        validar_assinatura_arquivo(arquivo)
+
+    def test_docx_com_assinatura_correta_passa(self):
+        arquivo = SimpleUploadedFile("peticao.docx", b"PK\x03\x04resto")
+        validar_assinatura_arquivo(arquivo)
+
+    def test_executavel_renomeado_para_pdf_e_recusado(self):
+        arquivo = SimpleUploadedFile("malicioso.pdf", b"MZ\x90\x00\x03\x00\x00\x00resto de um executavel")
+        with self.assertRaises(ValidationError):
+            validar_assinatura_arquivo(arquivo)
+
+    def test_texto_renomeado_para_jpg_e_recusado(self):
+        arquivo = SimpleUploadedFile("nao-e-foto.jpg", b"isso aqui e so um texto qualquer")
+        with self.assertRaises(ValidationError):
+            validar_assinatura_arquivo(arquivo)
+
+    def test_riff_que_nao_e_webp_e_recusado(self):
+        # RIFF é o contêiner de vários formatos (WAV, AVI...); só o
+        # marcador WEBP no offset 8 confirma que é mesmo uma imagem WebP.
+        arquivo = SimpleUploadedFile("audio.webp", b"RIFF\x00\x00\x00\x00WAVEresto")
+        with self.assertRaises(ValidationError):
+            validar_assinatura_arquivo(arquivo)
+
+    def test_validador_devolve_o_ponteiro_do_arquivo_para_o_inicio(self):
+        # O upload real é lido de novo (tamanho, salvamento) depois deste
+        # validador — se o ponteiro não voltar ao início, o arquivo salvo
+        # sai truncado.
+        arquivo = SimpleUploadedFile("contrato.pdf", b"%PDF-1.4\nresto do conteudo")
+        validar_assinatura_arquivo(arquivo)
+        self.assertEqual(arquivo.tell(), 0)
 
 
 class ContratoValorMinimoAPITestCase(APITestCase):
@@ -4907,3 +4960,67 @@ class ProximoPrazoDoProcessoAPITestCase(APITestCase):
 
         self.assertEqual(resposta.status_code, status.HTTP_200_OK, resposta.data)
         self.assertIsNotNone(resposta.data["proximo_prazo"])
+
+
+class ExportacaoCSVSeguraAPITestCase(APITestCase):
+    """Um nome ou endereço de cliente que comece com =, +, -, @, tab ou CR
+    vira fórmula executável ao abrir o CSV exportado no Excel/Sheets. A
+    exportação precisa neutralizar isso sem estragar valores normais."""
+
+    def setUp(self):
+        self.escritorio = _criar_escritorio()
+        self.admin = _criar_usuario(self.escritorio)
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Bearer {_gerar_token_de_acesso(self.admin)}"
+        )
+
+    def _linhas_csv(self, resposta):
+        texto = resposta.content.decode("utf-8-sig")
+        return list(csv.reader(io.StringIO(texto), delimiter=";"))
+
+    def test_exportacao_de_clientes_neutraliza_nome_com_formula(self):
+        Cliente.objects.create(
+            escritorio=self.escritorio, nome="=CMD|'/c calc'!A1", cpf="11122233344",
+            email="injecao@teste.com", telefone="11988887777", endereco="+SOMA(A1:A9)",
+        )
+        Cliente.objects.create(
+            escritorio=self.escritorio, nome="Cliente Normal", cpf="22233344455",
+            email="normal@teste.com", telefone="11977776666", endereco="Rua Normal, 10",
+        )
+
+        resposta = self.client.get("/api/configuracoes/exportar/clientes/")
+        self.assertEqual(resposta.status_code, status.HTTP_200_OK)
+
+        linhas = self._linhas_csv(resposta)
+        linha_injecao = next(l for l in linhas if "CMD" in l[0])
+        self.assertTrue(linha_injecao[0].startswith("'="))
+        self.assertTrue(linha_injecao[4].startswith("'+"))
+
+        linha_normal = next(l for l in linhas if "Normal" in l[0])
+        self.assertEqual(linha_normal[0], "Cliente Normal")
+        self.assertEqual(linha_normal[4], "Rua Normal, 10")
+
+    def test_exportacao_de_processos_neutraliza_titulo_com_formula(self):
+        cliente = Cliente.objects.create(
+            escritorio=self.escritorio, nome="Cliente Proc", cpf="33344455566",
+            email="clienteproc@teste.com", telefone="11966665555", endereco="Rua P",
+        )
+        usuario_adv = Usuario.objects.create(
+            escritorio=self.escritorio, nome="Advogado Proc", email="advproc@teste.com",
+            senha=make_password("senha12345"), tipo_usuario="advogado",
+        )
+        advogado = Advogado.objects.create(
+            escritorio=self.escritorio, usuario=usuario_adv, oab="111222/SP", especialidade="Cível",
+        )
+        Processo.objects.create(
+            escritorio=self.escritorio, numero_processo="PROC-CSV-1",
+            titulo="@SUM(1+1)*cmd|' /c calc'!A0", descricao="d",
+            cliente=cliente, advogado=advogado,
+        )
+
+        resposta = self.client.get("/api/configuracoes/exportar/processos/")
+        self.assertEqual(resposta.status_code, status.HTTP_200_OK)
+
+        linhas = self._linhas_csv(resposta)
+        linha = next(l for l in linhas if "SUM" in l[1])
+        self.assertTrue(linha[1].startswith("'@"))

@@ -2104,6 +2104,25 @@ class RelatorioProcessoEmailView(APIView):
         return Response({"detail": f"Relatório enviado para {destinatario}."})
 
 
+# Um valor de célula que começa com um desses caracteres é lido como
+# fórmula por Excel, Sheets e LibreOffice ao abrir o CSV — um nome ou
+# endereço de cliente digitado como "=CMD|'/c calc'!A1" executaria ao
+# abrir a planilha. Prefixar com aspas simples faz o texto aparecer como
+# está, sem virar fórmula.
+_CARACTERES_FORMULA_CSV = ("=", "+", "-", "@", "\t", "\r")
+
+
+def _celula_csv_segura(valor):
+    texto = "" if valor is None else str(valor)
+    if texto.startswith(_CARACTERES_FORMULA_CSV):
+        return "'" + texto
+    return texto
+
+
+def _linha_csv_segura(valores):
+    return [_celula_csv_segura(valor) for valor in valores]
+
+
 class ExportarClientesCSVView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -2117,7 +2136,10 @@ class ExportarClientesCSVView(APIView):
         writer = csv.writer(response, delimiter=";")
         writer.writerow(["Nome", "CPF", "E-mail", "Telefone", "Endereço", "Status", "Criado em"])
         for cliente in Cliente.objects.filter(escritorio=usuario.escritorio).order_by("nome"):
-            writer.writerow([cliente.nome, cliente.cpf, cliente.email, cliente.telefone, cliente.endereco, "Ativo" if cliente.ativo else "Inativo", cliente.criado_em.strftime("%d/%m/%Y %H:%M")])
+            writer.writerow(_linha_csv_segura([
+                cliente.nome, cliente.cpf, cliente.email, cliente.telefone, cliente.endereco,
+                "Ativo" if cliente.ativo else "Inativo", cliente.criado_em.strftime("%d/%m/%Y %H:%M"),
+            ]))
         return response
 
 
@@ -2135,7 +2157,11 @@ class ExportarProcessosCSVView(APIView):
         writer.writerow(["Número", "Título", "Status", "Cliente", "Advogado", "Data início", "Data fim"])
         queryset = Processo.objects.filter(escritorio=usuario.escritorio).select_related("cliente", "advogado__usuario").order_by("numero_processo")
         for processo in queryset:
-            writer.writerow([processo.numero_processo, processo.titulo, processo.get_status_display(), processo.cliente.nome, processo.advogado.usuario.nome, processo.data_inicio or "", processo.data_fim or ""])
+            writer.writerow(_linha_csv_segura([
+                processo.numero_processo, processo.titulo, processo.get_status_display(),
+                processo.cliente.nome, processo.advogado.usuario.nome,
+                processo.data_inicio or "", processo.data_fim or "",
+            ]))
         return response
 
 
