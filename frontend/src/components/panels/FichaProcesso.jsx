@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import {
   ArrowLeft,
+  Pencil,
   Briefcase,
   Wallet,
   TrendingUp,
@@ -65,7 +66,7 @@ function Campo({ rotulo, children }) {
   );
 }
 
-export default function FichaProcesso({ processoId, onVoltar }) {
+export default function FichaProcesso({ processoId, onVoltar, onEditar }) {
   const [dados, setDados] = useState(null);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState("");
@@ -144,7 +145,14 @@ export default function FichaProcesso({ processoId, onVoltar }) {
 
   return (
     <div>
-      <VoltarBtn />
+      <div style={{ display: "flex", gap: 10, marginBottom: 18 }}>
+        <button type="button" className="btn btn-secondary" onClick={onVoltar}>
+          <ArrowLeft size={15} /> Voltar à lista
+        </button>
+        <button type="button" className="btn btn-secondary" onClick={() => onEditar(processo)}>
+          <Pencil size={15} /> Editar processo
+        </button>
+      </div>
 
       <div className="ficha-identidade">
         <div>
