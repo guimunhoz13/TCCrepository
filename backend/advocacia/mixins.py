@@ -141,9 +141,6 @@ class EscritorioScopedMixin:
         if queryset.model.__name__ == "Documento":
             return queryset.filter(processo__escritorio=escritorio)
 
-        if queryset.model.__name__ == "Agenda":
-            return queryset.filter(processo__escritorio=escritorio)
-
         if queryset.model.__name__ == "Parcela":
             return queryset.filter(contrato__processo__escritorio=escritorio)
 

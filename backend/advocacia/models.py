@@ -392,8 +392,20 @@ class Agenda(models.Model):
         ("fatal", "Prazo fatal"),
     )
 
+    # Um prazo/audiência quase sempre pertence a um processo, mas nem todo
+    # compromisso é processual (reunião interna, ligação com o cliente
+    # antes de haver processo). Por isso o vínculo é opcional, e o
+    # isolamento por escritório passa a depender do campo `escritorio`
+    # abaixo em vez de sempre atravessar o processo.
     processo = models.ForeignKey(
         Processo,
+        on_delete=models.CASCADE,
+        related_name="eventos_agenda",
+        null=True,
+        blank=True,
+    )
+    escritorio = models.ForeignKey(
+        Escritorio,
         on_delete=models.CASCADE,
         related_name="eventos_agenda",
     )
@@ -409,6 +421,11 @@ class Agenda(models.Model):
     local_evento = models.CharField(max_length=255, blank=True, default="")
     cumprido = models.BooleanField(default=False)
     criado_em = models.DateTimeField(auto_now_add=True)
+
+    def save(self, *args, **kwargs):
+        if self.escritorio_id is None and self.processo_id is not None:
+            self.escritorio_id = self.processo.escritorio_id
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.titulo

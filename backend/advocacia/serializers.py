@@ -568,19 +568,14 @@ class AgendaSerializer(EscopoDoEscritorioMixin, serializers.ModelSerializer):
     campos_do_escritorio = ("processo",)
 
 
-    processo_titulo = serializers.CharField(source="processo.titulo", read_only=True)
-    numero_processo = serializers.CharField(
-        source="processo.numero_processo",
-        read_only=True,
-    )
-    cliente_nome = serializers.CharField(
-        source="processo.cliente.nome",
-        read_only=True,
-    )
-    advogado_nome = serializers.CharField(
-        source="processo.advogado.usuario.nome",
-        read_only=True,
-    )
+    # Compromisso sem processo vinculado (reunião interna, contato antes de
+    # haver processo) é permitido — daí esses quatro campos virarem
+    # SerializerMethodField em vez de CharField com `source="processo..."`:
+    # um CharField tentaria atravessar o atributo mesmo com processo nulo.
+    processo_titulo = serializers.SerializerMethodField()
+    numero_processo = serializers.SerializerMethodField()
+    cliente_nome = serializers.SerializerMethodField()
+    advogado_nome = serializers.SerializerMethodField()
     atrasado = serializers.SerializerMethodField()
 
     class Meta:
@@ -611,6 +606,21 @@ class AgendaSerializer(EscopoDoEscritorioMixin, serializers.ModelSerializer):
             "atrasado",
             "criado_em",
         ]
+        extra_kwargs = {
+            "processo": {"required": False, "allow_null": True},
+        }
+
+    def get_processo_titulo(self, obj):
+        return obj.processo.titulo if obj.processo else None
+
+    def get_numero_processo(self, obj):
+        return obj.processo.numero_processo if obj.processo else None
+
+    def get_cliente_nome(self, obj):
+        return obj.processo.cliente.nome if obj.processo else None
+
+    def get_advogado_nome(self, obj):
+        return obj.processo.advogado.usuario.nome if obj.processo else None
 
     def get_atrasado(self, obj):
         from django.utils import timezone

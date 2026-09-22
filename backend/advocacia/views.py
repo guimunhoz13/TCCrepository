@@ -720,7 +720,7 @@ class DashboardStatsView(APIView):
                     ).count(),
 
                     "agenda": Agenda.objects.filter(
-                        processo__escritorio=escritorio
+                        escritorio=escritorio
                     ).count(),
                 },
 

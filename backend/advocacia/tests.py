@@ -1376,6 +1376,99 @@ class AgendaPrazoAPITestCase(APITestCase):
         self.assertEqual(len(resposta.data["results"]), 1)
         self.assertEqual(resposta.data["results"][0]["titulo"], "Prazo X")
 
+    def test_criar_compromisso_sem_processo(self):
+        resposta = self.client.post(
+            "/api/agenda/",
+            {
+                "tipo": "compromisso",
+                "titulo": "Reunião interna",
+                "descricao": "Descrição.",
+                "data_evento": "2030-01-01T10:00:00Z",
+                "local_evento": "",
+            },
+            format="json",
+        )
+        self.assertEqual(resposta.status_code, status.HTTP_201_CREATED)
+        self.assertIsNone(resposta.data["processo"])
+        self.assertIsNone(resposta.data["numero_processo"])
+        self.assertIsNone(resposta.data["cliente_nome"])
+
+    def test_compromisso_sem_processo_e_gravado_no_escritorio_de_quem_criou(self):
+        Agenda.objects.create(
+            escritorio=self.escritorio,
+            tipo="compromisso",
+            titulo="Reunião sem processo",
+            descricao="Descrição.",
+            data_evento=timezone.now() + timezone.timedelta(days=1),
+        )
+        resposta = self.client.get("/api/agenda/")
+        titulos = [item["titulo"] for item in resposta.data["results"]]
+        self.assertIn("Reunião sem processo", titulos)
+
+    def test_compromisso_sem_processo_de_outro_escritorio_fica_isolado(self):
+        outro_escritorio = _criar_escritorio(nome="Outro Escritório Agenda", cnpj="22222222000122")
+        Agenda.objects.create(
+            escritorio=outro_escritorio,
+            tipo="compromisso",
+            titulo="Reunião de outro escritório",
+            descricao="Descrição.",
+            data_evento=timezone.now() + timezone.timedelta(days=1),
+        )
+        resposta = self.client.get("/api/agenda/")
+        titulos = [item["titulo"] for item in resposta.data["results"]]
+        self.assertNotIn("Reunião de outro escritório", titulos)
+
+    def test_editar_titulo_e_reagendar_data_do_evento(self):
+        evento = Agenda.objects.create(
+            processo=self.processo,
+            tipo="compromisso",
+            titulo="Audiência",
+            descricao="Descrição.",
+            data_evento=timezone.now() + timezone.timedelta(days=1),
+        )
+        nova_data = "2031-05-20T14:30:00Z"
+        resposta = self.client.patch(
+            f"/api/agenda/{evento.id}/",
+            {"titulo": "Audiência remarcada", "data_evento": nova_data},
+            format="json",
+        )
+        self.assertEqual(resposta.status_code, status.HTTP_200_OK)
+        evento.refresh_from_db()
+        self.assertEqual(evento.titulo, "Audiência remarcada")
+        self.assertEqual(evento.data_evento.isoformat(), "2031-05-20T14:30:00+00:00")
+
+    def test_reabrir_evento_marcado_como_cumprido(self):
+        evento = Agenda.objects.create(
+            processo=self.processo,
+            tipo="compromisso",
+            titulo="Audiência",
+            descricao="Descrição.",
+            data_evento=timezone.now() + timezone.timedelta(days=1),
+            cumprido=True,
+        )
+        resposta = self.client.patch(
+            f"/api/agenda/{evento.id}/", {"cumprido": False}, format="json"
+        )
+        self.assertEqual(resposta.status_code, status.HTTP_200_OK)
+        evento.refresh_from_db()
+        self.assertFalse(evento.cumprido)
+
+    def test_remover_vinculo_de_processo_de_um_evento_existente(self):
+        evento = Agenda.objects.create(
+            processo=self.processo,
+            tipo="compromisso",
+            titulo="Audiência",
+            descricao="Descrição.",
+            data_evento=timezone.now() + timezone.timedelta(days=1),
+        )
+        resposta = self.client.patch(
+            f"/api/agenda/{evento.id}/", {"processo": None}, format="json"
+        )
+        self.assertEqual(resposta.status_code, status.HTTP_200_OK)
+        evento.refresh_from_db()
+        self.assertIsNone(evento.processo)
+        self.assertEqual(evento.escritorio_id, self.escritorio.id)
+
 
 class ContratoHonorarioAPITestCase(APITestCase):
     """Testa a criação de contratos e a geração automática de parcelas."""

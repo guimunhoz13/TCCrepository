@@ -91,7 +91,7 @@ class Command(BaseCommand):
 
         eventos = (
             Agenda.objects.filter(
-                processo__escritorio=usuario.escritorio,
+                escritorio=usuario.escritorio,
                 cumprido=False,
                 tipo__in=tipos,
                 data_evento__gte=agora,
@@ -133,7 +133,7 @@ class Command(BaseCommand):
 
         eventos = list(
             Agenda.objects.filter(
-                processo__escritorio=escritorio,
+                escritorio=escritorio,
                 cumprido=False,
                 data_evento__gte=agora,
                 data_evento__lte=em_sete_dias,

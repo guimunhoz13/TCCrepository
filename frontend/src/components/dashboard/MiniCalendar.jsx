@@ -124,7 +124,7 @@ export default function MiniCalendar({ eventos = [], onEventoCriado }) {
     try {
       await createAgenda({
         ...formulario,
-        processo: Number(formulario.processo),
+        processo: formulario.processo ? Number(formulario.processo) : null,
         descricao: formulario.titulo,
       });
       setMostrarForm(false);
@@ -264,9 +264,8 @@ export default function MiniCalendar({ eventos = [], onEventoCriado }) {
                 onChange={(e) =>
                   setFormulario({ ...formulario, processo: e.target.value })
                 }
-                required
               >
-                <option value="">Processo vinculado</option>
+                <option value="">Processo vinculado (opcional)</option>
                 {processos.map((p) => (
                   <option key={p.id} value={p.id}>
                     {p.numero_processo} — {p.titulo}

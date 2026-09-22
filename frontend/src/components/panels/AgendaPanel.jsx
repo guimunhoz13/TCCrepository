@@ -5,7 +5,7 @@ import { usePanel } from "@/contexts/PanelContext";
 import { useDashboardData } from "@/contexts/DashboardDataContext";
 import { usePreferences } from "@/contexts/PreferencesContext";
 import OverlayPanel from "@/components/shell/OverlayPanel";
-import { Check, Trash2 } from "lucide-react";
+import { Check, Pencil, RotateCcw, Trash2 } from "lucide-react";
 import {
   getAgenda,
   createAgenda,
@@ -32,6 +32,174 @@ const calculadoraInicial = {
   dias_uteis: true,
 };
 
+// O input datetime-local espera "AAAA-MM-DDTHH:mm" em horário local; a API
+// devolve ISO em UTC. Sem essa conversão, editar um evento reabria o
+// formulário com um horário deslocado do que o usuário realmente marcou.
+function paraDatetimeLocal(isoString) {
+  if (!isoString) return "";
+  const data = new Date(isoString);
+  const offsetMs = data.getTimezoneOffset() * 60000;
+  return new Date(data.getTime() - offsetMs).toISOString().slice(0, 16);
+}
+
+function EventoForm({
+  formulario,
+  setFormulario,
+  processos,
+  calculadora,
+  setCalculadora,
+  calculando,
+  onCalcularPrazo,
+  onSubmit,
+  submitLabel,
+  onCancelar,
+}) {
+  return (
+    <form className="form-grid" onSubmit={onSubmit}>
+      <div className="form-field">
+        <label>Processo (opcional)</label>
+        <select
+          value={formulario.processo}
+          onChange={(e) =>
+            setFormulario({ ...formulario, processo: e.target.value })
+          }
+        >
+          <option value="">Nenhum (compromisso sem processo)</option>
+          {processos.map((processo) => (
+            <option key={processo.id} value={processo.id}>
+              {processo.numero_processo} — {processo.titulo}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div className="form-field">
+        <label>Tipo</label>
+        <select
+          value={formulario.tipo}
+          onChange={(e) =>
+            setFormulario({ ...formulario, tipo: e.target.value })
+          }
+        >
+          <option value="compromisso">Compromisso</option>
+          <option value="prazo">Prazo</option>
+        </select>
+      </div>
+      {formulario.tipo === "prazo" && (
+        <div className="form-field">
+          <label>Prioridade</label>
+          <select
+            value={formulario.prioridade}
+            onChange={(e) =>
+              setFormulario({ ...formulario, prioridade: e.target.value })
+            }
+          >
+            <option value="normal">Normal</option>
+            <option value="fatal">Prazo fatal</option>
+          </select>
+        </div>
+      )}
+      {formulario.tipo === "prazo" && (
+        <div className="form-field full" style={{ background: "var(--bg-input)", padding: 14, borderRadius: 10 }}>
+          <label style={{ marginBottom: 8 }}>Calculadora de prazo (opcional)</label>
+          <div className="form-grid" style={{ padding: 0 }}>
+            <div className="form-field">
+              <label>Data de início da contagem</label>
+              <input
+                type="date"
+                value={calculadora.data_intimacao}
+                onChange={(e) =>
+                  setCalculadora({ ...calculadora, data_intimacao: e.target.value })
+                }
+              />
+            </div>
+            <div className="form-field">
+              <label>Quantidade de dias</label>
+              <input
+                type="number"
+                min="1"
+                value={calculadora.dias_prazo}
+                onChange={(e) =>
+                  setCalculadora({ ...calculadora, dias_prazo: e.target.value })
+                }
+              />
+            </div>
+            <div className="form-field">
+              <label>Contagem</label>
+              <select
+                value={calculadora.dias_uteis ? "uteis" : "corridos"}
+                onChange={(e) =>
+                  setCalculadora({ ...calculadora, dias_uteis: e.target.value === "uteis" })
+                }
+              >
+                <option value="uteis">Dias úteis</option>
+                <option value="corridos">Dias corridos</option>
+              </select>
+            </div>
+            <div className="form-field" style={{ justifyContent: "flex-end" }}>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={onCalcularPrazo}
+                disabled={calculando}
+              >
+                {calculando ? "Calculando..." : "Calcular data final"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      <div className="form-field">
+        <label>Título</label>
+        <input
+          value={formulario.titulo}
+          onChange={(e) =>
+            setFormulario({ ...formulario, titulo: e.target.value })
+          }
+          required
+        />
+      </div>
+      <div className="form-field full">
+        <label>Descrição</label>
+        <textarea
+          value={formulario.descricao}
+          onChange={(e) =>
+            setFormulario({ ...formulario, descricao: e.target.value })
+          }
+          required
+        />
+      </div>
+      <div className="form-field">
+        <label>Data e hora</label>
+        <input
+          type="datetime-local"
+          value={formulario.data_evento}
+          onChange={(e) =>
+            setFormulario({ ...formulario, data_evento: e.target.value })
+          }
+          required
+        />
+      </div>
+      <div className="form-field">
+        <label>Local</label>
+        <input
+          value={formulario.local_evento}
+          onChange={(e) =>
+            setFormulario({ ...formulario, local_evento: e.target.value })
+          }
+        />
+      </div>
+      <div className="form-field full" style={{ display: "flex", gap: 10 }}>
+        <button className="btn btn-primary">{submitLabel}</button>
+        {onCancelar && (
+          <button type="button" className="btn btn-secondary" onClick={onCancelar}>
+            Cancelar
+          </button>
+        )}
+      </div>
+    </form>
+  );
+}
+
 export default function AgendaPanel() {
   const { activePanel, panelTab, setPanelTab } = usePanel();
   const { refresh: refreshDashboard } = useDashboardData();
@@ -40,6 +208,7 @@ export default function AgendaPanel() {
   const [processos, setProcessos] = useState([]);
   const [filtroTipo, setFiltroTipo] = useState("");
   const [formulario, setFormulario] = useState(formularioInicial);
+  const [formularioEdicao, setFormularioEdicao] = useState(null);
   const [calculadora, setCalculadora] = useState(calculadoraInicial);
   const [calculando, setCalculando] = useState(false);
   const [carregando, setCarregando] = useState(true);
@@ -83,13 +252,60 @@ export default function AgendaPanel() {
     try {
       await createAgenda({
         ...formulario,
-        processo: Number(formulario.processo),
+        processo: formulario.processo ? Number(formulario.processo) : null,
       });
       setFormulario(formularioInicial);
       setCalculadora(calculadoraInicial);
       setSucesso("Evento agendado com sucesso.");
       setPanelTab("lista");
       await carregarDados();
+      refreshDashboard().catch(() => {});
+    } catch (error) {
+      setErro(error.message);
+    }
+  }
+
+  function iniciarEdicao(evento) {
+    setFormularioEdicao({
+      id: evento.id,
+      processo: evento.processo || "",
+      tipo: evento.tipo,
+      prioridade: evento.prioridade || "normal",
+      titulo: evento.titulo || "",
+      descricao: evento.descricao || "",
+      data_evento: paraDatetimeLocal(evento.data_evento),
+      local_evento: evento.local_evento || "",
+    });
+    setErro("");
+    setSucesso("");
+    setPanelTab("editar");
+  }
+
+  async function handleSubmitEdicao(event) {
+    event.preventDefault();
+    setErro("");
+    setSucesso("");
+
+    const { id, ...campos } = formularioEdicao;
+
+    try {
+      await updateAgenda(id, {
+        ...campos,
+        processo: campos.processo ? Number(campos.processo) : null,
+      });
+      setSucesso("Evento atualizado com sucesso.");
+      setPanelTab("lista");
+      await carregarDados();
+      refreshDashboard().catch(() => {});
+    } catch (error) {
+      setErro(error.message);
+    }
+  }
+
+  async function handleAlternarCumprido(evento, cumprido) {
+    try {
+      await updateAgenda(evento.id, { cumprido });
+      carregarDados();
       refreshDashboard().catch(() => {});
     } catch (error) {
       setErro(error.message);
@@ -133,144 +349,32 @@ export default function AgendaPanel() {
       {sucesso && <div className="alert alert-success">{sucesso}</div>}
 
       {panelTab === "novo" ? (
-        <form className="form-grid" onSubmit={handleSubmit}>
-          <div className="form-field">
-            <label>Processo</label>
-            <select
-              value={formulario.processo}
-              onChange={(e) =>
-                setFormulario({ ...formulario, processo: e.target.value })
-              }
-              required
-            >
-              <option value="">Selecione</option>
-              {processos.map((processo) => (
-                <option key={processo.id} value={processo.id}>
-                  {processo.numero_processo} — {processo.titulo}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="form-field">
-            <label>Tipo</label>
-            <select
-              value={formulario.tipo}
-              onChange={(e) =>
-                setFormulario({ ...formulario, tipo: e.target.value })
-              }
-            >
-              <option value="compromisso">Compromisso</option>
-              <option value="prazo">Prazo</option>
-            </select>
-          </div>
-          {formulario.tipo === "prazo" && (
-            <div className="form-field">
-              <label>Prioridade</label>
-              <select
-                value={formulario.prioridade}
-                onChange={(e) =>
-                  setFormulario({ ...formulario, prioridade: e.target.value })
-                }
-              >
-                <option value="normal">Normal</option>
-                <option value="fatal">Prazo fatal</option>
-              </select>
-            </div>
-          )}
-          {formulario.tipo === "prazo" && (
-            <div className="form-field full" style={{ background: "var(--bg-input)", padding: 14, borderRadius: 10 }}>
-              <label style={{ marginBottom: 8 }}>Calculadora de prazo (opcional)</label>
-              <div className="form-grid" style={{ padding: 0 }}>
-                <div className="form-field">
-                  <label>Data de início da contagem</label>
-                  <input
-                    type="date"
-                    value={calculadora.data_intimacao}
-                    onChange={(e) =>
-                      setCalculadora({ ...calculadora, data_intimacao: e.target.value })
-                    }
-                  />
-                </div>
-                <div className="form-field">
-                  <label>Quantidade de dias</label>
-                  <input
-                    type="number"
-                    min="1"
-                    value={calculadora.dias_prazo}
-                    onChange={(e) =>
-                      setCalculadora({ ...calculadora, dias_prazo: e.target.value })
-                    }
-                  />
-                </div>
-                <div className="form-field">
-                  <label>Contagem</label>
-                  <select
-                    value={calculadora.dias_uteis ? "uteis" : "corridos"}
-                    onChange={(e) =>
-                      setCalculadora({ ...calculadora, dias_uteis: e.target.value === "uteis" })
-                    }
-                  >
-                    <option value="uteis">Dias úteis</option>
-                    <option value="corridos">Dias corridos</option>
-                  </select>
-                </div>
-                <div className="form-field" style={{ justifyContent: "flex-end" }}>
-                  <button
-                    type="button"
-                    className="btn btn-secondary btn-sm"
-                    onClick={handleCalcularPrazo}
-                    disabled={calculando}
-                  >
-                    {calculando ? "Calculando..." : "Calcular data final"}
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-          <div className="form-field">
-            <label>Título</label>
-            <input
-              value={formulario.titulo}
-              onChange={(e) =>
-                setFormulario({ ...formulario, titulo: e.target.value })
-              }
-              required
-            />
-          </div>
-          <div className="form-field full">
-            <label>Descrição</label>
-            <textarea
-              value={formulario.descricao}
-              onChange={(e) =>
-                setFormulario({ ...formulario, descricao: e.target.value })
-              }
-              required
-            />
-          </div>
-          <div className="form-field">
-            <label>Data e hora</label>
-            <input
-              type="datetime-local"
-              value={formulario.data_evento}
-              onChange={(e) =>
-                setFormulario({ ...formulario, data_evento: e.target.value })
-              }
-              required
-            />
-          </div>
-          <div className="form-field">
-            <label>Local</label>
-            <input
-              value={formulario.local_evento}
-              onChange={(e) =>
-                setFormulario({ ...formulario, local_evento: e.target.value })
-              }
-            />
-          </div>
-          <div className="form-field full">
-            <button className="btn btn-primary">{t("acao_agendar_evento")}</button>
-          </div>
-        </form>
+        <EventoForm
+          formulario={formulario}
+          setFormulario={setFormulario}
+          processos={processos}
+          calculadora={calculadora}
+          setCalculadora={setCalculadora}
+          calculando={calculando}
+          onCalcularPrazo={handleCalcularPrazo}
+          onSubmit={handleSubmit}
+          submitLabel={t("acao_agendar_evento")}
+        />
+      ) : panelTab === "editar" ? (
+        formularioEdicao && (
+          <EventoForm
+            formulario={formularioEdicao}
+            setFormulario={setFormularioEdicao}
+            processos={processos}
+            calculadora={calculadora}
+            setCalculadora={setCalculadora}
+            calculando={calculando}
+            onCalcularPrazo={handleCalcularPrazo}
+            onSubmit={handleSubmitEdicao}
+            submitLabel="Salvar alterações"
+            onCancelar={() => setPanelTab("lista")}
+          />
+        )
       ) : (
         <div className="table-wrap">
           <div className="form-field" style={{ marginBottom: 12, maxWidth: 220 }}>
@@ -312,7 +416,7 @@ export default function AgendaPanel() {
                       )}
                     </td>
                     <td>{evento.titulo}</td>
-                    <td>{evento.numero_processo}</td>
+                    <td>{evento.numero_processo || "—"}</td>
                     <td>
                       {new Date(evento.data_evento).toLocaleString("pt-BR")}
                     </td>
@@ -328,21 +432,36 @@ export default function AgendaPanel() {
                     </td>
                     <td>
                       <div className="row-actions">
-                        {!evento.cumprido && (
+                        {evento.cumprido ? (
+                          <button
+                            type="button"
+                            className="row-action"
+                            title="Reabrir evento"
+                            aria-label="Reabrir evento"
+                            onClick={() => handleAlternarCumprido(evento, false)}
+                          >
+                            <RotateCcw size={15} />
+                          </button>
+                        ) : (
                           <button
                             type="button"
                             className="row-action row-action-success"
                             title="Marcar como cumprido"
                             aria-label="Marcar como cumprido"
-                            onClick={async () => {
-                              await updateAgenda(evento.id, { cumprido: true });
-                              carregarDados();
-                              refreshDashboard().catch(() => {});
-                            }}
+                            onClick={() => handleAlternarCumprido(evento, true)}
                           >
                             <Check size={15} />
                           </button>
                         )}
+                        <button
+                          type="button"
+                          className="row-action"
+                          title="Editar evento"
+                          aria-label="Editar evento"
+                          onClick={() => iniciarEdicao(evento)}
+                        >
+                          <Pencil size={15} />
+                        </button>
                         <button
                           type="button"
                           className="row-action row-action-danger"
