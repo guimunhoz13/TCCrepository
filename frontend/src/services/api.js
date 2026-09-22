@@ -583,6 +583,14 @@ export async function getFichaProcesso(processoId) {
   return request(`/processos/${processoId}/ficha/`);
 }
 
+export async function createMovimentacao(data) {
+  return request("/movimentacoes/", { method: "POST", body: corpoRequisicao(data) });
+}
+
+export async function deleteMovimentacao(id) {
+  return request(`/movimentacoes/${id}/`, { method: "DELETE" });
+}
+
 // ---------------------------------------------------------------
 // Tarefas
 // ---------------------------------------------------------------

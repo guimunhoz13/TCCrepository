@@ -1341,6 +1341,17 @@ class MovimentacaoViewSet(
         self._salvar(serializer, criado_por=self.get_usuario())
         registrar_auditoria(self.request, "criacao", serializer.instance, escritorio=escritorio)
 
+    def perform_destroy(self, instance):
+        # Uma movimentação importada do DataJud é registro oficial do
+        # andamento processual — apagá-la deixaria a linha do tempo
+        # incompleta sem que o tribunal soubesse. Só o que foi lançado à
+        # mão pode ser removido.
+        if instance.origem != "manual":
+            raise ValidationError(
+                "Só é possível excluir movimentações lançadas manualmente."
+            )
+        super().perform_destroy(instance)
+
 
 # =========================================================
 # DOCUMENTOS

@@ -1707,6 +1707,63 @@ class MovimentacaoCriadoPorAPITestCase(APITestCase):
         self.assertEqual(movimentacao.criado_por, self.admin)
 
 
+class MovimentacaoManualAPITestCase(APITestCase):
+    """A ficha do processo só tinha andamento vindo do DataJud — não havia
+    como lançar à mão nem apagar o que foi lançado errado. Cobre as duas
+    pontas, e a regra que protege o histórico oficial: só o que foi
+    lançado manualmente pode ser excluído."""
+
+    def setUp(self):
+        self.escritorio = _criar_escritorio()
+        self.admin = _criar_usuario(self.escritorio)
+        self.cliente = Cliente.objects.create(
+            escritorio=self.escritorio, nome="Cliente Mov Manual", cpf="66677788899",
+            email="cliente.movmanual@teste.com", telefone="11955554444", endereco="Rua H",
+        )
+        usuario_advogado = Usuario.objects.create(
+            escritorio=self.escritorio, nome="Advogado Mov Manual",
+            email="advogado.movmanual@teste.com", senha=make_password("senha12345"),
+            tipo_usuario="advogado",
+        )
+        self.advogado = Advogado.objects.create(
+            escritorio=self.escritorio, usuario=usuario_advogado, oab="888888/SP", especialidade="Civil",
+        )
+        self.processo = Processo.objects.create(
+            escritorio=self.escritorio, numero_processo="PROC-MOV-MANUAL-1",
+            titulo="Processo Movimentação Manual", descricao="Descrição.",
+            cliente=self.cliente, advogado=self.advogado,
+        )
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Bearer {_gerar_token_de_acesso(self.admin)}"
+        )
+
+    def test_movimentacao_criada_pela_api_nasce_com_origem_manual(self):
+        resposta = self.client.post(
+            "/api/movimentacoes/",
+            {"processo": self.processo.id, "descricao": "Cliente enviou novos documentos."},
+            format="json",
+        )
+        self.assertEqual(resposta.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(resposta.data["origem"], "manual")
+
+    def test_exclui_movimentacao_lancada_manualmente(self):
+        movimentacao = Movimentacao.objects.create(
+            processo=self.processo, criado_por=self.admin, descricao="Lançamento por engano.",
+        )
+        resposta = self.client.delete(f"/api/movimentacoes/{movimentacao.id}/")
+        self.assertEqual(resposta.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertFalse(Movimentacao.objects.filter(id=movimentacao.id).exists())
+
+    def test_nao_exclui_movimentacao_importada_do_datajud(self):
+        movimentacao = Movimentacao.objects.create(
+            processo=self.processo, descricao="Juntada de petição.",
+            origem="datajud", identificador_externo="mov-datajud-1",
+        )
+        resposta = self.client.delete(f"/api/movimentacoes/{movimentacao.id}/")
+        self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertTrue(Movimentacao.objects.filter(id=movimentacao.id).exists())
+
+
 class AuditoriaLoginAPITestCase(APITestCase):
     """Testa que eventos de login (sucesso, falha, bloqueio) geram registros de auditoria."""
 
