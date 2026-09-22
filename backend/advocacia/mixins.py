@@ -1,4 +1,5 @@
 from django.db import IntegrityError
+from django.db.models import ProtectedError
 
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.permissions import BasePermission
@@ -14,13 +15,25 @@ def get_usuario_from_request(request):
     if request.auth.get("is_master"):
         return None
 
+    # A camada de autenticação já carregou e validou a conta; reaproveitar
+    # evita uma segunda consulta ao banco em toda requisição.
+    conta = getattr(request, "_conta_autenticada", None)
+    if isinstance(conta, Usuario):
+        return conta
+
     user_id = request.auth.get("user_id")
 
     if not user_id:
         return None
 
     try:
-        return Usuario.objects.select_related("escritorio").get(id=user_id)
+        # Só conta ativa em escritório ativo: um token emitido antes da
+        # desativação não pode continuar valendo.
+        return (
+            Usuario.objects
+            .select_related("escritorio")
+            .get(id=user_id, ativo=True, escritorio__ativo=True)
+        )
     except Usuario.DoesNotExist:
         return None
 
@@ -101,6 +114,17 @@ class EscritorioScopedMixin:
         usuario = self.get_usuario()
         return usuario.escritorio if usuario else None
 
+    def get_serializer_context(self):
+        """Entrega o escritório ao serializer.
+
+        É o que permite ao EscopoDoEscritorioMixin recusar vínculo com
+        registro alheio. Fica aqui, e não em cada viewset, para que o
+        próximo recurso a ser escrito já nasça protegido.
+        """
+        contexto = super().get_serializer_context()
+        contexto["escritorio"] = self.get_escritorio()
+        return contexto
+
     def get_queryset(self):
         queryset = super().get_queryset()
         escritorio = self.get_escritorio()
@@ -154,7 +178,20 @@ class EscritorioScopedMixin:
         descricao = str(instance)
         modelo = instance.__class__.__name__
         objeto_id = instance.id
-        instance.delete()
+
+        try:
+            instance.delete()
+        except ProtectedError:
+            # Acontece quando o registro sustenta um histórico — um cliente
+            # com processos, por exemplo. Recusar é melhor que apagar em
+            # cascata; quem quer tirar da lista inativa o cadastro.
+            raise ValidationError({
+                "detail": (
+                    "Este registro não pode ser excluído porque há processos "
+                    "vinculados a ele. Inative-o para retirá-lo das listagens "
+                    "sem perder o histórico."
+                )
+            })
         registrar_auditoria(
             self.request,
             "exclusao",

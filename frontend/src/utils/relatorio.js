@@ -1,30 +1,9 @@
-import { formatarMoeda as moeda, formatarHoras as horas } from "./formato";
-
-function formatarData(valor, comHora = false) {
-  if (!valor) return "—";
-  // Campos de data pura ("2026-09-21") seriam lidos pelo Date como meia-noite
-  // em UTC e, no fuso de Brasília, voltariam um dia. Para esses, basta
-  // reordenar os pedaços do texto.
-  const soData = /^\d{4}-\d{2}-\d{2}$/.exec(String(valor));
-  if (soData) {
-    const [ano, mes, dia] = valor.split("-");
-    return `${dia}/${mes}/${ano}`;
-  }
-  const data = new Date(valor);
-  if (Number.isNaN(data.getTime())) return "—";
-  return comHora ? data.toLocaleString("pt-BR") : data.toLocaleDateString("pt-BR");
-}
-
-const TIPOS_HONORARIO = {
-  fixo: "Valor fixo",
-  exito: "Percentual de êxito",
-  hora: "Por hora trabalhada",
-};
-
-function situacaoDespesa(despesa) {
-  if (despesa.reembolsada) return "Reembolsada";
-  return despesa.reembolsavel ? "A reembolsar" : "Não reembolsável";
-}
+import {
+  formatarMoeda as moeda,
+  formatarHoras as horas,
+  formatarData,
+} from "./formato";
+import { TIPO_HONORARIO_LABEL as TIPOS_HONORARIO, situacaoDespesa } from "../lib/contrato";
 
 function secoesFinanceiras({ contratos, apontamentos, despesas, resumo, comProcesso }) {
   // A coluna do processo só entra no relatório do cliente: no do processo

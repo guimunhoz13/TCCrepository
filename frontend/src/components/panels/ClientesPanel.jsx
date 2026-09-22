@@ -418,11 +418,21 @@ export default function ClientesPanel() {
                           aria-label={t("acao_excluir")}
                           onClick={async () => {
                             if (
-                              window.confirm(`Excluir ${cliente.nome}?`)
+                              !window.confirm(`Excluir ${cliente.nome}?`)
                             ) {
+                              return;
+                            }
+                            setErro("");
+                            try {
                               await deleteCliente(cliente.id);
                               carregarClientes();
                               refreshDashboard().catch(() => {});
+                            } catch (error) {
+                              // O back-end recusa excluir cliente com
+                              // processos, para não levar o histórico do
+                              // caso junto. Sem este tratamento, o clique
+                              // simplesmente não fazia nada.
+                              setErro(error.message);
                             }
                           }}
                         >

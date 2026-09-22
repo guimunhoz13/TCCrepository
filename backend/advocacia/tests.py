@@ -83,6 +83,18 @@ def _gerar_token_de_acesso(usuario):
     return str(refresh.access_token)
 
 
+def _gerar_refresh_token(usuario):
+    """Gera o refresh token com as mesmas claims do LoginView."""
+    refresh = RefreshToken()
+    refresh["user_id"] = usuario.id
+    refresh["nome"] = usuario.nome
+    refresh["email"] = usuario.email
+    refresh["tipo_usuario"] = usuario.tipo_usuario
+    refresh["escritorio_id"] = usuario.escritorio_id
+    refresh["escritorio_nome"] = usuario.escritorio.nome
+    return str(refresh)
+
+
 def _gerar_token_master(superadmin):
     """Gera um access token JWT com as mesmas claims usadas pelo MasterLoginView."""
     refresh = RefreshToken()
@@ -4178,3 +4190,542 @@ class TarefaAPITestCase(APITestCase):
         titulos = [t["titulo"] for t in resposta.data["results"]]
 
         self.assertNotIn("Tarefa do vizinho", titulos)
+
+
+class IsolamentoEAutorizacaoTestCase(APITestCase):
+    """Cobre o que a suíte não cobria: escrita entre escritórios, escalada de
+    privilégio e validade da conta a cada requisição.
+
+    Os 244 testes anteriores passavam com essas falhas abertas porque quase
+    todos usavam um escritório só, e os que usavam dois conferiam apenas se
+    a LISTAGEM vazava. Nenhum tentava escrever com identificador alheio.
+    """
+
+    def setUp(self):
+        self.a = _criar_escritorio()
+        self.b = _criar_escritorio(nome="Escritório B", cnpj="98765432000199")
+
+        self.advogado_a = _criar_usuario(self.a, email="adv@a.com", tipo_usuario="advogado")
+        self.admin_a = _criar_usuario(self.a, email="admin@a.com", tipo_usuario="admin")
+
+        self.cliente_b = Cliente.objects.create(
+            escritorio=self.b, nome="Cliente do B", cpf="55544433322",
+            email="cliente@b.com", telefone="11955554444", endereco="Rua B",
+        )
+        usuario_adv_b = _criar_usuario(self.b, email="adv@b.com", tipo_usuario="advogado")
+        self.advogado_b = Advogado.objects.create(
+            escritorio=self.b, usuario=usuario_adv_b, oab="333333/SP", especialidade="Cível",
+        )
+        self.processo_b = Processo.objects.create(
+            escritorio=self.b, numero_processo="PROC-B-1", titulo="Do escritório B",
+            descricao="Descrição.", cliente=self.cliente_b, advogado=self.advogado_b,
+        )
+
+        self._entrar_como(self.advogado_a)
+
+    def _entrar_como(self, usuario):
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Bearer {_gerar_token_de_acesso(usuario)}"
+        )
+
+    # ---------- escalada de privilégio ----------
+
+    def test_advogado_nao_se_promove_a_administrador(self):
+        resposta = self.client.patch(
+            f"/api/usuarios/{self.advogado_a.id}/", {"tipo_usuario": "admin"}
+        )
+
+        self.advogado_a.refresh_from_db()
+        self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(self.advogado_a.tipo_usuario, "advogado")
+
+    def test_a_rota_generica_nao_troca_senha(self):
+        senha_antes = self.advogado_a.senha
+
+        resposta = self.client.patch(f"/api/usuarios/{self.advogado_a.id}/", {"senha": "a"})
+
+        self.advogado_a.refresh_from_db()
+        self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(self.advogado_a.senha, senha_antes)
+
+    def test_advogado_nao_reativa_a_propria_conta(self):
+        resposta = self.client.patch(f"/api/usuarios/{self.advogado_a.id}/", {"ativo": True})
+
+        self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_advogado_nao_edita_outro_usuario(self):
+        resposta = self.client.patch(
+            f"/api/usuarios/{self.admin_a.id}/", {"nome": "Nome trocado"}
+        )
+
+        self.assertEqual(resposta.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_cada_um_edita_os_proprios_dados(self):
+        resposta = self.client.patch(
+            f"/api/usuarios/{self.advogado_a.id}/", {"telefone": "11912345678"}
+        )
+
+        self.assertEqual(resposta.status_code, status.HTTP_200_OK, resposta.data)
+
+    def test_administrador_troca_o_perfil_de_outro(self):
+        self._entrar_como(self.admin_a)
+
+        resposta = self.client.post(
+            f"/api/usuarios/{self.advogado_a.id}/definir-perfil/", {"tipo_usuario": "admin"}
+        )
+
+        self.advogado_a.refresh_from_db()
+        self.assertEqual(resposta.status_code, status.HTTP_200_OK, resposta.data)
+        self.assertEqual(self.advogado_a.tipo_usuario, "admin")
+
+    def test_administrador_nao_altera_o_proprio_perfil(self):
+        self._entrar_como(self.admin_a)
+
+        resposta = self.client.post(
+            f"/api/usuarios/{self.admin_a.id}/definir-perfil/", {"tipo_usuario": "advogado"}
+        )
+
+        self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_escritorio_nao_fica_sem_administrador(self):
+        outro_admin = _criar_usuario(self.a, email="admin2@a.com", tipo_usuario="admin")
+        self._entrar_como(self.admin_a)
+
+        resposta = self.client.post(
+            f"/api/usuarios/{outro_admin.id}/definir-perfil/", {"tipo_usuario": "advogado"}
+        )
+
+        self.assertEqual(resposta.status_code, status.HTTP_200_OK, resposta.data)
+
+        # Agora só resta um administrador: rebaixá-lo deixaria o escritório sem nenhum.
+        self._entrar_como(outro_admin)
+        resposta = self.client.post(
+            f"/api/usuarios/{self.admin_a.id}/definir-perfil/", {"tipo_usuario": "advogado"}
+        )
+        self.assertEqual(resposta.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_apenas_administrador_desativa_usuario(self):
+        resposta = self.client.post(f"/api/usuarios/{self.admin_a.id}/alternar-ativo/")
+        self.assertEqual(resposta.status_code, status.HTTP_403_FORBIDDEN)
+
+        self._entrar_como(self.admin_a)
+        resposta = self.client.post(f"/api/usuarios/{self.advogado_a.id}/alternar-ativo/")
+        self.advogado_a.refresh_from_db()
+        self.assertEqual(resposta.status_code, status.HTTP_200_OK, resposta.data)
+        self.assertFalse(self.advogado_a.ativo)
+
+    # ---------- isolamento na escrita ----------
+
+    def test_processo_nao_aceita_cliente_de_outro_escritorio(self):
+        resposta = self.client.post("/api/processos/", {
+            "numero_processo": "PROC-A-1", "titulo": "Tentativa", "descricao": "d",
+            "cliente": self.cliente_b.id, "advogado": self.advogado_b.id,
+            "status": "Em andamento",
+        })
+
+        self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("cliente", resposta.data)
+        self.assertFalse(Processo.objects.filter(numero_processo="PROC-A-1").exists())
+
+    def test_movimentacao_nao_entra_em_processo_alheio(self):
+        resposta = self.client.post(
+            "/api/movimentacoes/", {"processo": self.processo_b.id, "descricao": "Invasão."}
+        )
+
+        self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertFalse(Movimentacao.objects.filter(processo=self.processo_b).exists())
+
+    def test_agenda_nao_entra_em_processo_alheio(self):
+        resposta = self.client.post("/api/agenda/", {
+            "processo": self.processo_b.id, "titulo": "Audiência alheia",
+            "tipo": "compromisso", "data_evento": timezone.now().isoformat(),
+        })
+
+        self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_apontamento_nao_entra_em_processo_alheio(self):
+        resposta = self.client.post("/api/apontamentos/", {
+            "processo": self.processo_b.id, "data": timezone.localdate().isoformat(),
+            "minutos": 60, "descricao": "Trabalho alheio.",
+        })
+
+        self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_despesa_nao_entra_em_processo_alheio(self):
+        resposta = self.client.post("/api/despesas/", {
+            "processo": self.processo_b.id, "tipo": "custas", "descricao": "Custa alheia.",
+            "valor": "100.00", "data": timezone.localdate().isoformat(),
+        })
+
+        self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_contrato_nao_entra_em_processo_alheio(self):
+        resposta = self.client.post("/api/contratos/", {
+            "processo": self.processo_b.id, "tipo_honorario": "fixo",
+            "valor_total": "1000.00", "forma_pagamento": "avista",
+        })
+
+        self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_a_mensagem_nao_confirma_a_existencia_do_registro_alheio(self):
+        # Dizer "sem permissão" revelaria que aquele id existe.
+        resposta = self.client.post(
+            "/api/movimentacoes/", {"processo": self.processo_b.id, "descricao": "x"}
+        )
+
+        self.assertIn("não encontrado", str(resposta.data).lower())
+
+    # ---------- validade da conta ----------
+
+    def test_usuario_desativado_perde_o_acesso_imediatamente(self):
+        self.assertEqual(self.client.get("/api/clientes/").status_code, status.HTTP_200_OK)
+
+        self.advogado_a.ativo = False
+        self.advogado_a.save()
+
+        self.assertEqual(
+            self.client.get("/api/clientes/").status_code, status.HTTP_401_UNAUTHORIZED
+        )
+
+    def test_escritorio_desativado_derruba_os_usuarios(self):
+        self.a.ativo = False
+        self.a.save()
+
+        self.assertEqual(
+            self.client.get("/api/clientes/").status_code, status.HTTP_401_UNAUTHORIZED
+        )
+
+    def test_refresh_nao_renova_acesso_de_conta_desativada(self):
+        refresh = _gerar_refresh_token(self.advogado_a)
+        self.client.credentials()
+
+        resposta = self.client.post("/api/token/refresh/", {"refresh": refresh})
+        self.assertEqual(resposta.status_code, status.HTTP_200_OK, resposta.data)
+
+        self.advogado_a.ativo = False
+        self.advogado_a.save()
+
+        resposta = self.client.post("/api/token/refresh/", {"refresh": refresh})
+        self.assertEqual(resposta.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    # ---------- histórico ----------
+
+    def test_excluir_cliente_com_processo_e_recusado(self):
+        self._entrar_como(self.admin_a)
+        cliente = Cliente.objects.create(
+            escritorio=self.a, nome="Cliente com caso", cpf="11122233344",
+            email="comcaso@a.com", telefone="11944443333", endereco="Rua A",
+        )
+        usuario_adv = _criar_usuario(self.a, email="adv3@a.com", tipo_usuario="advogado")
+        advogado = Advogado.objects.create(
+            escritorio=self.a, usuario=usuario_adv, oab="444444/SP", especialidade="Cível",
+        )
+        processo = Processo.objects.create(
+            escritorio=self.a, numero_processo="PROC-A-9", titulo="Caso",
+            descricao="d", cliente=cliente, advogado=advogado,
+        )
+
+        resposta = self.client.delete(f"/api/clientes/{cliente.id}/")
+
+        self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertTrue(Processo.objects.filter(id=processo.id).exists())
+        self.assertTrue(Cliente.objects.filter(id=cliente.id).exists())
+
+    def test_cliente_sem_processo_continua_excluivel(self):
+        self._entrar_como(self.admin_a)
+        cliente = Cliente.objects.create(
+            escritorio=self.a, nome="Cliente solto", cpf="99988877766",
+            email="solto@a.com", telefone="11933332222", endereco="Rua A",
+        )
+
+        resposta = self.client.delete(f"/api/clientes/{cliente.id}/")
+
+        self.assertEqual(resposta.status_code, status.HTTP_204_NO_CONTENT)
+
+    # ---------- parâmetros de filtro ----------
+
+    def test_filtro_invalido_responde_400_e_nao_500(self):
+        for parametro in ("data_inicio_de=nao-e-data", "data_inicio_ate=32/13/2026",
+                          "cliente=abc", "advogado=xyz"):
+            with self.subTest(parametro=parametro):
+                resposta = self.client.get(f"/api/processos/?{parametro}")
+                self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_filtro_valido_continua_funcionando(self):
+        resposta = self.client.get(
+            f"/api/processos/?data_inicio_de=2020-01-01&cliente={self.cliente_b.id}"
+        )
+
+        self.assertEqual(resposta.status_code, status.HTTP_200_OK)
+
+
+class FichaDoProcessoAPITestCase(APITestCase):
+    """A ficha reúne, numa resposta só, tudo o que estava espalhado em sete
+    painéis — movimentações, documentos, agenda, tarefas, horas, despesas
+    e contrato. Existir a rota não bastava: cada bloco precisa vir com o
+    formato certo e nenhum vazar de outro escritório."""
+
+    def setUp(self):
+        self.escritorio = _criar_escritorio()
+        self.admin = _criar_usuario(self.escritorio)
+        self.cliente = Cliente.objects.create(
+            escritorio=self.escritorio,
+            nome="Cliente Ficha",
+            cpf="33344455566",
+            email="cliente.ficha@teste.com",
+            telefone="11977776666",
+            endereco="Rua Ficha, 1",
+        )
+        usuario_advogado = Usuario.objects.create(
+            escritorio=self.escritorio,
+            nome="Advogado Ficha",
+            email="advogado.ficha@teste.com",
+            senha=make_password("senha12345"),
+            tipo_usuario="advogado",
+        )
+        self.advogado = Advogado.objects.create(
+            escritorio=self.escritorio,
+            usuario=usuario_advogado,
+            oab="222222/SP",
+            especialidade="Cível",
+        )
+        self.processo = Processo.objects.create(
+            escritorio=self.escritorio,
+            numero_processo="PROC-FICHA-1",
+            titulo="Processo da Ficha",
+            descricao="Descrição.",
+            cliente=self.cliente,
+            advogado=self.advogado,
+        )
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Bearer {_gerar_token_de_acesso(self.admin)}"
+        )
+
+    def test_ficha_de_processo_vazio_traz_listas_vazias_e_sem_contrato(self):
+        resposta = self.client.get(f"/api/processos/{self.processo.id}/ficha/")
+
+        self.assertEqual(resposta.status_code, status.HTTP_200_OK, resposta.data)
+        self.assertEqual(resposta.data["processo"]["id"], self.processo.id)
+        self.assertEqual(resposta.data["movimentacoes"], [])
+        self.assertEqual(resposta.data["documentos"], [])
+        self.assertEqual(resposta.data["agenda"], [])
+        self.assertEqual(resposta.data["tarefas"], [])
+        self.assertEqual(resposta.data["apontamentos"], [])
+        self.assertEqual(resposta.data["despesas"], [])
+        self.assertIsNone(resposta.data["contrato"])
+        self.assertEqual(Decimal(str(resposta.data["resumo"]["valor_contratado"])), Decimal("0.00"))
+
+    def test_ficha_reune_todos_os_blocos_do_processo(self):
+        Movimentacao.objects.create(
+            processo=self.processo,
+            descricao="Juntada de petição.", criado_por=self.admin,
+        )
+        Agenda.objects.create(
+            processo=self.processo,
+            titulo="Audiência", tipo="compromisso", data_evento=timezone.now(),
+        )
+        Tarefa.objects.create(
+            escritorio=self.escritorio, processo=self.processo,
+            titulo="Revisar minuta", responsavel=self.admin,
+        )
+        ApontamentoHora.objects.create(
+            escritorio=self.escritorio, processo=self.processo, usuario=self.admin,
+            data=timezone.localdate(), minutos=90, descricao="Audiência.",
+        )
+        Despesa.objects.create(
+            escritorio=self.escritorio, processo=self.processo, tipo="custas",
+            descricao="Guia de custas.", valor=Decimal("312.45"), data=timezone.localdate(),
+        )
+        contrato = Contrato.objects.create(
+            escritorio=self.escritorio, processo=self.processo,
+            tipo_honorario="fixo", valor_total=Decimal("5000.00"),
+        )
+
+        resposta = self.client.get(f"/api/processos/{self.processo.id}/ficha/")
+
+        self.assertEqual(resposta.status_code, status.HTTP_200_OK, resposta.data)
+        self.assertEqual(len(resposta.data["movimentacoes"]), 1)
+        self.assertEqual(len(resposta.data["agenda"]), 1)
+        self.assertEqual(len(resposta.data["tarefas"]), 1)
+        self.assertEqual(len(resposta.data["apontamentos"]), 1)
+        self.assertEqual(len(resposta.data["despesas"]), 1)
+        self.assertIsNotNone(resposta.data["contrato"])
+        self.assertEqual(resposta.data["contrato"]["id"], contrato.id)
+        self.assertEqual(
+            Decimal(str(resposta.data["resumo"]["valor_contratado"])), Decimal("5000.00")
+        )
+
+    def test_ficha_expoe_a_origem_da_movimentacao(self):
+        Movimentacao.objects.create(
+            processo=self.processo,
+            descricao="Lançada à mão.", criado_por=self.admin, origem="manual",
+        )
+        Movimentacao.objects.create(
+            processo=self.processo,
+            descricao="Importada do tribunal.", origem="datajud",
+            identificador_externo="123:2026-01-01T00:00:00",
+        )
+
+        resposta = self.client.get(f"/api/processos/{self.processo.id}/ficha/")
+
+        origens = {m["origem"] for m in resposta.data["movimentacoes"]}
+        self.assertEqual(origens, {"manual", "datajud"})
+
+    def test_ficha_nao_alcanca_processo_de_outro_escritorio(self):
+        outro_escritorio = _criar_escritorio(nome="Escritório Alheio", cnpj="11222333000181")
+        outro_cliente = Cliente.objects.create(
+            escritorio=outro_escritorio, nome="Cliente Alheio", cpf="99988877766",
+            email="alheio@teste.com", telefone="11966665555", endereco="Rua Alheia, 1",
+        )
+        outro_usuario_adv = Usuario.objects.create(
+            escritorio=outro_escritorio, nome="Advogado Alheio",
+            email="advogado.alheio@teste.com", senha=make_password("senha12345"),
+            tipo_usuario="advogado",
+        )
+        outro_advogado = Advogado.objects.create(
+            escritorio=outro_escritorio, usuario=outro_usuario_adv,
+            oab="333333/SP", especialidade="Cível",
+        )
+        processo_alheio = Processo.objects.create(
+            escritorio=outro_escritorio, numero_processo="PROC-ALHEIO-1",
+            titulo="Processo Alheio", descricao="d",
+            cliente=outro_cliente, advogado=outro_advogado,
+        )
+
+        resposta = self.client.get(f"/api/processos/{processo_alheio.id}/ficha/")
+
+        self.assertEqual(resposta.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_ficha_exige_autenticacao(self):
+        self.client.credentials()
+
+        resposta = self.client.get(f"/api/processos/{self.processo.id}/ficha/")
+
+        self.assertEqual(resposta.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_processo_serializado_traz_data_de_sincronizacao_com_datajud(self):
+        agora = timezone.now()
+        self.processo.datajud_sincronizado_em = agora
+        self.processo.save()
+
+        resposta = self.client.get(f"/api/processos/{self.processo.id}/ficha/")
+
+        self.assertIsNotNone(resposta.data["processo"]["datajud_sincronizado_em"])
+
+
+class ProximoPrazoDoProcessoAPITestCase(APITestCase):
+    """A listagem de processos precisa sinalizar urgência sem que quem usa
+    a tela tenha que abrir a ficha de cada um para descobrir se há prazo
+    vencendo."""
+
+    def setUp(self):
+        self.escritorio = _criar_escritorio()
+        self.admin = _criar_usuario(self.escritorio)
+        self.cliente = Cliente.objects.create(
+            escritorio=self.escritorio, nome="Cliente Prazo", cpf="44455566677",
+            email="cliente.prazo@teste.com", telefone="11966665555", endereco="Rua P",
+        )
+        usuario_advogado = Usuario.objects.create(
+            escritorio=self.escritorio, nome="Advogado Prazo",
+            email="advogado.prazo@teste.com", senha=make_password("senha12345"),
+            tipo_usuario="advogado",
+        )
+        self.advogado = Advogado.objects.create(
+            escritorio=self.escritorio, usuario=usuario_advogado,
+            oab="555555/SP", especialidade="Cível",
+        )
+        self.processo = Processo.objects.create(
+            escritorio=self.escritorio, numero_processo="PROC-PRAZO-1",
+            titulo="Processo com prazo", descricao="d",
+            cliente=self.cliente, advogado=self.advogado,
+        )
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Bearer {_gerar_token_de_acesso(self.admin)}"
+        )
+
+    def _processo_na_listagem(self):
+        resposta = self.client.get("/api/processos/")
+        self.assertEqual(resposta.status_code, status.HTTP_200_OK, resposta.data)
+        (item,) = [p for p in resposta.data["results"] if p["id"] == self.processo.id]
+        return item
+
+    def test_processo_sem_prazo_nao_tem_proximo_prazo(self):
+        item = self._processo_na_listagem()
+        self.assertIsNone(item["proximo_prazo"])
+
+    def test_prazo_futuro_aparece_e_nao_esta_atrasado(self):
+        Agenda.objects.create(
+            processo=self.processo,
+            titulo="Contestação", tipo="prazo",
+            data_evento=timezone.now() + timedelta(days=3),
+        )
+
+        item = self._processo_na_listagem()
+
+        self.assertIsNotNone(item["proximo_prazo"])
+        self.assertFalse(item["proximo_prazo"]["atrasado"])
+
+    def test_prazo_vencido_aparece_como_atrasado(self):
+        Agenda.objects.create(
+            processo=self.processo,
+            titulo="Contestação", tipo="prazo",
+            data_evento=timezone.now() - timedelta(days=1),
+        )
+
+        item = self._processo_na_listagem()
+
+        self.assertTrue(item["proximo_prazo"]["atrasado"])
+
+    def test_prazo_cumprido_nao_conta_como_proximo_prazo(self):
+        Agenda.objects.create(
+            processo=self.processo,
+            titulo="Contestação", tipo="prazo",
+            data_evento=timezone.now() - timedelta(days=1), cumprido=True,
+        )
+
+        item = self._processo_na_listagem()
+
+        self.assertIsNone(item["proximo_prazo"])
+
+    def test_compromisso_nao_e_confundido_com_prazo(self):
+        Agenda.objects.create(
+            processo=self.processo,
+            titulo="Reunião", tipo="compromisso",
+            data_evento=timezone.now() + timedelta(days=1),
+        )
+
+        item = self._processo_na_listagem()
+
+        self.assertIsNone(item["proximo_prazo"])
+
+    def test_com_varios_prazos_traz_o_mais_proximo(self):
+        Agenda.objects.create(
+            processo=self.processo,
+            titulo="Prazo distante", tipo="prazo",
+            data_evento=timezone.now() + timedelta(days=30), prioridade="normal",
+        )
+        Agenda.objects.create(
+            processo=self.processo,
+            titulo="Prazo fatal próximo", tipo="prazo",
+            data_evento=timezone.now() + timedelta(days=1), prioridade="fatal",
+        )
+
+        item = self._processo_na_listagem()
+
+        self.assertEqual(item["proximo_prazo"]["prioridade"], "fatal")
+
+    def test_processo_recem_criado_tambem_traz_proximo_prazo(self):
+        # Fora da listagem paginada (sem o prefetch), o serializer cai para
+        # a consulta direta — este teste cobre esse caminho.
+        Agenda.objects.create(
+            processo=self.processo,
+            titulo="Contestação", tipo="prazo",
+            data_evento=timezone.now() + timedelta(days=2),
+        )
+
+        resposta = self.client.patch(
+            f"/api/processos/{self.processo.id}/", {"titulo": "Novo título"}, format="json"
+        )
+
+        self.assertEqual(resposta.status_code, status.HTTP_200_OK, resposta.data)
+        self.assertIsNotNone(resposta.data["proximo_prazo"])

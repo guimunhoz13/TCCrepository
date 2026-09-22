@@ -19,6 +19,7 @@ import {
   gerarDocumento,
   createModeloDocumento,
   consultarDataJud,
+  getFichaProcesso,
 } from "../api";
 
 describe("normalizarLista", () => {
@@ -475,5 +476,27 @@ describe("consulta ao DataJud", () => {
     expect(url).toMatch(/\/processos\/12\/consultar-datajud\/$/);
     expect(opcoes.method).toBe("POST");
     expect(dados.movimentacoes_importadas).toBe(2);
+  });
+});
+
+describe("ficha do processo", () => {
+  beforeEach(() => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ processo: { id: 12 }, movimentacoes: [] }),
+    });
+  });
+
+  afterEach(() => {
+    delete global.fetch;
+  });
+
+  test("getFichaProcesso consulta o endpoint de ficha do processo", async () => {
+    const dados = await getFichaProcesso(12);
+
+    const [url, opcoes] = global.fetch.mock.calls[0];
+    expect(url).toMatch(/\/processos\/12\/ficha\/$/);
+    expect(opcoes?.method ?? "GET").toBe("GET");
+    expect(dados.processo.id).toBe(12);
   });
 });

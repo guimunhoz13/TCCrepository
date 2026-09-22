@@ -586,6 +586,10 @@ export async function consultarDataJud(processoId) {
   });
 }
 
+export async function getFichaProcesso(processoId) {
+  return request(`/processos/${processoId}/ficha/`);
+}
+
 // ---------------------------------------------------------------
 // Tarefas
 // ---------------------------------------------------------------
