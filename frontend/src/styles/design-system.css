@@ -1376,20 +1376,6 @@ tbody tr:hover {
   transform: rotate(-45deg);
 }
 
-.lawyer-login-card {
-  margin-top: 16px;
-  padding: 16px;
-  border-radius: 12px;
-  background: var(--gradient-card);
-  border: 1px solid var(--accent-border);
-}
-
-.lawyer-login-card p {
-  font-size: 0.87rem;
-  color: var(--text-secondary);
-  margin-bottom: 12px;
-}
-
 /* ==========================================================================
    COMPROMISSOS
    ========================================================================== */

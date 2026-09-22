@@ -414,47 +414,6 @@ class LoginView(APIView):
         )
 
 
-class VerificarEmailView(APIView):
-
-    permission_classes = [AllowAny]
-    authentication_classes = []
-    throttle_scope = "sensivel"
-
-    def post(self, request):
-
-        email = request.data.get("email", "").strip()
-
-        if not email:
-            return Response(
-                {"detail": "Informe o e-mail."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        try:
-            usuario = (
-                Usuario.objects
-                .select_related("escritorio")
-                .get(email__iexact=email)
-            )
-        except Usuario.DoesNotExist:
-            return Response(
-                {
-                    "existe": False,
-                },
-                status=status.HTTP_200_OK,
-            )
-
-        return Response(
-            {
-                "existe": True,
-                "tipo_usuario": usuario.tipo_usuario,
-                "nome": usuario.nome,
-                "escritorio_nome": usuario.escritorio.nome,
-            },
-            status=status.HTTP_200_OK,
-        )
-
-
 # =========================================================
 # REDEFINIÇÃO DE SENHA
 # =========================================================

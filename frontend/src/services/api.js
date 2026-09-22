@@ -105,13 +105,6 @@ export async function login(email, senha) {
   });
 }
 
-export async function verificarEmail(email) {
-  return request("/login/verificar-email/", {
-    method: "POST",
-    body: JSON.stringify({ email }),
-  });
-}
-
 export async function solicitarRedefinicaoSenha(email) {
   return request("/login/esqueci-senha/", {
     method: "POST",
