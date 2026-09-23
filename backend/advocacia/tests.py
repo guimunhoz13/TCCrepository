@@ -584,6 +584,95 @@ class ClientesAPITestCase(APITestCase):
         self.assertNotIn("Cliente A", nomes)
         self.assertEqual(len(resposta.data["results"]), 0)
 
+    def test_criar_cliente_pessoa_juridica_com_cnpj(self, _mock_mx):
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Bearer {_gerar_token_de_acesso(self.admin_a)}"
+        )
+        resposta = self.client.post(
+            "/api/clientes/",
+            {
+                "tipo_pessoa": "juridica",
+                "nome": "Empresa Cliente Ltda",
+                "cnpj": "12345678000199",
+                "email": "empresa@teste.com",
+                "telefone": "11977776666",
+                "endereco": "Av. Empresarial, 500",
+            },
+            format="json",
+        )
+        self.assertEqual(resposta.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(resposta.data["tipo_pessoa"], "juridica")
+        self.assertEqual(resposta.data["cnpj"], "12345678000199")
+        self.assertEqual(resposta.data["cpf"], "")
+
+    def test_criar_cliente_com_cnpj_duplicado_retorna_erro_especifico(self, _mock_mx):
+        Cliente.objects.create(
+            escritorio=self.escritorio_a,
+            tipo_pessoa="juridica",
+            nome="Empresa Existente",
+            cnpj="99988877000166",
+            email="existente@teste.com",
+            telefone="11988887779",
+            endereco="Rua Empresa",
+        )
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Bearer {_gerar_token_de_acesso(self.admin_a)}"
+        )
+        resposta = self.client.post(
+            "/api/clientes/",
+            {
+                "tipo_pessoa": "juridica",
+                "nome": "Outra Empresa",
+                "cnpj": "99988877000166",  # mesmo CNPJ
+                "email": "outra@teste.com",
+                "telefone": "11977776666",
+                "endereco": "Rua Nova, 10",
+            },
+            format="json",
+        )
+        self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("cnpj", resposta.data)
+
+    def test_dois_clientes_pessoa_juridica_sem_cpf_nao_colidem(self, _mock_mx):
+        """cpf="" para dois clientes PJ no mesmo escritório não pode ser
+        tratado como CPF duplicado — só o unique_together antigo faria isso,
+        por isso virou um UniqueConstraint condicional (cpf != "")."""
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Bearer {_gerar_token_de_acesso(self.admin_a)}"
+        )
+        for indice in range(2):
+            resposta = self.client.post(
+                "/api/clientes/",
+                {
+                    "tipo_pessoa": "juridica",
+                    "nome": f"Empresa {indice}",
+                    "cnpj": f"1111111100010{indice}",
+                    "email": f"empresa{indice}@teste.com",
+                    "telefone": "11977776666",
+                    "endereco": "Rua Empresarial",
+                },
+                format="json",
+            )
+            self.assertEqual(resposta.status_code, status.HTTP_201_CREATED)
+
+    def test_dois_clientes_pessoa_fisica_sem_cnpj_nao_colidem(self, _mock_mx):
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Bearer {_gerar_token_de_acesso(self.admin_a)}"
+        )
+        for indice in range(2):
+            resposta = self.client.post(
+                "/api/clientes/",
+                {
+                    "nome": f"Pessoa {indice}",
+                    "cpf": f"1234567890{indice}",
+                    "email": f"pessoa{indice}@teste.com",
+                    "telefone": "11977776666",
+                    "endereco": "Rua Pessoal",
+                },
+                format="json",
+            )
+            self.assertEqual(resposta.status_code, status.HTTP_201_CREATED)
+
     def test_admin_ve_apenas_clientes_do_proprio_escritorio(self, _mock_mx):
         self.client.credentials(
             HTTP_AUTHORIZATION=f"Bearer {_gerar_token_de_acesso(self.admin_a)}"
@@ -5088,11 +5177,11 @@ class ExportacaoCSVSeguraAPITestCase(APITestCase):
         linhas = self._linhas_csv(resposta)
         linha_injecao = next(l for l in linhas if "CMD" in l[0])
         self.assertTrue(linha_injecao[0].startswith("'="))
-        self.assertTrue(linha_injecao[4].startswith("'+"))
+        self.assertTrue(linha_injecao[6].startswith("'+"))
 
         linha_normal = next(l for l in linhas if "Normal" in l[0])
         self.assertEqual(linha_normal[0], "Cliente Normal")
-        self.assertEqual(linha_normal[4], "Rua Normal, 10")
+        self.assertEqual(linha_normal[6], "Rua Normal, 10")
 
     def test_exportacao_de_processos_neutraliza_titulo_com_formula(self):
         cliente = Cliente.objects.create(

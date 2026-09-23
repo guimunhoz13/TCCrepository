@@ -37,9 +37,9 @@ export const GRUPOS_BUSCA = [
     rotulo: "Clientes",
     painel: "clientes",
     icone: User,
-    campos: ["nome", "cpf", "email", "telefone"],
+    campos: ["nome", "cpf", "cnpj", "email", "telefone"],
     titulo: (c) => c.nome,
-    detalhe: (c) => c.cpf || c.email || "",
+    detalhe: (c) => c.cpf || c.cnpj || c.email || "",
   },
   {
     chave: "processos",

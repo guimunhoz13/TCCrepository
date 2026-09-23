@@ -311,8 +311,10 @@ class ClienteSerializer(serializers.ModelSerializer):
         model = Cliente
         fields = [
             "id",
+            "tipo_pessoa",
             "nome",
             "cpf",
+            "cnpj",
             "email",
             "telefone",
             "endereco",
@@ -329,6 +331,7 @@ class ClienteSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "criado_em", "documento_identidade_enviado"]
         extra_kwargs = {
             "cpf": {"validators": [validar_cpf]},
+            "cnpj": {"validators": [validar_cnpj]},
             "rg": {"validators": [validar_rg]},
             "telefone": {"validators": [validar_telefone]},
             "documento_identidade": {"write_only": True},

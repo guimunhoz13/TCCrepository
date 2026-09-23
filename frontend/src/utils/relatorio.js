@@ -223,7 +223,9 @@ export function gerarHtmlRelatorioCliente(dados) {
       <h2>Dados do cliente</h2>
       <div class="grid">
         <div><span>Nome</span>${escapar(cliente.nome)}</div>
-        <div><span>CPF</span>${escapar(cliente.cpf)}</div>
+        <div><span>${cliente.tipo_pessoa === "juridica" ? "CNPJ" : "CPF"}</span>${escapar(
+          cliente.tipo_pessoa === "juridica" ? cliente.cnpj : cliente.cpf
+        )}</div>
         <div><span>E-mail</span>${escapar(cliente.email)}</div>
         <div><span>Telefone</span>${escapar(cliente.telefone)}</div>
         <div><span>Endereço</span>${escapar(cliente.endereco)}</div>
