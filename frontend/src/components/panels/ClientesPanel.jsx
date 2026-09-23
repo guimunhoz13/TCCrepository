@@ -8,7 +8,7 @@ import OverlayPanel from "@/components/shell/OverlayPanel";
 import { MessageCircle, Pencil, Trash2, UserCheck, UserX } from "lucide-react";
 import Avatar from "@/components/ui/Avatar";
 import { abrirWhatsApp, montarMensagemCliente } from "@/utils/whatsapp";
-import { formatarCEP, formatarCPF, formatarRG, formatarTelefone } from "@/utils/mascaras";
+import { formatarCEP, formatarCNPJ, formatarCPF, formatarRG, formatarTelefone } from "@/utils/mascaras";
 import { buscarEnderecoPorCep } from "@/utils/cep";
 import {
   getClientes,
@@ -20,8 +20,10 @@ import {
 } from "@/services/api";
 
 const formularioInicial = {
+  tipo_pessoa: "fisica",
   nome: "",
   cpf: "",
+  cnpj: "",
   email: "",
   telefone: "",
   endereco: "",
@@ -89,8 +91,10 @@ export default function ClientesPanel() {
     setSucesso("");
     setClienteEditando(cliente);
     setFormulario({
+      tipo_pessoa: cliente.tipo_pessoa || "fisica",
       nome: cliente.nome || "",
       cpf: cliente.cpf ? formatarCPF(cliente.cpf) : "",
+      cnpj: cliente.cnpj ? formatarCNPJ(cliente.cnpj) : "",
       email: cliente.email || "",
       telefone: cliente.telefone ? formatarTelefone(cliente.telefone) : "",
       endereco: cliente.endereco || "",
@@ -144,16 +148,19 @@ export default function ClientesPanel() {
     try {
       setSalvando(true);
       const payload = new FormData();
+      payload.append("tipo_pessoa", formulario.tipo_pessoa);
       payload.append("nome", formulario.nome);
-      payload.append("cpf", formulario.cpf);
+      payload.append("cpf", formulario.tipo_pessoa === "fisica" ? formulario.cpf : "");
+      payload.append("cnpj", formulario.tipo_pessoa === "juridica" ? formulario.cnpj : "");
       payload.append("email", formulario.email);
       payload.append("telefone", formulario.telefone);
       payload.append("endereco", formulario.endereco);
-      if (formulario.data_nascimento) {
+      const ehPessoaFisica = formulario.tipo_pessoa === "fisica";
+      if (ehPessoaFisica && formulario.data_nascimento) {
         payload.append("data_nascimento", formulario.data_nascimento);
       }
-      payload.append("rg", formulario.rg);
-      payload.append("estado_civil", formulario.estado_civil);
+      payload.append("rg", ehPessoaFisica ? formulario.rg : "");
+      payload.append("estado_civil", ehPessoaFisica ? formulario.estado_civil : "");
       payload.append("nacionalidade", formulario.nacionalidade);
       payload.append("ativo", formulario.ativo);
       if (foto) payload.append("foto", foto);
@@ -200,7 +207,19 @@ export default function ClientesPanel() {
       {panelTab === "novo" ? (
         <form className="form-grid" onSubmit={handleSubmit}>
           <div className="form-field">
-            <label>Nome</label>
+            <label>Tipo de pessoa</label>
+            <select
+              value={formulario.tipo_pessoa}
+              onChange={(e) =>
+                setFormulario({ ...formulario, tipo_pessoa: e.target.value })
+              }
+            >
+              <option value="fisica">Pessoa Física</option>
+              <option value="juridica">Pessoa Jurídica</option>
+            </select>
+          </div>
+          <div className="form-field">
+            <label>{formulario.tipo_pessoa === "juridica" ? "Razão social" : "Nome"}</label>
             <input
               value={formulario.nome}
               onChange={(e) =>
@@ -209,19 +228,35 @@ export default function ClientesPanel() {
               required
             />
           </div>
-          <div className="form-field">
-            <label>CPF</label>
-            <input
-              value={formulario.cpf}
-              onChange={(e) =>
-                setFormulario({
-                  ...formulario,
-                  cpf: formatarCPF(e.target.value),
-                })
-              }
-              required
-            />
-          </div>
+          {formulario.tipo_pessoa === "juridica" ? (
+            <div className="form-field">
+              <label>CNPJ</label>
+              <input
+                value={formulario.cnpj}
+                onChange={(e) =>
+                  setFormulario({
+                    ...formulario,
+                    cnpj: formatarCNPJ(e.target.value),
+                  })
+                }
+                required
+              />
+            </div>
+          ) : (
+            <div className="form-field">
+              <label>CPF</label>
+              <input
+                value={formulario.cpf}
+                onChange={(e) =>
+                  setFormulario({
+                    ...formulario,
+                    cpf: formatarCPF(e.target.value),
+                  })
+                }
+                required
+              />
+            </div>
+          )}
           <div className="form-field">
             <label>E-mail</label>
             <input
@@ -271,52 +306,56 @@ export default function ClientesPanel() {
               required
             />
           </div>
-          <div className="form-field">
-            <label>Data de nascimento</label>
-            <input
-              type="date"
-              value={formulario.data_nascimento}
-              onChange={(e) =>
-                setFormulario({
-                  ...formulario,
-                  data_nascimento: e.target.value,
-                })
-              }
-            />
-          </div>
-          <div className="form-field">
-            <label>RG</label>
-            <input
-              value={formulario.rg}
-              onChange={(e) =>
-                setFormulario({ ...formulario, rg: formatarRG(e.target.value) })
-              }
-            />
-          </div>
-          <div className="form-field">
-            <label>Estado civil</label>
-            <select
-              value={formulario.estado_civil}
-              onChange={(e) =>
-                setFormulario({ ...formulario, estado_civil: e.target.value })
-              }
-            >
-              {ESTADOS_CIVIS.map((opcao) => (
-                <option key={opcao.value} value={opcao.value}>
-                  {opcao.label}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="form-field">
-            <label>Nacionalidade</label>
-            <input
-              value={formulario.nacionalidade}
-              onChange={(e) =>
-                setFormulario({ ...formulario, nacionalidade: e.target.value })
-              }
-            />
-          </div>
+          {formulario.tipo_pessoa === "fisica" && (
+            <>
+              <div className="form-field">
+                <label>Data de nascimento</label>
+                <input
+                  type="date"
+                  value={formulario.data_nascimento}
+                  onChange={(e) =>
+                    setFormulario({
+                      ...formulario,
+                      data_nascimento: e.target.value,
+                    })
+                  }
+                />
+              </div>
+              <div className="form-field">
+                <label>RG</label>
+                <input
+                  value={formulario.rg}
+                  onChange={(e) =>
+                    setFormulario({ ...formulario, rg: formatarRG(e.target.value) })
+                  }
+                />
+              </div>
+              <div className="form-field">
+                <label>Estado civil</label>
+                <select
+                  value={formulario.estado_civil}
+                  onChange={(e) =>
+                    setFormulario({ ...formulario, estado_civil: e.target.value })
+                  }
+                >
+                  {ESTADOS_CIVIS.map((opcao) => (
+                    <option key={opcao.value} value={opcao.value}>
+                      {opcao.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="form-field">
+                <label>Nacionalidade</label>
+                <input
+                  value={formulario.nacionalidade}
+                  onChange={(e) =>
+                    setFormulario({ ...formulario, nacionalidade: e.target.value })
+                  }
+                />
+              </div>
+            </>
+          )}
           <div className="form-field">
             <label>Foto (opcional)</label>
             {clienteEditando?.foto && !foto && (
@@ -378,7 +417,7 @@ export default function ClientesPanel() {
           <div className="form-field" style={{ marginBottom: 12 }}>
             <input
               type="search"
-              placeholder="Buscar por nome, CPF ou e-mail..."
+              placeholder="Buscar por nome, CPF/CNPJ ou e-mail..."
               value={busca}
               onChange={(e) => setBusca(e.target.value)}
             />
@@ -388,7 +427,7 @@ export default function ClientesPanel() {
               <tr>
                 <th></th>
                 <th>Nome</th>
-                <th>CPF</th>
+                <th>Documento</th>
                 <th>E-mail</th>
                 <th>Status</th>
                 <th>Ações</th>
@@ -405,7 +444,7 @@ export default function ClientesPanel() {
                   <tr key={cliente.id}>
                     <td><Avatar src={cliente.foto} nome={cliente.nome} /></td>
                     <td>{cliente.nome}</td>
-                    <td>{cliente.cpf}</td>
+                    <td>{cliente.tipo_pessoa === "juridica" ? cliente.cnpj : cliente.cpf}</td>
                     <td>{cliente.email}</td>
                     <td>
                       <span

@@ -23,7 +23,8 @@ MESES = (
 # mostra. Nada fora daqui é resolvido.
 VARIAVEIS_DISPONIVEIS = {
     "cliente.nome": "Nome completo do cliente",
-    "cliente.cpf": "CPF do cliente",
+    "cliente.cpf": "CPF do cliente (pessoa física)",
+    "cliente.cnpj": "CNPJ do cliente (pessoa jurídica)",
     "cliente.rg": "RG do cliente",
     "cliente.endereco": "Endereço do cliente",
     "cliente.estado_civil": "Estado civil do cliente",
@@ -98,6 +99,7 @@ def montar_contexto(escritorio, cliente=None, processo=None, advogado=None):
     if cliente:
         contexto["cliente.nome"] = _texto(cliente.nome)
         contexto["cliente.cpf"] = _texto(cliente.cpf)
+        contexto["cliente.cnpj"] = _texto(cliente.cnpj)
         contexto["cliente.rg"] = _texto(cliente.rg)
         contexto["cliente.endereco"] = _texto(cliente.endereco)
         contexto["cliente.estado_civil"] = (

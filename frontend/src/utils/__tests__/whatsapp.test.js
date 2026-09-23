@@ -52,6 +52,17 @@ describe("montarMensagemCliente", () => {
     expect(mensagem).toContain("CPF: —");
     expect(mensagem).toContain("Status: Inativo");
   });
+
+  test("mostra CNPJ em vez de CPF para cliente pessoa jurídica", () => {
+    const mensagem = montarMensagemCliente({
+      tipo_pessoa: "juridica",
+      nome: "Empresa Exemplo Ltda",
+      cnpj: "12.345.678/0001-99",
+      ativo: true,
+    });
+    expect(mensagem).toContain("CNPJ: 12.345.678/0001-99");
+    expect(mensagem).not.toContain("CPF:");
+  });
 });
 
 describe("montarMensagemProcesso", () => {

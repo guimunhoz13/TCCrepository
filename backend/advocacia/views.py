@@ -1016,6 +1016,7 @@ class ClienteViewSet(
             queryset = queryset.filter(
                 Q(nome__icontains=busca)
                 | Q(cpf__icontains=busca)
+                | Q(cnpj__icontains=busca)
                 | Q(email__icontains=busca)
             )
 
@@ -1036,22 +1037,37 @@ class ClienteViewSet(
         if conflito.exists():
             raise ValidationError({"cpf": ["Já existe um cliente com este CPF neste escritório."]})
 
+    def _verificar_cnpj_duplicado(self, serializer):
+        cnpj = serializer.validated_data.get("cnpj")
+        if not cnpj:
+            return
+        escritorio = self.get_escritorio()
+        conflito = Cliente.objects.filter(escritorio=escritorio, cnpj=cnpj)
+        if serializer.instance:
+            conflito = conflito.exclude(pk=serializer.instance.pk)
+        if conflito.exists():
+            raise ValidationError({"cnpj": ["Já existe um cliente com este CNPJ neste escritório."]})
+
     def perform_create(self, serializer):
         self._verificar_cpf_duplicado(serializer)
+        self._verificar_cnpj_duplicado(serializer)
         super().perform_create(serializer)
 
         cliente = serializer.instance
+        documento = cliente.cnpj if cliente.tipo_pessoa == "juridica" else cliente.cpf
+        rotulo_documento = "CNPJ" if cliente.tipo_pessoa == "juridica" else "CPF"
         notificar_escritorio(
             cliente.escritorio,
             "notificacao_novo_cliente",
             "Novo cliente cadastrado",
             "Um novo cliente foi cadastrado no escritório.",
-            [("Nome", cliente.nome), ("CPF", cliente.cpf or "—")],
+            [("Nome", cliente.nome), (rotulo_documento, documento or "—")],
             autor=self.get_usuario(),
         )
 
     def perform_update(self, serializer):
         self._verificar_cpf_duplicado(serializer)
+        self._verificar_cnpj_duplicado(serializer)
         super().perform_update(serializer)
 
     @action(detail=True, methods=["get"], url_path="documento-identidade")
@@ -2166,10 +2182,12 @@ class ExportarClientesCSVView(APIView):
         response["Content-Disposition"] = 'attachment; filename="clientes.csv"'
         response.write("\ufeff")
         writer = csv.writer(response, delimiter=";")
-        writer.writerow(["Nome", "CPF", "E-mail", "Telefone", "Endereço", "Status", "Criado em"])
+        writer.writerow(["Nome", "Tipo", "CPF", "CNPJ", "E-mail", "Telefone", "Endereço", "Status", "Criado em"])
         for cliente in Cliente.objects.filter(escritorio=usuario.escritorio).order_by("nome"):
             writer.writerow(_linha_csv_segura([
-                cliente.nome, cliente.cpf, cliente.email, cliente.telefone, cliente.endereco,
+                cliente.nome,
+                cliente.get_tipo_pessoa_display(),
+                cliente.cpf, cliente.cnpj, cliente.email, cliente.telefone, cliente.endereco,
                 "Ativo" if cliente.ativo else "Inativo", cliente.criado_em.strftime("%d/%m/%Y %H:%M"),
             ]))
         return response

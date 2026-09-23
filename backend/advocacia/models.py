@@ -130,14 +130,24 @@ class Usuario(models.Model):
 
 class Cliente(models.Model):
 
+    TIPOS_PESSOA = (
+        ("fisica", "Pessoa Física"),
+        ("juridica", "Pessoa Jurídica"),
+    )
+
     escritorio = models.ForeignKey(
         Escritorio,
         on_delete=models.CASCADE,
         related_name="clientes",
     )
 
+    tipo_pessoa = models.CharField(max_length=10, choices=TIPOS_PESSOA, default="fisica")
     nome = models.CharField(max_length=255)
-    cpf = models.CharField(max_length=14)
+    # CPF (pessoa física) e CNPJ (pessoa jurídica) ficam em campos separados
+    # em vez de um único "documento" — mantém a unicidade por escritório
+    # simples de checar e evita ambiguidade sobre qual formato validar.
+    cpf = models.CharField(max_length=14, blank=True, default="")
+    cnpj = models.CharField(max_length=18, blank=True, default="")
     email = models.EmailField()
     telefone = models.CharField(max_length=20)
     endereco = models.CharField(max_length=255)
@@ -169,7 +179,22 @@ class Cliente(models.Model):
     criado_em = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        unique_together = [["escritorio", "cpf"]]
+        # Restrita a quando o campo não está vazio: com pessoa jurídica sem
+        # CPF (e pessoa física sem CNPJ) virando a regra, um unique_together
+        # comum bloquearia o segundo cliente sem esse campo no mesmo
+        # escritório, já que "" não é NULL para fins de unicidade.
+        constraints = [
+            models.UniqueConstraint(
+                fields=["escritorio", "cpf"],
+                condition=~models.Q(cpf=""),
+                name="cliente_escritorio_cpf_unico",
+            ),
+            models.UniqueConstraint(
+                fields=["escritorio", "cnpj"],
+                condition=~models.Q(cnpj=""),
+                name="cliente_escritorio_cnpj_unico",
+            ),
+        ]
 
     def __str__(self):
         return self.nome

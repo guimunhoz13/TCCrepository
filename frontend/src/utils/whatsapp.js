@@ -22,10 +22,13 @@ export function abrirWhatsApp(telefone, mensagem) {
 }
 
 export function montarMensagemCliente(cliente) {
+  const ehPessoaJuridica = cliente.tipo_pessoa === "juridica";
+  const rotuloDocumento = ehPessoaJuridica ? "CNPJ" : "CPF";
+  const documento = ehPessoaJuridica ? cliente.cnpj : cliente.cpf;
   return (
     `Olá${cliente.nome ? " " + cliente.nome.split(" ")[0] : ""}, seguem os detalhes do seu cadastro:\n\n` +
     `Cliente: ${cliente.nome || "—"}\n` +
-    `CPF: ${cliente.cpf || "—"}\n` +
+    `${rotuloDocumento}: ${documento || "—"}\n` +
     `E-mail: ${cliente.email || "—"}\n` +
     `Status: ${cliente.ativo ? "Ativo" : "Inativo"}`
   );
