@@ -1746,11 +1746,6 @@ tbody tr:hover {
     grid-template-columns: 1fr;
   }
 
-  .sidebar {
-    position: relative;
-    height: auto;
-  }
-
   .stats-grid,
   .dashboard-grid,
   .auth-page,
@@ -1765,7 +1760,7 @@ tbody tr:hover {
     left: 12px;
     bottom: 12px;
     width: auto;
-    max-height: calc(100vh - 24px);
+    max-height: calc(100dvh - 24px);
   }
 }
 
@@ -3020,9 +3015,6 @@ button.doc-mini-card {
 }
 
 @media (max-width: 1100px) {
-  .global-search {
-    display: none;
-  }
 
   .dashboard-hero {
     padding: 22px 24px;
@@ -3530,4 +3522,311 @@ button.doc-mini-card {
   padding: 14px 4px 2px;
   font-size: 0.85rem;
   color: var(--text-muted);
+}
+
+.topbar-user-nome {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+/* ==========================================================================
+   CELULAR E TABLET
+   Abaixo de 1100px o menu lateral vira gaveta (botão de menu no topo e
+   "Menu" na barra inferior). Abaixo de 720px aparece a barra inferior com
+   os atalhos, os painéis ocupam a tela inteira e as tabelas viram cartões
+   (o rótulo de cada campo vem do data-label preenchido por
+   RotulosDeTabela.jsx).
+   ========================================================================== */
+
+.menu-movel-btn,
+.sidebar-fechar,
+.barra-inferior,
+.sidebar-backdrop {
+  display: none;
+}
+
+@media (max-width: 1100px) {
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 151;
+    width: min(300px, 86vw);
+    height: 100dvh;
+    overflow-y: auto;
+    transform: translateX(-105%);
+    transition: transform 0.22s ease;
+    visibility: hidden;
+  }
+
+  .sidebar.aberta {
+    transform: translateX(0);
+    visibility: visible;
+  }
+
+  .sidebar-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 150;
+    background: var(--overlay);
+  }
+
+  .sidebar-brand {
+    position: relative;
+  }
+
+  .sidebar-fechar {
+    display: grid;
+    place-items: center;
+    margin-left: auto;
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.06);
+    color: #f2eee2;
+    cursor: pointer;
+  }
+
+  .menu-movel-btn {
+    display: inline-flex;
+    flex-shrink: 0;
+  }
+
+  .app-main {
+    padding: 20px 20px 40px;
+  }
+
+  .topbar {
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .topbar-title {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .topbar-title h2 {
+    font-size: 1.5rem;
+  }
+
+  .topbar-actions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .topbar-actions .global-search {
+    flex: 1 1 100%;
+    order: -1;
+  }
+
+  .topbar-actions .global-search input {
+    width: 100%;
+  }
+
+  .topbar-user {
+    margin-right: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sidebar {
+    transition: none;
+  }
+}
+
+@media (max-width: 720px) {
+  .app-main {
+    padding: 16px 16px calc(84px + env(safe-area-inset-bottom));
+  }
+
+  .topbar {
+    margin-bottom: 20px;
+    padding-bottom: 14px;
+  }
+
+  .topbar-title h2 {
+    font-size: 1.3rem;
+  }
+
+  .topbar-user-nome {
+    display: none;
+  }
+
+  .barra-inferior {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 90;
+    padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
+    background: var(--sidebar-bg);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.18);
+  }
+
+  .barra-inferior-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    min-height: 48px;
+    padding: 6px 2px;
+    border: none;
+    border-radius: 10px;
+    background: transparent;
+    color: rgba(242, 238, 226, 0.66);
+    font-size: 0.68rem;
+    cursor: pointer;
+  }
+
+  .barra-inferior-item span {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .barra-inferior-item.active {
+    color: var(--accent);
+    background: rgba(255, 255, 255, 0.06);
+    font-weight: 600;
+  }
+
+  /* Painel ocupa a tela inteira: no celular não sobra espaço útil em volta. */
+  .overlay-panel {
+    inset: 0;
+    width: 100%;
+    max-height: none;
+    height: 100dvh;
+    border-radius: 0;
+  }
+
+  .overlay-header {
+    padding: 14px 16px;
+  }
+
+  .overlay-body {
+    padding: 16px;
+  }
+
+  .overlay-tabs {
+    padding: 0 16px;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    scrollbar-width: none;
+  }
+
+  .overlay-tabs .tab-btn {
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  /* Filtros e campos de formulário empilhados. */
+  .form-grid,
+  .filtros-lista {
+    grid-template-columns: 1fr !important;
+  }
+
+  .form-grid > *,
+  .filtros-lista > * {
+    grid-column: auto !important;
+  }
+
+  /* Tabelas viram cartões. */
+  .table-wrap {
+    overflow-x: visible;
+  }
+
+  .table-wrap table,
+  .table-wrap tbody,
+  .table-wrap tr,
+  .table-wrap td {
+    display: block;
+    width: 100%;
+  }
+
+  .table-wrap thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .table-wrap tbody tr {
+    margin-bottom: 12px;
+    padding: 6px 14px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--bg-elevated);
+  }
+
+  .table-wrap tbody tr:hover {
+    background: var(--bg-elevated);
+  }
+
+  /* Duas colunas: rótulo à esquerda; à direita, o conteúdo da célula
+     empilhado (número + tipo da ação, por exemplo). */
+  .table-wrap td {
+    display: grid;
+    grid-template-columns: minmax(84px, 38%) minmax(0, 1fr);
+    column-gap: 14px;
+    align-items: center;
+    padding: 9px 0;
+    text-align: right;
+    border-bottom: 1px solid var(--border);
+    overflow-wrap: anywhere;
+  }
+
+  .table-wrap td:last-child {
+    border-bottom: none;
+  }
+
+  .table-wrap td::before {
+    content: attr(data-label);
+    grid-column: 1;
+    grid-row: 1 / span 8;
+    text-align: left;
+    font-size: 0.74rem;
+    font-weight: 600;
+    color: var(--text-muted);
+  }
+
+  .table-wrap td > * {
+    grid-column: 2;
+    justify-self: end;
+    min-width: 0;
+  }
+
+  .table-wrap td[data-label=""] {
+    grid-template-columns: minmax(0, 1fr);
+    text-align: center;
+  }
+
+  .table-wrap td[data-label=""]::before {
+    content: none;
+  }
+
+  .table-wrap td[data-label=""] > * {
+    grid-column: 1;
+    justify-self: center;
+  }
+
+  .table-wrap .row-actions {
+    justify-content: flex-end;
+    flex-wrap: wrap;
+  }
+
+  .table-wrap .row-action {
+    width: 40px;
+    height: 40px;
+  }
 }

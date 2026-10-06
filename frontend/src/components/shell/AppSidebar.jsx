@@ -16,12 +16,15 @@ import {
   Timer,
   ListChecks,
   FileSignature,
+  Menu,
+  X,
 } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
 import { PANELS, usePanel } from "@/contexts/PanelContext";
 import { usePreferences } from "@/contexts/PreferencesContext";
 import { useUsuarioLogado } from "@/hooks/useUsuarioLogado";
 import Logo from "@/components/ui/Logo";
+import { useMenuMovel } from "@/contexts/MenuMovelContext";
 
 const NAV_ITEMS = [
   {
@@ -105,15 +108,29 @@ const NAV_ITEMS = [
   },
 ];
 
+// Atalhos da barra inferior no celular: as quatro telas mais usadas e o
+// botão que abre o menu completo.
+const ATALHOS_CELULAR = ["dashboard", PANELS.CLIENTES, PANELS.PROCESSOS, PANELS.AGENDA];
+
 export default function AppSidebar() {
   const { activePanel, openPanel, closePanel } = usePanel();
+  const menuMovel = useMenuMovel();
   const { t } = usePreferences();
   const router = useRouter();
   const pathname = usePathname();
 
   const usuario = useUsuarioLogado();
 
+  function estaAtivo({ id, href }) {
+    const isDashboard = id === "dashboard";
+    if (href && pathname === href && !isDashboard) return true;
+    if (!href && !isDashboard && activePanel === id) return true;
+    return isDashboard && pathname === "/dashboard" && !activePanel;
+  }
+
   function handleNav(item) {
+    menuMovel.fechar();
+
     if (item.href) {
       closePanel();
       router.push(item.href);
@@ -129,58 +146,82 @@ export default function AppSidebar() {
     openPanel(item.id);
   }
 
+  const itensVisiveis = NAV_ITEMS.filter(
+    (item) => !item.adminOnly || usuario?.tipo_usuario === "admin"
+  );
+  const atalhos = ATALHOS_CELULAR.map((id) => NAV_ITEMS.find((item) => item.id === id));
+
   return (
-    <aside className="sidebar">
-      <div className="sidebar-brand">
-        <div className="sidebar-brand-icon">
-          <Logo size={22} />
+    <>
+      {menuMovel.aberto && (
+        <div className="sidebar-backdrop" onClick={menuMovel.fechar} aria-hidden="true" />
+      )}
+
+      <aside
+        id="menu-principal"
+        className={`sidebar ${menuMovel.aberto ? "aberta" : ""}`}
+        aria-label="Menu principal"
+      >
+        <div className="sidebar-brand">
+          <div className="sidebar-brand-icon">
+            <Logo size={22} />
+          </div>
+
+          <div>
+            <h1>LexOffice</h1>
+            <p>{usuario?.escritorio_nome || "ERP Jurídico"}</p>
+          </div>
+
+          <button
+            type="button"
+            className="sidebar-fechar"
+            onClick={menuMovel.fechar}
+            aria-label="Fechar o menu"
+          >
+            <X size={20} />
+          </button>
         </div>
 
-        <div>
-          <h1>LexOffice</h1>
-
-          <p>
-            {usuario?.escritorio_nome || "ERP Jurídico"}
-          </p>
-        </div>
-      </div>
-
-      <nav className="sidebar-nav">
-        {NAV_ITEMS.filter(
-          (item) =>
-            !item.adminOnly ||
-            usuario?.tipo_usuario === "admin"
-        ).map(({ id, tKey, icon: Icon, href }) => {
-          const isDashboard = id === "dashboard";
-
-          const isRouteActive =
-            href && pathname === href;
-
-          const isPanelActive =
-            !href &&
-            !isDashboard &&
-            activePanel === id;
-
-          const isActive =
-            isRouteActive ||
-            isPanelActive ||
-            (isDashboard &&
-              pathname === "/dashboard" &&
-              !activePanel);
-
-          return (
+        <nav className="sidebar-nav">
+          {itensVisiveis.map(({ id, tKey, icon: Icon, href }) => (
             <button
               key={id}
               type="button"
-              className={`nav-item ${isActive ? "active" : ""}`}
+              className={`nav-item ${estaAtivo({ id, href }) ? "active" : ""}`}
+              aria-current={estaAtivo({ id, href }) ? "page" : undefined}
               onClick={() => handleNav({ id, href })}
             >
               <Icon size={18} />
               <span>{t(tKey)}</span>
             </button>
-          );
-        })}
+          ))}
+        </nav>
+      </aside>
+
+      <nav className="barra-inferior" aria-label="Atalhos">
+        {atalhos.map(({ id, tKey, icon: Icon, href }) => (
+          <button
+            key={id}
+            type="button"
+            className={`barra-inferior-item ${estaAtivo({ id, href }) ? "active" : ""}`}
+            aria-current={estaAtivo({ id, href }) ? "page" : undefined}
+            onClick={() => handleNav({ id, href })}
+          >
+            <Icon size={20} />
+            <span>{t(tKey)}</span>
+          </button>
+        ))}
+        <button
+          type="button"
+          className="barra-inferior-item"
+          onClick={menuMovel.abrir}
+          aria-expanded={menuMovel.aberto}
+          aria-controls="menu-principal"
+        >
+          <Menu size={20} />
+          <span>Menu</span>
+        </button>
       </nav>
-    </aside>
+    </>
   );
 }
