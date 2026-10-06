@@ -103,6 +103,10 @@ jobs:
         working-directory: frontend
         run: npm ci
 
+      - name: Lint
+        working-directory: frontend
+        run: npm run lint -- --max-warnings=0
+
       - name: Run tests
         working-directory: frontend
         run: npm test -- --ci

@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useListaPaginada, useRecurso } from "@/hooks/useRecurso";
+import RodapeLista from "@/components/ui/RodapeLista";
 import { FileDown, Paperclip, Trash2 } from "lucide-react";
 import { usePanel } from "@/contexts/PanelContext";
 import { useDashboardData } from "@/contexts/DashboardDataContext";
@@ -11,7 +13,7 @@ import {
   createDocumento,
   deleteDocumento,
   getProcessos,
-  normalizarLista,
+  listarTudo,
   abrirDocumento,
 } from "@/services/api";
 
@@ -19,36 +21,25 @@ export default function DocumentosPanel() {
   const { activePanel, panelTab, setPanelTab } = usePanel();
   const { refresh: refreshDashboard } = useDashboardData();
   const { t } = usePreferences();
-  const [documentos, setDocumentos] = useState([]);
-  const [processos, setProcessos] = useState([]);
   const [processoId, setProcessoId] = useState("");
   const [nomeArquivo, setNomeArquivo] = useState("");
   const [arquivo, setArquivo] = useState(null);
-  const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState("");
   const [sucesso, setSucesso] = useState("");
 
-  async function carregarDados() {
-    try {
-      setCarregando(true);
-      const [dadosDocumentos, dadosProcessos] = await Promise.all([
-        getDocumentos(),
-        getProcessos(),
-      ]);
-      setDocumentos(normalizarLista(dadosDocumentos));
-      setProcessos(normalizarLista(dadosProcessos));
-    } catch (error) {
-      setErro(error.message);
-    } finally {
-      setCarregando(false);
-    }
-  }
+  const painelAberto = activePanel === "documentos";
+  const lista = useListaPaginada((page) => getDocumentos({ page }), [], { ativo: painelAberto });
+  const recursoProcessos = useRecurso(() => listarTudo(getProcessos), [], {
+    ativo: painelAberto,
+  });
+  const documentos = lista.itens;
+  const processos = recursoProcessos.dados ?? [];
+  const carregando = lista.carregando && documentos.length === 0;
+  const erroCarga = lista.erro || recursoProcessos.erro;
 
-  useEffect(() => {
-    if (activePanel === "documentos") {
-      carregarDados();
-    }
-  }, [activePanel]);
+  function carregarDados() {
+    lista.recarregar();
+  }
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -72,7 +63,7 @@ export default function DocumentosPanel() {
       setArquivo(null);
       setSucesso("Documento enviado com sucesso.");
       setPanelTab("lista");
-      await carregarDados();
+      carregarDados();
       refreshDashboard().catch(() => {});
     } catch (error) {
       setErro(error.message);
@@ -88,7 +79,7 @@ export default function DocumentosPanel() {
         { id: "novo", label: t("acao_enviar_documento") },
       ]}
     >
-      {erro && <div className="alert alert-error">{erro}</div>}
+      {(erro || erroCarga) && <div className="alert alert-error">{erro || erroCarga}</div>}
       {sucesso && <div className="alert alert-success">{sucesso}</div>}
 
       {panelTab === "novo" ? (
@@ -199,6 +190,13 @@ export default function DocumentosPanel() {
               )}
             </tbody>
           </table>
+          <RodapeLista
+            quantidade={documentos.length}
+            total={lista.total}
+            temMais={lista.temMais}
+            carregandoMais={lista.carregandoMais}
+            onCarregarMais={lista.carregarMais}
+          />
         </div>
       )}
     </OverlayPanel>

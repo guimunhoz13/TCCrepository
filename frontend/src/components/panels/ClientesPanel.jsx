@@ -1,6 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useListaPaginada } from "@/hooks/useRecurso";
+import { useValorAtrasado } from "@/hooks/useValorAtrasado";
+import RodapeLista from "@/components/ui/RodapeLista";
 import { usePanel } from "@/contexts/PanelContext";
 import { useDashboardData } from "@/contexts/DashboardDataContext";
 import { usePreferences } from "@/contexts/PreferencesContext";
@@ -15,7 +18,6 @@ import {
   createCliente,
   updateCliente,
   deleteCliente,
-  normalizarLista,
   abrirDocumentoIdentidadeCliente,
 } from "@/services/api";
 
@@ -47,7 +49,6 @@ export default function ClientesPanel() {
   const { activePanel, panelTab, setPanelTab } = usePanel();
   const { refresh: refreshDashboard } = useDashboardData();
   const { t } = usePreferences();
-  const [clientes, setClientes] = useState([]);
   const [busca, setBusca] = useState("");
   const [formulario, setFormulario] = useState(formularioInicial);
   const [cep, setCep] = useState("");
@@ -55,36 +56,19 @@ export default function ClientesPanel() {
   const [foto, setFoto] = useState(null);
   const [documentoIdentidade, setDocumentoIdentidade] = useState(null);
   const [clienteEditando, setClienteEditando] = useState(null);
-  const [carregando, setCarregando] = useState(true);
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState("");
   const [sucesso, setSucesso] = useState("");
 
-  async function carregarClientes(filtroBusca) {
-    try {
-      setCarregando(true);
-      const dados = await getClientes({ busca: filtroBusca ?? busca });
-      setClientes(normalizarLista(dados));
-    } catch (error) {
-      setErro(error.message);
-    } finally {
-      setCarregando(false);
-    }
-  }
-
-  useEffect(() => {
-    if (activePanel === "clientes") {
-      carregarClientes();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activePanel]);
-
-  useEffect(() => {
-    if (activePanel !== "clientes") return;
-    const timeout = setTimeout(() => carregarClientes(busca), 300);
-    return () => clearTimeout(timeout);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [busca]);
+  const buscaAtrasada = useValorAtrasado(busca);
+  const lista = useListaPaginada(
+    (page) => getClientes({ busca: buscaAtrasada, page }),
+    [buscaAtrasada],
+    { ativo: activePanel === "clientes" }
+  );
+  const clientes = lista.itens;
+  const carregando = lista.carregando && clientes.length === 0;
+  const carregarClientes = lista.recarregar;
 
   function handleIniciarEdicao(cliente) {
     setErro("");
@@ -180,7 +164,7 @@ export default function ClientesPanel() {
       setDocumentoIdentidade(null);
       setClienteEditando(null);
       setPanelTab("lista");
-      await carregarClientes();
+      carregarClientes();
       refreshDashboard().catch(() => {});
     } catch (error) {
       setErro(error.message);
@@ -201,7 +185,7 @@ export default function ClientesPanel() {
         },
       ]}
     >
-      {erro && <div className="alert alert-error">{erro}</div>}
+      {(erro || lista.erro) && <div className="alert alert-error">{erro || lista.erro}</div>}
       {sucesso && <div className="alert alert-success">{sucesso}</div>}
 
       {panelTab === "novo" ? (
@@ -527,6 +511,13 @@ export default function ClientesPanel() {
                 ))}
             </tbody>
           </table>
+          <RodapeLista
+            quantidade={clientes.length}
+            total={lista.total}
+            temMais={lista.temMais}
+            carregandoMais={lista.carregandoMais}
+            onCarregarMais={lista.carregarMais}
+          />
         </div>
       )}
     </OverlayPanel>

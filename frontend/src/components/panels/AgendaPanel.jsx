@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useListaPaginada, useRecurso } from "@/hooks/useRecurso";
+import RodapeLista from "@/components/ui/RodapeLista";
 import { usePanel } from "@/contexts/PanelContext";
 import { useDashboardData } from "@/contexts/DashboardDataContext";
 import { usePreferences } from "@/contexts/PreferencesContext";
@@ -13,7 +15,7 @@ import {
   deleteAgenda,
   getProcessos,
   calcularPrazo,
-  normalizarLista,
+  listarTudo,
 } from "@/services/api";
 
 const formularioInicial = {
@@ -204,45 +206,31 @@ export default function AgendaPanel() {
   const { activePanel, panelTab, setPanelTab } = usePanel();
   const { refresh: refreshDashboard } = useDashboardData();
   const { t } = usePreferences();
-  const [eventos, setEventos] = useState([]);
-  const [processos, setProcessos] = useState([]);
   const [filtroTipo, setFiltroTipo] = useState("");
   const [formulario, setFormulario] = useState(formularioInicial);
   const [formularioEdicao, setFormularioEdicao] = useState(null);
   const [calculadora, setCalculadora] = useState(calculadoraInicial);
   const [calculando, setCalculando] = useState(false);
-  const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState("");
   const [sucesso, setSucesso] = useState("");
 
-  async function carregarDados(tipo = filtroTipo) {
-    try {
-      setCarregando(true);
-      const [dadosAgenda, dadosProcessos] = await Promise.all([
-        getAgenda({ tipo }),
-        getProcessos(),
-      ]);
-      setEventos(normalizarLista(dadosAgenda));
-      setProcessos(normalizarLista(dadosProcessos));
-    } catch (error) {
-      setErro(error.message);
-    } finally {
-      setCarregando(false);
-    }
+  const painelAberto = activePanel === "agenda";
+  const lista = useListaPaginada(
+    (page) => getAgenda({ tipo: filtroTipo, page }),
+    [filtroTipo],
+    { ativo: painelAberto }
+  );
+  const recursoProcessos = useRecurso(() => listarTudo(getProcessos), [], {
+    ativo: painelAberto,
+  });
+  const eventos = lista.itens;
+  const processos = recursoProcessos.dados ?? [];
+  const carregando = lista.carregando && eventos.length === 0;
+  const erroCarga = lista.erro || recursoProcessos.erro;
+
+  function carregarDados() {
+    lista.recarregar();
   }
-
-  useEffect(() => {
-    if (activePanel === "agenda") {
-      carregarDados();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activePanel]);
-
-  useEffect(() => {
-    if (activePanel !== "agenda") return;
-    carregarDados(filtroTipo);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filtroTipo]);
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -258,7 +246,7 @@ export default function AgendaPanel() {
       setCalculadora(calculadoraInicial);
       setSucesso("Evento agendado com sucesso.");
       setPanelTab("lista");
-      await carregarDados();
+      carregarDados();
       refreshDashboard().catch(() => {});
     } catch (error) {
       setErro(error.message);
@@ -295,7 +283,7 @@ export default function AgendaPanel() {
       });
       setSucesso("Evento atualizado com sucesso.");
       setPanelTab("lista");
-      await carregarDados();
+      carregarDados();
       refreshDashboard().catch(() => {});
     } catch (error) {
       setErro(error.message);
@@ -345,7 +333,7 @@ export default function AgendaPanel() {
         { id: "novo", label: t("aba_novo") },
       ]}
     >
-      {erro && <div className="alert alert-error">{erro}</div>}
+      {(erro || erroCarga) && <div className="alert alert-error">{erro || erroCarga}</div>}
       {sucesso && <div className="alert alert-success">{sucesso}</div>}
 
       {panelTab === "novo" ? (
@@ -378,7 +366,11 @@ export default function AgendaPanel() {
       ) : (
         <div className="table-wrap">
           <div className="form-field" style={{ marginBottom: 12, maxWidth: 220 }}>
-            <select value={filtroTipo} onChange={(e) => setFiltroTipo(e.target.value)}>
+            <select
+              aria-label="Filtrar por tipo de evento"
+              value={filtroTipo}
+              onChange={(e) => setFiltroTipo(e.target.value)}
+            >
               <option value="">Todos os tipos</option>
               <option value="compromisso">Compromissos</option>
               <option value="prazo">Prazos</option>
@@ -483,6 +475,13 @@ export default function AgendaPanel() {
                 ))}
             </tbody>
           </table>
+          <RodapeLista
+            quantidade={eventos.length}
+            total={lista.total}
+            temMais={lista.temMais}
+            carregandoMais={lista.carregandoMais}
+            onCarregarMais={lista.carregarMais}
+          />
         </div>
       )}
     </OverlayPanel>

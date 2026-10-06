@@ -1,6 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
+import { useListaPaginada, useRecurso } from "@/hooks/useRecurso";
+import { useUsuarioLogado } from "@/hooks/useUsuarioLogado";
+import RodapeLista from "@/components/ui/RodapeLista";
 import { Check, RotateCcw, Trash2 } from "lucide-react";
 import { usePanel } from "@/contexts/PanelContext";
 import { usePreferences } from "@/contexts/PreferencesContext";
@@ -12,8 +15,7 @@ import {
   deleteTarefa,
   getProcessos,
   getUsuarios,
-  getUsuarioLogado,
-  normalizarLista,
+  listarTudo,
 } from "@/services/api";
 
 const STATUS = [
@@ -62,15 +64,11 @@ export default function TarefasPanel() {
   const { activePanel, panelTab, setPanelTab } = usePanel();
   const { t } = usePreferences();
 
-  const [tarefas, setTarefas] = useState([]);
-  const [processos, setProcessos] = useState([]);
-  const [usuarios, setUsuarios] = useState([]);
   const [form, setForm] = useState(tarefaInicial);
   const [erro, setErro] = useState("");
-  const [carregando, setCarregando] = useState(false);
 
   const ativo = activePanel === "tarefas";
-  const usuario = typeof window !== "undefined" ? getUsuarioLogado() : null;
+  const usuario = useUsuarioLogado();
 
   // A aba decide o filtro: "minhas" traz só as do usuário logado, e as duas
   // deixam de fora o que já foi concluído ou cancelado.
@@ -81,28 +79,26 @@ export default function TarefasPanel() {
         ? { status: "abertas" }
         : { };
 
-  const carregar = useCallback(async (filtrosAtuais) => {
-    setCarregando(true);
-    try {
-      const [listaTarefas, listaProcessos, listaUsuarios] = await Promise.all([
-        getTarefas(filtrosAtuais),
-        getProcessos(),
-        getUsuarios(),
-      ]);
-      setTarefas(normalizarLista(listaTarefas));
-      setProcessos(normalizarLista(listaProcessos));
-      setUsuarios(normalizarLista(listaUsuarios).filter((u) => u.ativo));
-    } catch (e) {
-      setErro(e.message);
-    } finally {
-      setCarregando(false);
-    }
-  }, []);
+  const abaDeLista = panelTab !== "nova";
+  const lista = useListaPaginada(
+    (page) => getTarefas({ ...filtros, page }),
+    [panelTab],
+    { ativo: ativo && abaDeLista }
+  );
+  const auxiliares = useRecurso(
+    () => Promise.all([listarTudo(getProcessos), listarTudo(getUsuarios)]),
+    [],
+    { ativo }
+  );
+  const tarefas = lista.itens;
+  const [processos, todosUsuarios] = auxiliares.dados ?? [[], []];
+  const usuarios = todosUsuarios.filter((u) => u.ativo);
+  const carregando = lista.carregando && tarefas.length === 0;
+  const erroCarga = lista.erro || auxiliares.erro;
 
-  useEffect(() => {
-    if (ativo) carregar(filtros);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ativo, panelTab, carregar]);
+  function carregar() {
+    lista.recarregar();
+  }
 
   async function salvar(evento) {
     evento.preventDefault();
@@ -124,7 +120,7 @@ export default function TarefasPanel() {
     setErro("");
     try {
       await updateTarefa(tarefa.id, { status });
-      carregar(filtros);
+      carregar();
     } catch (e) {
       setErro(e.message);
     }
@@ -143,14 +139,14 @@ export default function TarefasPanel() {
 
   return (
     <OverlayPanel tabs={abas}>
-      {erro && <div className="form-error">{erro}</div>}
+      {(erro || erroCarga) && <div className="form-error">{erro || erroCarga}</div>}
 
       {panelTab !== "nova" && (
         <>
           <div className="resumo-linha">
             <span>
               {panelTab === "historico" ? "Registros" : "Em aberto"}:{" "}
-              <strong>{tarefas.length}</strong>
+              <strong>{lista.total}</strong>
             </span>
             {atrasadas > 0 && (
               <span>
@@ -257,7 +253,7 @@ export default function TarefasPanel() {
                           onClick={async () => {
                             if (window.confirm("Excluir esta tarefa?")) {
                               await deleteTarefa(tarefa.id);
-                              carregar(filtros);
+                              carregar();
                             }
                           }}
                         >
@@ -269,6 +265,13 @@ export default function TarefasPanel() {
                 ))}
             </tbody>
           </table>
+          <RodapeLista
+            quantidade={tarefas.length}
+            total={lista.total}
+            temMais={lista.temMais}
+            carregandoMais={lista.carregandoMais}
+            onCarregarMais={lista.carregarMais}
+          />
         </>
       )}
 

@@ -1,6 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useListaPaginada, useRecurso } from "@/hooks/useRecurso";
+import { useValorAtrasado } from "@/hooks/useValorAtrasado";
+import RodapeLista from "@/components/ui/RodapeLista";
 import { usePanel, PANELS } from "@/contexts/PanelContext";
 import { useDashboardData } from "@/contexts/DashboardDataContext";
 import { usePreferences } from "@/contexts/PreferencesContext";
@@ -18,7 +21,7 @@ import {
   deleteProcesso,
   getClientes,
   getAdvogados,
-  normalizarLista,
+  listarTudo,
 } from "@/services/api";
 
 const formularioInicial = {
@@ -59,9 +62,6 @@ export default function ProcessosPanel() {
   const { activePanel, panelTab, panelParams, openPanel, setPanelTab } = usePanel();
   const { refresh: refreshDashboard } = useDashboardData();
   const { t } = usePreferences();
-  const [processos, setProcessos] = useState([]);
-  const [clientes, setClientes] = useState([]);
-  const [advogados, setAdvogados] = useState([]);
   const [busca, setBusca] = useState("");
   const [consultando, setConsultando] = useState(null);
   const [avisoDataJud, setAvisoDataJud] = useState(null);
@@ -69,54 +69,36 @@ export default function ProcessosPanel() {
   const [filtroAdvogado, setFiltroAdvogado] = useState("");
   const [formulario, setFormulario] = useState(formularioInicial);
   const [formularioEdicao, setFormularioEdicao] = useState(null);
-  const [carregando, setCarregando] = useState(true);
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState("");
   const [sucesso, setSucesso] = useState("");
 
-  async function carregarDados(filtros = {}) {
-    try {
-      setCarregando(true);
-      const parametros = {
-        busca: filtros.busca ?? busca,
-        status: filtros.status ?? filtroStatus,
-        advogado: filtros.advogado ?? filtroAdvogado,
-      };
-      const [dadosProcessos, dadosClientes, dadosAdvogados] =
-        await Promise.all([
-          getProcessos(parametros),
-          getClientes(),
-          getAdvogados(),
-        ]);
-      setProcessos(normalizarLista(dadosProcessos));
-      setClientes(normalizarLista(dadosClientes));
-      setAdvogados(normalizarLista(dadosAdvogados));
-    } catch (error) {
-      setErro(error.message);
-    } finally {
-      setCarregando(false);
-    }
+  const painelAberto = activePanel === "processos";
+  const buscaAtrasada = useValorAtrasado(busca);
+  const lista = useListaPaginada(
+    (page) =>
+      getProcessos({
+        busca: buscaAtrasada,
+        status: filtroStatus,
+        advogado: filtroAdvogado,
+        page,
+      }),
+    [buscaAtrasada, filtroStatus, filtroAdvogado],
+    { ativo: painelAberto }
+  );
+  const auxiliares = useRecurso(
+    () => Promise.all([listarTudo(getClientes), listarTudo(getAdvogados)]),
+    [],
+    { ativo: painelAberto }
+  );
+  const processos = lista.itens;
+  const [clientes, advogados] = auxiliares.dados ?? [[], []];
+  const carregando = lista.carregando && processos.length === 0;
+  const erroCarga = lista.erro || auxiliares.erro;
+
+  function carregarDados() {
+    lista.recarregar();
   }
-
-  useEffect(() => {
-    if (activePanel === "processos") {
-      carregarDados();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activePanel]);
-
-  useEffect(() => {
-    if (activePanel !== "processos") return;
-    const timeout = setTimeout(() => carregarDados({ busca }), 300);
-    return () => clearTimeout(timeout);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [busca]);
-
-  useEffect(() => {
-    if (activePanel !== "processos") return;
-    carregarDados({ status: filtroStatus, advogado: filtroAdvogado });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filtroStatus, filtroAdvogado]);
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -138,7 +120,7 @@ export default function ProcessosPanel() {
       setFormulario(formularioInicial);
       setSucesso("Processo cadastrado com sucesso.");
       setPanelTab("lista");
-      await carregarDados();
+      carregarDados();
       refreshDashboard().catch(() => {});
     } catch (error) {
       setErro(error.message);
@@ -192,7 +174,7 @@ export default function ProcessosPanel() {
       });
       setSucesso("Processo atualizado com sucesso.");
       setPanelTab("ficha");
-      await carregarDados();
+      carregarDados();
       refreshDashboard().catch(() => {});
     } catch (error) {
       setErro(error.message);
@@ -210,7 +192,7 @@ export default function ProcessosPanel() {
         { id: "novo", label: t("aba_novo") },
       ]}
     >
-      {erro && <div className="alert alert-error">{erro}</div>}
+      {(erro || erroCarga) && <div className="alert alert-error">{erro || erroCarga}</div>}
       {sucesso && <div className="alert alert-success">{sucesso}</div>}
       {avisoDataJud && (
         <div className={`alert ${avisoDataJud.erro ? "alert-error" : "alert-success"}`}>
@@ -263,6 +245,7 @@ export default function ProcessosPanel() {
             </div>
             <div className="form-field">
               <select
+                aria-label="Filtrar por status"
                 value={filtroStatus}
                 onChange={(e) => setFiltroStatus(e.target.value)}
               >
@@ -275,6 +258,7 @@ export default function ProcessosPanel() {
             </div>
             <div className="form-field">
               <select
+                aria-label="Filtrar por advogado"
                 value={filtroAdvogado}
                 onChange={(e) => setFiltroAdvogado(e.target.value)}
               >
@@ -289,10 +273,10 @@ export default function ProcessosPanel() {
           </div>
           {!carregando && (
             <p className="celula-secundaria" style={{ marginBottom: 10 }}>
-              {processos.length === 0
+              {lista.total === 0
                 ? "Nenhum processo encontrado."
-                : `${processos.length} processo${processos.length > 1 ? "s" : ""} encontrado${
-                    processos.length > 1 ? "s" : ""
+                : `${lista.total} processo${lista.total > 1 ? "s" : ""} encontrado${
+                    lista.total > 1 ? "s" : ""
                   }.`}
             </p>
           )}
@@ -452,6 +436,13 @@ export default function ProcessosPanel() {
                 ))}
             </tbody>
           </table>
+          <RodapeLista
+            quantidade={processos.length}
+            total={lista.total}
+            temMais={lista.temMais}
+            carregandoMais={lista.carregandoMais}
+            onCarregarMais={lista.carregarMais}
+          />
         </div>
       )}
     </OverlayPanel>

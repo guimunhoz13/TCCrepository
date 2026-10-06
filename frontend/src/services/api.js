@@ -181,6 +181,14 @@ export async function getDashboardStats() {
   return request("/dashboard/stats/");
 }
 
+export async function getDashboardResumo() {
+  return request("/dashboard/");
+}
+
+export async function buscarNoEscritorio(termo) {
+  return request(`/busca/${buildQuery({ q: termo })}`);
+}
+
 export async function getNoticiasJuridicas() {
   return request("/noticias/");
 }
@@ -258,8 +266,8 @@ export async function calcularPrazo({ data_inicio, dias, dias_uteis = true }) {
   });
 }
 
-export async function getContratos() {
-  return request("/contratos/");
+export async function getContratos(params) {
+  return request(`/contratos/${buildQuery(params)}`);
 }
 
 export async function createContrato(data) {
@@ -287,8 +295,8 @@ export async function updateParcela(id, data) {
   });
 }
 
-export async function getDocumentos() {
-  return request("/documentos/");
+export async function getDocumentos(params) {
+  return request(`/documentos/${buildQuery(params)}`);
 }
 
 export async function createDocumento(formData) {
@@ -302,8 +310,8 @@ export async function deleteDocumento(id) {
   return request(`/documentos/${id}/`, { method: "DELETE" });
 }
 
-export async function getAdvogados() {
-  return request("/advogados/");
+export async function getAdvogados(params) {
+  return request(`/advogados/${buildQuery(params)}`);
 }
 
 export async function updateAdvogado(id, data) {
@@ -326,10 +334,32 @@ export function normalizarLista(dados) {
   return [];
 }
 
+/**
+ * Busca todas as páginas de uma listagem (para preencher um <select>, por
+ * exemplo). `buscar` é uma das funções get* deste arquivo.
+ */
+export async function listarTudo(buscar, params = {}) {
+  const itens = [];
+  for (let page = 1; ; page += 1) {
+    const dados = await buscar({ ...params, page, page_size: 1000 });
+    itens.push(...normalizarLista(dados));
+    if (!dados?.next) return itens;
+  }
+}
+
 export function getUsuarioLogado() {
   if (typeof window === "undefined") return null;
   const raw = localStorage.getItem("usuarioLogado");
   return raw ? JSON.parse(raw) : null;
+}
+
+export const EVENTO_USUARIO_ALTERADO = "lexoffice:usuario-alterado";
+
+/** Grava o usuário logado e avisa os componentes que o exibem
+ *  (o evento "storage" do navegador só dispara nas outras abas). */
+export function salvarUsuarioLogado(usuario) {
+  localStorage.setItem("usuarioLogado", JSON.stringify(usuario));
+  window.dispatchEvent(new Event(EVENTO_USUARIO_ALTERADO));
 }
 
 export function logout() {
@@ -531,8 +561,8 @@ export async function getMasterStats() {
   return masterRequest("/master/stats/");
 }
 
-export async function getMasterEscritorios() {
-  return masterRequest("/master/escritorios/");
+export async function getMasterEscritorios(params) {
+  return masterRequest(`/master/escritorios/${buildQuery(params)}`);
 }
 
 export async function createMasterEscritorio(data) {
@@ -566,10 +596,7 @@ export async function getAuditoria(params) {
 // ---------------------------------------------------------------
 
 export async function getApontamentos(filtros = {}) {
-  const busca = new URLSearchParams(
-    Object.entries(filtros).filter(([, valor]) => valor !== "" && valor != null)
-  ).toString();
-  return request(`/apontamentos/${busca ? `?${busca}` : ""}`);
+  return request(`/apontamentos/${buildQuery(filtros)}`);
 }
 
 export async function createApontamento(data) {
@@ -585,10 +612,7 @@ export async function deleteApontamento(id) {
 // ---------------------------------------------------------------
 
 export async function getDespesas(filtros = {}) {
-  const busca = new URLSearchParams(
-    Object.entries(filtros).filter(([, valor]) => valor !== "" && valor != null)
-  ).toString();
-  return request(`/despesas/${busca ? `?${busca}` : ""}`);
+  return request(`/despesas/${buildQuery(filtros)}`);
 }
 
 export async function createDespesa(data) {
@@ -619,8 +643,8 @@ export async function getTempoDeUso(mes) {
 // Modelos de documento (automação)
 // ---------------------------------------------------------------
 
-export async function getModelosDocumento() {
-  return request("/modelos-documento/");
+export async function getModelosDocumento(params) {
+  return request(`/modelos-documento/${buildQuery(params)}`);
 }
 
 export async function createModeloDocumento(data) {
@@ -674,10 +698,7 @@ export async function deleteMovimentacao(id) {
 // ---------------------------------------------------------------
 
 export async function getTarefas(filtros = {}) {
-  const busca = new URLSearchParams(
-    Object.entries(filtros).filter(([, valor]) => valor !== "" && valor != null)
-  ).toString();
-  return request(`/tarefas/${busca ? `?${busca}` : ""}`);
+  return request(`/tarefas/${buildQuery(filtros)}`);
 }
 
 export async function createTarefa(data) {
@@ -692,6 +713,6 @@ export async function deleteTarefa(id) {
   return request(`/tarefas/${id}/`, { method: "DELETE" });
 }
 
-export async function getUsuarios() {
-  return request("/usuarios/");
+export async function getUsuarios(params) {
+  return request(`/usuarios/${buildQuery(params)}`);
 }

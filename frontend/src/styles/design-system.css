@@ -3520,3 +3520,14 @@ button.doc-mini-card {
     white-space: nowrap;
   }
 }
+
+/* Rodapé das listas paginadas ("Mostrando 200 de 340 — Carregar mais"). */
+.rodape-lista {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 4px 2px;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}

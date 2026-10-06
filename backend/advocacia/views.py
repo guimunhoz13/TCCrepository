@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.contrib.auth.hashers import check_password, make_password
-from django.db.models import Count, Q, Sum
+from django.db.models import CharField, Count, F, Func, Q, Sum, Value
+from django.db.models.functions import Lower
 from django.db.models import Prefetch
 from django.http import FileResponse, Http404, HttpResponse
 from django.utils import timezone
@@ -9,6 +10,7 @@ from decimal import Decimal, ROUND_HALF_UP
 import csv
 import logging
 import secrets
+import unicodedata
 
 logger = logging.getLogger(__name__)
 
@@ -683,67 +685,259 @@ def _indicadores_financeiros(escritorio):
     }
 
 
+def _estatisticas_do_escritorio(escritorio):
+    processos_por_status = (
+        Processo.objects
+        .filter(escritorio=escritorio)
+        .values("status")
+        .annotate(total=Count("id"))
+        .order_by("status")
+    )
+
+    return (
+        {
+            "escritorio": EscritorioSerializer(
+                escritorio
+            ).data,
+
+            "totais": {
+                "clientes": Cliente.objects.filter(
+                    escritorio=escritorio
+                ).count(),
+
+                "processos": Processo.objects.filter(
+                    escritorio=escritorio
+                ).count(),
+
+                "advogados": Advogado.objects.filter(
+                    escritorio=escritorio
+                ).count(),
+
+                "documentos": Documento.objects.filter(
+                    processo__escritorio=escritorio
+                ).count(),
+
+                "agenda": Agenda.objects.filter(
+                    escritorio=escritorio
+                ).count(),
+            },
+
+            "processos_por_status": list(
+                processos_por_status
+            ),
+
+            "financeiro": _indicadores_financeiros(escritorio),
+        }
+    )
+
+
 class DashboardStatsView(APIView):
 
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-
         usuario = get_usuario_from_request(request)
-
         if not usuario:
             return Response(
-                {
-                    "detail": "Usuário não identificado."
-                },
+                {"detail": "Usuário não identificado."},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+        return Response(_estatisticas_do_escritorio(usuario.escritorio))
+
+
+QUANTIDADE_RECENTES_DASHBOARD = 5
+
+
+class DashboardResumoView(APIView):
+    """Tudo o que a dashboard desenha numa única requisição.
+
+    Antes a tela abria com 14 chamadas, uma lista completa por área (inclusive
+    as que ela nem desenhava, só para a busca do topo). Agora vêm só os
+    totais, os cinco itens mais recentes de cada cartão e a agenda do
+    calendário; a busca consulta /api/busca/ sob demanda.
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        usuario = get_usuario_from_request(request)
+        if not usuario:
+            return Response(
+                {"detail": "Usuário não identificado."},
                 status=status.HTTP_401_UNAUTHORIZED,
             )
 
         escritorio = usuario.escritorio
+        contexto = {"request": request}
+        n = QUANTIDADE_RECENTES_DASHBOARD
+        semana_passada = timezone.now() - timezone.timedelta(days=7)
 
-        processos_por_status = (
-            Processo.objects
-            .filter(escritorio=escritorio)
-            .values("status")
-            .annotate(total=Count("id"))
-            .order_by("status")
+        processos = (
+            Processo.objects.filter(escritorio=escritorio)
+            .select_related("cliente", "advogado__usuario")
+            .prefetch_related(
+                Prefetch(
+                    "eventos_agenda",
+                    queryset=Agenda.objects.filter(tipo="prazo", cumprido=False)
+                    .order_by("data_evento", "pk"),
+                    to_attr="prazos_pendentes_ordenados",
+                )
+            )
+            .order_by("-criado_em")[:n]
+        )
+        documentos = (
+            Documento.objects.filter(processo__escritorio=escritorio)
+            .select_related("processo")
+            .order_by("-enviado_em")[:n]
+        )
+        minhas_tarefas = ordenacao_de_trabalho(
+            Tarefa.objects.filter(escritorio=escritorio, responsavel=usuario)
+            .exclude(status__in=Tarefa.STATUS_ENCERRADOS)
+            .select_related("processo", "processo__cliente", "responsavel", "criado_por")
+        )[:n]
+        # O calendário navega entre meses, então a agenda vai inteira — mas
+        # só ela, e não mais junto com todas as outras listas.
+        agenda = (
+            Agenda.objects.filter(escritorio=escritorio)
+            .select_related("processo__cliente", "processo__advogado__usuario")
+            .order_by("data_evento")
         )
 
-        return Response(
-            {
-                "escritorio": EscritorioSerializer(
-                    escritorio
-                ).data,
+        dados = _estatisticas_do_escritorio(escritorio)
+        dados.update({
+            "novos_na_semana": {
+                "clientes": Cliente.objects.filter(
+                    escritorio=escritorio, criado_em__gte=semana_passada
+                ).count(),
+                "processos": Processo.objects.filter(
+                    escritorio=escritorio, criado_em__gte=semana_passada
+                ).count(),
+                "agenda": Agenda.objects.filter(
+                    escritorio=escritorio, criado_em__gte=semana_passada
+                ).count(),
+                "documentos": Documento.objects.filter(
+                    processo__escritorio=escritorio, enviado_em__gte=semana_passada
+                ).count(),
+            },
+            "processos_recentes": ProcessoSerializer(processos, many=True, context=contexto).data,
+            "documentos_recentes": DocumentoSerializer(documentos, many=True, context=contexto).data,
+            "minhas_tarefas": TarefaSerializer(minhas_tarefas, many=True, context=contexto).data,
+            "agenda": AgendaSerializer(agenda, many=True, context=contexto).data,
+        })
+        return Response(dados)
 
-                "totais": {
-                    "clientes": Cliente.objects.filter(
-                        escritorio=escritorio
-                    ).count(),
 
-                    "processos": Processo.objects.filter(
-                        escritorio=escritorio
-                    ).count(),
+_COM_ACENTO = "áàâãäéèêëíìîïóòôõöúùûüçñ"
+_SEM_ACENTO = "aaaaaeeeeiiiiooooouuuucn"
 
-                    "advogados": Advogado.objects.filter(
-                        escritorio=escritorio
-                    ).count(),
 
-                    "documentos": Documento.objects.filter(
-                        processo__escritorio=escritorio
-                    ).count(),
+def _sem_acento_sql(campo):
+    return Func(
+        Lower(F(campo)), Value(_COM_ACENTO), Value(_SEM_ACENTO),
+        function="translate", output_field=CharField(),
+    )
 
-                    "agenda": Agenda.objects.filter(
-                        escritorio=escritorio
-                    ).count(),
-                },
 
-                "processos_por_status": list(
-                    processos_por_status
-                ),
+def _sem_acento(texto):
+    return "".join(
+        c for c in unicodedata.normalize("NFD", texto.lower())
+        if unicodedata.category(c) != "Mn"
+    )
 
-                "financeiro": _indicadores_financeiros(escritorio),
-            }
-        )
+
+def _filtrar_sem_acento(queryset, campos, termo):
+    anotacoes = {f"_busca_{i}": _sem_acento_sql(campo) for i, campo in enumerate(campos)}
+    filtro = Q()
+    for nome in anotacoes:
+        filtro |= Q(**{f"{nome}__contains": termo})
+    return queryset.annotate(**anotacoes).filter(filtro)
+
+
+class BuscaGlobalView(APIView):
+    """Busca do topo do sistema, feita no servidor.
+
+    Antes ela filtrava, no navegador, listas que a dashboard baixava inteiras
+    só para isso — e enxergava apenas a primeira página de cada uma. Aqui a
+    consulta vai direto ao banco, ignora acentos ("acao" acha "Ação") e
+    devolve no máximo alguns itens por área.
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    MINIMO_CARACTERES = 2
+    POR_GRUPO = 4
+
+    def get(self, request):
+        usuario = get_usuario_from_request(request)
+        if not usuario:
+            return Response(
+                {"detail": "Usuário não identificado."},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+
+        termo = _sem_acento((request.query_params.get("q") or "").strip())
+        if len(termo) < self.MINIMO_CARACTERES:
+            return Response({})
+
+        escritorio = usuario.escritorio
+        contexto = {"request": request}
+        grupos = {
+            "clientes": (
+                Cliente.objects.filter(escritorio=escritorio).order_by("nome"),
+                ["nome", "cpf", "cnpj", "email", "telefone"],
+                ClienteSerializer,
+            ),
+            "processos": (
+                Processo.objects.filter(escritorio=escritorio)
+                .select_related("cliente", "advogado__usuario").order_by("-criado_em"),
+                ["numero_processo", "titulo", "cliente__nome"],
+                ProcessoSerializer,
+            ),
+            "tarefas": (
+                Tarefa.objects.filter(escritorio=escritorio)
+                .select_related("processo", "processo__cliente", "responsavel", "criado_por")
+                .order_by("-criado_em"),
+                ["titulo", "descricao", "responsavel__nome", "processo__numero_processo"],
+                TarefaSerializer,
+            ),
+            "agenda": (
+                Agenda.objects.filter(escritorio=escritorio)
+                .select_related("processo__cliente", "processo__advogado__usuario")
+                .order_by("-data_evento"),
+                ["titulo", "descricao", "local_evento", "processo__numero_processo",
+                 "processo__cliente__nome"],
+                AgendaSerializer,
+            ),
+            "documentos": (
+                Documento.objects.filter(processo__escritorio=escritorio)
+                .select_related("processo").order_by("-enviado_em"),
+                ["nome_arquivo", "processo__numero_processo"],
+                DocumentoSerializer,
+            ),
+            "contratos": (
+                Contrato.objects.filter(escritorio=escritorio)
+                .select_related("processo__cliente").order_by("-criado_em"),
+                ["processo__numero_processo", "processo__titulo", "processo__cliente__nome"],
+                ContratoSerializer,
+            ),
+            "apontamentos": (
+                ApontamentoHora.objects.filter(escritorio=escritorio)
+                .select_related("processo", "usuario"),
+                ["descricao", "processo__numero_processo", "usuario__nome"],
+                ApontamentoHoraSerializer,
+            ),
+            "modelos": (
+                ModeloDocumento.objects.filter(escritorio=escritorio),
+                ["nome", "conteudo"],
+                ModeloDocumentoSerializer,
+            ),
+        }
+
+        resultado = {}
+        for chave, (queryset, campos, serializer) in grupos.items():
+            itens = _filtrar_sem_acento(queryset, campos, termo)[: self.POR_GRUPO]
+            resultado[chave] = serializer(itens, many=True, context=contexto).data
+        return Response(resultado)
 
 
 # =========================================================

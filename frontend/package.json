@@ -10,7 +10,6 @@
     "test": "jest"
   },
   "dependencies": {
-    "bootstrap": "^5.3.8",
     "lucide-react": "^1.28.0",
     "next": "^16.3.5",
     "react": "19.2.4",
@@ -18,8 +17,10 @@
     "recharts": "^3.10.1"
   },
   "devDependencies": {
+    "@testing-library/react": "^16.3.3",
     "eslint": "^9",
     "eslint-config-next": "16.2.6",
-    "jest": "^30.5.1"
+    "jest": "^30.5.1",
+    "jest-environment-jsdom": "^30.5.2"
   }
 }

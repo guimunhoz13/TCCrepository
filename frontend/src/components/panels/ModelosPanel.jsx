@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
+import { useRecurso } from "@/hooks/useRecurso";
 import { Pencil, Printer, Trash2 } from "lucide-react";
 import { usePanel } from "@/contexts/PanelContext";
 import { usePreferences } from "@/contexts/PreferencesContext";
@@ -14,7 +15,7 @@ import {
   gerarDocumento,
   getProcessos,
   getClientes,
-  normalizarLista,
+  listarTudo,
 } from "@/services/api";
 
 const TIPOS = [
@@ -45,42 +46,27 @@ export default function ModelosPanel() {
   const { activePanel, panelTab, setPanelTab } = usePanel();
   const { t } = usePreferences();
 
-  const [modelos, setModelos] = useState([]);
-  const [variaveis, setVariaveis] = useState([]);
-  const [processos, setProcessos] = useState([]);
-  const [clientes, setClientes] = useState([]);
   const [formulario, setFormulario] = useState(modeloInicial);
   const [editandoId, setEditandoId] = useState(null);
   const [gerar, setGerar] = useState({ modelo: "", origem: "processo", alvo: "" });
   const [resultado, setResultado] = useState(null);
   const [erro, setErro] = useState("");
-  const [carregando, setCarregando] = useState(false);
 
   const ativo = activePanel === "modelos";
 
-  const carregar = useCallback(async () => {
-    setCarregando(true);
-    try {
-      const [lista, vars, procs, clis] = await Promise.all([
-        getModelosDocumento(),
-        getVariaveisDocumento(),
-        getProcessos(),
-        getClientes(),
-      ]);
-      setModelos(normalizarLista(lista));
-      setVariaveis(Array.isArray(vars) ? vars : []);
-      setProcessos(normalizarLista(procs));
-      setClientes(normalizarLista(clis));
-    } catch (e) {
-      setErro(e.message);
-    } finally {
-      setCarregando(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (ativo) carregar();
-  }, [ativo, carregar]);
+  const recursoModelos = useRecurso(() => listarTudo(getModelosDocumento), [], { ativo });
+  const auxiliares = useRecurso(
+    () =>
+      Promise.all([getVariaveisDocumento(), listarTudo(getProcessos), listarTudo(getClientes)]),
+    [],
+    { ativo }
+  );
+  const modelos = recursoModelos.dados ?? [];
+  const [vars, processos, clientes] = auxiliares.dados ?? [[], [], []];
+  const variaveis = Array.isArray(vars) ? vars : [];
+  const carregando = recursoModelos.carregando && modelos.length === 0;
+  const erroCarga = recursoModelos.erro || auxiliares.erro;
+  const carregar = recursoModelos.recarregar;
 
   async function salvar(evento) {
     evento.preventDefault();
@@ -148,7 +134,7 @@ export default function ModelosPanel() {
 
   return (
     <OverlayPanel tabs={abas}>
-      {erro && <div className="form-error">{erro}</div>}
+      {(erro || erroCarga) && <div className="form-error">{erro || erroCarga}</div>}
 
       {panelTab === "lista" && (
         <table>

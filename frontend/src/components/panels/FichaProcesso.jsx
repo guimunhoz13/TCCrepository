@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useRecurso } from "@/hooks/useRecurso";
 import {
   ArrowLeft,
   Pencil,
@@ -68,38 +69,20 @@ function Campo({ rotulo, children }) {
 }
 
 export default function FichaProcesso({ processoId, onVoltar, onEditar }) {
-  const [dados, setDados] = useState(null);
-  const [carregando, setCarregando] = useState(true);
-  const [erro, setErro] = useState("");
   const [novaMovimentacao, setNovaMovimentacao] = useState("");
   const [lancando, setLancando] = useState(false);
   const [erroMovimentacao, setErroMovimentacao] = useState("");
   const [excluindoMovId, setExcluindoMovId] = useState(null);
 
-  useEffect(() => {
-    if (!processoId) return;
-    let cancelado = false;
-    setCarregando(true);
-    setErro("");
-    getFichaProcesso(processoId)
-      .then((resposta) => {
-        if (!cancelado) setDados(resposta);
-      })
-      .catch((error) => {
-        if (!cancelado) setErro(error.message);
-      })
-      .finally(() => {
-        if (!cancelado) setCarregando(false);
-      });
-    return () => {
-      cancelado = true;
-    };
-  }, [processoId]);
-
-  async function recarregarMovimentacoes() {
-    const resposta = await getFichaProcesso(processoId);
-    setDados((atual) => ({ ...atual, movimentacoes: resposta.movimentacoes }));
-  }
+  const recurso = useRecurso(() => getFichaProcesso(processoId), [processoId], {
+    ativo: Boolean(processoId),
+  });
+  const dados = recurso.dados;
+  const carregando = recurso.carregando;
+  // Se a ficha já está na tela, uma falha ao recarregar (depois de lançar
+  // movimentação) não troca a ficha inteira pela mensagem de erro.
+  const erro = dados ? "" : recurso.erro;
+  const recarregarMovimentacoes = recurso.recarregar;
 
   async function handleLancarMovimentacao(event) {
     event.preventDefault();
@@ -109,7 +92,7 @@ export default function FichaProcesso({ processoId, onVoltar, onEditar }) {
       setLancando(true);
       await createMovimentacao({ processo: processoId, descricao: novaMovimentacao.trim() });
       setNovaMovimentacao("");
-      await recarregarMovimentacoes();
+      recarregarMovimentacoes();
     } catch (error) {
       setErroMovimentacao(error.message);
     } finally {
@@ -122,7 +105,7 @@ export default function FichaProcesso({ processoId, onVoltar, onEditar }) {
     setExcluindoMovId(id);
     try {
       await deleteMovimentacao(id);
-      await recarregarMovimentacoes();
+      recarregarMovimentacoes();
     } catch (error) {
       setErroMovimentacao(error.message);
     } finally {
@@ -130,7 +113,7 @@ export default function FichaProcesso({ processoId, onVoltar, onEditar }) {
     }
   }
 
-  const VoltarBtn = () => (
+  const botaoVoltar = (
     <button
       type="button"
       className="btn btn-secondary"
@@ -144,7 +127,7 @@ export default function FichaProcesso({ processoId, onVoltar, onEditar }) {
   if (!processoId) {
     return (
       <div>
-        <VoltarBtn />
+        {botaoVoltar}
         <div className="empty-state">Nenhum processo selecionado.</div>
       </div>
     );
@@ -153,7 +136,7 @@ export default function FichaProcesso({ processoId, onVoltar, onEditar }) {
   if (carregando && !dados) {
     return (
       <div>
-        <VoltarBtn />
+        {botaoVoltar}
         <p>Carregando ficha do processo...</p>
       </div>
     );
@@ -162,7 +145,7 @@ export default function FichaProcesso({ processoId, onVoltar, onEditar }) {
   if (erro) {
     return (
       <div>
-        <VoltarBtn />
+        {botaoVoltar}
         <div className="alert alert-error">{erro}</div>
       </div>
     );

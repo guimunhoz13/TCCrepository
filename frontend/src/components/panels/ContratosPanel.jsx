@@ -1,6 +1,8 @@
 "use client";
 
-import { Fragment, useEffect, useState } from "react";
+import { Fragment, useState } from "react";
+import { useListaPaginada, useRecurso } from "@/hooks/useRecurso";
+import RodapeLista from "@/components/ui/RodapeLista";
 import { usePanel } from "@/contexts/PanelContext";
 import { useDashboardData } from "@/contexts/DashboardDataContext";
 import { usePreferences } from "@/contexts/PreferencesContext";
@@ -12,7 +14,7 @@ import {
   deleteContrato,
   updateParcela,
   getProcessos,
-  normalizarLista,
+  listarTudo,
 } from "@/services/api";
 
 const formularioInicial = {
@@ -33,35 +35,24 @@ export default function ContratosPanel() {
   const { activePanel, panelTab } = usePanel();
   const { refresh: refreshDashboard } = useDashboardData();
   const { t } = usePreferences();
-  const [contratos, setContratos] = useState([]);
-  const [processos, setProcessos] = useState([]);
   const [formulario, setFormulario] = useState(formularioInicial);
   const [contratoExpandido, setContratoExpandido] = useState(null);
-  const [carregando, setCarregando] = useState(true);
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState("");
 
-  async function carregarDados() {
-    try {
-      setCarregando(true);
-      const [dadosContratos, dadosProcessos] = await Promise.all([
-        getContratos(),
-        getProcessos(),
-      ]);
-      setContratos(normalizarLista(dadosContratos));
-      setProcessos(normalizarLista(dadosProcessos));
-    } catch (error) {
-      setErro(error.message);
-    } finally {
-      setCarregando(false);
-    }
-  }
+  const painelAberto = activePanel === "contratos";
+  const lista = useListaPaginada((page) => getContratos({ page }), [], { ativo: painelAberto });
+  const recursoProcessos = useRecurso(() => listarTudo(getProcessos), [], {
+    ativo: painelAberto,
+  });
+  const contratos = lista.itens;
+  const processos = recursoProcessos.dados ?? [];
+  const carregando = lista.carregando && contratos.length === 0;
+  const erroCarga = lista.erro || recursoProcessos.erro;
 
-  useEffect(() => {
-    if (activePanel === "contratos") {
-      carregarDados();
-    }
-  }, [activePanel]);
+  function carregarDados() {
+    lista.recarregar();
+  }
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -78,7 +69,7 @@ export default function ContratosPanel() {
             : 1,
       });
       setFormulario(formularioInicial);
-      await carregarDados();
+      carregarDados();
       refreshDashboard().catch(() => {});
     } catch (error) {
       setErro(error.message);
@@ -101,7 +92,7 @@ export default function ContratosPanel() {
         { id: "novo", label: t("aba_novo") },
       ]}
     >
-      {erro && <div className="alert alert-error">{erro}</div>}
+      {(erro || erroCarga) && <div className="alert alert-error">{erro || erroCarga}</div>}
 
       {panelTab === "novo" ? (
         <form className="form-grid" onSubmit={handleSubmit}>
@@ -326,6 +317,13 @@ export default function ContratosPanel() {
                 ))}
             </tbody>
           </table>
+          <RodapeLista
+            quantidade={contratos.length}
+            total={lista.total}
+            temMais={lista.temMais}
+            carregandoMais={lista.carregandoMais}
+            onCarregarMais={lista.carregarMais}
+          />
         </div>
       )}
     </OverlayPanel>

@@ -1,6 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
+import { useListaPaginada, useRecurso } from "@/hooks/useRecurso";
+import { useUsuarioLogado } from "@/hooks/useUsuarioLogado";
+import RodapeLista from "@/components/ui/RodapeLista";
 import { Trash2 } from "lucide-react";
 import { usePanel } from "@/contexts/PanelContext";
 import { usePreferences } from "@/contexts/PreferencesContext";
@@ -15,8 +18,7 @@ import {
   deleteDespesa,
   getTempoDeUso,
   getProcessos,
-  getUsuarioLogado,
-  normalizarLista,
+  listarTudo,
 } from "@/services/api";
 
 const TIPOS_DESPESA = [
@@ -67,53 +69,35 @@ export default function HorasPanel() {
   const { activePanel, panelTab, setPanelTab } = usePanel();
   const { t } = usePreferences();
 
-  const [processos, setProcessos] = useState([]);
-  const [apontamentos, setApontamentos] = useState([]);
-  const [despesas, setDespesas] = useState([]);
-  const [tempoUso, setTempoUso] = useState([]);
   const [mes, setMes] = useState(mesAtual());
   const [formHora, setFormHora] = useState(horaInicial);
   const [formDespesa, setFormDespesa] = useState(despesaInicial);
   const [erro, setErro] = useState("");
-  const [carregando, setCarregando] = useState(false);
 
   const ativo = activePanel === "horas";
-  const usuario = typeof window !== "undefined" ? getUsuarioLogado() : null;
+  const usuario = useUsuarioLogado();
 
-  const carregar = useCallback(async () => {
-    setCarregando(true);
-    try {
-      const [listaProcessos, listaHoras, listaDespesas] = await Promise.all([
-        getProcessos(),
-        getApontamentos(),
-        getDespesas(),
-      ]);
-      setProcessos(normalizarLista(listaProcessos));
-      setApontamentos(normalizarLista(listaHoras));
-      setDespesas(normalizarLista(listaDespesas));
-    } catch (e) {
-      setErro(e.message);
-    } finally {
-      setCarregando(false);
-    }
-  }, []);
+  const listaHoras = useListaPaginada((page) => getApontamentos({ page }), [], { ativo });
+  const listaDespesas = useListaPaginada((page) => getDespesas({ page }), [], { ativo });
+  const recursoProcessos = useRecurso(() => listarTudo(getProcessos), [], { ativo });
+  const recursoTempo = useRecurso(() => getTempoDeUso(mes), [mes], {
+    ativo: ativo && panelTab === "tempo",
+  });
 
-  useEffect(() => {
-    if (ativo) carregar();
-  }, [ativo, carregar]);
+  const processos = recursoProcessos.dados ?? [];
+  const apontamentos = listaHoras.itens;
+  const despesas = listaDespesas.itens;
+  const tempoUso = recursoTempo.dados?.usuarios ?? [];
+  const carregando =
+    (listaHoras.carregando && apontamentos.length === 0) ||
+    (listaDespesas.carregando && despesas.length === 0);
+  const erroCarga =
+    listaHoras.erro || listaDespesas.erro || recursoProcessos.erro || recursoTempo.erro;
 
-  const carregarTempo = useCallback(async (mesEscolhido) => {
-    try {
-      const dados = await getTempoDeUso(mesEscolhido);
-      setTempoUso(dados.usuarios || []);
-    } catch (e) {
-      setErro(e.message);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (ativo && panelTab === "tempo") carregarTempo(mes);
-  }, [ativo, panelTab, mes, carregarTempo]);
+  function carregar() {
+    listaHoras.recarregar();
+    listaDespesas.recarregar();
+  }
 
   async function salvarHora(evento) {
     evento.preventDefault();
@@ -178,7 +162,7 @@ export default function HorasPanel() {
 
   return (
     <OverlayPanel tabs={abas}>
-      {erro && <div className="form-error">{erro}</div>}
+      {(erro || erroCarga) && <div className="form-error">{erro || erroCarga}</div>}
 
       {panelTab === "horas" && (
         <>
@@ -250,6 +234,13 @@ export default function HorasPanel() {
                 ))}
             </tbody>
           </table>
+          <RodapeLista
+            quantidade={apontamentos.length}
+            total={listaHoras.total}
+            temMais={listaHoras.temMais}
+            carregandoMais={listaHoras.carregandoMais}
+            onCarregarMais={listaHoras.carregarMais}
+          />
         </>
       )}
 
@@ -426,6 +417,13 @@ export default function HorasPanel() {
                 ))}
             </tbody>
           </table>
+          <RodapeLista
+            quantidade={despesas.length}
+            total={listaDespesas.total}
+            temMais={listaDespesas.temMais}
+            carregandoMais={listaDespesas.carregandoMais}
+            onCarregarMais={listaDespesas.carregarMais}
+          />
         </>
       )}
 

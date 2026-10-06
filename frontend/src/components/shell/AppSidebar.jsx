@@ -20,8 +20,7 @@ import {
 import { useRouter, usePathname } from "next/navigation";
 import { PANELS, usePanel } from "@/contexts/PanelContext";
 import { usePreferences } from "@/contexts/PreferencesContext";
-import { getUsuarioLogado } from "@/services/api";
-import { useEffect, useState } from "react";
+import { useUsuarioLogado } from "@/hooks/useUsuarioLogado";
 import Logo from "@/components/ui/Logo";
 
 const NAV_ITEMS = [
@@ -112,17 +111,7 @@ export default function AppSidebar() {
   const router = useRouter();
   const pathname = usePathname();
 
-  // O usuário é carregado somente no cliente para evitar
-  // erro de hydration causado pelo localStorage.
-  const [usuario, setUsuario] = useState(null);
-
-  useEffect(() => {
-    const usuarioLogado = getUsuarioLogado();
-
-    if (usuarioLogado) {
-      setUsuario(usuarioLogado);
-    }
-  }, []);
+  const usuario = useUsuarioLogado();
 
   function handleNav(item) {
     if (item.href) {

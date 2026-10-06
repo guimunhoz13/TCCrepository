@@ -5488,3 +5488,129 @@ class AssistenteIAAPITestCase(APITestCase):
             self.assertEqual(
                 self._perguntar().status_code, status.HTTP_429_TOO_MANY_REQUESTS
             )
+
+
+class _EscritorioComDados:
+    """Monta um escritório com um advogado e um cliente para os testes de
+    dashboard e busca."""
+
+    def _montar(self, nome="Escritorio A", cnpj="12345678000199", email="a@a.com", sufixo="a"):
+        escritorio = _criar_escritorio(nome=nome, cnpj=cnpj, email=email)
+        usuario = _criar_usuario(escritorio, email=f"admin.{sufixo}@teste.com")
+        advogado = Advogado.objects.create(
+            escritorio=escritorio, usuario=usuario, oab=f"1{sufixo}/SP", especialidade="Civil"
+        )
+        cliente = Cliente.objects.create(escritorio=escritorio, nome=f"Cliente {sufixo}")
+        return escritorio, usuario, advogado, cliente
+
+    def _processo(self, escritorio, cliente, advogado, numero, titulo="Ação de Cobrança"):
+        return Processo.objects.create(
+            escritorio=escritorio, cliente=cliente, advogado=advogado,
+            numero_processo=numero, titulo=titulo,
+        )
+
+
+class DashboardResumoAPITestCase(_EscritorioComDados, APITestCase):
+
+    def setUp(self):
+        self.escritorio, self.usuario, self.advogado, self.cliente = self._montar()
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Bearer {_gerar_token_de_acesso(self.usuario)}"
+        )
+
+    def test_traz_totais_e_os_cinco_processos_mais_recentes(self):
+        for i in range(7):
+            self._processo(self.escritorio, self.cliente, self.advogado, f"P-{i}")
+
+        resposta = self.client.get("/api/dashboard/")
+
+        self.assertEqual(resposta.status_code, status.HTTP_200_OK)
+        self.assertEqual(resposta.data["totais"]["processos"], 7)
+        numeros = [p["numero_processo"] for p in resposta.data["processos_recentes"]]
+        self.assertEqual(numeros, ["P-6", "P-5", "P-4", "P-3", "P-2"])
+        self.assertEqual(resposta.data["novos_na_semana"]["processos"], 7)
+        self.assertEqual(resposta.data["novos_na_semana"]["clientes"], 1)
+
+    def test_minhas_tarefas_so_inclui_as_abertas_de_quem_abriu(self):
+        colega = _criar_usuario(self.escritorio, email="colega@teste.com", tipo_usuario="advogado")
+        Tarefa.objects.create(escritorio=self.escritorio, titulo="Minha", responsavel=self.usuario)
+        Tarefa.objects.create(
+            escritorio=self.escritorio, titulo="Já feita", responsavel=self.usuario, status="concluida"
+        )
+        Tarefa.objects.create(escritorio=self.escritorio, titulo="Do colega", responsavel=colega)
+
+        resposta = self.client.get("/api/dashboard/")
+
+        self.assertEqual([t["titulo"] for t in resposta.data["minhas_tarefas"]], ["Minha"])
+
+    def test_nao_mistura_dados_de_outro_escritorio(self):
+        outro, _, adv_outro, cli_outro = self._montar(
+            nome="Outro", cnpj="99999999000199", email="o@o.com", sufixo="b"
+        )
+        self._processo(outro, cli_outro, adv_outro, "ALHEIO-1")
+        Agenda.objects.create(escritorio=outro, titulo="Audiência alheia", data_evento=timezone.now())
+
+        resposta = self.client.get("/api/dashboard/")
+
+        self.assertEqual(resposta.data["processos_recentes"], [])
+        self.assertEqual(resposta.data["agenda"], [])
+        self.assertEqual(resposta.data["totais"]["clientes"], 1)
+
+    def test_exige_autenticacao(self):
+        self.client.credentials()
+        self.assertEqual(self.client.get("/api/dashboard/").status_code, status.HTTP_401_UNAUTHORIZED)
+
+
+class BuscaGlobalAPITestCase(_EscritorioComDados, APITestCase):
+
+    def setUp(self):
+        self.escritorio, self.usuario, self.advogado, self.cliente = self._montar()
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Bearer {_gerar_token_de_acesso(self.usuario)}"
+        )
+
+    def _buscar(self, termo):
+        return self.client.get("/api/busca/", {"q": termo})
+
+    def test_termo_curto_nao_busca_nada(self):
+        self.assertEqual(self._buscar("a").data, {})
+
+    def test_ignora_acentos_e_maiusculas(self):
+        Cliente.objects.create(escritorio=self.escritorio, nome="João Conceição")
+
+        resposta = self._buscar("CONCEICAO")
+
+        self.assertEqual([c["nome"] for c in resposta.data["clientes"]], ["João Conceição"])
+
+    def test_acha_processo_pelo_nome_do_cliente(self):
+        self._processo(self.escritorio, self.cliente, self.advogado, "0001-23")
+
+        resposta = self._buscar("cliente a")
+
+        self.assertEqual([p["numero_processo"] for p in resposta.data["processos"]], ["0001-23"])
+
+    def test_acha_em_varias_areas_de_uma_vez(self):
+        processo = self._processo(self.escritorio, self.cliente, self.advogado, "X-1", titulo="Despejo")
+        Tarefa.objects.create(
+            escritorio=self.escritorio, titulo="Revisar despejo", processo=processo, responsavel=self.usuario
+        )
+        ModeloDocumento.objects.create(escritorio=self.escritorio, nome="Notificação", conteudo="Ação de despejo")
+
+        resposta = self._buscar("despejo")
+
+        self.assertEqual(len(resposta.data["processos"]), 1)
+        self.assertEqual(len(resposta.data["tarefas"]), 1)
+        self.assertEqual(len(resposta.data["modelos"]), 1)
+        self.assertEqual(resposta.data["clientes"], [])
+
+    def test_limita_a_quatro_resultados_por_area(self):
+        for i in range(6):
+            Cliente.objects.create(escritorio=self.escritorio, nome=f"Silva {i}")
+
+        self.assertEqual(len(self._buscar("silva").data["clientes"]), 4)
+
+    def test_nao_enxerga_outro_escritorio(self):
+        outro, _, _, _ = self._montar(nome="Outro", cnpj="99999999000199", email="o@o.com", sufixo="b")
+        Cliente.objects.create(escritorio=outro, nome="Segredo Alheio")
+
+        self.assertEqual(self._buscar("segredo").data["clientes"], [])

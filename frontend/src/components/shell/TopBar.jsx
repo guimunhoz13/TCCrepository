@@ -7,16 +7,16 @@ import { usePreferences } from "@/contexts/PreferencesContext";
 import Avatar from "@/components/ui/Avatar";
 import GlobalSearch from "@/components/shell/GlobalSearch";
 import NotificationBell from "@/components/shell/NotificationBell";
-import { getUsuarioLogado, logout } from "@/services/api";
+import { logout } from "@/services/api";
+import { useUsuarioLogado } from "@/hooks/useUsuarioLogado";
 import { getSaudacaoCompleta } from "@/utils/greeting";
-import { useEffect, useState } from "react";
 import { useAjuda } from "@/contexts/AjudaContext";
 
 export default function TopBar({
   title,
   subtitle,
   showGreeting = false,
-  searchData,
+  comBusca = false,
   onSelectSearchResult,
   notificacoes,
   onSelectNotificacao,
@@ -26,17 +26,7 @@ export default function TopBar({
   const { t } = usePreferences();
   const router = useRouter();
 
-  // O usuário não deve ser carregado durante a renderização inicial,
-  // pois getUsuarioLogado() utiliza dados do navegador/localStorage.
-  const [usuario, setUsuario] = useState(null);
-
-  useEffect(() => {
-    const usuarioLogado = getUsuarioLogado();
-
-    if (usuarioLogado) {
-      setUsuario(usuarioLogado);
-    }
-  }, []);
+  const usuario = useUsuarioLogado();
 
   const displayTitle =
     showGreeting && usuario?.nome
@@ -65,9 +55,7 @@ export default function TopBar({
       </div>
 
       <div className="topbar-actions">
-        {searchData && (
-          <GlobalSearch colecoes={searchData} onSelect={onSelectSearchResult} />
-        )}
+        {comBusca && <GlobalSearch onSelect={onSelectSearchResult} />}
 
         {notificacoes && (
           <NotificationBell eventos={notificacoes} onSelect={onSelectNotificacao} />

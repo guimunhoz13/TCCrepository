@@ -42,16 +42,9 @@ import { PanelProvider, usePanel, PANELS } from "@/contexts/PanelContext";
 import { DashboardDataProvider, useDashboardData } from "@/contexts/DashboardDataContext";
 import { PreferencesProvider } from "@/contexts/PreferencesContext";
 import useRegistroDeAtividade from "@/hooks/useRegistroDeAtividade";
+import { useAgora } from "@/hooks/useAgora";
 import { badgeStatus, rotuloStatus } from "@/lib/statusProcesso";
 import { abrirDocumento } from "@/services/api";
-
-function contarUltimosDias(lista, campoData, dias) {
-  const limite = Date.now() - dias * 24 * 60 * 60 * 1000;
-  return lista.filter((item) => {
-    const valor = item?.[campoData];
-    return valor && new Date(valor).getTime() >= limite;
-  }).length;
-}
 
 function formatarPrazo(dataISO) {
   const data = new Date(dataISO);
@@ -105,18 +98,15 @@ function DashboardContent() {
     stats,
     processos,
     agenda,
-    clientes,
     documentos,
     tarefas,
-    tarefasBusca,
-    contratos,
-    apontamentos,
-    modelos,
+    novosNaSemana,
     carregando,
     erro,
-    atualizadoEm,
+    versaoDados,
     refresh,
   } = useDashboardData();
+  const agora = useAgora();
   const { openPanel } = usePanel();
   const [pulsar, setPulsar] = useState(false);
   const primeiraRenderizacao = useRef(true);
@@ -134,16 +124,21 @@ function DashboardContent() {
     }
   }, [erro, router]);
 
+  // Pisca o indicador "dados em tempo real" quando chega uma resposta nova
+  // (não na primeira carga).
   useEffect(() => {
-    if (!atualizadoEm) return;
+    if (!versaoDados) return undefined;
     if (primeiraRenderizacao.current) {
       primeiraRenderizacao.current = false;
-      return;
+      return undefined;
     }
-    setPulsar(true);
-    const timer = setTimeout(() => setPulsar(false), 1200);
-    return () => clearTimeout(timer);
-  }, [atualizadoEm]);
+    const inicio = setTimeout(() => setPulsar(true), 0);
+    const fim = setTimeout(() => setPulsar(false), 1200);
+    return () => {
+      clearTimeout(inicio);
+      clearTimeout(fim);
+    };
+  }, [versaoDados]);
 
   const totais = stats?.totais || {};
 
@@ -152,15 +147,13 @@ function DashboardContent() {
   const minhasTarefas = useMemo(() => tarefas.slice(0, 5), [tarefas]);
 
   const proximosCompromissos = useMemo(() => {
-    const agora = Date.now();
     return agenda
       .filter((e) => new Date(e.data_evento).getTime() >= agora)
       .sort((a, b) => new Date(a.data_evento) - new Date(b.data_evento))
       .slice(0, 5);
-  }, [agenda]);
+  }, [agenda, agora]);
 
   const prazosVencendo = useMemo(() => {
-    const agora = Date.now();
     const limite = agora + 3 * 24 * 60 * 60 * 1000;
     return agenda
       .filter((e) => {
@@ -169,15 +162,10 @@ function DashboardContent() {
       })
       .sort((a, b) => new Date(a.data_evento) - new Date(b.data_evento))
       .slice(0, 5);
-  }, [agenda]);
+  }, [agenda, agora]);
 
-  const ultimosDocumentos = useMemo(
-    () =>
-      [...documentos]
-        .sort((a, b) => new Date(b.enviado_em) - new Date(a.enviado_em))
-        .slice(0, 5),
-    [documentos]
-  );
+  // Já vêm do servidor como os cinco mais recentes.
+  const ultimosDocumentos = documentos;
 
   // Cada grupo de resultado já sabe a que painel pertence.
   function abrirResultadoBusca(painel) {
@@ -196,16 +184,7 @@ function DashboardContent() {
               ? `${stats.escritorio.nome} — visão geral`
               : "Visão geral do escritório"
           }
-          searchData={{
-            clientes,
-            processos,
-            documentos,
-            agenda,
-            tarefas: tarefasBusca,
-            contratos,
-            apontamentos,
-            modelos,
-          }}
+          comBusca
           onSelectSearchResult={abrirResultadoBusca}
           notificacoes={prazosVencendo}
           onSelectNotificacao={() => openPanel(PANELS.AGENDA, "lista")}
@@ -267,7 +246,7 @@ function DashboardContent() {
             icon={Users}
             label="Clientes"
             valor={totais.clientes}
-            novos={contarUltimosDias(clientes, "criado_em", 7)}
+            novos={novosNaSemana.clientes}
             carregando={carregando}
             pulsar={pulsar}
             onVerTodos={() => openPanel(PANELS.CLIENTES, "lista")}
@@ -276,7 +255,7 @@ function DashboardContent() {
             icon={Briefcase}
             label="Processos"
             valor={totais.processos}
-            novos={contarUltimosDias(processos, "criado_em", 7)}
+            novos={novosNaSemana.processos}
             carregando={carregando}
             pulsar={pulsar}
             onVerTodos={() => openPanel(PANELS.PROCESSOS, "lista")}
@@ -285,7 +264,7 @@ function DashboardContent() {
             icon={CalendarDays}
             label="Audiências"
             valor={totais.agenda}
-            novos={contarUltimosDias(agenda, "criado_em", 7)}
+            novos={novosNaSemana.agenda}
             carregando={carregando}
             pulsar={pulsar}
             onVerTodos={() => openPanel(PANELS.AGENDA, "lista")}
@@ -294,7 +273,7 @@ function DashboardContent() {
             icon={FileText}
             label="Documentos"
             valor={totais.documentos}
-            novos={contarUltimosDias(documentos, "enviado_em", 7)}
+            novos={novosNaSemana.documentos}
             carregando={carregando}
             pulsar={pulsar}
             onVerTodos={() => openPanel(PANELS.DOCUMENTOS, "lista")}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRecurso } from "@/hooks/useRecurso";
 import {
   X, User, Building2, Bell, Palette, Database, CreditCard,
   Eye, EyeOff, Trash2, Download, FileBarChart, Mail, MessageCircle, History,
@@ -25,6 +26,8 @@ import {
   enviarRelatorioProcessoPorEmail,
   getAuditoria,
   normalizarLista,
+  listarTudo,
+  salvarUsuarioLogado,
   logout,
 } from "@/services/api";
 import { gerarHtmlRelatorioCliente, gerarHtmlRelatorioProcesso, abrirRelatorio } from "@/utils/relatorio";
@@ -68,29 +71,31 @@ export default function ConfigPanel() {
   const { theme, setTheme } = useTheme();
   const { t, atualizarPreferencias } = usePreferences();
   const [activeTab, setActiveTab] = useState("conta");
-  const [dados, setDados] = useState(null);
-  const [carregando, setCarregando] = useState(false);
   const [erro, setErro] = useState("");
   const [sucesso, setSucesso] = useState("");
 
+  const recurso = useRecurso(getConfiguracoes, [], { ativo: activePanel === PANELS.CONFIG });
+  const carregando = recurso.carregando;
+  // As abas editam partes dos dados (perfil, escritório, preferências) e
+  // atualizam a tela sem recarregar tudo: a edição local vale enquanto for
+  // sobre a mesma resposta da API que a originou.
+  const [local, setLocal] = useState({ base: undefined, valor: null });
+  const dados =
+    local.base !== undefined && local.base === recurso.dados ? local.valor : recurso.dados ?? null;
+  function setDados(atualizar) {
+    setLocal({
+      base: recurso.dados,
+      valor: typeof atualizar === "function" ? atualizar(dados) : atualizar,
+    });
+  }
+
+  // O tema salvo na conta vale sobre o do navegador: aplica quando a
+  // configuração chega da API.
+  const respostaConfig = recurso.dados;
   useEffect(() => {
-    if (activePanel !== PANELS.CONFIG) return;
-    let ativo = true;
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setCarregando(true);
-    setErro("");
-    getConfiguracoes()
-      .then((res) => {
-        if (!ativo) return;
-        setDados(res);
-        if (res?.preferencias?.tema && res.preferencias.tema !== theme) {
-          setTheme(res.preferencias.tema);
-        }
-      })
-      .catch((e) => ativo && setErro(e.message))
-      .finally(() => ativo && setCarregando(false));
-    return () => { ativo = false; };
-  }, [activePanel]); // eslint-disable-line react-hooks/exhaustive-deps
+    const temaSalvo = respostaConfig?.preferencias?.tema;
+    if (temaSalvo && temaSalvo !== theme) setTheme(temaSalvo);
+  }, [respostaConfig]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function feedback(msg, isError = false) {
     if (isError) { setErro(msg); setSucesso(""); }
@@ -119,7 +124,7 @@ export default function ConfigPanel() {
         </div>
 
         <div className="overlay-body">
-          {erro && <div className="alert alert-error">{erro}</div>}
+          {(erro || recurso.erro) && <div className="alert alert-error">{erro || recurso.erro}</div>}
           {sucesso && <div className="alert alert-success">{sucesso}</div>}
           {carregando && <div className="empty-state">Carregando configurações...</div>}
 
@@ -142,7 +147,7 @@ export default function ConfigPanel() {
             <RelatoriosTab feedback={feedback} t={t} />
           )}
           {!carregando && dados && activeTab === "auditoria" && dados.usuario.tipo_usuario === "admin" && (
-            <AuditoriaTab feedback={feedback} />
+            <AuditoriaTab />
           )}
           {!carregando && activeTab === "faturamento" && <FaturamentoTab />}
         </div>
@@ -171,7 +176,7 @@ function ContaTab({ usuario, setDados, feedback, t }) {
       setDados((d) => ({ ...d, usuario: res.usuario }));
       setFoto(null);
       const atual = JSON.parse(localStorage.getItem("usuarioLogado") || "{}");
-      localStorage.setItem("usuarioLogado", JSON.stringify({ ...atual, nome: res.usuario.nome, email: res.usuario.email, foto: res.usuario.foto }));
+      salvarUsuarioLogado({ ...atual, nome: res.usuario.nome, email: res.usuario.email, foto: res.usuario.foto });
       feedback(res.detail);
     } catch (e) { feedback(e.message, true); }
     finally { setSalvando(false); }
@@ -272,7 +277,7 @@ function EscritorioTab({ dados, setDados, feedback }) {
       const res = await updateEscritorio(form);
       setDados((d) => ({ ...d, escritorio: res.escritorio, configuracao_escritorio: res.configuracao_escritorio }));
       const atual = JSON.parse(localStorage.getItem("usuarioLogado") || "{}");
-      localStorage.setItem("usuarioLogado", JSON.stringify({ ...atual, escritorio_nome: res.escritorio.nome }));
+      salvarUsuarioLogado({ ...atual, escritorio_nome: res.escritorio.nome });
       feedback(res.detail);
     } catch (e) { feedback(e.message, true); }
   }
@@ -385,35 +390,29 @@ function DadosTab({ dados, setDados, feedback }) {
 
 function RelatoriosTab({ feedback, t }) {
   const [tipo, setTipo] = useState("cliente");
-  const [clientes, setClientes] = useState([]);
-  const [processos, setProcessos] = useState([]);
   const [selecionado, setSelecionado] = useState("");
-  const [carregandoListas, setCarregandoListas] = useState(true);
   const [gerando, setGerando] = useState(false);
   const [emailDestino, setEmailDestino] = useState("");
   const [enviandoEmail, setEnviandoEmail] = useState(false);
   const [telefoneDestino, setTelefoneDestino] = useState("");
 
-  useEffect(() => {
-    let ativo = true;
-    Promise.all([getClientes(), getProcessos()])
-      .then(([dadosClientes, dadosProcessos]) => {
-        if (!ativo) return;
-        setClientes(normalizarLista(dadosClientes));
-        setProcessos(normalizarLista(dadosProcessos));
-      })
-      .catch((e) => ativo && feedback(e.message, true))
-      .finally(() => ativo && setCarregandoListas(false));
-    return () => { ativo = false; };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => { setSelecionado(""); }, [tipo]);
+  const listas = useRecurso(() => Promise.all([listarTudo(getClientes), listarTudo(getProcessos)]));
+  const [clientes, processos] = listas.dados ?? [[], []];
+  const carregandoListas = listas.carregando;
 
   const opcoes = tipo === "cliente" ? clientes : processos;
 
-  useEffect(() => {
-    if (!selecionado) { setEmailDestino(""); setTelefoneDestino(""); return; }
-    const item = opcoes.find((o) => String(o.id) === String(selecionado));
+  function escolherTipo(novoTipo) {
+    setTipo(novoTipo);
+    escolher("");
+  }
+
+  // Ao escolher o cliente/processo, já sugere o e-mail e o telefone dele
+  // como destino do relatório.
+  function escolher(id) {
+    setSelecionado(id);
+    if (!id) { setEmailDestino(""); setTelefoneDestino(""); return; }
+    const item = opcoes.find((o) => String(o.id) === String(id));
     if (tipo === "cliente") {
       setEmailDestino(item?.email || "");
       setTelefoneDestino(item?.telefone || "");
@@ -422,7 +421,7 @@ function RelatoriosTab({ feedback, t }) {
       const clienteDoProcesso = clientes.find((c) => c.id === item?.cliente);
       setTelefoneDestino(clienteDoProcesso?.telefone || "");
     }
-  }, [selecionado, tipo]); // eslint-disable-line react-hooks/exhaustive-deps
+  }
 
   async function gerar() {
     if (!selecionado) {
@@ -491,7 +490,7 @@ function RelatoriosTab({ feedback, t }) {
     <Section title={t("relatorios_gerar_titulo")} description={t("relatorios_gerar_desc")}>
       <div className="form-grid">
         <Field label={t("relatorios_tipo")}>
-          <select value={tipo} onChange={(e) => setTipo(e.target.value)}>
+          <select value={tipo} onChange={(e) => escolherTipo(e.target.value)}>
             <option value="cliente">{t("relatorios_cliente")}</option>
             <option value="processo">{t("relatorios_processo")}</option>
           </select>
@@ -499,7 +498,7 @@ function RelatoriosTab({ feedback, t }) {
         <Field label={tipo === "cliente" ? t("relatorios_cliente") : t("relatorios_processo")}>
           <select
             value={selecionado}
-            onChange={(e) => setSelecionado(e.target.value)}
+            onChange={(e) => escolher(e.target.value)}
             disabled={carregandoListas || opcoes.length === 0}
           >
             <option value="">{carregandoListas ? t("carregando") : t("relatorios_selecione")}</option>
@@ -511,6 +510,7 @@ function RelatoriosTab({ feedback, t }) {
           </select>
         </Field>
       </div>
+      {listas.erro && <div className="alert alert-error">{listas.erro}</div>}
       {!carregandoListas && opcoes.length === 0 && (
         <div className="empty-state">{t("nenhum_registro")}</div>
       )}
@@ -579,21 +579,14 @@ const ACOES_BADGE = {
   exclusao: "badge-danger",
 };
 
-function AuditoriaTab({ feedback }) {
-  const [registros, setRegistros] = useState([]);
-  const [carregando, setCarregando] = useState(true);
-
-  useEffect(() => {
-    let ativo = true;
-    getAuditoria()
-      .then((res) => ativo && setRegistros(normalizarLista(res)))
-      .catch((e) => ativo && feedback(e.message, true))
-      .finally(() => ativo && setCarregando(false));
-    return () => { ativo = false; };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+function AuditoriaTab() {
+  const recurso = useRecurso(getAuditoria);
+  const registros = normalizarLista(recurso.dados);
+  const carregando = recurso.carregando;
 
   return <div className="settings-stack">
     <Section title="Registro de auditoria" description="Quem entrou no sistema e quem criou, editou ou excluiu registros — os 200 eventos mais recentes deste escritório.">
+      {recurso.erro && <div className="alert alert-error">{recurso.erro}</div>}
       {carregando && <div className="empty-state">Carregando registros...</div>}
       {!carregando && registros.length === 0 && <div className="empty-state">Nenhum evento de auditoria registrado ainda.</div>}
       {!carregando && registros.length > 0 && (

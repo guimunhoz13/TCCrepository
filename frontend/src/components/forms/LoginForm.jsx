@@ -1,30 +1,35 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { login } from "@/services/api";
+import { login, salvarUsuarioLogado } from "@/services/api";
+
+const assinarNada = () => () => {};
 
 export default function LoginForm() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
-  const [mensagem, setMensagem] = useState("");
   const [erro, setErro] = useState("");
   const [carregando, setCarregando] = useState(false);
 
-  useEffect(() => {
-    const msg = sessionStorage.getItem("sucessoCadastro");
-    if (msg) {
-      setMensagem(msg);
-      sessionStorage.removeItem("sucessoCadastro");
-    }
-  }, []);
+  // Recado deixado pelo cadastro ("escritório criado, confirme o e-mail").
+  // Lido do sessionStorage só no navegador; some depois da primeira
+  // tentativa de login.
+  const recadoDoCadastro = useSyncExternalStore(
+    assinarNada,
+    () => sessionStorage.getItem("sucessoCadastro"),
+    () => null
+  );
+  const [recadoDispensado, setRecadoDispensado] = useState(false);
+  const mensagem = recadoDispensado ? "" : recadoDoCadastro || "";
 
   async function handleLogin(event) {
     event.preventDefault();
     setErro("");
-    setMensagem("");
+    setRecadoDispensado(true);
+    sessionStorage.removeItem("sucessoCadastro");
 
     try {
       setCarregando(true);
@@ -32,7 +37,7 @@ export default function LoginForm() {
 
       localStorage.setItem("access", data.access);
       localStorage.setItem("refresh", data.refresh);
-      localStorage.setItem("usuarioLogado", JSON.stringify(data.usuario));
+      salvarUsuarioLogado(data.usuario);
 
       router.push("/dashboard");
     } catch (error) {

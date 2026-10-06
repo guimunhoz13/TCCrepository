@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRecurso } from "@/hooks/useRecurso";
+import { useItemSalvo } from "@/hooks/useUsuarioLogado";
 import { useRouter } from "next/navigation";
 import { ShieldCheck, LogOut, Trash2, Moon, Sun, Power, PowerOff } from "lucide-react";
 import {
-  getMasterLogado,
   masterLogout,
   getMasterStats,
   getMasterEscritorios,
@@ -12,62 +13,55 @@ import {
   deleteMasterEscritorio,
   getMasterAuditoria,
   normalizarLista,
+  listarTudo,
 } from "@/services/api";
 import { useTheme } from "@/contexts/ThemeContext";
 
 export default function MasterPainelPage() {
   const router = useRouter();
   const { theme, toggleTheme } = useTheme();
-  const [master, setMaster] = useState(null);
-  const [stats, setStats] = useState(null);
-  const [escritorios, setEscritorios] = useState([]);
-  const [auditoria, setAuditoria] = useState([]);
-  const [carregando, setCarregando] = useState(true);
+  const master = useItemSalvo("masterLogado");
   const [erro, setErro] = useState("");
 
-  async function carregarDados() {
-    try {
-      setCarregando(true);
-      const [dadosStats, dadosEscritorios, dadosAuditoria] = await Promise.all([
-        getMasterStats(),
-        getMasterEscritorios(),
-        getMasterAuditoria(),
-      ]);
-      setStats(dadosStats);
-      setEscritorios(normalizarLista(dadosEscritorios));
-      setAuditoria(normalizarLista(dadosAuditoria));
-    } catch (error) {
-      setErro(error.message);
-    } finally {
-      setCarregando(false);
-    }
-  }
+  const recurso = useRecurso(() =>
+    Promise.all([
+      getMasterStats(),
+      listarTudo(getMasterEscritorios),
+      getMasterAuditoria(),
+    ])
+  );
+  const [stats, escritorios, respostaAuditoria] = recurso.dados ?? [null, [], null];
+  const auditoria = normalizarLista(respostaAuditoria);
+  const carregando = recurso.carregando && !recurso.dados;
+  const carregarDados = recurso.recarregar;
 
   useEffect(() => {
-    const token = localStorage.getItem("master_access");
-    if (!token) {
+    if (!localStorage.getItem("master_access")) {
       router.replace("/master");
-      return;
     }
-    setMaster(getMasterLogado());
-    carregarDados();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [router]);
 
-  async function handleAlternarAtivo(escritorio) {
-    await updateMasterEscritorio(escritorio.id, { ativo: !escritorio.ativo });
-    carregarDados();
-  }
-
-  async function handleAtualizarPlano(escritorio, campo, valor) {
-    await updateMasterEscritorio(escritorio.id, { [campo]: valor });
-    carregarDados();
-  }
-
-  async function handleExcluir(escritorio) {
-    if (window.confirm(`Excluir permanentemente o escritório "${escritorio.nome}"? Essa ação não pode ser desfeita.`)) {
-      await deleteMasterEscritorio(escritorio.id);
+  async function executar(acao) {
+    setErro("");
+    try {
+      await acao();
       carregarDados();
+    } catch (error) {
+      setErro(error.message);
+    }
+  }
+
+  function handleAlternarAtivo(escritorio) {
+    executar(() => updateMasterEscritorio(escritorio.id, { ativo: !escritorio.ativo }));
+  }
+
+  function handleAtualizarPlano(escritorio, campo, valor) {
+    executar(() => updateMasterEscritorio(escritorio.id, { [campo]: valor }));
+  }
+
+  function handleExcluir(escritorio) {
+    if (window.confirm(`Excluir permanentemente o escritório "${escritorio.nome}"? Essa ação não pode ser desfeita.`)) {
+      executar(() => deleteMasterEscritorio(escritorio.id));
     }
   }
 
@@ -105,7 +99,7 @@ export default function MasterPainelPage() {
         </div>
       </header>
 
-      {erro && <div className="alert alert-error">{erro}</div>}
+      {(erro || recurso.erro) && <div className="alert alert-error">{erro || recurso.erro}</div>}
 
       {stats && (
         <div
