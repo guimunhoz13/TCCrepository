@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRecurso } from "@/hooks/useRecurso";
+import { useConfirmacao } from "@/contexts/ConfirmacaoContext";
 import { useItemSalvo } from "@/hooks/useUsuarioLogado";
 import { useRouter } from "next/navigation";
 import { ShieldCheck, LogOut, Trash2, Moon, Sun, Power, PowerOff } from "lucide-react";
@@ -16,11 +17,13 @@ import {
   listarTudo,
 } from "@/services/api";
 import { useTheme } from "@/contexts/ThemeContext";
+import LinhasCarregando from "@/components/ui/LinhasCarregando";
 
 export default function MasterPainelPage() {
   const router = useRouter();
   const { theme, toggleTheme } = useTheme();
   const master = useItemSalvo("masterLogado");
+  const confirmar = useConfirmacao();
   const [erro, setErro] = useState("");
 
   const recurso = useRecurso(() =>
@@ -59,10 +62,12 @@ export default function MasterPainelPage() {
     executar(() => updateMasterEscritorio(escritorio.id, { [campo]: valor }));
   }
 
-  function handleExcluir(escritorio) {
-    if (window.confirm(`Excluir permanentemente o escritório "${escritorio.nome}"? Essa ação não pode ser desfeita.`)) {
-      executar(() => deleteMasterEscritorio(escritorio.id));
-    }
+  async function handleExcluir(escritorio) {
+    const ok = await confirmar({
+      titulo: "Excluir escritório",
+      mensagem: `O escritório "${escritorio.nome}" e todos os dados dele serão apagados permanentemente.`,
+    });
+    if (ok) executar(() => deleteMasterEscritorio(escritorio.id));
   }
 
   function handleSair() {
@@ -144,11 +149,7 @@ export default function MasterPainelPage() {
             </tr>
           </thead>
           <tbody>
-            {carregando && (
-              <tr>
-                <td colSpan="9">Carregando...</td>
-              </tr>
-            )}
+            {carregando && <LinhasCarregando colunas={9} />}
             {!carregando &&
               escritorios.map((escritorio) => (
                 <tr key={escritorio.id}>
@@ -222,11 +223,7 @@ export default function MasterPainelPage() {
             </tr>
           </thead>
           <tbody>
-            {carregando && (
-              <tr>
-                <td colSpan="5">Carregando...</td>
-              </tr>
-            )}
+            {carregando && <LinhasCarregando colunas={5} />}
             {!carregando && auditoria.length === 0 && (
               <tr>
                 <td colSpan="5">Nenhum evento de auditoria registrado ainda.</td>

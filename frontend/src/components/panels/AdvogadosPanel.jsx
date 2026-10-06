@@ -19,6 +19,7 @@ import {
   listarTudo,
   abrirDocumentoIdentidadeUsuario,
 } from "@/services/api";
+import LinhasCarregando from "@/components/ui/LinhasCarregando";
 
 const FORM_ADVOGADO_INICIAL = {
   nome: "",
@@ -376,11 +377,7 @@ export default function AdvogadosPanel() {
               </tr>
             </thead>
             <tbody>
-              {carregando && (
-                <tr>
-                  <td colSpan="6">Carregando...</td>
-                </tr>
-              )}
+              {carregando && <LinhasCarregando colunas={6} />}
               {!carregando &&
                 advogados.map((adv) => (
                   <tr key={adv.id}>

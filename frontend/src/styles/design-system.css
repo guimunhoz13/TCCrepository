@@ -16,7 +16,8 @@
   --bg-input: #efe8d8;
   --text-primary: #1c2333;
   --text-secondary: #4b5468;
-  --text-muted: #80869a;
+  /* Mínimo de 4,5:1 (WCAG AA) sobre todas as superfícies do tema claro. */
+  --text-muted: #626879;
   --border: rgba(28, 35, 51, 0.12);
   --border-strong: rgba(28, 35, 51, 0.22);
   --accent: #a2712e;
@@ -29,6 +30,9 @@
   --success-soft: rgba(47, 107, 79, 0.11);
   --warning: #b5791f;
   --warning-soft: rgba(181, 121, 31, 0.12);
+  /* Versões para texto (selos, avisos): 4,5:1 sobre o fundo suave. */
+  --warning-texto: #875810;
+  --danger-texto: #8c2f39;
   --danger: #8c2f39;
   --danger-soft: rgba(140, 47, 57, 0.1);
   --shadow-sm: 0 1px 2px rgba(28, 22, 12, 0.06), 0 1px 1px rgba(28, 22, 12, 0.04);
@@ -43,6 +47,10 @@
   --chart-tooltip-bg: #fffefb;
   --chart-tooltip-border: rgba(28, 35, 51, 0.16);
   --chart-bar: #6b7488;
+  /* Séries do gráfico recebido × despesas — par validado para daltonismo
+     (scripts/validate_palette.js, tema claro, superfície #ffffff). */
+  --serie-recebido: #a2712e;
+  --serie-despesas: #3d6ea8;
   --focus-ring: #a2712e;
   --sidebar-bg: #1c2333;
   --shadow-glow: 0 0 0 4px rgba(162, 113, 46, 0.14);
@@ -58,7 +66,8 @@
   --bg-input: #12151f;
   --text-primary: #f2eee2;
   --text-secondary: #a7acc0;
-  --text-muted: #676d87;
+  /* Mínimo de 4,5:1 (WCAG AA) sobre todas as superfícies do tema escuro. */
+  --text-muted: #8f95ad;
   --border: rgba(242, 238, 226, 0.09);
   --border-strong: rgba(242, 238, 226, 0.17);
   --accent: #c99a4b;
@@ -71,6 +80,8 @@
   --success-soft: rgba(85, 166, 126, 0.16);
   --warning: #d9a441;
   --warning-soft: rgba(217, 164, 65, 0.14);
+  --warning-texto: #d9a441;
+  --danger-texto: #e58a93;
   --danger: #d9707a;
   --danger-soft: rgba(217, 112, 122, 0.15);
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
@@ -85,6 +96,8 @@
   --chart-tooltip-bg: #1c2131;
   --chart-tooltip-border: rgba(242, 238, 226, 0.14);
   --chart-bar: #5d6782;
+  --serie-recebido: #b5873c;
+  --serie-despesas: #5e8ccc;
   --focus-ring: #c99a4b;
   --sidebar-bg: #1c2333; /* fixa — a sidebar não muda com o tema */
   --shadow-glow: 0 0 0 4px rgba(201, 154, 75, 0.18);
@@ -357,7 +370,7 @@ textarea {
 
 .btn-danger {
   background: var(--danger-soft);
-  color: var(--danger);
+  color: var(--danger-texto);
 }
 
 .btn-danger:hover {
@@ -696,20 +709,20 @@ tbody tr:hover {
 
 .badge-warning {
   background: var(--warning-soft);
-  color: var(--warning);
+  color: var(--warning-texto);
 }
 
 /* Estado neutro/inativo: cinza. O dourado é reservado às ações primárias,
    então um registro inativo não pode ser o elemento mais chamativo da tabela. */
 .badge-muted {
   background: var(--ink-soft);
-  color: var(--text-muted);
+  color: var(--text-secondary);
   box-shadow: inset 0 0 0 1px var(--border);
 }
 
 .badge-danger {
   background: var(--danger-soft);
-  color: var(--danger);
+  color: var(--danger-texto);
 }
 
 /* ==========================================================================
@@ -1806,8 +1819,7 @@ tbody tr:hover {
 }
 
 .settings-section.danger .settings-section-header p {
-  color: var(--danger);
-  opacity: 0.85;
+  color: var(--danger-texto);
 }
 
 .settings-section-body {
@@ -2284,7 +2296,6 @@ body {
    fundo. */
 .badge {
   box-shadow: inset 0 0 0 1px currentColor;
-  opacity: 0.95;
 }
 
 .badge-success { opacity: 1; }
@@ -2815,81 +2826,6 @@ tbody tr {
 }
 
 /* ==========================================================================
-   HERO DA DASHBOARD — saudação + citação, sem fotografia (só CSS)
-   ========================================================================== */
-
-.dashboard-hero {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 24px;
-  padding: 28px 32px;
-  margin-bottom: 22px;
-  border-radius: 18px;
-  background:
-    var(--texture-dots),
-    linear-gradient(120deg, var(--bg-elevated) 0%, var(--bg-secondary) 100%);
-  background-size: 22px 22px, 100% 100%;
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow-sm);
-  position: relative;
-  overflow: hidden;
-}
-
-.dashboard-hero::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: var(--gradient-primary-btn);
-}
-
-.dashboard-hero-text h1 {
-  font-family: "Fraunces", serif;
-  font-size: 1.7rem;
-  font-weight: 600;
-  letter-spacing: -0.02em;
-  margin-bottom: 6px;
-  max-width: 30ch;
-}
-
-.dashboard-hero-text p {
-  color: var(--text-secondary);
-  font-size: 0.95rem;
-  max-width: 42ch;
-}
-
-.dashboard-hero-quote {
-  flex-shrink: 0;
-  max-width: 30ch;
-  text-align: right;
-  font-family: "Fraunces", serif;
-  font-style: italic;
-  font-size: 0.98rem;
-  line-height: 1.5;
-  color: var(--text-muted);
-  border-right: 2px solid var(--accent-border);
-  padding-right: 18px;
-}
-
-@media (max-width: 900px) {
-  .dashboard-hero {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .dashboard-hero-quote {
-    text-align: left;
-    border-right: none;
-    border-left: 2px solid var(--accent-border);
-    padding-right: 0;
-    padding-left: 18px;
-  }
-}
-
-/* ==========================================================================
    AÇÕES RÁPIDAS — atalhos de criação no topo da dashboard
    ========================================================================== */
 
@@ -2936,7 +2872,7 @@ tbody tr {
 
 .badge-danger {
   background: var(--danger-soft);
-  color: var(--danger);
+  color: var(--danger-texto);
 }
 
 .list-widget {
@@ -3012,17 +2948,6 @@ button.doc-mini-card {
 .doc-mini-info span {
   font-size: 0.78rem;
   color: var(--text-muted);
-}
-
-@media (max-width: 1100px) {
-
-  .dashboard-hero {
-    padding: 22px 24px;
-  }
-
-  .dashboard-hero-text h1 {
-    font-size: 1.4rem;
-  }
 }
 
 /* ==========================================================================
@@ -3260,7 +3185,7 @@ button.doc-mini-card {
 
 [data-theme="dark"] .badge-info {
   background: rgba(143, 102, 194, 0.18);
-  color: #a684d1;
+  color: #b598dc;
   box-shadow: inset 0 0 0 1px rgba(143, 102, 194, 0.35);
 }
 
@@ -3828,5 +3753,299 @@ button.doc-mini-card {
   .table-wrap .row-action {
     width: 40px;
     height: 40px;
+  }
+}
+
+/* ==========================================================================
+   CONFIRMAÇÃO E AVISOS — substituem window.confirm e alert do navegador
+   ========================================================================== */
+
+.confirmacao-fundo {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  background: var(--overlay);
+}
+
+.confirmacao-janela {
+  position: fixed;
+  z-index: 301;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(420px, calc(100vw - 32px));
+  padding: 26px 24px 20px;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  box-shadow: var(--shadow-lg);
+  text-align: center;
+}
+
+.confirmacao-icone {
+  display: inline-grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  margin-bottom: 12px;
+  border-radius: 50%;
+  color: var(--warning);
+  background: var(--warning-soft);
+}
+
+.confirmacao-icone.perigo {
+  color: var(--danger);
+  background: var(--danger-soft);
+}
+
+.confirmacao-janela h2 {
+  font-family: "Fraunces", serif;
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.confirmacao-janela p {
+  color: var(--text-secondary);
+  font-size: 0.93rem;
+  line-height: 1.5;
+}
+
+.confirmacao-acoes {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+.confirmacao-acoes .btn {
+  min-width: 120px;
+}
+
+.avisos {
+  position: fixed;
+  z-index: 400;
+  right: 20px;
+  bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: min(380px, calc(100vw - 32px));
+  pointer-events: none;
+}
+
+.aviso {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 12px 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--success);
+  background: var(--bg-elevated);
+  box-shadow: var(--shadow-md);
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  pointer-events: auto;
+  animation: avisoEntrada 0.18s ease-out;
+}
+
+.aviso svg:first-child {
+  flex-shrink: 0;
+  color: var(--success);
+}
+
+.aviso-erro {
+  border-left-color: var(--danger);
+}
+
+.aviso-erro svg:first-child {
+  color: var(--danger);
+}
+
+.aviso span {
+  flex: 1;
+}
+
+.aviso button {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+@keyframes avisoEntrada {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aviso { animation: none; }
+}
+
+@media (max-width: 720px) {
+  .avisos {
+    left: 16px;
+    right: 16px;
+    width: auto;
+    bottom: calc(84px + env(safe-area-inset-bottom));
+  }
+}
+
+/* Gráfico recebido × despesas */
+.grafico-cabecalho {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.grafico-periodo {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.grafico-legenda {
+  display: flex;
+  gap: 16px;
+  margin: 4px 0 8px;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+}
+
+.grafico-legenda > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.grafico-resumo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  margin: 10px 0 6px;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.grafico-resumo strong {
+  color: var(--text-primary);
+}
+
+.grafico-dica {
+  min-width: 200px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--chart-tooltip-border);
+  background: var(--chart-tooltip-bg);
+  box-shadow: var(--shadow-md);
+  font-size: 0.84rem;
+}
+
+.grafico-dica strong {
+  display: block;
+  margin-bottom: 6px;
+}
+
+.grafico-dica-linha {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-secondary);
+  padding: 2px 0;
+}
+
+.grafico-dica-linha b {
+  margin-left: auto;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.grafico-dica-saldo {
+  margin-top: 4px;
+  padding-top: 6px;
+  border-top: 1px solid var(--border);
+}
+
+.grafico-tabela {
+  margin-top: 10px;
+}
+
+.grafico-tabela td:not(:first-child),
+.grafico-tabela th:not(:first-child) {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.dashboard-atencao {
+  align-items: start;
+}
+
+.dashboard-atencao .tarefas-widget {
+  grid-template-columns: 1fr;
+}
+
+/* Botão com cara de texto dentro de uma célula (número do processo que abre
+   a ficha): mantém a leitura da tabela e dá um alvo real ao teclado. */
+.link-celula {
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--text-primary);
+  font: inherit;
+  font-weight: 600;
+  text-align: inherit;
+  cursor: pointer;
+}
+
+.link-celula:hover {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.link-celula:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 3px;
+  border-radius: 3px;
+}
+
+.overlay-body:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: -2px;
+}
+
+@media (max-width: 720px) {
+  .dashboard-toolbar {
+    margin-bottom: 18px;
+  }
+
+  .quick-actions-bar {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    width: 100%;
+    gap: 8px;
+  }
+
+  .quick-actions-bar > * {
+    justify-content: center;
+    width: 100%;
+    margin: 0;
+    padding: 10px 8px;
+    font-size: 0.82rem;
+  }
+
+  .quick-actions-bar .ai-quick-btn {
+    grid-column: 1 / -1;
+    order: 1;
+  }
+
+  .sync-indicator {
+    display: none;
   }
 }

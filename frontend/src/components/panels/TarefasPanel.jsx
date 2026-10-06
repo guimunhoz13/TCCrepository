@@ -1,5 +1,8 @@
 "use client";
 
+import { useConfirmacao } from "@/contexts/ConfirmacaoContext";
+import { useAvisos } from "@/contexts/AvisosContext";
+
 import { useState } from "react";
 import { useListaPaginada, useRecurso } from "@/hooks/useRecurso";
 import { useUsuarioLogado } from "@/hooks/useUsuarioLogado";
@@ -17,6 +20,7 @@ import {
   getUsuarios,
   listarTudo,
 } from "@/services/api";
+import LinhasCarregando from "@/components/ui/LinhasCarregando";
 
 const STATUS = [
   { value: "aberta", label: "Aberta" },
@@ -63,6 +67,8 @@ const tarefaInicial = {
 export default function TarefasPanel() {
   const { activePanel, panelTab, setPanelTab } = usePanel();
   const { t } = usePreferences();
+  const confirmar = useConfirmacao();
+  const avisar = useAvisos();
 
   const [form, setForm] = useState(tarefaInicial);
   const [erro, setErro] = useState("");
@@ -167,11 +173,7 @@ export default function TarefasPanel() {
               </tr>
             </thead>
             <tbody>
-              {carregando && (
-                <tr>
-                  <td colSpan="7">Carregando...</td>
-                </tr>
-              )}
+              {carregando && <LinhasCarregando colunas={7} />}
               {!carregando && tarefas.length === 0 && (
                 <tr>
                   <td colSpan="7">
@@ -251,9 +253,17 @@ export default function TarefasPanel() {
                           title={t("acao_excluir")}
                           aria-label={t("acao_excluir")}
                           onClick={async () => {
-                            if (window.confirm("Excluir esta tarefa?")) {
+                            const ok = await confirmar({
+                              titulo: "Excluir tarefa",
+                              mensagem: `"${tarefa.titulo}" será excluída. Para guardar o histórico, prefira marcar como cancelada.`,
+                            });
+                            if (!ok) return;
+                            try {
                               await deleteTarefa(tarefa.id);
+                              avisar("Tarefa excluída.");
                               carregar();
+                            } catch (error) {
+                              avisar(error.message, "erro");
                             }
                           }}
                         >

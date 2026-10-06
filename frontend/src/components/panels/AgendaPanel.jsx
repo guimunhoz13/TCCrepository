@@ -1,5 +1,8 @@
 "use client";
 
+import { useConfirmacao } from "@/contexts/ConfirmacaoContext";
+import { useAvisos } from "@/contexts/AvisosContext";
+
 import { useState } from "react";
 import { useListaPaginada, useRecurso } from "@/hooks/useRecurso";
 import RodapeLista from "@/components/ui/RodapeLista";
@@ -17,6 +20,7 @@ import {
   calcularPrazo,
   listarTudo,
 } from "@/services/api";
+import LinhasCarregando from "@/components/ui/LinhasCarregando";
 
 const formularioInicial = {
   processo: "",
@@ -205,6 +209,8 @@ function EventoForm({
 export default function AgendaPanel() {
   const { activePanel, panelTab, setPanelTab } = usePanel();
   const { refresh: refreshDashboard } = useDashboardData();
+  const confirmar = useConfirmacao();
+  const avisar = useAvisos();
   const { t } = usePreferences();
   const [filtroTipo, setFiltroTipo] = useState("");
   const [formulario, setFormulario] = useState(formularioInicial);
@@ -389,11 +395,7 @@ export default function AgendaPanel() {
               </tr>
             </thead>
             <tbody>
-              {carregando && (
-                <tr>
-                  <td colSpan="7">Carregando...</td>
-                </tr>
-              )}
+              {carregando && <LinhasCarregando colunas={7} />}
               {!carregando &&
                 eventos.map((evento) => (
                   <tr key={evento.id}>
@@ -460,10 +462,18 @@ export default function AgendaPanel() {
                           title={t("acao_excluir")}
                           aria-label={t("acao_excluir")}
                           onClick={async () => {
-                            if (window.confirm("Excluir evento?")) {
+                            const ok = await confirmar({
+                              titulo: "Excluir evento",
+                              mensagem: `"${evento.titulo}" sairá da agenda e dos lembretes.`,
+                            });
+                            if (!ok) return;
+                            try {
                               await deleteAgenda(evento.id);
+                              avisar("Evento excluído.");
                               carregarDados();
                               refreshDashboard().catch(() => {});
+                            } catch (error) {
+                              avisar(error.message, "erro");
                             }
                           }}
                         >

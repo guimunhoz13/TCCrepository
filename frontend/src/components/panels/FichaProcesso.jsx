@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRecurso } from "@/hooks/useRecurso";
+import { useConfirmacao } from "@/contexts/ConfirmacaoContext";
 import {
   ArrowLeft,
   Pencil,
@@ -69,6 +70,7 @@ function Campo({ rotulo, children }) {
 }
 
 export default function FichaProcesso({ processoId, onVoltar, onEditar }) {
+  const confirmar = useConfirmacao();
   const [novaMovimentacao, setNovaMovimentacao] = useState("");
   const [lancando, setLancando] = useState(false);
   const [erroMovimentacao, setErroMovimentacao] = useState("");
@@ -101,7 +103,11 @@ export default function FichaProcesso({ processoId, onVoltar, onEditar }) {
   }
 
   async function handleExcluirMovimentacao(id) {
-    if (!window.confirm("Excluir esta movimentação?")) return;
+    const ok = await confirmar({
+      titulo: "Excluir movimentação",
+      mensagem: "Este lançamento manual sai do histórico do processo.",
+    });
+    if (!ok) return;
     setExcluindoMovId(id);
     try {
       await deleteMovimentacao(id);

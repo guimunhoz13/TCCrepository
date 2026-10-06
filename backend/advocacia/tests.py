@@ -5560,6 +5560,38 @@ class DashboardResumoAPITestCase(_EscritorioComDados, APITestCase):
         self.client.credentials()
         self.assertEqual(self.client.get("/api/dashboard/").status_code, status.HTTP_401_UNAUTHORIZED)
 
+    def test_financeiro_mensal_traz_seis_meses_com_recebido_e_despesas(self):
+        processo = self._processo(self.escritorio, self.cliente, self.advogado, "F-1")
+        contrato = Contrato.objects.create(
+            escritorio=self.escritorio, processo=processo, valor_total=Decimal("900.00")
+        )
+        hoje = timezone.localdate()
+        Parcela.objects.create(
+            contrato=contrato, numero=1, valor=Decimal("300.00"),
+            data_vencimento=hoje, status="pago", pago_em=timezone.now(),
+        )
+        Parcela.objects.create(
+            contrato=contrato, numero=2, valor=Decimal("600.00"),
+            data_vencimento=hoje, status="pendente",
+        )
+        Despesa.objects.create(
+            escritorio=self.escritorio, processo=processo, descricao="Custas",
+            valor=Decimal("120.50"), data=hoje,
+        )
+        # Despesa de um ano atrás fica fora da janela de seis meses.
+        Despesa.objects.create(
+            escritorio=self.escritorio, processo=processo, descricao="Antiga",
+            valor=Decimal("999.00"), data=hoje - timedelta(days=370),
+        )
+
+        serie = self.client.get("/api/dashboard/").data["financeiro_mensal"]
+
+        self.assertEqual(len(serie), 6)
+        self.assertEqual(serie[-1]["mes"], hoje.strftime("%Y-%m"))
+        self.assertEqual(Decimal(serie[-1]["recebido"]), Decimal("300.00"))
+        self.assertEqual(Decimal(serie[-1]["despesas"]), Decimal("120.50"))
+        self.assertTrue(all(Decimal(m["despesas"]) == 0 for m in serie[:-1]))
+
 
 class BuscaGlobalAPITestCase(_EscritorioComDados, APITestCase):
 

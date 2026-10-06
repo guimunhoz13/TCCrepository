@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRecurso } from "@/hooks/useRecurso";
+import { useConfirmacao } from "@/contexts/ConfirmacaoContext";
 import {
   X, User, Building2, Bell, Palette, Database, CreditCard,
   Eye, EyeOff, Trash2, Download, FileBarChart, Mail, MessageCircle, History,
@@ -123,7 +124,7 @@ export default function ConfigPanel() {
           })}
         </div>
 
-        <div className="overlay-body">
+        <div className="overlay-body" tabIndex={0} role="region" aria-label="Conteúdo das configurações">
           {(erro || recurso.erro) && <div className="alert alert-error">{erro || recurso.erro}</div>}
           {sucesso && <div className="alert alert-success">{sucesso}</div>}
           {carregando && <div className="empty-state">Carregando configurações...</div>}
@@ -229,7 +230,7 @@ function ContaTab({ usuario, setDados, feedback, t }) {
 
     <Section title="Senha" description="A nova senha deve ter pelo menos 8 caracteres, 1 letra maiúscula, 1 número e 1 caractere especial.">
       <div className="form-grid">
-        <Field label="Senha atual" full><div className="password-field"><input type={showPassword ? "text" : "password"} value={senha.senha_atual} onChange={(e) => setSenha({ ...senha, senha_atual: e.target.value })} /><button type="button" className="password-toggle" onClick={() => setShowPassword(!showPassword)}>{showPassword ? <EyeOff size={16}/> : <Eye size={16}/>}</button></div></Field>
+        <Field label="Senha atual" full><div className="password-field"><input type={showPassword ? "text" : "password"} value={senha.senha_atual} onChange={(e) => setSenha({ ...senha, senha_atual: e.target.value })} /><button type="button" className="password-toggle" aria-label={showPassword ? "Ocultar senhas" : "Mostrar senhas"} aria-pressed={showPassword} onClick={() => setShowPassword(!showPassword)}>{showPassword ? <EyeOff size={16}/> : <Eye size={16}/>}</button></div></Field>
         <Field label="Nova senha">
           <input type={showPassword ? "text" : "password"} value={senha.nova_senha} onChange={(e) => setSenha({ ...senha, nova_senha: e.target.value })} />
           <RequisitosSenha senha={senha.nova_senha} />
@@ -358,13 +359,14 @@ function AparenciaTab({ preferencias, setDados, feedback, theme, setTheme, atual
   }
   return <div className="settings-stack">
     <Section title={t("aparencia_tema")}><div className="theme-toggle"><button className={`btn btn-sm ${theme === "light" ? "btn-primary" : "btn-secondary"}`} onClick={() => salvar("tema", "light")}>{t("aparencia_claro")}</button><button className={`btn btn-sm ${theme === "dark" ? "btn-primary" : "btn-secondary"}`} onClick={() => salvar("tema", "dark")}>{t("aparencia_escuro")}</button></div></Section>
-    <Section title={t("aparencia_densidade")}><Field><select value={p.densidade_tabela} onChange={(e) => salvar("densidade_tabela", e.target.value)}><option value="comfortable">{t("aparencia_confortavel")}</option><option value="compact">{t("aparencia_compacta")}</option></select></Field></Section>
-    <Section title={t("aparencia_idioma")}><Field><select value={p.idioma} onChange={(e) => salvar("idioma", e.target.value)}><option value="pt-BR">Português (Brasil)</option><option value="en-US">English (US)</option><option value="es-ES">Español</option></select></Field></Section>
-    <Section title={t("aparencia_pagina_inicial")}><Field><select value={p.pagina_inicial} onChange={(e) => salvar("pagina_inicial", e.target.value)}><option value="dashboard">{t("nav_dashboard")}</option><option value="agenda">{t("nav_agenda")}</option><option value="clientes">{t("nav_clientes")}</option><option value="processos">{t("nav_processos")}</option></select></Field></Section>
+    <Section title={t("aparencia_densidade")}><Field><select aria-label={t("aparencia_densidade")} value={p.densidade_tabela} onChange={(e) => salvar("densidade_tabela", e.target.value)}><option value="comfortable">{t("aparencia_confortavel")}</option><option value="compact">{t("aparencia_compacta")}</option></select></Field></Section>
+    <Section title={t("aparencia_idioma")}><Field><select aria-label={t("aparencia_idioma")} value={p.idioma} onChange={(e) => salvar("idioma", e.target.value)}><option value="pt-BR">Português (Brasil)</option><option value="en-US">English (US)</option><option value="es-ES">Español</option></select></Field></Section>
+    <Section title={t("aparencia_pagina_inicial")}><Field><select aria-label={t("aparencia_pagina_inicial")} value={p.pagina_inicial} onChange={(e) => salvar("pagina_inicial", e.target.value)}><option value="dashboard">{t("nav_dashboard")}</option><option value="agenda">{t("nav_agenda")}</option><option value="clientes">{t("nav_clientes")}</option><option value="processos">{t("nav_processos")}</option></select></Field></Section>
   </div>;
 }
 
 function DadosTab({ dados, setDados, feedback }) {
+  const confirmar = useConfirmacao();
   const admin = dados.usuario.tipo_usuario === "admin";
   const [retencao, setRetencao] = useState(dados.configuracao_escritorio?.retencao_documentos || "indeterminado");
   const [senha, setSenha] = useState("");
@@ -376,14 +378,19 @@ function DadosTab({ dados, setDados, feedback }) {
     catch (e) { feedback(e.message, true); }
   }
   async function excluir() {
-    if (!window.confirm("Isto desativará o escritório e todos os usuários. Deseja continuar?")) return;
+    const ok = await confirmar({
+      titulo: "Desativar escritório",
+      mensagem: "O escritório e todos os usuários serão desativados e ninguém mais conseguirá entrar. Só o suporte reativa.",
+      acao: "Desativar",
+    });
+    if (!ok) return;
     try { const res = await desativarEscritorio({ senha, confirmacao }); feedback(res.detail); logout(); window.location.href = "/"; }
     catch (e) { feedback(e.message, true); }
   }
 
   return <div className="settings-stack">
     <Section title="Exportar dados" description="Baixe os dados do escritório em CSV."><div className="export-row"><button className="btn btn-secondary btn-sm" onClick={() => exportarClientesCSV().catch((e) => feedback(e.message, true))}><Download size={14}/>Exportar clientes (CSV)</button><button className="btn btn-secondary btn-sm" onClick={() => exportarProcessosCSV().catch((e) => feedback(e.message, true))}><Download size={14}/>Exportar processos (CSV)</button></div></Section>
-    <Section title="Retenção de documentos" description="Preferência administrativa do escritório."><Field><select value={retencao} disabled={!admin} onChange={(e) => salvarRetencao(e.target.value)}><option value="1y">1 ano</option><option value="5y">5 anos</option><option value="indeterminado">Por tempo indeterminado</option></select></Field></Section>
+    <Section title="Retenção de documentos" description="Preferência administrativa do escritório."><Field><select aria-label="Tempo de retenção de documentos" value={retencao} disabled={!admin} onChange={(e) => salvarRetencao(e.target.value)}><option value="1y">1 ano</option><option value="5y">5 anos</option><option value="indeterminado">Por tempo indeterminado</option></select></Field></Section>
     {admin && <Section title="Zona de risco" description="Esta ação desativa o escritório e impede novos logins." danger><div className="form-grid"><Field label="Senha do administrador"><input type="password" value={senha} onChange={(e) => setSenha(e.target.value)}/></Field><Field label='Digite EXCLUIR para confirmar'><input value={confirmacao} onChange={(e) => setConfirmacao(e.target.value)}/></Field></div><Actions><button className="btn btn-danger btn-sm" onClick={excluir} disabled={!senha || confirmacao !== "EXCLUIR"}><Trash2 size={14}/>Desativar escritório</button></Actions></Section>}
   </div>;
 }

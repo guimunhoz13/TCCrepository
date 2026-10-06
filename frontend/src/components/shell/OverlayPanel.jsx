@@ -116,7 +116,8 @@ export default function OverlayPanel({
           </div>
         )}
 
-        <div className="overlay-body">
+        {/* Focável para quem rola o conteúdo pelo teclado (setas, PgDn). */}
+        <div className="overlay-body" tabIndex={0} role="region" aria-labelledby="overlay-panel-title">
           {children}
         </div>
       </div>

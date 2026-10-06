@@ -8,12 +8,9 @@ import {
   Pie,
   Cell,
   ResponsiveContainer,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
   Tooltip,
 } from "recharts";
+import ReceitaDespesas from "@/components/dashboard/ReceitaDespesas";
 
 function CustomTooltip({ active, payload }) {
   if (!active || !payload?.length) return null;
@@ -37,9 +34,8 @@ function CustomTooltip({ active, payload }) {
   );
 }
 
-export default function ChartsSection({ processosPorStatus = [], totais = {} }) {
+export default function ChartsSection({ processosPorStatus = [], financeiroMensal = [] }) {
   const [fatiaAtiva, setFatiaAtiva] = useState(null);
-  const [barraAtiva, setBarraAtiva] = useState(null);
   const { theme } = useTheme();
 
   // A cor sai do status, nunca da posição na lista: um escritório sem
@@ -57,15 +53,7 @@ export default function ChartsSection({ processosPorStatus = [], totais = {} }) 
     [processosPorStatus, theme]
   );
 
-  const barData = [
-    { nome: "Clientes", total: totais.clientes || 0 },
-    { nome: "Processos", total: totais.processos || 0 },
-    { nome: "Advogados", total: totais.advogados || 0 },
-    { nome: "Documentos", total: totais.documentos || 0 },
-  ];
-
   const fatiaSelecionada = fatiaAtiva !== null ? pieData[fatiaAtiva] : null;
-  const barraSelecionada = barraAtiva !== null ? barData[barraAtiva] : null;
   const totalProcessos = pieData.reduce((soma, item) => soma + item.value, 0);
 
   return (
@@ -144,66 +132,7 @@ export default function ChartsSection({ processosPorStatus = [], totais = {} }) 
         )}
       </div>
 
-      <div className="panel-card">
-        <h3>Visão geral do escritório</h3>
-        <div style={{ width: "100%", height: 260 }}>
-          <ResponsiveContainer>
-            <BarChart data={barData}>
-              <XAxis
-                dataKey="nome"
-                tick={{ fill: "var(--text-secondary)", fontSize: 12 }}
-              />
-              <YAxis tick={{ fill: "var(--text-secondary)", fontSize: 12 }} />
-              <Tooltip content={<CustomTooltip />} />
-              <Bar
-                dataKey="total"
-                radius={[8, 8, 0, 0]}
-                onClick={(_, index) =>
-                  setBarraAtiva(barraAtiva === index ? null : index)
-                }
-                style={{ cursor: "pointer" }}
-              >
-                {barData.map((_, index) => (
-                  <Cell
-                    key={index}
-                    fill={
-                      barraAtiva === index ? "var(--accent)" : "var(--chart-bar)"
-                    }
-                    opacity={
-                      barraAtiva === null || barraAtiva === index ? 1 : 0.4
-                    }
-                  />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-
-        <div className="chart-legend">
-          {barData.map((item, index) => (
-            <button
-              type="button"
-              key={item.nome}
-              className={`chart-legend-item ${
-                barraAtiva === index ? "active" : ""
-              }`}
-              onClick={() =>
-                setBarraAtiva(barraAtiva === index ? null : index)
-              }
-            >
-              {item.nome}: {item.total}
-            </button>
-          ))}
-        </div>
-
-        {barraSelecionada && (
-          <div className="chart-detail-box">
-            O escritório possui <strong>{barraSelecionada.total}</strong>{" "}
-            {barraSelecionada.nome.toLowerCase()} cadastrado
-            {barraSelecionada.total !== 1 ? "s" : ""}.
-          </div>
-        )}
-      </div>
+      <ReceitaDespesas serie={financeiroMensal} />
     </div>
   );
 }

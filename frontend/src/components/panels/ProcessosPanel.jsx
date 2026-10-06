@@ -1,5 +1,8 @@
 "use client";
 
+import { useConfirmacao } from "@/contexts/ConfirmacaoContext";
+import { useAvisos } from "@/contexts/AvisosContext";
+
 import { useState } from "react";
 import { useListaPaginada, useRecurso } from "@/hooks/useRecurso";
 import { useValorAtrasado } from "@/hooks/useValorAtrasado";
@@ -23,6 +26,7 @@ import {
   getAdvogados,
   listarTudo,
 } from "@/services/api";
+import LinhasCarregando from "@/components/ui/LinhasCarregando";
 
 const formularioInicial = {
   numero_processo: "",
@@ -61,6 +65,8 @@ function rotuloUrgencia(prazo) {
 export default function ProcessosPanel() {
   const { activePanel, panelTab, panelParams, openPanel, setPanelTab } = usePanel();
   const { refresh: refreshDashboard } = useDashboardData();
+  const confirmar = useConfirmacao();
+  const avisar = useAvisos();
   const { t } = usePreferences();
   const [busca, setBusca] = useState("");
   const [consultando, setConsultando] = useState(null);
@@ -291,31 +297,33 @@ export default function ProcessosPanel() {
               </tr>
             </thead>
             <tbody>
-              {carregando && (
-                <tr>
-                  <td colSpan="5">Carregando...</td>
-                </tr>
-              )}
+              {carregando && <LinhasCarregando colunas={5} />}
               {!carregando &&
                 processos.map((processo) => (
                   <tr
                     key={processo.id}
                     className="tr-clicavel"
-                    tabIndex={0}
-                    role="button"
-                    aria-label={`Ver ficha do processo ${processo.numero_processo}`}
-                    onClick={() =>
-                      openPanel(PANELS.PROCESSOS, "ficha", { processoId: processo.id })
-                    }
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
-                        openPanel(PANELS.PROCESSOS, "ficha", { processoId: processo.id });
-                      }
+                    // Clicar em qualquer ponto da linha é atalho de mouse/toque;
+                    // para teclado e leitor de tela o caminho é o botão com o
+                    // número do processo. A linha em si não é um controle:
+                    // antes ela era role="button" com outros botões dentro,
+                    // o que leitores de tela não conseguem anunciar.
+                    onClick={(e) => {
+                      if (e.target.closest("button, a")) return;
+                      openPanel(PANELS.PROCESSOS, "ficha", { processoId: processo.id });
                     }}
                   >
                     <td>
-                      <strong>{processo.numero_processo}</strong>
+                      <button
+                        type="button"
+                        className="link-celula"
+                        aria-label={`Ver ficha do processo ${processo.numero_processo}`}
+                        onClick={() =>
+                          openPanel(PANELS.PROCESSOS, "ficha", { processoId: processo.id })
+                        }
+                      >
+                        {processo.numero_processo}
+                      </button>
                       {processo.titulo && (
                         <div className="celula-secundaria">{processo.titulo}</div>
                       )}
@@ -421,10 +429,18 @@ export default function ProcessosPanel() {
                           title={t("acao_excluir")}
                           aria-label={t("acao_excluir")}
                           onClick={async () => {
-                            if (window.confirm("Excluir processo?")) {
+                            const ok = await confirmar({
+                              titulo: "Excluir processo",
+                              mensagem: `O processo ${processo.numero_processo} será excluído junto com movimentações, documentos, agenda e contrato. Isso não pode ser desfeito.`,
+                            });
+                            if (!ok) return;
+                            try {
                               await deleteProcesso(processo.id);
+                              avisar("Processo excluído.");
                               carregarDados();
                               refreshDashboard().catch(() => {});
+                            } catch (error) {
+                              avisar(error.message, "erro");
                             }
                           }}
                         >

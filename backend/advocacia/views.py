@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.contrib.auth.hashers import check_password, make_password
 from django.db.models import CharField, Count, F, Func, Q, Sum, Value
-from django.db.models.functions import Lower
+from django.db.models.functions import Lower, TruncMonth
 from django.db.models import Prefetch
 from django.http import FileResponse, Http404, HttpResponse
 from django.utils import timezone
@@ -746,6 +746,47 @@ class DashboardStatsView(APIView):
 
 
 QUANTIDADE_RECENTES_DASHBOARD = 5
+MESES_NO_GRAFICO_FINANCEIRO = 6
+
+
+def _financeiro_mensal(escritorio, meses=MESES_NO_GRAFICO_FINANCEIRO):
+    """Recebido (parcelas pagas) e despesas lançadas, mês a mês, dos últimos
+    `meses` meses incluindo o atual — a série do gráfico da dashboard.
+
+    Os meses sem movimento aparecem com zero: um buraco no eixo faria um mês
+    parado parecer dado faltando.
+    """
+    zero = Decimal("0.00")
+    hoje = timezone.localdate()
+    primeiro = _somar_meses(hoje.replace(day=1), -(meses - 1))
+
+    recebido = {
+        (linha["mes"].year, linha["mes"].month): linha["total"]
+        for linha in Parcela.objects.filter(
+            contrato__escritorio=escritorio, status="pago", pago_em__date__gte=primeiro
+        )
+        .annotate(mes=TruncMonth("pago_em"))
+        .values("mes")
+        .annotate(total=Sum("valor"))
+    }
+    despesas = {
+        (linha["mes"].year, linha["mes"].month): linha["total"]
+        for linha in Despesa.objects.filter(escritorio=escritorio, data__gte=primeiro)
+        .annotate(mes=TruncMonth("data"))
+        .values("mes")
+        .annotate(total=Sum("valor"))
+    }
+
+    serie = []
+    for i in range(meses):
+        mes = _somar_meses(primeiro, i)
+        chave = (mes.year, mes.month)
+        serie.append({
+            "mes": mes.strftime("%Y-%m"),
+            "recebido": str(recebido.get(chave) or zero),
+            "despesas": str(despesas.get(chave) or zero),
+        })
+    return serie
 
 
 class DashboardResumoView(APIView):
@@ -823,6 +864,7 @@ class DashboardResumoView(APIView):
             "documentos_recentes": DocumentoSerializer(documentos, many=True, context=contexto).data,
             "minhas_tarefas": TarefaSerializer(minhas_tarefas, many=True, context=contexto).data,
             "agenda": AgendaSerializer(agenda, many=True, context=contexto).data,
+            "financeiro_mensal": _financeiro_mensal(escritorio),
         })
         return Response(dados)
 

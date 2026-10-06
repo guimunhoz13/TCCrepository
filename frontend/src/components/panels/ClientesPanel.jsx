@@ -1,5 +1,8 @@
 "use client";
 
+import { useConfirmacao } from "@/contexts/ConfirmacaoContext";
+import { useAvisos } from "@/contexts/AvisosContext";
+
 import { useState } from "react";
 import { useListaPaginada } from "@/hooks/useRecurso";
 import { useValorAtrasado } from "@/hooks/useValorAtrasado";
@@ -20,6 +23,7 @@ import {
   deleteCliente,
   abrirDocumentoIdentidadeCliente,
 } from "@/services/api";
+import LinhasCarregando from "@/components/ui/LinhasCarregando";
 
 const formularioInicial = {
   tipo_pessoa: "fisica",
@@ -48,6 +52,8 @@ const ESTADOS_CIVIS = [
 export default function ClientesPanel() {
   const { activePanel, panelTab, setPanelTab } = usePanel();
   const { refresh: refreshDashboard } = useDashboardData();
+  const confirmar = useConfirmacao();
+  const avisar = useAvisos();
   const { t } = usePreferences();
   const [busca, setBusca] = useState("");
   const [formulario, setFormulario] = useState(formularioInicial);
@@ -418,11 +424,7 @@ export default function ClientesPanel() {
               </tr>
             </thead>
             <tbody>
-              {carregando && (
-                <tr>
-                  <td colSpan="6">Carregando...</td>
-                </tr>
-              )}
+              {carregando && <LinhasCarregando colunas={6} />}
               {!carregando &&
                 clientes.map((cliente) => (
                   <tr key={cliente.id}>
@@ -484,14 +486,15 @@ export default function ClientesPanel() {
                           title={t("acao_excluir")}
                           aria-label={t("acao_excluir")}
                           onClick={async () => {
-                            if (
-                              !window.confirm(`Excluir ${cliente.nome}?`)
-                            ) {
-                              return;
-                            }
+                            const ok = await confirmar({
+                              titulo: "Excluir cliente",
+                              mensagem: `${cliente.nome} será excluído. Se houver processos dele, o sistema recusa e sugere inativar.`,
+                            });
+                            if (!ok) return;
                             setErro("");
                             try {
                               await deleteCliente(cliente.id);
+                              avisar("Cliente excluído.");
                               carregarClientes();
                               refreshDashboard().catch(() => {});
                             } catch (error) {

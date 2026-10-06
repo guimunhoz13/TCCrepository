@@ -1,5 +1,8 @@
 "use client";
 
+import { useConfirmacao } from "@/contexts/ConfirmacaoContext";
+import { useAvisos } from "@/contexts/AvisosContext";
+
 import { useState } from "react";
 import { useListaPaginada, useRecurso } from "@/hooks/useRecurso";
 import { useUsuarioLogado } from "@/hooks/useUsuarioLogado";
@@ -20,6 +23,7 @@ import {
   getProcessos,
   listarTudo,
 } from "@/services/api";
+import LinhasCarregando from "@/components/ui/LinhasCarregando";
 
 const TIPOS_DESPESA = [
   { value: "custas", label: "Custas processuais" },
@@ -68,6 +72,8 @@ const despesaInicial = {
 export default function HorasPanel() {
   const { activePanel, panelTab, setPanelTab } = usePanel();
   const { t } = usePreferences();
+  const confirmar = useConfirmacao();
+  const avisar = useAvisos();
 
   const [mes, setMes] = useState(mesAtual());
   const [formHora, setFormHora] = useState(horaInicial);
@@ -187,11 +193,7 @@ export default function HorasPanel() {
               </tr>
             </thead>
             <tbody>
-              {carregando && (
-                <tr>
-                  <td colSpan="7">Carregando...</td>
-                </tr>
-              )}
+              {carregando && <LinhasCarregando colunas={7} />}
               {!carregando && apontamentos.length === 0 && (
                 <tr>
                   <td colSpan="7">Nenhuma hora apontada ainda.</td>
@@ -220,9 +222,17 @@ export default function HorasPanel() {
                           title={t("acao_excluir")}
                           aria-label={t("acao_excluir")}
                           onClick={async () => {
-                            if (window.confirm("Excluir este apontamento?")) {
+                            const ok = await confirmar({
+                              titulo: "Excluir apontamento",
+                              mensagem: "As horas deste apontamento deixam de contar no faturamento.",
+                            });
+                            if (!ok) return;
+                            try {
                               await deleteApontamento(a.id);
+                              avisar("Apontamento excluído.");
                               carregar();
+                            } catch (error) {
+                              avisar(error.message, "erro");
                             }
                           }}
                         >
@@ -354,11 +364,7 @@ export default function HorasPanel() {
               </tr>
             </thead>
             <tbody>
-              {carregando && (
-                <tr>
-                  <td colSpan="7">Carregando...</td>
-                </tr>
-              )}
+              {carregando && <LinhasCarregando colunas={7} />}
               {!carregando && despesas.length === 0 && (
                 <tr>
                   <td colSpan="7">Nenhuma despesa lançada ainda.</td>
@@ -403,9 +409,17 @@ export default function HorasPanel() {
                           title={t("acao_excluir")}
                           aria-label={t("acao_excluir")}
                           onClick={async () => {
-                            if (window.confirm("Excluir esta despesa?")) {
+                            const ok = await confirmar({
+                              titulo: "Excluir despesa",
+                              mensagem: "A despesa sai do relatório do cliente e do reembolso.",
+                            });
+                            if (!ok) return;
+                            try {
                               await deleteDespesa(d.id);
+                              avisar("Despesa excluída.");
                               carregar();
+                            } catch (error) {
+                              avisar(error.message, "erro");
                             }
                           }}
                         >

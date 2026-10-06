@@ -1,5 +1,8 @@
 "use client";
 
+import { useConfirmacao } from "@/contexts/ConfirmacaoContext";
+import { useAvisos } from "@/contexts/AvisosContext";
+
 import { Fragment, useState } from "react";
 import { useListaPaginada, useRecurso } from "@/hooks/useRecurso";
 import RodapeLista from "@/components/ui/RodapeLista";
@@ -16,6 +19,7 @@ import {
   getProcessos,
   listarTudo,
 } from "@/services/api";
+import LinhasCarregando from "@/components/ui/LinhasCarregando";
 
 const formularioInicial = {
   processo: "",
@@ -34,6 +38,8 @@ function formatarMoeda(valor) {
 export default function ContratosPanel() {
   const { activePanel, panelTab } = usePanel();
   const { refresh: refreshDashboard } = useDashboardData();
+  const confirmar = useConfirmacao();
+  const avisar = useAvisos();
   const { t } = usePreferences();
   const [formulario, setFormulario] = useState(formularioInicial);
   const [contratoExpandido, setContratoExpandido] = useState(null);
@@ -196,11 +202,7 @@ export default function ContratosPanel() {
               </tr>
             </thead>
             <tbody>
-              {carregando && (
-                <tr>
-                  <td colSpan="7">Carregando...</td>
-                </tr>
-              )}
+              {carregando && <LinhasCarregando colunas={7} />}
               {!carregando &&
                 contratos.map((contrato) => (
                   <Fragment key={contrato.id}>
@@ -247,10 +249,18 @@ export default function ContratosPanel() {
                             title={t("acao_excluir")}
                             aria-label={t("acao_excluir")}
                             onClick={async () => {
-                              if (window.confirm("Excluir contrato?")) {
+                              const ok = await confirmar({
+                                titulo: "Excluir contrato",
+                                mensagem: "O contrato e todas as parcelas dele serão excluídos.",
+                              });
+                              if (!ok) return;
+                              try {
                                 await deleteContrato(contrato.id);
+                                avisar("Contrato excluído.");
                                 carregarDados();
                                 refreshDashboard().catch(() => {});
+                              } catch (error) {
+                                avisar(error.message, "erro");
                               }
                             }}
                           >

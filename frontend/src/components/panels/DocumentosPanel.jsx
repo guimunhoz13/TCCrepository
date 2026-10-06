@@ -1,5 +1,8 @@
 "use client";
 
+import { useConfirmacao } from "@/contexts/ConfirmacaoContext";
+import { useAvisos } from "@/contexts/AvisosContext";
+
 import { useState } from "react";
 import { useListaPaginada, useRecurso } from "@/hooks/useRecurso";
 import RodapeLista from "@/components/ui/RodapeLista";
@@ -16,10 +19,13 @@ import {
   listarTudo,
   abrirDocumento,
 } from "@/services/api";
+import LinhasCarregando from "@/components/ui/LinhasCarregando";
 
 export default function DocumentosPanel() {
   const { activePanel, panelTab, setPanelTab } = usePanel();
   const { refresh: refreshDashboard } = useDashboardData();
+  const confirmar = useConfirmacao();
+  const avisar = useAvisos();
   const { t } = usePreferences();
   const [processoId, setProcessoId] = useState("");
   const [nomeArquivo, setNomeArquivo] = useState("");
@@ -131,11 +137,7 @@ export default function DocumentosPanel() {
               </tr>
             </thead>
             <tbody>
-              {carregando && (
-                <tr>
-                  <td colSpan="4">Carregando...</td>
-                </tr>
-              )}
+              {carregando && <LinhasCarregando colunas={4} />}
               {!carregando &&
                 documentos.map((doc) => (
                   <tr key={doc.id}>
@@ -166,10 +168,18 @@ export default function DocumentosPanel() {
                           title={t("acao_excluir")}
                           aria-label={t("acao_excluir")}
                           onClick={async () => {
-                            if (window.confirm("Excluir documento?")) {
+                            const ok = await confirmar({
+                              titulo: "Excluir documento",
+                              mensagem: `O arquivo "${doc.nome_arquivo}" será apagado do sistema.`,
+                            });
+                            if (!ok) return;
+                            try {
                               await deleteDocumento(doc.id);
+                              avisar("Documento excluído.");
                               carregarDados();
                               refreshDashboard().catch(() => {});
+                            } catch (error) {
+                              avisar(error.message, "erro");
                             }
                           }}
                         >

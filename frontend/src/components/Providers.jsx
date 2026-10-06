@@ -3,15 +3,21 @@
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { AjudaProvider } from "@/contexts/AjudaContext";
 import { MenuMovelProvider } from "@/contexts/MenuMovelContext";
-import RotulosDeTabela from "@/components/shell/RotulosDeTabela";
+import RotulosAutomaticos from "@/components/shell/RotulosAutomaticos";
+import { ConfirmacaoProvider } from "@/contexts/ConfirmacaoContext";
+import { AvisosProvider } from "@/contexts/AvisosContext";
 import "../styles/design-system.css";
 
 export default function Providers({ children }) {
   return (
     <ThemeProvider>
       <MenuMovelProvider>
-        <AjudaProvider>{children}</AjudaProvider>
-        <RotulosDeTabela />
+        <AvisosProvider>
+          <ConfirmacaoProvider>
+            <AjudaProvider>{children}</AjudaProvider>
+          </ConfirmacaoProvider>
+        </AvisosProvider>
+        <RotulosAutomaticos />
       </MenuMovelProvider>
     </ThemeProvider>
   );

@@ -1,5 +1,8 @@
 "use client";
 
+import { useConfirmacao } from "@/contexts/ConfirmacaoContext";
+import { useAvisos } from "@/contexts/AvisosContext";
+
 import { useState } from "react";
 import { useRecurso } from "@/hooks/useRecurso";
 import { Pencil, Printer, Trash2 } from "lucide-react";
@@ -17,6 +20,7 @@ import {
   getClientes,
   listarTudo,
 } from "@/services/api";
+import LinhasCarregando from "@/components/ui/LinhasCarregando";
 
 const TIPOS = [
   { value: "procuracao", label: "Procuração" },
@@ -45,6 +49,8 @@ const modeloInicial = { nome: "", tipo: "procuracao", conteudo: "" };
 export default function ModelosPanel() {
   const { activePanel, panelTab, setPanelTab } = usePanel();
   const { t } = usePreferences();
+  const confirmar = useConfirmacao();
+  const avisar = useAvisos();
 
   const [formulario, setFormulario] = useState(modeloInicial);
   const [editandoId, setEditandoId] = useState(null);
@@ -147,11 +153,7 @@ export default function ModelosPanel() {
             </tr>
           </thead>
           <tbody>
-            {carregando && (
-              <tr>
-                <td colSpan="4">Carregando...</td>
-              </tr>
-            )}
+            {carregando && <LinhasCarregando colunas={4} />}
             {!carregando && modelos.length === 0 && (
               <tr>
                 <td colSpan="4">
@@ -182,9 +184,17 @@ export default function ModelosPanel() {
                         title={t("acao_excluir")}
                         aria-label={t("acao_excluir")}
                         onClick={async () => {
-                          if (window.confirm(`Excluir o modelo "${modelo.nome}"?`)) {
+                          const ok = await confirmar({
+                            titulo: "Excluir modelo",
+                            mensagem: `O modelo "${modelo.nome}" será excluído. Documentos já gerados não são afetados.`,
+                          });
+                          if (!ok) return;
+                          try {
                             await deleteModeloDocumento(modelo.id);
+                            avisar("Modelo excluído.");
                             carregar();
+                          } catch (error) {
+                            avisar(error.message, "erro");
                           }
                         }}
                       >
