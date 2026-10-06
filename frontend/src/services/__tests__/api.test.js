@@ -221,6 +221,76 @@ describe("renovação automática do access token expirado", () => {
     );
     expect(global.fetch).toHaveBeenCalledTimes(2);
   });
+
+  test("guarda o refresh novo quando o backend faz a rotação", async () => {
+    let primeira = true;
+    global.fetch = jest.fn((url) => {
+      if (url.endsWith("/token/refresh/")) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({ access: "token-novo", refresh: "refresh-rotacionado" }),
+        });
+      }
+      if (primeira) {
+        primeira = false;
+        return Promise.resolve({ ok: false, status: 401, json: async () => ({}) });
+      }
+      return Promise.resolve({ ok: true, json: async () => ({ results: [] }) });
+    });
+
+    await getClientes();
+
+    expect(localStorage.getItem("refresh")).toBe("refresh-rotacionado");
+  });
+
+  test("várias chamadas com 401 ao mesmo tempo compartilham uma única renovação", async () => {
+    const chamadasComTokenVelho = new Set();
+    global.fetch = jest.fn((url, opcoes) => {
+      if (url.endsWith("/token/refresh/")) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({ access: "token-novo", refresh: "refresh-rotacionado" }),
+        });
+      }
+      if (opcoes.headers.Authorization === "Bearer token-expirado") {
+        chamadasComTokenVelho.add(url);
+        return Promise.resolve({ ok: false, status: 401, json: async () => ({}) });
+      }
+      return Promise.resolve({ ok: true, json: async () => ({ results: [] }) });
+    });
+
+    await Promise.all([getClientes(), getClientes({ busca: "a" }), getClientes({ busca: "b" })]);
+
+    const renovacoes = global.fetch.mock.calls.filter(([url]) => url.endsWith("/token/refresh/"));
+    expect(renovacoes).toHaveLength(1);
+    expect(chamadasComTokenVelho.size).toBe(3);
+  });
+
+  test("se outra aba já rotacionou o refresh, tenta de novo com o refresh atual", async () => {
+    global.fetch = jest.fn((url, opcoes) => {
+      if (url.endsWith("/token/refresh/")) {
+        const { refresh } = JSON.parse(opcoes.body);
+        if (refresh === "refresh-valido") {
+          // Simula a outra aba gravando o refresh novo enquanto este pedido falha.
+          localStorage.setItem("refresh", "refresh-da-outra-aba");
+          return Promise.resolve({ ok: false, status: 401, json: async () => ({}) });
+        }
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({ access: "token-novo", refresh: "refresh-seguinte" }),
+        });
+      }
+      if (opcoes.headers.Authorization === "Bearer token-expirado") {
+        return Promise.resolve({ ok: false, status: 401, json: async () => ({}) });
+      }
+      return Promise.resolve({ ok: true, json: async () => ({ results: [] }) });
+    });
+
+    const resultado = await getClientes();
+
+    expect(resultado.results).toEqual([]);
+    expect(localStorage.getItem("refresh")).toBe("refresh-seguinte");
+  });
 });
 
 describe("revogação do refresh token no logout", () => {

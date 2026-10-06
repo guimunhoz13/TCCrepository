@@ -22,30 +22,63 @@ const CHAVE_REFRESH = {
 // a primeira chamada à API depois da expiração falhava com "Given token not
 // valid for any token type" e o usuário era obrigado a atualizar a página e
 // logar de novo no meio do uso do sistema.
-async function renovarAccessToken(tokenKey) {
+//
+// O backend troca o refresh token a cada renovação e revoga o anterior. Por
+// isso várias chamadas que recebem 401 ao mesmo tempo compartilham uma única
+// renovação em andamento: se cada uma renovasse por conta própria, a segunda
+// usaria um refresh já revogado e derrubaria a sessão.
+const renovacoesEmAndamento = {};
+
+function lerRefresh(refreshKey) {
+  return refreshKey && typeof window !== "undefined"
+    ? localStorage.getItem(refreshKey)
+    : null;
+}
+
+async function pedirNovoAccessToken(tokenKey, refreshKey, refreshToken) {
+  const response = await fetch(`${API_URL}/token/refresh/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ refresh: refreshToken }),
+  });
+
+  if (!response.ok) return null;
+
+  const data = await response.json();
+  localStorage.setItem(tokenKey, data.access);
+  if (data.refresh) localStorage.setItem(refreshKey, data.refresh);
+  return data.access;
+}
+
+async function executarRenovacao(tokenKey) {
   const refreshKey = CHAVE_REFRESH[tokenKey];
-  const refreshToken =
-    refreshKey && typeof window !== "undefined"
-      ? localStorage.getItem(refreshKey)
-      : null;
+  const refreshToken = lerRefresh(refreshKey);
 
   if (!refreshToken) return null;
 
   try {
-    const response = await fetch(`${API_URL}/token/refresh/`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ refresh: refreshToken }),
-    });
+    const novo = await pedirNovoAccessToken(tokenKey, refreshKey, refreshToken);
+    if (novo) return novo;
 
-    if (!response.ok) return null;
-
-    const data = await response.json();
-    localStorage.setItem(tokenKey, data.access);
-    return data.access;
+    // Outra aba pode ter renovado (e revogado o refresh que lemos) enquanto
+    // esta requisição estava em voo; nesse caso o localStorage já tem o novo.
+    const refreshAtual = lerRefresh(refreshKey);
+    if (refreshAtual && refreshAtual !== refreshToken) {
+      return await pedirNovoAccessToken(tokenKey, refreshKey, refreshAtual);
+    }
+    return null;
   } catch {
     return null;
   }
+}
+
+function renovarAccessToken(tokenKey) {
+  if (!renovacoesEmAndamento[tokenKey]) {
+    renovacoesEmAndamento[tokenKey] = executarRenovacao(tokenKey).finally(() => {
+      delete renovacoesEmAndamento[tokenKey];
+    });
+  }
+  return renovacoesEmAndamento[tokenKey];
 }
 
 async function request(endpoint, options = {}, tokenKey = "access") {

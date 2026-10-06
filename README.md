@@ -57,6 +57,19 @@ npm install
 npm run dev
 ```
 
+## Segurança em produção
+
+- Sem `DEBUG=True` o backend sobe em modo produção: exige `SECRET_KEY`
+  (recusa subir sem ela), redireciona para HTTPS, liga HSTS e marca os
+  cookies como seguros. No `.env` local mantenha `DEBUG=True`.
+- O CI roda `manage.py check --deploy --fail-level WARNING` e falha em
+  qualquer aviso de segurança de deploy.
+- O frontend envia CSP, `X-Frame-Options`, `Referrer-Policy` e
+  `Permissions-Policy` em todas as páginas (`frontend/next.config.mjs`).
+- O refresh token é trocado a cada renovação e o anterior é revogado.
+- O assistente de IA tem limite próprio (20 chamadas/minuto por usuário) e
+  aceita mensagens de até 4000 caracteres.
+
 ## Tarefas agendadas
 
 Os lembretes de agenda e o resumo semanal são enviados por um comando que

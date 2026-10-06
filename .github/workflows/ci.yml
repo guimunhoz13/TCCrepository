@@ -35,6 +35,9 @@ jobs:
       DB_PASSWORD: postgres
       DB_HOST: localhost
       DB_PORT: 5432
+      # Sem DEBUG=True o settings exige uma SECRET_KEY real; esta só existe
+      # no CI, para o `check` subir o projeto como subiria em produção.
+      SECRET_KEY: chave-exclusiva-do-ci-nao-usada-em-producao-${{ github.run_id }}
 
     steps:
       - name: Checkout
@@ -61,6 +64,15 @@ jobs:
       - name: Build (django check)
         working-directory: backend
         run: python manage.py check
+
+      # Simula a configuração de produção (DEBUG desligado, HTTPS) e falha se
+      # o Django apontar qualquer aviso de segurança de deploy.
+      - name: Checagem de segurança de produção (check --deploy)
+        working-directory: backend
+        env:
+          DEBUG: "False"
+          ALLOWED_HOSTS: lexoffice.exemplo.com
+        run: python manage.py check --deploy --fail-level WARNING
 
       # Aponta dependências Python com vulnerabilidades conhecidas. Não
       # quebra o build (continue-on-error) — serve como alerta a ser

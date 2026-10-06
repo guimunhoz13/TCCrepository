@@ -127,6 +127,7 @@ export default function AssistenteChat() {
 
       <div className="chat-context-bar">
         <select
+          aria-label="Cliente em foco na conversa"
           value={clienteId}
           onChange={(e) => {
             setClienteId(e.target.value);
@@ -142,6 +143,7 @@ export default function AssistenteChat() {
         </select>
 
         <select
+          aria-label="Processo em foco na conversa"
           value={processoId}
           onChange={(e) => setProcessoId(e.target.value)}
         >
@@ -198,6 +200,8 @@ export default function AssistenteChat() {
         <textarea
           ref={inputRef}
           placeholder="Digite sua pergunta..."
+          aria-label="Pergunta para o assistente"
+          maxLength={4000}
           value={texto}
           onChange={(e) => setTexto(e.target.value)}
           onKeyDown={handleKeyDown}

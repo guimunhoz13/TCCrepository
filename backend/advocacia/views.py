@@ -99,7 +99,11 @@ from .serializers import (
     RegistroAuditoriaSerializer,
 )
 
-from .ia_service import montar_contexto_sistema, gerar_resposta_ia
+from .ia_service import (
+    TAMANHO_MAXIMO_MENSAGEM_IA,
+    gerar_resposta_ia,
+    montar_contexto_sistema,
+)
 
 
 # =========================================================
@@ -177,7 +181,16 @@ class RenovarTokenView(APIView):
         except AuthenticationFailed as exc:
             return Response({"detail": exc.detail}, status=status.HTTP_401_UNAUTHORIZED)
 
-        return Response({"access": str(refresh.access_token)})
+        # Rotação: o refresh usado é revogado e um novo (mesmos claims, novo
+        # jti e nova validade) volta junto com o access. Assim um refresh
+        # vazado só serve até a próxima renovação do dono legítimo, em vez de
+        # valer os 7 dias inteiros.
+        _revogar_refresh_token(refresh)
+        refresh.set_jti()
+        refresh.set_exp()
+        refresh.set_iat()
+
+        return Response({"access": str(refresh.access_token), "refresh": str(refresh)})
 
 
 def _revogar_refresh_token(refresh):
@@ -1636,6 +1649,10 @@ class AssistenteIAView(APIView):
 
     permission_classes = [IsAuthenticated]
 
+    # Cada chamada é cobrada pela OpenAI: o limite geral por usuário
+    # (1000/min) deixaria uma conta comprometida gerar uma conta alta.
+    throttle_scope = "ia"
+
     def post(self, request):
 
         usuario = get_usuario_from_request(request)
@@ -1651,6 +1668,17 @@ class AssistenteIAView(APIView):
         if not mensagem:
             return Response(
                 {"detail": "Informe uma mensagem."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if len(mensagem) > TAMANHO_MAXIMO_MENSAGEM_IA:
+            return Response(
+                {
+                    "detail": (
+                        f"A mensagem passou de {TAMANHO_MAXIMO_MENSAGEM_IA} caracteres. "
+                        "Resuma a pergunta ou divida em partes."
+                    )
+                },
                 status=status.HTTP_400_BAD_REQUEST,
             )
 

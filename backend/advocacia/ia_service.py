@@ -5,6 +5,15 @@ from django.conf import settings
 from .models import Cliente, Processo
 
 
+TAMANHO_MAXIMO_MENSAGEM_IA = 4000
+
+
+def _documento_do_cliente(cliente):
+    if cliente.tipo_pessoa == "juridica":
+        return f"CNPJ: {cliente.cnpj or 'não informado'}"
+    return f"CPF: {cliente.cpf or 'não informado'}"
+
+
 def montar_contexto_sistema(usuario, cliente_id=None, processo_id=None):
     """
     Monta o contexto autorizado do escritório para enviar à IA.
@@ -36,7 +45,7 @@ def montar_contexto_sistema(usuario, cliente_id=None, processo_id=None):
             partes.append(
                 "\n--- Cliente selecionado ---\n"
                 f"Nome: {cliente.nome}\n"
-                f"CPF: {cliente.cpf or 'não informado'}\n"
+                f"{_documento_do_cliente(cliente)}\n"
                 f"E-mail: {cliente.email or 'não informado'}\n"
                 f"Telefone: {cliente.telefone or 'não informado'}\n"
                 f"Endereço: {cliente.endereco or 'não informado'}"
@@ -156,7 +165,9 @@ def _normalizar_historico(historico):
             continue
 
         role = item.get("role")
-        content = str(item.get("content") or "").strip()
+        # O histórico vem do navegador: sem corte, cada item poderia carregar
+        # um texto enorme e multiplicar o custo da chamada à OpenAI.
+        content = str(item.get("content") or "").strip()[:TAMANHO_MAXIMO_MENSAGEM_IA]
 
         if role in ("user", "assistant") and content:
             mensagens.append({
