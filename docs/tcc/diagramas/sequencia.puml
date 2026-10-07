@@ -1,0 +1,36 @@
+@startuml
+!include skinparam.iuml
+title Diagrama de Sequência — Autenticar no Sistema (com bloqueio após tentativas)
+
+actor Usuario as U
+participant "Frontend\n(Next.js)" as F
+participant "Backend\n(LoginView)" as B
+database "Banco de Dados" as DB
+
+U -> F : informa e-mail e senha
+F -> B : POST /api/login/
+
+B -> DB : buscar Usuario por e-mail
+DB --> B : usuario
+
+alt usuário bloqueado (bloqueadoAte no futuro)
+  B --> F : 403 Forbidden\n"conta bloqueada, tente em X min"
+  F --> U : exibe mensagem de bloqueio
+else senha inválida
+  B -> DB : incrementar tentativasLogin
+  alt tentativasLogin >= 3
+    B -> DB : definir bloqueadoAte (+15 min)
+    B --> F : 403 Forbidden\n"bloqueado por 15 minutos"
+  else
+    B --> F : 401 Unauthorized\n"e-mail ou senha inválidos"
+  end
+  F --> U : exibe mensagem de erro
+else senha válida
+  B -> DB : zerar tentativasLogin / bloqueadoAte
+  B -> B : gerar token JWT (access + refresh)
+  B --> F : 200 OK\n{ access, refresh, usuario }
+  F -> F : salvar token no localStorage
+  F --> U : redireciona ao dashboard
+end
+
+@enduml

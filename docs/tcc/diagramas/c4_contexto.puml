@@ -1,0 +1,30 @@
+@startuml
+!include skinparam.iuml
+title Diagrama de Contexto (C4 — Nível 1)
+
+actor "Usuários do escritório\n(administrador, advogado,\nestagiário, financeiro, secretária)" as Equipe
+actor "Administrador do Sistema\n(desenvolvedor)" as Master
+actor "Cliente do escritório\n(sem acesso ao sistema)" as Cliente
+
+rectangle "Sistema Web de Advocacia\n(LexOffice)" as Sistema #FDF6E3
+cloud "API da OpenAI\n(assistente e resumo\npara o cliente)" as OpenAI
+cloud "Envio de e-mail\n(SMTP)" as Email
+cloud "DataJud (CNJ)\nandamentos" as DataJud
+cloud "DJEN / Comunica PJe (CNJ)\nintimações por OAB" as DJEN
+cloud "Serviços de push\n(Google, Apple, Mozilla)" as Push
+cloud "Aplicativos de agenda\n(Google Agenda, Outlook,\niPhone)" as Agenda
+cloud "WhatsApp" as Whats
+
+Equipe --> Sistema : usa (web ou app instalado)
+Master --> Sistema : administra escritórios
+
+Sistema --> OpenAI : consulta
+Sistema --> Email : lembretes, relatórios
+Sistema --> DataJud : consulta andamentos
+Sistema --> DJEN : busca intimações
+Sistema --> Push : notificações cifradas
+Agenda --> Sistema : assina o calendário (.ics)
+Sistema ..> Whats : mensagem pronta (aberta pelo usuário)
+Whats ..> Cliente : resumo do andamento, PIX (pago no app do banco)
+
+@enduml

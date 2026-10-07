@@ -1,0 +1,40 @@
+skinparam backgroundColor white
+skinparam defaultFontName Helvetica
+skinparam defaultFontSize 13
+skinparam shadowing false
+skinparam roundcorner 6
+skinparam ArrowColor #333333
+skinparam ArrowThickness 1.2
+skinparam classFontStyle bold
+skinparam classAttributeFontSize 12
+skinparam classAttributeFontColor #333333
+
+skinparam class {
+  BackgroundColor #FDF6E3
+  BorderColor #8C6D1F
+  ArrowColor #333333
+}
+skinparam actor {
+  BackgroundColor #E8EEF7
+  BorderColor #2C4A73
+}
+skinparam usecase {
+  BackgroundColor #E8EEF7
+  BorderColor #2C4A73
+  FontSize 13
+}
+skinparam package {
+  BackgroundColor white
+  BorderColor #888888
+}
+skinparam component {
+  BackgroundColor #FDF6E3
+  BorderColor #8C6D1F
+}
+skinparam sequence {
+  ActorBackgroundColor #E8EEF7
+  ActorBorderColor #2C4A73
+  ParticipantBackgroundColor #FDF6E3
+  ParticipantBorderColor #8C6D1F
+  LifeLineBorderColor #999999
+}

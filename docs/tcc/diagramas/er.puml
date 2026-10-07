@@ -1,0 +1,345 @@
+@startuml
+!include skinparam.iuml
+title Diagrama de Banco de Dados (Modelo Entidade-Relacionamento)
+hide circle
+skinparam linetype ortho
+
+entity superadmin {
+  * id : SERIAL <<PK>>
+  --
+  nome : VARCHAR(255)
+  email : VARCHAR(254)
+  senha : VARCHAR(255)
+  ativo : BOOLEAN
+}
+
+entity escritorio {
+  * id : SERIAL <<PK>>
+  --
+  nome : VARCHAR(255)
+  cnpj : VARCHAR(18)
+  email : VARCHAR(254)
+  telefone : VARCHAR(20)
+  endereco : VARCHAR(255)
+  ativo : BOOLEAN
+  plano : VARCHAR(20)
+  plano_validade : DATE
+}
+
+entity usuario {
+  * id : SERIAL <<PK>>
+  --
+  # escritorio_id : INT <<FK>>
+  nome : VARCHAR(255)
+  email : VARCHAR(254)
+  senha : VARCHAR(255)
+  tipo_usuario : VARCHAR(20)
+  telefone : VARCHAR(20)
+  ativo : BOOLEAN
+  tentativas_login : SMALLINT
+  bloqueado_ate : TIMESTAMP
+  email_verificado : BOOLEAN
+  totp_segredo : VARCHAR(64)
+  totp_ativo : BOOLEAN
+  totp_ultimo_passo : BIGINT
+  agenda_feed_token : VARCHAR(64)
+}
+
+entity cliente {
+  * id : SERIAL <<PK>>
+  --
+  # escritorio_id : INT <<FK>>
+  nome : VARCHAR(255)
+  cpf : VARCHAR(14)
+  email : VARCHAR(254)
+  telefone : VARCHAR(20)
+  endereco : VARCHAR(255)
+  ativo : BOOLEAN
+  consentimento_lgpd : BOOLEAN
+  consentimento_lgpd_em : TIMESTAMP
+  anonimizado_em : TIMESTAMP
+}
+
+entity advogado {
+  * id : SERIAL <<PK>>
+  --
+  # escritorio_id : INT <<FK>>
+  # usuario_id : INT <<FK>>
+  oab : VARCHAR(30)
+  especialidade : VARCHAR(255)
+  valor_hora_padrao : DECIMAL(10,2)
+}
+
+entity processo {
+  * id : SERIAL <<PK>>
+  --
+  # escritorio_id : INT <<FK>>
+  # cliente_id : INT <<FK>>
+  # advogado_id : INT <<FK>>
+  numero_processo : VARCHAR(100)
+  titulo : VARCHAR(255)
+  descricao : TEXT
+  status : VARCHAR(50)
+  data_inicio : DATE
+  data_fim : DATE
+  area_direito : VARCHAR(20)
+  vara : VARCHAR(255)
+  comarca : VARCHAR(255)
+  valor_causa : DECIMAL(14,2)
+  nome_parte_contraria : VARCHAR(255)
+  nome_advogado_adverso : VARCHAR(255)
+  oab_advogado_adverso : VARCHAR(30)
+  percentual_honorarios_sucumbencia : DECIMAL(5,2)
+  datajud_sincronizado_em : TIMESTAMP
+  sigiloso : BOOLEAN
+}
+
+entity movimentacao {
+  * id : SERIAL <<PK>>
+  --
+  # processo_id : INT <<FK>>
+  # criado_por_id : INT <<FK>>
+  descricao : TEXT
+  data_movimentacao : TIMESTAMP
+  origem : VARCHAR(10)
+  identificador_externo : VARCHAR(120)
+}
+
+entity documento {
+  * id : SERIAL <<PK>>
+  --
+  # processo_id : INT <<FK>>
+  nome_arquivo : VARCHAR(255)
+  arquivo : VARCHAR(500)
+  enviado_em : TIMESTAMP
+}
+
+entity agenda {
+  * id : SERIAL <<PK>>
+  --
+  # processo_id : INT <<FK>>
+  tipo : VARCHAR(20)
+  prioridade : VARCHAR(10)
+  titulo : VARCHAR(255)
+  descricao : TEXT
+  data_evento : TIMESTAMP
+  local_evento : VARCHAR(255)
+  cumprido : BOOLEAN
+}
+
+entity contrato {
+  * id : SERIAL <<PK>>
+  --
+  # escritorio_id : INT <<FK>>
+  # processo_id : INT <<FK, UNIQUE>>
+  tipo_honorario : VARCHAR(20)
+  valor_total : DECIMAL(12,2)
+  forma_pagamento : VARCHAR(20)
+  numero_parcelas : SMALLINT
+  status : VARCHAR(20)
+  observacoes : TEXT
+}
+
+entity parcela {
+  * id : SERIAL <<PK>>
+  --
+  # contrato_id : INT <<FK>>
+  numero : SMALLINT
+  valor : DECIMAL(12,2)
+  data_vencimento : DATE
+  status : VARCHAR(20)
+  pago_em : TIMESTAMP
+}
+
+entity registro_auditoria {
+  * id : SERIAL <<PK>>
+  --
+  # escritorio_id : INT <<FK>>
+  # usuario_id : INT <<FK>>
+  # superadmin_id : INT <<FK>>
+  acao : VARCHAR(20)
+  modelo : VARCHAR(100)
+  objeto_id : INT
+  descricao : VARCHAR(255)
+  endereco_ip : INET
+  criado_em : TIMESTAMP
+}
+
+entity token_redefinicao_senha {
+  * id : SERIAL <<PK>>
+  --
+  # usuario_id : INT <<FK>>
+  token : VARCHAR(64) <<UNIQUE>>
+  criado_em : TIMESTAMP
+  expira_em : TIMESTAMP
+  usado : BOOLEAN
+}
+
+entity token_verificacao_email {
+  * id : SERIAL <<PK>>
+  --
+  # usuario_id : INT <<FK>>
+  token : VARCHAR(64) <<UNIQUE>>
+  criado_em : TIMESTAMP
+  expira_em : TIMESTAMP
+  usado : BOOLEAN
+}
+
+entity apontamento_hora {
+  * id : SERIAL <<PK>>
+  --
+  # escritorio_id : INT <<FK>>
+  # processo_id : INT <<FK>>
+  # usuario_id : INT <<FK>>
+  data : DATE
+  minutos : INT
+  descricao : VARCHAR(255)
+  faturavel : BOOLEAN
+  valor_hora : DECIMAL(10,2)
+}
+
+entity despesa {
+  * id : SERIAL <<PK>>
+  --
+  # escritorio_id : INT <<FK>>
+  # processo_id : INT <<FK>>
+  # criado_por_id : INT <<FK>>
+  tipo : VARCHAR(20)
+  descricao : VARCHAR(255)
+  valor : DECIMAL(12,2)
+  data : DATE
+  reembolsavel : BOOLEAN
+  reembolsada : BOOLEAN
+  comprovante : VARCHAR(500)
+}
+
+entity sessao_uso {
+  * id : SERIAL <<PK>>
+  --
+  # escritorio_id : INT <<FK>>
+  # usuario_id : INT <<FK>>
+  inicio : TIMESTAMP
+  ultima_atividade : TIMESTAMP
+}
+
+entity notificacao_enviada {
+  * id : SERIAL <<PK>>
+  --
+  # usuario_id : INT <<FK>>
+  # agenda_id : INT <<FK>>
+  tipo : VARCHAR(20)
+  chave : VARCHAR(120)
+  enviado_em : TIMESTAMP
+}
+
+entity modelo_documento {
+  * id : SERIAL <<PK>>
+  --
+  # escritorio_id : INT <<FK>>
+  nome : VARCHAR(120)
+  tipo : VARCHAR(20)
+  conteudo : TEXT
+}
+
+entity tarefa {
+  * id : SERIAL <<PK>>
+  --
+  # escritorio_id : INT <<FK>>
+  # processo_id : INT <<FK, NULL>>
+  # responsavel_id : INT <<FK>>
+  # criado_por_id : INT <<FK, NULL>>
+  titulo : VARCHAR(200)
+  descricao : TEXT
+  status : VARCHAR(20)
+  prioridade : VARCHAR(10)
+  prazo : DATE <<NULL>>
+  concluida_em : TIMESTAMP <<NULL>>
+}
+
+
+entity intimacao {
+  * id : SERIAL <<PK>>
+  --
+  # escritorio_id : INT <<FK>>
+  # advogado_id : INT <<FK, NULL>>
+  # processo_id : INT <<FK, NULL>>
+  # evento_agenda_id : INT <<FK, NULL>>
+  identificador_externo : VARCHAR(120)
+  numero_processo : VARCHAR(30)
+  tribunal : VARCHAR(20)
+  orgao : VARCHAR(255)
+  tipo_comunicacao : VARCHAR(100)
+  texto : TEXT
+  link : VARCHAR(500)
+  data_disponibilizacao : DATE
+  data_publicacao : DATE
+  prazo_dias : SMALLINT
+  prazo_dias_uteis : BOOLEAN
+  prazo_estimado : BOOLEAN
+  prazo_final : DATE
+  lida : BOOLEAN
+}
+
+entity inscricao_push {
+  * id : SERIAL <<PK>>
+  --
+  # usuario_id : INT <<FK>>
+  endpoint : VARCHAR(1000) <<UNIQUE>>
+  p256dh : VARCHAR(255)
+  auth : VARCHAR(255)
+  navegador : VARCHAR(255)
+}
+
+entity configuracao_escritorio {
+  * id : SERIAL <<PK>>
+  --
+  # escritorio_id : INT <<FK, UNIQUE>>
+  timezone : VARCHAR(100)
+  formato_data : VARCHAR(10)
+  retencao_documentos : VARCHAR(30)
+  tipo_chave_pix : VARCHAR(10)
+  chave_pix : VARCHAR(77)
+  nome_recebedor_pix : VARCHAR(25)
+  cidade_pix : VARCHAR(15)
+}
+
+superadmin ..> escritorio : administra
+escritorio ||--o{ usuario
+escritorio ||--o{ cliente
+escritorio ||--o{ processo
+escritorio ||--o{ advogado
+usuario ||--o| advogado
+cliente ||--o{ processo
+advogado ||--o{ processo
+processo ||--o{ movimentacao
+processo ||--o{ documento
+processo ||--o{ agenda
+processo |o--o| contrato
+contrato ||--|{ parcela
+usuario ..> movimentacao : autoria
+escritorio ||--o{ registro_auditoria
+usuario ||--o{ registro_auditoria
+superadmin ||--o{ registro_auditoria
+usuario ||--o{ token_redefinicao_senha
+usuario ||--o{ token_verificacao_email
+escritorio ||--o{ apontamento_hora
+processo ||--o{ apontamento_hora
+usuario ||--o{ apontamento_hora
+escritorio ||--o{ despesa
+processo ||--o{ despesa
+escritorio ||--o{ sessao_uso
+usuario ||--o{ sessao_uso
+usuario ||--o{ notificacao_enviada
+agenda ||--o{ notificacao_enviada
+escritorio ||--o{ modelo_documento
+escritorio ||--o{ tarefa
+processo |o--o{ tarefa
+usuario ||--o{ tarefa
+escritorio ||--o{ intimacao
+advogado |o--o{ intimacao
+processo |o--o{ intimacao
+intimacao |o--o| agenda
+usuario ||--o{ inscricao_push
+escritorio ||--|| configuracao_escritorio
+
+@enduml
