@@ -15,6 +15,7 @@ from ..models import (
     Intimacao,
 )
 from ..permissoes import EDITAR, PermissaoPorPerfil
+from ..planos import INTIMACOES_DJEN, exigir_recurso
 from ..serializers import (
     IntimacaoSerializer,
 )
@@ -57,6 +58,7 @@ class IntimacaoViewSet(EscritorioScopedMixin, viewsets.ModelViewSet):
     @action(detail=False, methods=["post"], url_path="buscar")
     def buscar(self, request):
         escritorio = self.get_escritorio()
+        exigir_recurso(escritorio, INTIMACOES_DJEN)
         resultado = importar_intimacoes(escritorio)
         novas = len(resultado["novas"])
         partes = [

@@ -19,6 +19,7 @@ from django.utils import timezone
 from advocacia.datajud import ErroDataJud, consultar_processo, importar_movimentacoes
 from advocacia.emails import enviar_email, montar_email_movimentacoes
 from advocacia.models import Movimentacao, Processo, Usuario
+from advocacia.planos import SINCRONIZACAO_DATAJUD, filtro_com_recurso
 
 logger = logging.getLogger(__name__)
 
@@ -59,6 +60,7 @@ class Command(BaseCommand):
 
         processos = (
             Processo.objects.filter(
+                filtro_com_recurso(SINCRONIZACAO_DATAJUD, prefixo="escritorio__"),
                 status__in=STATUS_ACOMPANHADOS,
                 escritorio__ativo=True,
             )

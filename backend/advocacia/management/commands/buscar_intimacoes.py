@@ -10,6 +10,7 @@ from django.core.management.base import BaseCommand
 
 from advocacia.djen import DIAS_PARA_TRAS, importar_intimacoes
 from advocacia.models import Escritorio
+from advocacia.planos import INTIMACOES_DJEN, filtro_com_recurso
 
 
 class Command(BaseCommand):
@@ -25,7 +26,8 @@ class Command(BaseCommand):
 
     def handle(self, *args, **opcoes):
         total = 0
-        for escritorio in Escritorio.objects.filter(ativo=True):
+        # Só os escritórios cujo plano inclui as intimações do DJEN.
+        for escritorio in Escritorio.objects.filter(filtro_com_recurso(INTIMACOES_DJEN), ativo=True):
             resultado = importar_intimacoes(escritorio, dias=opcoes["dias"])
             novas = len(resultado["novas"])
             total += novas
