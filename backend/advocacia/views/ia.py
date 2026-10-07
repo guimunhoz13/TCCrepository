@@ -18,6 +18,7 @@ from ..mixins import (
     get_usuario_from_request,
 )
 from ..permissoes import VER, PermissaoPorPerfil
+from ..planos import IA, exigir_recurso
 
 # =========================================================
 # ASSISTENTE IA
@@ -55,6 +56,8 @@ class AssistenteIAView(APIView):
                 {"detail": "Usuário não identificado."},
                 status=status.HTTP_401_UNAUTHORIZED,
             )
+
+        exigir_recurso(usuario.escritorio, IA)
 
         mensagem = (request.data.get("mensagem") or "").strip()
 

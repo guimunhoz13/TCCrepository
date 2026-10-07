@@ -814,3 +814,12 @@ export async function deleteTarefa(id) {
 export async function getUsuarios(params) {
   return request(`/usuarios/${buildQuery(params)}`);
 }
+
+// Planos: catálogo (público, também na página inicial) e situação do escritório.
+export async function getPlanos() {
+  return request("/planos/");
+}
+
+export async function getPlanoAtual() {
+  return request("/plano/");
+}

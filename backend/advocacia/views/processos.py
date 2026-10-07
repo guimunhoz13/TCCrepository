@@ -28,6 +28,7 @@ from ..models import (
 )
 from ..notificacoes import notificar_escritorio
 from ..permissoes import EDITAR, VER, PermissaoPorPerfil, pode
+from ..planos import IA, PROCESSOS_ATIVOS, STATUS_INATIVOS, tem_recurso, verificar_limite
 from ..resumo_cliente import gerar_resumo_para_cliente
 from ..serializers import (
     AgendaSerializer,
@@ -69,12 +70,14 @@ class ProcessoViewSet(
     def resumo_cliente(self, request, pk=None):
         """Mensagem em linguagem simples sobre o andamento, para o cliente.
 
-        Usa a IA quando o perfil tem acesso a ela e o servidor está
-        configurado; senão, o modelo automático. O advogado revisa e envia.
+        Usa a IA quando o plano e o perfil têm acesso a ela e o servidor
+        está configurado; senão, o modelo automático. O advogado revisa e
+        envia.
         """
         processo = self.get_object()
         usuario = get_usuario_from_request(request)
-        resultado = gerar_resumo_para_cliente(processo, usuario, usar_ia=pode(usuario, "ia"))
+        usar_ia = pode(usuario, "ia") and tem_recurso(processo.escritorio, IA)
+        resultado = gerar_resumo_para_cliente(processo, usuario, usar_ia=usar_ia)
         resultado["cliente_telefone"] = processo.cliente.telefone
         resultado["cliente_nome"] = processo.cliente.nome
         return Response(resultado)
@@ -150,6 +153,8 @@ class ProcessoViewSet(
 
     def perform_create(self, serializer):
         self._verificar_numero_processo_duplicado(serializer)
+        if serializer.validated_data.get("status", "Em andamento") not in STATUS_INATIVOS:
+            verificar_limite(self.get_escritorio(), PROCESSOS_ATIVOS)
         super().perform_create(serializer)
 
         processo = serializer.instance
@@ -269,6 +274,9 @@ class ProcessoViewSet(
     def perform_update(self, serializer):
         self._verificar_numero_processo_duplicado(serializer)
         status_anterior = serializer.instance.status
+        status_novo = serializer.validated_data.get("status", status_anterior)
+        if status_anterior in STATUS_INATIVOS and status_novo not in STATUS_INATIVOS:
+            verificar_limite(self.get_escritorio(), PROCESSOS_ATIVOS)
         super().perform_update(serializer)
 
         processo = serializer.instance

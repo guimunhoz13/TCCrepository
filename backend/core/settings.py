@@ -270,6 +270,10 @@ EMAIL_PORT = int(os.environ.get("EMAIL_PORT", "587"))
 EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS", "True") == "True"
 DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", EMAIL_HOST_USER or "no-reply@lexoffice.local")
 
+# E-mail para quem quer contratar um plano pago (aparece no botão da tela de
+# planos). Em branco, a tela orienta a falar com o administrador da plataforma.
+CONTATO_COMERCIAL = os.environ.get("CONTATO_COMERCIAL", "")
+
 if EMAIL_HOST_USER and EMAIL_HOST_PASSWORD:
     EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 else:

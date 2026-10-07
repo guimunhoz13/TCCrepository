@@ -127,6 +127,27 @@ sincronização às 5h:
 Sem SMTP configurado (`EMAIL_HOST_USER`/`EMAIL_HOST_PASSWORD`), o Django cai
 no backend de console e apenas imprime os e-mails — veja `backend/.env.example`.
 
+## Planos
+
+Todo escritório novo entra no plano **Gratuito**, sem pagamento nem cartão. Os
+planos pagos ampliam os limites e trazem as automações e a IA:
+
+| | Gratuito | Básico (R$ 79/mês) | Profissional (R$ 199/mês) |
+|---|---|---|---|
+| Usuários ativos | até 3 | até 10 | ilimitados |
+| Processos ativos | até 30 | até 300 | ilimitados |
+| Clientes, agenda, tarefas, documentos, DataJud (consulta), PIX, 2FA, LGPD | sim | sim | sim |
+| Intimações do DJEN e sincronização automática do DataJud | — | sim | sim |
+| Assistente de IA e mensagens ao cliente escritas pela IA | — | — | sim |
+
+O catálogo fica em `backend/advocacia/planos.py`, e a API aplica os limites.
+Passar do limite só impede criar mais; nada é apagado. Processos concluídos ou
+arquivados não contam. Um plano pago com validade vencida vale como Gratuito
+até ser renovado. O plano e a validade de cada escritório são definidos pelo
+administrador da plataforma no painel mestre (`/master`). A cobrança online
+ainda não está ligada a um meio de pagamento: o botão "Quero este plano"
+abre um e-mail para `CONTATO_COMERCIAL` (variável de ambiente do backend).
+
 ## Dados de demonstração
 
 ```bash

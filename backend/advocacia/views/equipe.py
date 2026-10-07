@@ -19,6 +19,7 @@ from ..models import (
     Usuario,
 )
 from ..permissoes import PERFIS, PermissaoPorPerfil
+from ..planos import USUARIOS, verificar_limite
 from ..serializers import (
     AdvogadoRegistroSerializer,
     AdvogadoSerializer,
@@ -156,6 +157,8 @@ class UsuarioViewSet(
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        if not alvo.ativo:
+            verificar_limite(admin.escritorio, USUARIOS)
         alvo.ativo = not alvo.ativo
         alvo.save(update_fields=["ativo"])
         registrar_auditoria(
@@ -252,6 +255,7 @@ class MembroRegistroView(APIView):
 
         serializer = MembroRegistroSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        verificar_limite(admin.escritorio, USUARIOS)
         membro = serializer.create(serializer.validated_data, admin.escritorio)
         registrar_auditoria(
             request,
@@ -317,6 +321,8 @@ class AdvogadoRegistroView(APIView):
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )
+
+        verificar_limite(usuario_logado.escritorio, USUARIOS)
 
         advogado = serializer.create(
             serializer.validated_data,

@@ -22,6 +22,10 @@ def _criar_escritorio(**overrides):
         "email": "contato@escritorio.com",
         "telefone": "11999999999",
         "endereco": "Rua Teste, 100",
+        # Os testes de cada funcionalidade não devem esbarrar nos limites do
+        # plano; esses limites têm testes próprios (test_planos.py), que
+        # criam o escritório no Gratuito.
+        "plano": "profissional",
     }
     dados.update(overrides)
     return Escritorio.objects.create(**dados)
