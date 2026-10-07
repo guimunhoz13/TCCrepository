@@ -127,6 +127,32 @@ sincronização às 5h:
 Sem SMTP configurado (`EMAIL_HOST_USER`/`EMAIL_HOST_PASSWORD`), o Django cai
 no backend de console e apenas imprime os e-mails — veja `backend/.env.example`.
 
+## Dados de demonstração
+
+```bash
+cd backend && python manage.py popular_demo   # --recriar para começar do zero
+```
+
+Cria o escritório "Silva & Sabino Advocacia (demonstração)" com clientes,
+processos (um em segredo de justiça), agenda, tarefas, contrato com parcelas
+e chave PIX. Todos entram com a senha `Demo@1234`: `admin@`, `advogada@`,
+`estagiario@`, `financeiro@` e `secretaria@demo.lexoffice.app` — um de cada
+perfil de acesso.
+
+## Testes de ponta a ponta (E2E)
+
+Com o back-end (porta 8000, `LIMITES_DESLIGADOS=True`) e o front (porta
+3000) rodando sobre os dados de `popular_demo`:
+
+```bash
+cd frontend && npm run e2e
+```
+
+O Playwright usa o sistema como uma pessoa usaria — login, cadastro de
+cliente, ficha do processo, perfis de acesso, Kanban, PIX, agenda .ics e
+celular — e checa acessibilidade (WCAG AA) com axe. No CI, o job
+"E2E (Playwright)" sobe Postgres, API e front sozinho.
+
 ## Documentação da API
 
 Com o back-end rodando, a documentação interativa (OpenAPI 3, gerada com

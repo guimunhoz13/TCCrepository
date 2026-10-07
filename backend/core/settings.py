@@ -309,7 +309,9 @@ REST_FRAMEWORK = {
     # (ver SPECTACULAR_SETTINGS e /api/docs/).
     "DEFAULT_SCHEMA_CLASS": "advocacia.esquema_api.EsquemaLexOffice",
 
-    "DEFAULT_THROTTLE_CLASSES": () if TESTING else (
+    # LIMITES_DESLIGADOS=True só para os testes de ponta a ponta (E2E), que
+    # entram e saem do sistema dezenas de vezes por minuto.
+    "DEFAULT_THROTTLE_CLASSES": () if TESTING or os.environ.get("LIMITES_DESLIGADOS") == "True" else (
 
         "rest_framework.throttling.AnonRateThrottle",
 
