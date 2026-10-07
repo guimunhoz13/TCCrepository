@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { useRecurso } from "@/hooks/useRecurso";
 import { useConfirmacao } from "@/contexts/ConfirmacaoContext";
 import {
@@ -17,7 +17,8 @@ import {
   CalendarDays,
   ListChecks,
   FileText,
-  FileSignature, Lock } from "lucide-react";
+  FileSignature, Lock, MessageCircle } from "lucide-react";
+import ResumoParaCliente from "@/components/panels/ResumoParaCliente";
 import { getFichaProcesso, createMovimentacao, deleteMovimentacao, abrirDocumento } from "@/services/api";
 import { badgeStatus, rotuloStatus } from "@/lib/statusProcesso";
 import { areaDireitoLabel } from "@/lib/areaDireito";
@@ -76,6 +77,8 @@ export default function FichaProcesso({ processoId, onVoltar, onEditar }) {
   const [lancando, setLancando] = useState(false);
   const [erroMovimentacao, setErroMovimentacao] = useState("");
   const [excluindoMovId, setExcluindoMovId] = useState(null);
+  const [resumoAberto, setResumoAberto] = useState(false);
+  const fecharResumo = useCallback(() => setResumoAberto(false), []);
 
   const recurso = useRecurso(() => getFichaProcesso(processoId), [processoId], {
     ativo: Boolean(processoId),
@@ -174,7 +177,7 @@ export default function FichaProcesso({ processoId, onVoltar, onEditar }) {
 
   return (
     <div>
-      <div style={{ display: "flex", gap: 10, marginBottom: 18 }}>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginBottom: 18 }}>
         <button type="button" className="btn btn-secondary" onClick={onVoltar}>
           <ArrowLeft size={15} /> Voltar à lista
         </button>
@@ -183,7 +186,11 @@ export default function FichaProcesso({ processoId, onVoltar, onEditar }) {
             <Pencil size={15} /> Editar processo
           </button>
         )}
+        <button type="button" className="btn btn-secondary" onClick={() => setResumoAberto(true)}>
+          <MessageCircle size={15} /> Atualizar o cliente
+        </button>
       </div>
+      {resumoAberto && <ResumoParaCliente processoId={processo.id} onFechar={fecharResumo} />}
 
       <div className="ficha-identidade">
         <div>

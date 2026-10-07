@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 from .feriados import calcular_prazo
 from .calendario import eventos_para_calendario, gerar_ics
 from .pix import ErroPix, pix_da_parcela
+from .resumo_cliente import gerar_resumo_para_cliente
 from .modelos_documento import VARIAVEIS_DISPONIVEIS, montar_contexto, preencher
 from .datajud import ErroDataJud, consultar_processo, importar_movimentacoes
 from .autenticacao import conta_ativa
@@ -1668,7 +1669,27 @@ class ProcessoViewSet(
 
     permission_classes = [IsAuthenticated, PermissaoPorPerfil]
     area_permissao = "processos"
-    acoes_permissao = {'ficha': VER, 'consultar_datajud': EDITAR}
+    acoes_permissao = {'ficha': VER, 'consultar_datajud': EDITAR, 'resumo_cliente': VER}
+
+    def get_throttles(self):
+        # O resumo pode chamar a IA, que é paga: mesmo limite do assistente.
+        if self.action == "resumo_cliente":
+            self.throttle_scope = "ia"
+        return super().get_throttles()
+
+    @action(detail=True, methods=["post"], url_path="resumo-cliente")
+    def resumo_cliente(self, request, pk=None):
+        """Mensagem em linguagem simples sobre o andamento, para o cliente.
+
+        Usa a IA quando o perfil tem acesso a ela e o servidor está
+        configurado; senão, o modelo automático. O advogado revisa e envia.
+        """
+        processo = self.get_object()
+        usuario = get_usuario_from_request(request)
+        resultado = gerar_resumo_para_cliente(processo, usuario, usar_ia=pode(usuario, "ia"))
+        resultado["cliente_telefone"] = processo.cliente.telefone
+        resultado["cliente_nome"] = processo.cliente.nome
+        return Response(resultado)
 
     def get_queryset(self):
 

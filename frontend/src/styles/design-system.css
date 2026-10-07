@@ -4411,3 +4411,26 @@ button.doc-mini-card {
   resize: none;
   word-break: break-all;
 }
+
+/* Resumo do andamento para o cliente */
+.resumo-cliente {
+  display: grid;
+  gap: 12px;
+}
+
+.resumo-cliente textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border-strong);
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 0.9rem;
+  line-height: 1.55;
+  resize: vertical;
+}
+
+.resumo-cliente .dica-campo svg {
+  vertical-align: -2px;
+}

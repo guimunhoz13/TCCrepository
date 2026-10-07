@@ -562,6 +562,11 @@ export async function getPixDaParcela(parcelaId) {
   return request(`/parcelas/${parcelaId}/pix/`);
 }
 
+// Mensagem em linguagem simples sobre o andamento, para o cliente.
+export async function gerarResumoParaCliente(processoId) {
+  return request(`/processos/${processoId}/resumo-cliente/`, { method: "POST" });
+}
+
 export async function getRelatorioCliente(clienteId) {
   return request(`/configuracoes/relatorio/cliente/${clienteId}/`);
 }
