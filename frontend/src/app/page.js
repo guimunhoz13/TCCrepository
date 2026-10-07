@@ -3,6 +3,9 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import Logo from "@/components/ui/Logo";
+import CartoesDePlanos from "@/components/planos/CartoesDePlanos";
+import { useRecurso } from "@/hooks/useRecurso";
+import { getPlanos } from "@/services/api";
 import {
   Users,
   Briefcase,
@@ -169,6 +172,7 @@ export default function HomePage() {
         <nav className={styles.navLinks}>
           <a href="#recursos">Recursos</a>
           <a href="#como-funciona">Como funciona</a>
+          <a href="#planos">Planos</a>
         </nav>
 
         <div className={styles.navActions}>
@@ -309,6 +313,8 @@ export default function HomePage() {
         </div>
       </section>
 
+      <SecaoDePlanos />
+
       <Reveal as="section" className={styles.ctaFinal}>
         <h2>Pronto para organizar seu escritório?</h2>
         <p>Crie sua conta gratuitamente e comece a usar em minutos.</p>
@@ -327,5 +333,32 @@ export default function HomePage() {
         <Link href="/login">Entrar</Link>
       </footer>
     </div>
+  );
+}
+
+function SecaoDePlanos() {
+  const { dados } = useRecurso(getPlanos);
+  const planos = dados?.planos || [];
+  if (!planos.length) return null;
+
+  return (
+    <section className={styles.features}>
+      <Reveal id="planos" className={styles.sectionHeading}>
+        <span className={styles.eyebrow}>Planos</span>
+        <h2>Comece grátis. Assine quando o escritório crescer.</h2>
+      </Reveal>
+      <CartoesDePlanos
+        planos={planos}
+        acao={(plano) => (
+          <Link
+            href="/cadastro"
+            className={`btn ${plano.preco_mensal ? "btn-secondary" : "btn-primary"}`}
+            style={{ width: "100%" }}
+          >
+            {plano.preco_mensal ? "Começar grátis e assinar depois" : "Criar conta grátis"}
+          </Link>
+        )}
+      />
+    </section>
   );
 }

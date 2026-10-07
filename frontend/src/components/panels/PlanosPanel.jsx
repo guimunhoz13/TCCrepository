@@ -2,109 +2,137 @@
 
 import { usePanel, PANELS } from "@/contexts/PanelContext";
 import OverlayPanel from "@/components/shell/OverlayPanel";
-import { Check, Star } from "lucide-react";
+import CartoesDePlanos from "@/components/planos/CartoesDePlanos";
+import { useRecurso } from "@/hooks/useRecurso";
+import { getPlanoAtual, getPlanos } from "@/services/api";
+import { formatarData } from "@/utils/formato";
 
-const PLANOS = [
-  {
-    id: "basico",
-    nome: "Básico",
-    preco: "R$ 99",
-    descricao: "Ideal para escritórios pequenos começando a digitalizar.",
-    features: [
-      "Até 3 advogados",
-      "50 processos ativos",
-      "Agenda e calendário",
-      "Upload de documentos (5 GB)",
-      "Suporte por e-mail",
-    ],
-  },
-  {
-    id: "profissional",
-    nome: "Profissional",
-    preco: "R$ 249",
-    descricao: "Para escritórios em crescimento com equipe maior.",
-    featured: true,
-    features: [
-      "Até 15 advogados",
-      "Processos ilimitados",
-      "Dashboard com gráficos",
-      "Upload de documentos (50 GB)",
-      "Relatórios avançados",
-      "Suporte prioritário",
-    ],
-  },
-  {
-    id: "enterprise",
-    nome: "Enterprise",
-    preco: "R$ 499",
-    descricao: "Solução completa para grandes bancas jurídicas.",
-    features: [
-      "Advogados ilimitados",
-      "Processos ilimitados",
-      "Multi-unidade",
-      "Armazenamento ilimitado",
-      "API de integração",
-      "Gerente de conta dedicado",
-    ],
-  },
-];
+const ROTULOS_USO = {
+  usuarios: "Usuários ativos",
+  processos_ativos: "Processos ativos",
+};
+
+function BarraDeUso({ rotulo, usado, limite }) {
+  const ilimitado = limite === null || limite === undefined;
+  const proporcao = ilimitado ? 0 : Math.min(usado / limite, 1);
+  const cheio = !ilimitado && usado >= limite;
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.875rem" }}>
+        <span>{rotulo}</span>
+        <strong style={{ color: cheio ? "var(--danger)" : "var(--text-primary)" }}>
+          {ilimitado ? `${usado} (ilimitado)` : `${usado} de ${limite}`}
+        </strong>
+      </div>
+      {!ilimitado && (
+        <div
+          role="meter"
+          aria-label={rotulo}
+          aria-valuemin={0}
+          aria-valuemax={limite}
+          aria-valuenow={usado}
+          style={{ height: 6, borderRadius: 999, background: "var(--border)", overflow: "hidden" }}
+        >
+          <div
+            style={{
+              width: `${proporcao * 100}%`,
+              height: "100%",
+              background: cheio ? "var(--danger)" : "var(--accent)",
+            }}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function botaoDoPlano(plano, ehAtual, { ordem, ordemAtual, contato }) {
+  if (ehAtual || ordem < ordemAtual) return null;
+  if (contato) {
+    const assunto = encodeURIComponent(`Quero o plano ${plano.nome} do LexOffice`);
+    return (
+      <a className="btn btn-primary" style={{ width: "100%" }} href={`mailto:${contato}?subject=${assunto}`}>
+        Quero o plano {plano.nome}
+      </a>
+    );
+  }
+  return (
+    <p style={{ fontSize: "0.8rem", color: "var(--text-muted)", textAlign: "center" }}>
+      Para contratar, fale com o administrador da plataforma.
+    </p>
+  );
+}
 
 export default function PlanosPanel() {
   const { activePanel } = usePanel();
+  const aberto = activePanel === PANELS.PLANOS;
+  const catalogo = useRecurso(getPlanos, [], { ativo: aberto });
+  const atual = useRecurso(getPlanoAtual, [], { ativo: aberto });
 
-  if (activePanel !== PANELS.PLANOS) return null;
+  if (!aberto) return null;
+
+  const planos = catalogo.dados?.planos || [];
+  const situacao = atual.dados;
+  const ordemAtual = planos.findIndex((p) => p.id === situacao?.plano);
+  const nomeContratado = planos.find((p) => p.id === situacao?.plano_contratado)?.nome;
 
   return (
     <OverlayPanel>
       <p style={{ color: "var(--text-secondary)", marginBottom: 20, fontSize: "0.925rem" }}>
-        Escolha o plano ideal para o seu escritório. Todos incluem isolamento
-        de dados, agenda integrada e gestão de processos.
+        O LexOffice é gratuito para começar, sem cartão de crédito. Os planos pagos ampliam os
+        limites e trazem as automações e a inteligência artificial.
       </p>
 
-      <div className="plans-grid">
-        {PLANOS.map((plano) => (
-          <div
-            key={plano.id}
-            className={`plan-card ${plano.featured ? "featured" : ""}`}
-          >
-            {plano.featured && (
-              <span
-                className="badge badge-muted"
-                style={{ alignSelf: "flex-start" }}
-              >
-                <Star size={12} style={{ marginRight: 4 }} />
-                Mais popular
+      {(catalogo.erro || atual.erro) && (
+        <div className="alert alert-error" role="alert" style={{ marginBottom: 16 }}>
+          {catalogo.erro || atual.erro}
+        </div>
+      )}
+
+      {situacao && (
+        <section className="settings-section" aria-labelledby="uso-do-plano" style={{ marginBottom: 24 }}>
+          <h3 id="uso-do-plano" style={{ fontSize: "1rem", marginBottom: 14 }}>
+            Seu escritório está no plano {situacao.nome}
+            {situacao.validade && !situacao.vencido && (
+              <span style={{ fontWeight: 400, color: "var(--text-muted)" }}>
+                {" "}· válido até {formatarData(situacao.validade)}
               </span>
             )}
-            <h4>{plano.nome}</h4>
-            <div className="plan-price">
-              {plano.preco}
-              <span>/mês</span>
+          </h3>
+          {situacao.vencido && (
+            <div className="alert alert-warning" role="status" style={{ marginBottom: 14 }}>
+              O plano {nomeContratado} venceu em {formatarData(situacao.validade)}. Até a renovação,
+              valem os limites do {situacao.nome}; nenhum dado foi apagado.
             </div>
-            <p style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>
-              {plano.descricao}
-            </p>
-            <ul className="plan-features">
-              {plano.features.map((feature) => (
-                <li key={feature}>{feature}</li>
-              ))}
-            </ul>
-            <button
-              className={`btn ${plano.featured ? "btn-primary" : "btn-secondary"}`}
-              style={{ width: "100%" }}
-            >
-              {plano.featured ? (
-                <>
-                  <Check size={16} />
-                  Plano atual
-                </>
-              ) : (
-                "Saiba mais"
-              )}
-            </button>
+          )}
+          <div style={{ display: "grid", gap: 14 }}>
+            {Object.entries(ROTULOS_USO).map(([chave, rotulo]) => (
+              <BarraDeUso
+                key={chave}
+                rotulo={rotulo}
+                usado={situacao.uso[chave]}
+                limite={situacao.limites[chave]}
+              />
+            ))}
           </div>
-        ))}
-      </div>
+        </section>
+      )}
+
+      {catalogo.carregando && !planos.length ? (
+        <p style={{ color: "var(--text-muted)" }}>Carregando os planos…</p>
+      ) : (
+        <CartoesDePlanos
+          planos={planos}
+          atual={situacao?.plano}
+          acao={(plano, ehAtual) =>
+            botaoDoPlano(plano, ehAtual, {
+              ordem: planos.indexOf(plano),
+              ordemAtual,
+              contato: catalogo.dados?.contato_comercial,
+            })
+          }
+        />
+      )}
     </OverlayPanel>
   );
 }

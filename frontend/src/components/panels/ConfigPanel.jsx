@@ -41,6 +41,7 @@ import {
   inscreverPush,
   cancelarPush,
   testarPush,
+  getPlanoAtual,
 } from "@/services/api";
 import { gerarHtmlRelatorioCliente, gerarHtmlRelatorioProcesso, abrirRelatorio } from "@/utils/relatorio";
 import { abrirWhatsApp, montarMensagemCliente, montarMensagemProcesso } from "@/utils/whatsapp";
@@ -1027,7 +1028,33 @@ function AuditoriaTab() {
 }
 
 function FaturamentoTab() {
-  return <div className="settings-stack"><Section title="Faturamento"><div className="empty-state">A área de planos já é visual. A cobrança real ainda não está conectada a um gateway de pagamento.</div></Section></div>;
+  const { openPanel } = usePanel();
+  const { dados: plano, erro } = useRecurso(getPlanoAtual);
+  return (
+    <div className="settings-stack">
+      <Section title="Plano do escritório" description="Todo escritório começa no Gratuito, sem pagamento; os planos pagos ampliam limites e recursos.">
+        {erro && <div className="alert alert-error" role="alert">{erro}</div>}
+        {plano && (
+          <p style={{ fontSize: "0.9rem" }}>
+            Plano atual: <strong>{plano.nome}</strong>
+            {plano.vencido && " (o plano pago venceu; valem os limites do Gratuito até a renovação)"}
+            {" · "}
+            {plano.uso.usuarios} de {plano.limites.usuarios ?? "∞"} usuários
+            {" · "}
+            {plano.uso.processos_ativos} de {plano.limites.processos_ativos ?? "∞"} processos ativos
+          </p>
+        )}
+        <Actions>
+          <button type="button" className="btn btn-primary" onClick={() => openPanel(PANELS.PLANOS)}>
+            Ver planos
+          </button>
+        </Actions>
+      </Section>
+      <Section title="Pagamento">
+        <div className="empty-state">A cobrança online ainda não está conectada a um meio de pagamento: a mudança de plano é feita pelo administrador da plataforma.</div>
+      </Section>
+    </div>
+  );
 }
 
 function Section({ title, description, children, danger }) { return <div className={`settings-section ${danger ? "danger" : ""}`}><div className="settings-section-header"><h4>{title}</h4>{description && <p>{description}</p>}</div><div className="settings-section-body">{children}</div></div>; }
