@@ -14,18 +14,20 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from ..calendario import eventos_para_calendario, gerar_ics
-from ..feriados import calcular_prazo
+from ..feriados import FeriadosLocais, calcular_prazo, feriados_locais_no_periodo
 from ..mixins import (
     EscritorioScopedMixin,
     get_usuario_from_request,
 )
 from ..models import (
     Agenda,
+    FeriadoLocal,
     Usuario,
 )
 from ..permissoes import VER, PermissaoPorPerfil, pode
 from ..serializers import (
     AgendaSerializer,
+    FeriadoLocalSerializer,
 )
 from ..sigilo import esconder_sigilosos
 
@@ -46,7 +48,7 @@ from ..sigilo import esconder_sigilosos
 class CalcularPrazoView(APIView):
     """Calcula a data final de um prazo a partir de uma data de início e
     uma quantidade de dias, contando em dias úteis (pulando fins de semana
-    e feriados nacionais) ou em dias corridos, conforme solicitado. Apoia
+    e feriados nacionais e locais) ou em dias corridos, conforme solicitado. Apoia
     o preenchimento da agenda ao cadastrar um prazo processual (RN — CPC
     art. 219: prazos processuais cíveis contam em dias úteis)."""
 
@@ -80,9 +82,27 @@ class CalcularPrazoView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        data_final = calcular_prazo(data_inicio, dias, dias_uteis=bool(dias_uteis))
+        usuario = get_usuario_from_request(request)
+        locais = FeriadosLocais.do_escritorio(usuario.escritorio) if usuario else FeriadosLocais()
+        data_final = calcular_prazo(data_inicio, dias, dias_uteis=bool(dias_uteis), locais=locais)
 
-        return Response({"data_final": data_final.isoformat()})
+        return Response({
+            "data_final": data_final.isoformat(),
+            # Os feriados locais que pularam a contagem, para o usuário
+            # conferir de onde veio a data.
+            "feriados_locais": feriados_locais_no_periodo(data_inicio, data_final, locais) if dias_uteis else [],
+        })
+
+
+class FeriadoLocalViewSet(EscritorioScopedMixin, viewsets.ModelViewSet):
+    """Feriados municipais, estaduais e suspensões de expediente do
+    escritório, que entram no cálculo de prazos."""
+
+    queryset = FeriadoLocal.objects.all()
+    serializer_class = FeriadoLocalSerializer
+    permission_classes = [IsAuthenticated, PermissaoPorPerfil]
+    area_permissao = "agenda"
+    pagination_class = None
 
 
 class AgendaViewSet(

@@ -514,6 +514,37 @@ class Agenda(models.Model):
         return self.titulo
 
 
+class FeriadoLocal(models.Model):
+    """Dia sem expediente forense que vale só para o escritório: feriado
+    municipal ou estadual, ou suspensão de expediente decretada pelo
+    tribunal. Entra no cálculo de prazos (agenda e intimações do DJEN)."""
+
+    escritorio = models.ForeignKey(
+        Escritorio,
+        on_delete=models.CASCADE,
+        related_name="feriados_locais",
+    )
+    data = models.DateField()
+    descricao = models.CharField(max_length=120)
+    # Onde vale (comarca, tribunal) — só informativo.
+    abrangencia = models.CharField(max_length=120, blank=True, default="")
+    # Repete todo ano no mesmo dia e mês (aniversário da cidade, feriado
+    # estadual de data fixa). Suspensões de expediente não se repetem.
+    anual = models.BooleanField(default=False)
+    criado_em = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["data"]
+        verbose_name = "Feriado local"
+        verbose_name_plural = "Feriados locais"
+        constraints = [
+            models.UniqueConstraint(fields=["escritorio", "data"], name="feriado_local_unico_por_data"),
+        ]
+
+    def __str__(self):
+        return f"{self.data:%d/%m/%Y} — {self.descricao}"
+
+
 class Contrato(models.Model):
 
     TIPOS_HONORARIO = (

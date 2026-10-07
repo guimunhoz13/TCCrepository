@@ -35,6 +35,7 @@ from .models import (
     PreferenciasUsuario,
     ConfiguracaoEscritorio,
     RegistroAuditoria,
+    FeriadoLocal,
     Intimacao,
     ESTADOS_CIVIS,
 )
@@ -1058,6 +1059,24 @@ class ModeloDocumentoSerializer(serializers.ModelSerializer):
             "atualizado_em",
         ]
         read_only_fields = ["id", "tipo_display", "criado_em", "atualizado_em"]
+
+
+class FeriadoLocalSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = FeriadoLocal
+        fields = ["id", "data", "descricao", "abrangencia", "anual", "criado_em"]
+        read_only_fields = ["id", "criado_em"]
+
+    def validate(self, dados):
+        escritorio = self.context.get("escritorio")
+        data = dados.get("data", getattr(self.instance, "data", None))
+        repetido = FeriadoLocal.objects.filter(escritorio=escritorio, data=data)
+        if self.instance is not None:
+            repetido = repetido.exclude(pk=self.instance.pk)
+        if escritorio is not None and repetido.exists():
+            raise serializers.ValidationError({"data": "Já existe um feriado local cadastrado nesta data."})
+        return dados
 
 
 class IntimacaoSerializer(serializers.ModelSerializer):
