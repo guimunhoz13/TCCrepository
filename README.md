@@ -127,6 +127,18 @@ sincronização às 5h:
 Sem SMTP configurado (`EMAIL_HOST_USER`/`EMAIL_HOST_PASSWORD`), o Django cai
 no backend de console e apenas imprime os e-mails — veja `backend/.env.example`.
 
+## Documentação da API
+
+Com o back-end rodando, a documentação interativa (OpenAPI 3, gerada com
+drf-spectacular a partir das próprias views e serializers) fica em:
+
+- `http://localhost:8000/api/docs/` — Swagger UI (clique em **Authorize** e
+  cole o `access` devolvido por `POST /api/login/` para testar as rotas);
+- `http://localhost:8000/api/redoc/` — ReDoc;
+- `http://localhost:8000/api/schema/` — o arquivo OpenAPI.
+
+Para esconder a documentação em produção, defina `API_DOCS_PUBLICAS=False`.
+
 ## Testes
 
 ```bash

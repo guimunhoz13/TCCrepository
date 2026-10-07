@@ -26,6 +26,9 @@ from .datajud import ErroDataJud, consultar_processo, importar_movimentacoes
 from .autenticacao import conta_ativa
 from .notificacoes import notificar_escritorio
 
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import OpenApiExample, extend_schema, inline_serializer
+from rest_framework import serializers as campos
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied, ValidationError
@@ -160,6 +163,13 @@ def _id_do_filtro(params, nome):
         raise ValidationError({nome: ["Informe um identificador numérico."]})
 
 
+@extend_schema(
+    tags=["autenticacao"],
+    summary="Renovar o access token",
+    description="Rotaciona o refresh: o enviado é revogado e um novo par volta na resposta.",
+    request=inline_serializer("Renovacao", {"refresh": campos.CharField()}),
+    responses={200: inline_serializer("TokensRenovados", {"access": campos.CharField(), "refresh": campos.CharField()}), 401: OpenApiTypes.OBJECT},
+)
 class RenovarTokenView(APIView):
     """Emite um novo access token a partir de um refresh token válido.
 
@@ -240,6 +250,12 @@ def _revogar_refresh_token(refresh):
     BlacklistedToken.objects.get_or_create(token=token)
 
 
+@extend_schema(
+    tags=["autenticacao"],
+    summary="Sair (revoga o refresh token)",
+    request=inline_serializer("Logout", {"refresh": campos.CharField()}),
+    responses={205: None, 400: OpenApiTypes.OBJECT},
+)
 class LogoutView(APIView):
     """Revoga (blacklista) o refresh token, encerrando a sessão de verdade
     no servidor. Sem isso, "sair" só apagava os tokens do navegador — uma
@@ -317,6 +333,26 @@ def _dados_do_usuario_logado(request, usuario):
     }
 
 
+# Resposta comum ao login e à segunda etapa (documentação da API).
+_SESSAO_ABERTA = inline_serializer("Sessao", {
+    "access": campos.CharField(),
+    "refresh": campos.CharField(),
+    "usuario": campos.DictField(help_text="Dados do usuário logado, perfil e permissões."),
+})
+
+
+@extend_schema(
+    tags=["autenticacao"],
+    summary="Entrar com e-mail e senha",
+    description=(
+        "Devolve o par de tokens e o usuário. Se a conta tem verificação em duas "
+        "etapas, devolve `requer_2fa: true` e um `desafio` (válido por 5 minutos) "
+        "para concluir em /api/login/2fa/. Cinco senhas erradas bloqueiam por 15 minutos."
+    ),
+    request=inline_serializer("Login", {"email": campos.EmailField(), "senha": campos.CharField()}),
+    responses={200: _SESSAO_ABERTA, 401: OpenApiTypes.OBJECT, 403: OpenApiTypes.OBJECT},
+    examples=[OpenApiExample("Demo", value={"email": "admin@silvasabino.adv.br", "senha": "Demo@1234"}, request_only=True)],
+)
 class LoginView(APIView):
 
     permission_classes = [AllowAny]
@@ -472,6 +508,12 @@ def _abrir_sessao(request, usuario):
 TENTATIVAS_SEGUNDO_FATOR = 5
 
 
+@extend_schema(
+    tags=["autenticacao"],
+    summary="Concluir o login com o código do autenticador",
+    request=inline_serializer("LoginSegundoFator", {"desafio": campos.CharField(), "codigo": campos.CharField()}),
+    responses={200: _SESSAO_ABERTA, 400: OpenApiTypes.OBJECT},
+)
 class LoginSegundoFatorView(APIView):
     """Segunda fase do login: desafio (da primeira fase) + código do app."""
 
@@ -2020,6 +2062,16 @@ class DocumentoViewSet(
 # AGENDA
 # =========================================================
 
+@extend_schema(
+    tags=["agenda"],
+    summary="Calcular a data final de um prazo",
+    request=inline_serializer("CalculoDePrazo", {
+        "data_inicio": campos.DateField(),
+        "dias": campos.IntegerField(min_value=1),
+        "dias_uteis": campos.BooleanField(default=True),
+    }),
+    responses={200: OpenApiTypes.OBJECT},
+)
 class CalcularPrazoView(APIView):
     """Calcula a data final de um prazo a partir de uma data de início e
     uma quantidade de dias, contando em dias úteis (pulando fins de semana
@@ -2290,6 +2342,19 @@ class ParcelaViewSet(
 # ASSISTENTE IA
 # =========================================================
 
+@extend_schema(
+    tags=["ia"],
+    summary="Perguntar ao assistente de IA",
+    request=inline_serializer("PerguntaIA", {
+        "mensagem": campos.CharField(max_length=4000),
+        "historico": campos.ListField(child=campos.DictField(), required=False),
+        "contexto": inline_serializer("ContextoIA", {
+            "cliente_id": campos.IntegerField(required=False),
+            "processo_id": campos.IntegerField(required=False),
+        }, required=False),
+    }),
+    responses={200: inline_serializer("RespostaIA", {"resposta": campos.CharField()}), 503: OpenApiTypes.OBJECT},
+)
 class AssistenteIAView(APIView):
 
     permission_classes = [IsAuthenticated, PermissaoPorPerfil]

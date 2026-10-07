@@ -83,6 +83,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt.token_blacklist',
     'corsheaders',
+    'drf_spectacular',
 
 
     # projeto
@@ -304,6 +305,10 @@ REST_FRAMEWORK = {
 
     "DEFAULT_PAGINATION_CLASS": "advocacia.pagination.PaginacaoPadrao",
 
+    # Documentação OpenAPI gerada a partir das próprias views e serializers
+    # (ver SPECTACULAR_SETTINGS e /api/docs/).
+    "DEFAULT_SCHEMA_CLASS": "advocacia.esquema_api.EsquemaLexOffice",
+
     "DEFAULT_THROTTLE_CLASSES": () if TESTING else (
 
         "rest_framework.throttling.AnonRateThrottle",
@@ -333,6 +338,49 @@ REST_FRAMEWORK = {
 
     },
 
+}
+
+
+# Documentação da API (OpenAPI 3 / Swagger)
+#
+# /api/docs/ (Swagger UI), /api/redoc/ e /api/schema/ (o arquivo OpenAPI).
+# O esquema descreve rotas e campos, nunca dados: para chamar uma rota pela
+# própria página é preciso colar um token de acesso em "Authorize". Para
+# esconder a documentação em produção, API_DOCS_PUBLICAS=False.
+API_DOCS_PUBLICAS = os.environ.get("API_DOCS_PUBLICAS", "True") == "True"
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "LexOffice API",
+    "DESCRIPTION": (
+        "API do ERP jurídico LexOffice: clientes, processos, agenda, documentos, "
+        "contratos e honorários, tarefas, horas e despesas, intimações do DJEN, "
+        "PIX, IA e configurações do escritório.\n\n"
+        "**Autenticação:** `POST /api/login/` devolve `access` e `refresh` "
+        "(ou um desafio de verificação em duas etapas, concluído em "
+        "`POST /api/login/2fa/`). Envie `Authorization: Bearer <access>`.\n\n"
+        "**Escopo:** toda rota enxerga só o escritório de quem está logado; o "
+        "perfil de acesso (administrador, advogado, estagiário, financeiro, "
+        "secretária) limita o que cada um pode ver e alterar, e processos em "
+        "segredo de justiça só aparecem para o administrador e o advogado "
+        "responsável."
+    ),
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
+    # Versões fixas da interface (CDN), para a página não mudar sozinha.
+    "SWAGGER_UI_DIST": "https://cdn.jsdelivr.net/npm/swagger-ui-dist@5",
+    "SWAGGER_UI_FAVICON_HREF": "https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/favicon-32x32.png",
+    "REDOC_DIST": "https://cdn.jsdelivr.net/npm/redoc@2",
+    "SWAGGER_UI_SETTINGS": {"persistAuthorization": True, "displayRequestDuration": True},
+    "COMPONENT_SPLIT_REQUEST": True,
+    "SCHEMA_PATH_PREFIX": r"/api/",
+    "TAGS": [
+        {"name": "autenticacao", "description": "Login, verificação em duas etapas, renovação e logout."},
+        {"name": "clientes", "description": "Cadastro de clientes e pedidos da LGPD."},
+        {"name": "processos", "description": "Processos, ficha completa, DataJud e resumo para o cliente."},
+        {"name": "intimacoes", "description": "Intimações do Diário de Justiça Eletrônico Nacional."},
+        {"name": "agenda", "description": "Compromissos e prazos, cálculo de prazo e calendário .ics."},
+        {"name": "financeiro", "description": "Contratos, parcelas e PIX."},
+    ],
 }
 
 

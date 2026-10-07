@@ -65,6 +65,18 @@ jobs:
         working-directory: backend
         run: python manage.py check
 
+      # Gera o arquivo OpenAPI e falha se o esquema tiver erro ou aviso
+      # (rota sem documentação, campo de tipo desconhecido).
+      - name: Documentação da API (OpenAPI)
+        working-directory: backend
+        run: python manage.py spectacular --validate --fail-on-warn --file openapi.yml
+
+      - name: Publicar o openapi.yml
+        uses: actions/upload-artifact@v4
+        with:
+          name: openapi
+          path: backend/openapi.yml
+
       # Simula a configuração de produção (DEBUG desligado, HTTPS) e falha se
       # o Django apontar qualquer aviso de segurança de deploy.
       - name: Checagem de segurança de produção (check --deploy)

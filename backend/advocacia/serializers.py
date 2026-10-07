@@ -1,7 +1,11 @@
+from decimal import Decimal
+
 from django.contrib.auth.hashers import make_password
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
 from django.utils import timezone
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import extend_schema_field, inline_serializer
 from rest_framework import serializers
 
 from .validators import (
@@ -229,7 +233,7 @@ class UsuarioSerializer(serializers.ModelSerializer):
             "documento_identidade": {"write_only": True},
         }
 
-    def get_documento_identidade_enviado(self, obj):
+    def get_documento_identidade_enviado(self, obj) -> bool:
         return bool(obj.documento_identidade)
 
     def validate(self, dados):
@@ -388,7 +392,7 @@ class ClienteSerializer(serializers.ModelSerializer):
             "documento_identidade": {"write_only": True},
         }
 
-    def get_documento_identidade_enviado(self, obj):
+    def get_documento_identidade_enviado(self, obj) -> bool:
         return bool(obj.documento_identidade)
 
 
@@ -445,7 +449,7 @@ class AdvogadoSerializer(serializers.ModelSerializer):
             "oab": {"validators": [validar_oab]},
         }
 
-    def get_documento_identidade_enviado(self, obj):
+    def get_documento_identidade_enviado(self, obj) -> bool:
         return bool(obj.usuario.documento_identidade)
 
     def update(self, instance, validated_data):
@@ -474,6 +478,17 @@ class ProcessoSerializer(EscopoDoEscritorioMixin, serializers.ModelSerializer):
     )
     proximo_prazo = serializers.SerializerMethodField()
 
+    @extend_schema_field(
+        inline_serializer(
+            "ProximoPrazo",
+            {
+                "data_evento": serializers.DateTimeField(),
+                "prioridade": serializers.CharField(),
+                "atrasado": serializers.BooleanField(),
+            },
+            allow_null=True,
+        )
+    )
     def get_proximo_prazo(self, obj):
         """O prazo pendente mais próximo do processo, para a listagem
         sinalizar urgência sem abrir a ficha.
@@ -665,19 +680,19 @@ class AgendaSerializer(EscopoDoEscritorioMixin, serializers.ModelSerializer):
             "processo": {"required": False, "allow_null": True},
         }
 
-    def get_processo_titulo(self, obj):
+    def get_processo_titulo(self, obj) -> str | None:
         return obj.processo.titulo if obj.processo else None
 
-    def get_numero_processo(self, obj):
+    def get_numero_processo(self, obj) -> str | None:
         return obj.processo.numero_processo if obj.processo else None
 
-    def get_cliente_nome(self, obj):
+    def get_cliente_nome(self, obj) -> str | None:
         return obj.processo.cliente.nome if obj.processo else None
 
-    def get_advogado_nome(self, obj):
+    def get_advogado_nome(self, obj) -> str | None:
         return obj.processo.advogado.usuario.nome if obj.processo else None
 
-    def get_atrasado(self, obj):
+    def get_atrasado(self, obj) -> bool:
         from django.utils import timezone
 
         return not obj.cumprido and obj.data_evento < timezone.now()
@@ -710,13 +725,13 @@ class EscritorioAdminSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["id", "criado_em", "total_advogados", "total_clientes", "total_processos"]
 
-    def get_total_advogados(self, obj):
+    def get_total_advogados(self, obj) -> int:
         return obj.advogados.count()
 
-    def get_total_clientes(self, obj):
+    def get_total_clientes(self, obj) -> int:
         return obj.clientes.count()
 
-    def get_total_processos(self, obj):
+    def get_total_processos(self, obj) -> int:
         return obj.processos.count()
 
 
@@ -778,10 +793,10 @@ class ContratoSerializer(EscopoDoEscritorioMixin, serializers.ModelSerializer):
             "criado_em",
         ]
 
-    def get_valor_pago(self, obj):
+    def get_valor_pago(self, obj) -> Decimal:
         return sum((p.valor for p in obj.parcelas.all() if p.status == "pago"), 0)
 
-    def get_valor_pendente(self, obj):
+    def get_valor_pendente(self, obj) -> Decimal:
         return sum((p.valor for p in obj.parcelas.all() if p.status != "pago"), 0)
 
 
