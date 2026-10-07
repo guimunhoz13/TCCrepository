@@ -22,30 +22,63 @@ const CHAVE_REFRESH = {
 // a primeira chamada à API depois da expiração falhava com "Given token not
 // valid for any token type" e o usuário era obrigado a atualizar a página e
 // logar de novo no meio do uso do sistema.
-async function renovarAccessToken(tokenKey) {
+//
+// O backend troca o refresh token a cada renovação e revoga o anterior. Por
+// isso várias chamadas que recebem 401 ao mesmo tempo compartilham uma única
+// renovação em andamento: se cada uma renovasse por conta própria, a segunda
+// usaria um refresh já revogado e derrubaria a sessão.
+const renovacoesEmAndamento = {};
+
+function lerRefresh(refreshKey) {
+  return refreshKey && typeof window !== "undefined"
+    ? localStorage.getItem(refreshKey)
+    : null;
+}
+
+async function pedirNovoAccessToken(tokenKey, refreshKey, refreshToken) {
+  const response = await fetch(`${API_URL}/token/refresh/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ refresh: refreshToken }),
+  });
+
+  if (!response.ok) return null;
+
+  const data = await response.json();
+  localStorage.setItem(tokenKey, data.access);
+  if (data.refresh) localStorage.setItem(refreshKey, data.refresh);
+  return data.access;
+}
+
+async function executarRenovacao(tokenKey) {
   const refreshKey = CHAVE_REFRESH[tokenKey];
-  const refreshToken =
-    refreshKey && typeof window !== "undefined"
-      ? localStorage.getItem(refreshKey)
-      : null;
+  const refreshToken = lerRefresh(refreshKey);
 
   if (!refreshToken) return null;
 
   try {
-    const response = await fetch(`${API_URL}/token/refresh/`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ refresh: refreshToken }),
-    });
+    const novo = await pedirNovoAccessToken(tokenKey, refreshKey, refreshToken);
+    if (novo) return novo;
 
-    if (!response.ok) return null;
-
-    const data = await response.json();
-    localStorage.setItem(tokenKey, data.access);
-    return data.access;
+    // Outra aba pode ter renovado (e revogado o refresh que lemos) enquanto
+    // esta requisição estava em voo; nesse caso o localStorage já tem o novo.
+    const refreshAtual = lerRefresh(refreshKey);
+    if (refreshAtual && refreshAtual !== refreshToken) {
+      return await pedirNovoAccessToken(tokenKey, refreshKey, refreshAtual);
+    }
+    return null;
   } catch {
     return null;
   }
+}
+
+function renovarAccessToken(tokenKey) {
+  if (!renovacoesEmAndamento[tokenKey]) {
+    renovacoesEmAndamento[tokenKey] = executarRenovacao(tokenKey).finally(() => {
+      delete renovacoesEmAndamento[tokenKey];
+    });
+  }
+  return renovacoesEmAndamento[tokenKey];
 }
 
 async function request(endpoint, options = {}, tokenKey = "access") {
@@ -105,6 +138,14 @@ export async function login(email, senha) {
   });
 }
 
+/** Segunda fase do login, quando a conta tem verificação em duas etapas. */
+export async function loginSegundoFator(desafio, codigo) {
+  return request("/login/2fa/", {
+    method: "POST",
+    body: JSON.stringify({ desafio, codigo }),
+  });
+}
+
 export async function solicitarRedefinicaoSenha(email) {
   return request("/login/esqueci-senha/", {
     method: "POST",
@@ -146,6 +187,14 @@ export async function registrarAdvogado(data) {
 
 export async function getDashboardStats() {
   return request("/dashboard/stats/");
+}
+
+export async function getDashboardResumo() {
+  return request("/dashboard/");
+}
+
+export async function buscarNoEscritorio(termo) {
+  return request(`/busca/${buildQuery({ q: termo })}`);
 }
 
 export async function getNoticiasJuridicas() {
@@ -200,6 +249,23 @@ export async function getAgenda(params) {
   return request(`/agenda/${buildQuery(params)}`);
 }
 
+// Agenda no Google Agenda / Outlook / iPhone (iCalendar).
+export function exportarAgendaICS() {
+  return downloadArquivo("/agenda/exportar-ics/", "agenda-lexoffice.ics");
+}
+
+export async function getAssinaturaAgenda() {
+  return request("/agenda/assinatura/");
+}
+
+export async function gerarAssinaturaAgenda() {
+  return request("/agenda/assinatura/", { method: "POST" });
+}
+
+export async function desligarAssinaturaAgenda() {
+  return request("/agenda/assinatura/", { method: "DELETE" });
+}
+
 export async function createAgenda(data) {
   return request("/agenda/", {
     method: "POST",
@@ -225,8 +291,8 @@ export async function calcularPrazo({ data_inicio, dias, dias_uteis = true }) {
   });
 }
 
-export async function getContratos() {
-  return request("/contratos/");
+export async function getContratos(params) {
+  return request(`/contratos/${buildQuery(params)}`);
 }
 
 export async function createContrato(data) {
@@ -254,8 +320,8 @@ export async function updateParcela(id, data) {
   });
 }
 
-export async function getDocumentos() {
-  return request("/documentos/");
+export async function getDocumentos(params) {
+  return request(`/documentos/${buildQuery(params)}`);
 }
 
 export async function createDocumento(formData) {
@@ -269,8 +335,8 @@ export async function deleteDocumento(id) {
   return request(`/documentos/${id}/`, { method: "DELETE" });
 }
 
-export async function getAdvogados() {
-  return request("/advogados/");
+export async function getAdvogados(params) {
+  return request(`/advogados/${buildQuery(params)}`);
 }
 
 export async function updateAdvogado(id, data) {
@@ -293,10 +359,32 @@ export function normalizarLista(dados) {
   return [];
 }
 
+/**
+ * Busca todas as páginas de uma listagem (para preencher um <select>, por
+ * exemplo). `buscar` é uma das funções get* deste arquivo.
+ */
+export async function listarTudo(buscar, params = {}) {
+  const itens = [];
+  for (let page = 1; ; page += 1) {
+    const dados = await buscar({ ...params, page, page_size: 1000 });
+    itens.push(...normalizarLista(dados));
+    if (!dados?.next) return itens;
+  }
+}
+
 export function getUsuarioLogado() {
   if (typeof window === "undefined") return null;
   const raw = localStorage.getItem("usuarioLogado");
   return raw ? JSON.parse(raw) : null;
+}
+
+export const EVENTO_USUARIO_ALTERADO = "lexoffice:usuario-alterado";
+
+/** Grava o usuário logado e avisa os componentes que o exibem
+ *  (o evento "storage" do navegador só dispara nas outras abas). */
+export function salvarUsuarioLogado(usuario) {
+  localStorage.setItem("usuarioLogado", JSON.stringify(usuario));
+  window.dispatchEvent(new Event(EVENTO_USUARIO_ALTERADO));
 }
 
 export function logout() {
@@ -436,6 +524,79 @@ export function exportarProcessosCSV() {
   return downloadArquivo("/configuracoes/exportar/processos/", "processos.csv");
 }
 
+// LGPD — pedidos do titular dos dados.
+export function exportarDadosDoCliente(clienteId) {
+  return downloadArquivo(`/clientes/${clienteId}/exportar-dados/`, `dados-cliente-${clienteId}.json`);
+}
+
+export async function anonimizarCliente(clienteId) {
+  return request(`/clientes/${clienteId}/anonimizar/`, { method: "POST" });
+}
+
+// Equipe do escritório (membros sem OAB, perfis de acesso, 2FA).
+export async function registrarMembro(data) {
+  return request("/equipe/registrar/", { method: "POST", body: JSON.stringify(data) });
+}
+
+export async function definirPerfilDoUsuario(usuarioId, tipo_usuario) {
+  return request(`/usuarios/${usuarioId}/definir-perfil/`, {
+    method: "POST",
+    body: JSON.stringify({ tipo_usuario }),
+  });
+}
+
+export async function redefinirDoisFatoresDoUsuario(usuarioId) {
+  return request(`/usuarios/${usuarioId}/redefinir-2fa/`, { method: "POST" });
+}
+
+// Verificação em duas etapas da própria conta.
+export async function configurarDoisFatores(acao, dados = {}) {
+  return request("/configuracoes/2fa/", {
+    method: "POST",
+    body: JSON.stringify({ acao, ...dados }),
+  });
+}
+
+// PIX (BR Code) de uma parcela de contrato.
+export async function getPixDaParcela(parcelaId) {
+  return request(`/parcelas/${parcelaId}/pix/`);
+}
+
+// Mensagem em linguagem simples sobre o andamento, para o cliente.
+export async function gerarResumoParaCliente(processoId) {
+  return request(`/processos/${processoId}/resumo-cliente/`, { method: "POST" });
+}
+
+// Intimações do DJEN.
+export async function getIntimacoes(params) {
+  return request(`/intimacoes/${buildQuery(params)}`);
+}
+
+export async function buscarIntimacoesNoDjen() {
+  return request("/intimacoes/buscar/", { method: "POST" });
+}
+
+export async function marcarIntimacaoComoLida(id) {
+  return request(`/intimacoes/${id}/`, { method: "PATCH", body: JSON.stringify({ lida: true }) });
+}
+
+// Notificações push.
+export async function getSituacaoPush() {
+  return request("/push/");
+}
+
+export async function inscreverPush(inscricao) {
+  return request("/push/inscrever/", { method: "POST", body: JSON.stringify(inscricao) });
+}
+
+export async function cancelarPush(endpoint) {
+  return request("/push/cancelar/", { method: "POST", body: JSON.stringify({ endpoint }) });
+}
+
+export async function testarPush() {
+  return request("/push/testar/", { method: "POST" });
+}
+
 export async function getRelatorioCliente(clienteId) {
   return request(`/configuracoes/relatorio/cliente/${clienteId}/`);
 }
@@ -498,8 +659,8 @@ export async function getMasterStats() {
   return masterRequest("/master/stats/");
 }
 
-export async function getMasterEscritorios() {
-  return masterRequest("/master/escritorios/");
+export async function getMasterEscritorios(params) {
+  return masterRequest(`/master/escritorios/${buildQuery(params)}`);
 }
 
 export async function createMasterEscritorio(data) {
@@ -533,10 +694,7 @@ export async function getAuditoria(params) {
 // ---------------------------------------------------------------
 
 export async function getApontamentos(filtros = {}) {
-  const busca = new URLSearchParams(
-    Object.entries(filtros).filter(([, valor]) => valor !== "" && valor != null)
-  ).toString();
-  return request(`/apontamentos/${busca ? `?${busca}` : ""}`);
+  return request(`/apontamentos/${buildQuery(filtros)}`);
 }
 
 export async function createApontamento(data) {
@@ -552,10 +710,7 @@ export async function deleteApontamento(id) {
 // ---------------------------------------------------------------
 
 export async function getDespesas(filtros = {}) {
-  const busca = new URLSearchParams(
-    Object.entries(filtros).filter(([, valor]) => valor !== "" && valor != null)
-  ).toString();
-  return request(`/despesas/${busca ? `?${busca}` : ""}`);
+  return request(`/despesas/${buildQuery(filtros)}`);
 }
 
 export async function createDespesa(data) {
@@ -586,8 +741,8 @@ export async function getTempoDeUso(mes) {
 // Modelos de documento (automação)
 // ---------------------------------------------------------------
 
-export async function getModelosDocumento() {
-  return request("/modelos-documento/");
+export async function getModelosDocumento(params) {
+  return request(`/modelos-documento/${buildQuery(params)}`);
 }
 
 export async function createModeloDocumento(data) {
@@ -641,10 +796,7 @@ export async function deleteMovimentacao(id) {
 // ---------------------------------------------------------------
 
 export async function getTarefas(filtros = {}) {
-  const busca = new URLSearchParams(
-    Object.entries(filtros).filter(([, valor]) => valor !== "" && valor != null)
-  ).toString();
-  return request(`/tarefas/${busca ? `?${busca}` : ""}`);
+  return request(`/tarefas/${buildQuery(filtros)}`);
 }
 
 export async function createTarefa(data) {
@@ -659,6 +811,6 @@ export async function deleteTarefa(id) {
   return request(`/tarefas/${id}/`, { method: "DELETE" });
 }
 
-export async function getUsuarios() {
-  return request("/usuarios/");
+export async function getUsuarios(params) {
+  return request(`/usuarios/${buildQuery(params)}`);
 }

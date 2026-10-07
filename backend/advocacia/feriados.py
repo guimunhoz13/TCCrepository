@@ -79,3 +79,51 @@ def calcular_prazo(data_inicio, dias, dias_uteis=True):
             dias_contados += 1
 
     return data
+
+
+def em_recesso_forense(data):
+    """20 de dezembro a 20 de janeiro: prazos suspensos (CPC, art. 220)."""
+    return (data.month == 12 and data.day >= 20) or (data.month == 1 and data.day <= 20)
+
+
+def eh_dia_util_forense(data):
+    """Dia útil para contar prazo processual: sem fim de semana, feriado
+    nacional nem recesso forense."""
+    return eh_dia_util(data) and not em_recesso_forense(data)
+
+
+def proximo_dia_util_forense(data):
+    data += timedelta(days=1)
+    while not eh_dia_util_forense(data):
+        data += timedelta(days=1)
+    return data
+
+
+def prazo_de_publicacao(data_disponibilizacao, dias, dias_uteis=True):
+    """Datas de uma intimação publicada no Diário de Justiça Eletrônico.
+
+    - Publicação: primeiro dia útil seguinte à disponibilização no diário
+      (Lei 11.419/2006, art. 4º, § 3º).
+    - Contagem: começa no primeiro dia útil seguinte à publicação
+      (art. 4º, § 4º; CPC, art. 224, § 3º).
+    - Em dias úteis, pula fins de semana, feriados nacionais e o recesso
+      de 20/12 a 20/01 (CPC, arts. 219 e 220). Em dias corridos, o recesso
+      também suspende a contagem.
+
+    Devolve (data_publicacao, data_final).
+    """
+    publicacao = proximo_dia_util_forense(data_disponibilizacao)
+    data = publicacao
+    contados = 0
+    while contados < dias:
+        data += timedelta(days=1)
+        if dias_uteis:
+            if eh_dia_util_forense(data):
+                contados += 1
+        elif not em_recesso_forense(data):
+            contados += 1
+    # Prazo que vence em dia sem expediente passa para o próximo útil
+    # (CPC, art. 224, § 1º).
+    if not eh_dia_util_forense(data):
+        data = proximo_dia_util_forense(data)
+    return publicacao, data

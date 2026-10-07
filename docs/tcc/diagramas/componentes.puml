@@ -1,0 +1,38 @@
+@startuml
+!include skinparam.iuml
+title Diagrama de Componentes — Backend (Django)
+
+package "Backend (Django)" {
+  package "Views (advocacia/views/)" {
+    component "sessao, equipe, clientes,\nprocessos, intimacoes, agenda,\nfinanceiro, tarefas, ...\n<<um módulo por assunto>>" as Views
+  }
+  component "Serializers\n<<validação de entrada>>" as Serializers
+  component "Permissões\n<<permissoes.py: perfil × área × ação>>" as Perm
+  component "Escopo e sigilo\n<<mixins.py, sigilo.py>>" as Escopo
+  component "Serviços de domínio\n<<feriados, djen, datajud, pix,\ncalendario, resumo_cliente,\ndois_fatores, push, ia_service>>" as Servicos
+  component "Modelos / ORM\n<<Django Models>>" as Models
+  component "Documentação OpenAPI\n<<drf-spectacular>>" as Docs
+}
+
+database "PostgreSQL\n(Supabase)" as DB
+cloud "Serviços externos\n(OpenAI, SMTP, DataJud,\nDJEN, push)" as Externos
+
+Views ..> Serializers
+Views ..> Perm
+Views ..> Escopo
+Views ..> Servicos
+Serializers ..> Models
+Escopo ..> Models
+Servicos ..> Models
+Servicos ..> Externos
+Models ..> DB
+Docs ..> Views : lê as rotas
+
+note bottom of Perm
+  Uma matriz única decide o que cada perfil
+  pode ver, criar, editar e excluir; a mesma
+  matriz vai ao frontend, que esconde o que
+  a API recusaria.
+end note
+
+@enduml

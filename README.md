@@ -57,6 +57,19 @@ npm install
 npm run dev
 ```
 
+## Segurança em produção
+
+- Sem `DEBUG=True` o backend sobe em modo produção: exige `SECRET_KEY`
+  (recusa subir sem ela), redireciona para HTTPS, liga HSTS e marca os
+  cookies como seguros. No `.env` local mantenha `DEBUG=True`.
+- O CI roda `manage.py check --deploy --fail-level WARNING` e falha em
+  qualquer aviso de segurança de deploy.
+- O frontend envia CSP, `X-Frame-Options`, `Referrer-Policy` e
+  `Permissions-Policy` em todas as páginas (`frontend/next.config.mjs`).
+- O refresh token é trocado a cada renovação e o anterior é revogado.
+- O assistente de IA tem limite próprio (20 chamadas/minuto por usuário) e
+  aceita mensagens de até 4000 caracteres.
+
 ## Tarefas agendadas
 
 Os lembretes de agenda e o resumo semanal são enviados por um comando que
@@ -93,15 +106,64 @@ atrapalhar o envio dos lembretes. Opções: `--dry-run`, `--limite N`
 Processos concluídos ou arquivados não são consultados, e a rotina exige
 `DATAJUD_API_KEY` configurada.
 
-Exemplo de agendamento no cron — lembretes às 7h, sincronização às 5h:
+As intimações publicadas no Diário de Justiça Eletrônico Nacional (DJEN)
+são buscadas pela OAB de cada advogado (no formato `123456/SP`). Cada uma é
+ligada ao processo cadastrado, o prazo é lido do texto (ou estimado em 5
+dias úteis, CPC art. 218 § 3º) e lançado na agenda:
+
+```bash
+cd backend && python manage.py buscar_intimacoes   # --dias N (padrão 7)
+```
+
+Exemplo de agendamento no cron — intimações às 6h, lembretes às 7h,
+sincronização às 5h:
 
 ```cron
+0 6 * * * cd /caminho/para/backend && /caminho/para/python manage.py buscar_intimacoes
 0 7 * * * cd /caminho/para/backend && /caminho/para/python manage.py enviar_lembretes
 0 5 * * * cd /caminho/para/backend && /caminho/para/python manage.py sincronizar_datajud
 ```
 
 Sem SMTP configurado (`EMAIL_HOST_USER`/`EMAIL_HOST_PASSWORD`), o Django cai
 no backend de console e apenas imprime os e-mails — veja `backend/.env.example`.
+
+## Dados de demonstração
+
+```bash
+cd backend && python manage.py popular_demo   # --recriar para começar do zero
+```
+
+Cria o escritório "Silva & Sabino Advocacia (demonstração)" com clientes,
+processos (um em segredo de justiça), agenda, tarefas, contrato com parcelas
+e chave PIX. Todos entram com a senha `Demo@1234`: `admin@`, `advogada@`,
+`estagiario@`, `financeiro@` e `secretaria@demo.lexoffice.app` — um de cada
+perfil de acesso.
+
+## Testes de ponta a ponta (E2E)
+
+Com o back-end (porta 8000, `LIMITES_DESLIGADOS=True`) e o front (porta
+3000) rodando sobre os dados de `popular_demo`:
+
+```bash
+cd frontend && npm run e2e
+```
+
+O Playwright usa o sistema como uma pessoa usaria — login, cadastro de
+cliente, ficha do processo, perfis de acesso, Kanban, PIX, agenda .ics e
+celular — e checa acessibilidade (WCAG AA) com axe. No CI, o job
+"E2E (Playwright)" sobe Postgres, API e front sozinho.
+
+## Documentação da API
+
+Com o back-end rodando, a documentação interativa (OpenAPI 3, gerada com
+drf-spectacular a partir das próprias views e serializers) fica em:
+
+- `http://localhost:8000/api/docs/` — Swagger UI (clique em **Authorize** e
+  cole o `access` devolvido por `POST /api/login/` para testar as rotas);
+- `http://localhost:8000/api/redoc/` — ReDoc;
+- `http://localhost:8000/api/schema/` — o arquivo OpenAPI.
+
+Para esconder a documentação em produção, defina `API_DOCS_PUBLICAS=False`.
 
 ## Testes
 

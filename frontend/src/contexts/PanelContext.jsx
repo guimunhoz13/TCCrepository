@@ -19,6 +19,14 @@ export const PANELS = {
   PLANOS: "planos",
 };
 
+// Painéis cuja primeira aba não se chama "lista". O menu lateral e a busca
+// abrem todo painel na aba "lista"; sem esta tradução, Horas abria em
+// branco e Tarefas abria sem nenhuma aba marcada.
+const ABA_INICIAL = {
+  [PANELS.HORAS]: "horas",
+  [PANELS.TAREFAS]: "minhas",
+};
+
 export function PanelProvider({ children }) {
   const [activePanel, setActivePanel] = useState(null);
   const [panelTab, setPanelTab] = useState("lista");
@@ -29,7 +37,7 @@ export function PanelProvider({ children }) {
 
   const openPanel = useCallback((panel, tab = "lista", params = {}) => {
     setActivePanel(panel);
-    setPanelTab(tab);
+    setPanelTab(tab === "lista" && ABA_INICIAL[panel] ? ABA_INICIAL[panel] : tab);
     setPanelParams(params);
   }, []);
 

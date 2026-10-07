@@ -1,6 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useConfirmacao } from "@/contexts/ConfirmacaoContext";
+import { useAvisos } from "@/contexts/AvisosContext";
+
+import { useState } from "react";
+import { useRecurso } from "@/hooks/useRecurso";
 import { Pencil, Printer, Trash2 } from "lucide-react";
 import { usePanel } from "@/contexts/PanelContext";
 import { usePreferences } from "@/contexts/PreferencesContext";
@@ -14,8 +18,10 @@ import {
   gerarDocumento,
   getProcessos,
   getClientes,
-  normalizarLista,
+  listarTudo,
 } from "@/services/api";
+import LinhasCarregando from "@/components/ui/LinhasCarregando";
+import { usePermissoes } from "@/hooks/usePermissoes";
 
 const TIPOS = [
   { value: "procuracao", label: "Procuração" },
@@ -44,43 +50,31 @@ const modeloInicial = { nome: "", tipo: "procuracao", conteudo: "" };
 export default function ModelosPanel() {
   const { activePanel, panelTab, setPanelTab } = usePanel();
   const { t } = usePreferences();
+  const confirmar = useConfirmacao();
+  const avisar = useAvisos();
+  const pode = usePermissoes();
 
-  const [modelos, setModelos] = useState([]);
-  const [variaveis, setVariaveis] = useState([]);
-  const [processos, setProcessos] = useState([]);
-  const [clientes, setClientes] = useState([]);
   const [formulario, setFormulario] = useState(modeloInicial);
   const [editandoId, setEditandoId] = useState(null);
   const [gerar, setGerar] = useState({ modelo: "", origem: "processo", alvo: "" });
   const [resultado, setResultado] = useState(null);
   const [erro, setErro] = useState("");
-  const [carregando, setCarregando] = useState(false);
 
   const ativo = activePanel === "modelos";
 
-  const carregar = useCallback(async () => {
-    setCarregando(true);
-    try {
-      const [lista, vars, procs, clis] = await Promise.all([
-        getModelosDocumento(),
-        getVariaveisDocumento(),
-        getProcessos(),
-        getClientes(),
-      ]);
-      setModelos(normalizarLista(lista));
-      setVariaveis(Array.isArray(vars) ? vars : []);
-      setProcessos(normalizarLista(procs));
-      setClientes(normalizarLista(clis));
-    } catch (e) {
-      setErro(e.message);
-    } finally {
-      setCarregando(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (ativo) carregar();
-  }, [ativo, carregar]);
+  const recursoModelos = useRecurso(() => listarTudo(getModelosDocumento), [], { ativo });
+  const auxiliares = useRecurso(
+    () =>
+      Promise.all([getVariaveisDocumento(), listarTudo(getProcessos), listarTudo(getClientes)]),
+    [],
+    { ativo }
+  );
+  const modelos = recursoModelos.dados ?? [];
+  const [vars, processos, clientes] = auxiliares.dados ?? [[], [], []];
+  const variaveis = Array.isArray(vars) ? vars : [];
+  const carregando = recursoModelos.carregando && modelos.length === 0;
+  const erroCarga = recursoModelos.erro || auxiliares.erro;
+  const carregar = recursoModelos.recarregar;
 
   async function salvar(evento) {
     evento.preventDefault();
@@ -140,7 +134,9 @@ export default function ModelosPanel() {
 
   const abas = [
     { id: "lista", label: "Modelos" },
-    { id: "novo", label: editandoId ? "Editar modelo" : "Novo modelo" },
+    ...(pode("modelos", "criar") || editandoId
+      ? [{ id: "novo", label: editandoId ? "Editar modelo" : "Novo modelo" }]
+      : []),
     { id: "gerar", label: "Gerar documento" },
   ];
 
@@ -148,7 +144,7 @@ export default function ModelosPanel() {
 
   return (
     <OverlayPanel tabs={abas}>
-      {erro && <div className="form-error">{erro}</div>}
+      {(erro || erroCarga) && <div className="form-error">{erro || erroCarga}</div>}
 
       {panelTab === "lista" && (
         <table>
@@ -161,11 +157,7 @@ export default function ModelosPanel() {
             </tr>
           </thead>
           <tbody>
-            {carregando && (
-              <tr>
-                <td colSpan="4">Carregando...</td>
-              </tr>
-            )}
+            {carregando && <LinhasCarregando colunas={4} />}
             {!carregando && modelos.length === 0 && (
               <tr>
                 <td colSpan="4">
@@ -181,29 +173,41 @@ export default function ModelosPanel() {
                   <td>{new Date(modelo.atualizado_em).toLocaleDateString("pt-BR")}</td>
                   <td>
                     <div className="row-actions">
-                      <button
-                        type="button"
-                        className="row-action"
-                        title={t("acao_editar")}
-                        aria-label={t("acao_editar")}
-                        onClick={() => editar(modelo)}
-                      >
-                        <Pencil size={15} />
-                      </button>
-                      <button
-                        type="button"
-                        className="row-action row-action-danger"
-                        title={t("acao_excluir")}
-                        aria-label={t("acao_excluir")}
-                        onClick={async () => {
-                          if (window.confirm(`Excluir o modelo "${modelo.nome}"?`)) {
-                            await deleteModeloDocumento(modelo.id);
-                            carregar();
-                          }
-                        }}
-                      >
-                        <Trash2 size={15} />
-                      </button>
+                      {pode("modelos", "editar") && (
+                        <button
+                          type="button"
+                          className="row-action"
+                          title={t("acao_editar")}
+                          aria-label={t("acao_editar")}
+                          onClick={() => editar(modelo)}
+                        >
+                          <Pencil size={15} />
+                        </button>
+                      )}
+                      {pode("modelos", "excluir") && (
+                        <button
+                          type="button"
+                          className="row-action row-action-danger"
+                          title={t("acao_excluir")}
+                          aria-label={t("acao_excluir")}
+                          onClick={async () => {
+                            const ok = await confirmar({
+                              titulo: "Excluir modelo",
+                              mensagem: `O modelo "${modelo.nome}" será excluído. Documentos já gerados não são afetados.`,
+                            });
+                            if (!ok) return;
+                            try {
+                              await deleteModeloDocumento(modelo.id);
+                              avisar("Modelo excluído.");
+                              carregar();
+                            } catch (error) {
+                              avisar(error.message, "erro");
+                            }
+                          }}
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>

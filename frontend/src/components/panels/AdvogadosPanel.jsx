@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useRecurso } from "@/hooks/useRecurso";
+import { useUsuarioLogado } from "@/hooks/useUsuarioLogado";
 import { usePanel, PANELS } from "@/contexts/PanelContext";
 import { useDashboardData } from "@/contexts/DashboardDataContext";
 import { usePreferences } from "@/contexts/PreferencesContext";
@@ -11,13 +13,13 @@ import { formatarCPF, formatarRG, formatarTelefone, formatarOAB } from "@/utils/
 import { senhaAtendeRequisitos } from "@/utils/senha";
 import RequisitosSenha from "@/components/ui/RequisitosSenha";
 import {
-  getUsuarioLogado,
   registrarAdvogado,
   updateAdvogado,
   getAdvogados,
-  normalizarLista,
+  listarTudo,
   abrirDocumentoIdentidadeUsuario,
 } from "@/services/api";
+import LinhasCarregando from "@/components/ui/LinhasCarregando";
 
 const FORM_ADVOGADO_INICIAL = {
   nome: "",
@@ -46,34 +48,21 @@ export default function AdvogadosPanel() {
   const { activePanel, panelTab, setPanelTab } = usePanel();
   const { refresh: refreshDashboard } = useDashboardData();
   const { t } = usePreferences();
-  const usuario = getUsuarioLogado();
-  const [advogados, setAdvogados] = useState([]);
+  const usuario = useUsuarioLogado();
   const [formAdvogado, setFormAdvogado] = useState(FORM_ADVOGADO_INICIAL);
   const [foto, setFoto] = useState(null);
   const [documentoIdentidade, setDocumentoIdentidade] = useState(null);
   const [advogadoEditando, setAdvogadoEditando] = useState(null);
   const [mensagem, setMensagem] = useState("");
   const [erro, setErro] = useState("");
-  const [carregando, setCarregando] = useState(false);
   const [salvando, setSalvando] = useState(false);
 
-  async function carregarAdvogados() {
-    try {
-      setCarregando(true);
-      const dados = await getAdvogados();
-      setAdvogados(normalizarLista(dados));
-    } catch (error) {
-      setErro(error.message);
-    } finally {
-      setCarregando(false);
-    }
-  }
-
-  useEffect(() => {
-    if (activePanel === PANELS.ADVOGADOS) {
-      carregarAdvogados();
-    }
-  }, [activePanel]);
+  const recurso = useRecurso(() => listarTudo(getAdvogados), [], {
+    ativo: activePanel === PANELS.ADVOGADOS,
+  });
+  const advogados = recurso.dados ?? [];
+  const carregando = recurso.carregando && advogados.length === 0;
+  const carregarAdvogados = recurso.recarregar;
 
   function handleIniciarEdicao(advogado) {
     setErro("");
@@ -141,7 +130,7 @@ export default function AdvogadosPanel() {
       setDocumentoIdentidade(null);
       setAdvogadoEditando(null);
       setPanelTab("lista");
-      await carregarAdvogados();
+      carregarAdvogados();
       refreshDashboard().catch(() => {});
     } catch (error) {
       setErro(error.message);
@@ -172,7 +161,7 @@ export default function AdvogadosPanel() {
         },
       ]}
     >
-      {erro && <div className="alert alert-error">{erro}</div>}
+      {(erro || recurso.erro) && <div className="alert alert-error">{erro || recurso.erro}</div>}
       {mensagem && <div className="alert alert-success">{mensagem}</div>}
 
       {panelTab === "novo" ? (
@@ -388,11 +377,7 @@ export default function AdvogadosPanel() {
               </tr>
             </thead>
             <tbody>
-              {carregando && (
-                <tr>
-                  <td colSpan="6">Carregando...</td>
-                </tr>
-              )}
+              {carregando && <LinhasCarregando colunas={6} />}
               {!carregando &&
                 advogados.map((adv) => (
                   <tr key={adv.id}>

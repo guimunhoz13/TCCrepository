@@ -1,115 +1,58 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
-import {
-  getDashboardStats,
-  getProcessos,
-  getAgenda,
-  getClientes,
-  getDocumentos,
-  getTarefas,
-  getContratos,
-  getApontamentos,
-  getModelosDocumento,
-  normalizarLista,
-} from "@/services/api";
+import { createContext, useCallback, useContext, useEffect } from "react";
+import { getDashboardResumo, getUsuarioLogado, salvarUsuarioLogado } from "@/services/api";
+import { useRecurso } from "@/hooks/useRecurso";
 
 const DashboardDataContext = createContext(null);
 
+const VAZIO = [];
+
 export function DashboardDataProvider({ children }) {
-  const [stats, setStats] = useState(null);
-  const [processos, setProcessos] = useState([]);
-  const [agenda, setAgenda] = useState([]);
-  const [clientes, setClientes] = useState([]);
-  const [documentos, setDocumentos] = useState([]);
-  const [tarefas, setTarefas] = useState([]);
-  // Coleções que a dashboard não desenha, mas que a busca do topo
-  // precisa para achar contrato, hora apontada e modelo. Vêm no mesmo
-  // lote das outras: são requisições paralelas, então não atrasam a
-  // abertura.
-  const [tarefasBusca, setTarefasBusca] = useState([]);
-  const [contratos, setContratos] = useState([]);
-  const [apontamentos, setApontamentos] = useState([]);
-  const [modelos, setModelos] = useState([]);
-  const [carregando, setCarregando] = useState(true);
-  const [erro, setErro] = useState("");
-  const [atualizadoEm, setAtualizadoEm] = useState(null);
-  const primeiraCarga = useRef(true);
+  // Uma única requisição traz tudo o que a dashboard desenha (antes eram 14,
+  // uma lista completa por área). A busca do topo consulta o servidor à parte.
+  const recurso = useRecurso(getDashboardResumo);
+  const dados = recurso.dados;
+  const recarregar = recurso.recarregar;
 
-  const refresh = useCallback(async () => {
-    try {
-      const [
-        dadosStats,
-        dadosProcessos,
-        dadosAgenda,
-        dadosClientes,
-        dadosDocumentos,
-        dadosTarefas,
-        dadosTarefasBusca,
-        dadosContratos,
-        dadosApontamentos,
-        dadosModelos,
-      ] = await Promise.all([
-        getDashboardStats(),
-        getProcessos(),
-        getAgenda(),
-        getClientes(),
-        getDocumentos(),
-        // Só o que está pendente para quem abriu a dashboard: tarefa dos
-        // outros ou já resolvida não é "o que eu tenho para fazer".
-        getTarefas({ responsavel: "eu", status: "abertas" }),
-        // A busca precisa achar a tarefa de qualquer pessoa, inclusive as
-        // já concluídas — por isso uma consulta sem filtro, separada da
-        // que alimenta o cartão.
-        getTarefas(),
-        getContratos(),
-        getApontamentos(),
-        getModelosDocumento(),
-      ]);
-      setStats(dadosStats);
-      setProcessos(normalizarLista(dadosProcessos));
-      setAgenda(normalizarLista(dadosAgenda));
-      setClientes(normalizarLista(dadosClientes));
-      setDocumentos(normalizarLista(dadosDocumentos));
-      setTarefas(normalizarLista(dadosTarefas));
-      setTarefasBusca(normalizarLista(dadosTarefasBusca));
-      setContratos(normalizarLista(dadosContratos));
-      setApontamentos(normalizarLista(dadosApontamentos));
-      setModelos(normalizarLista(dadosModelos));
-      setAtualizadoEm(Date.now());
-      setErro("");
-      return true;
-    } catch (error) {
-      setErro(error.message);
-      throw error;
-    } finally {
-      if (primeiraCarga.current) {
-        primeiraCarga.current = false;
-        setCarregando(false);
-      }
-    }
-  }, []);
-
+  // O perfil pode ter mudado desde o login (o administrador trocou de
+  // estagiário para advogado, por exemplo): a dashboard traz as permissões
+  // atuais e o menu se ajusta sem precisar sair e entrar de novo.
+  const tipoAtual = dados?.tipo_usuario;
+  const permissoesAtuais = dados?.permissoes;
   useEffect(() => {
-    refresh().catch(() => {});
-  }, [refresh]);
+    if (!tipoAtual || !permissoesAtuais) return;
+    const salvo = getUsuarioLogado();
+    if (!salvo) return;
+    if (
+      salvo.tipo_usuario !== tipoAtual ||
+      JSON.stringify(salvo.permissoes) !== JSON.stringify(permissoesAtuais)
+    ) {
+      salvarUsuarioLogado({ ...salvo, tipo_usuario: tipoAtual, permissoes: permissoesAtuais });
+    }
+  }, [tipoAtual, permissoesAtuais]);
+
+  // Os painéis chamam `refresh().catch(...)` depois de salvar algo; a
+  // recarga em si é disparada aqui e acontece em segundo plano.
+  const refresh = useCallback(() => {
+    recarregar();
+    return Promise.resolve();
+  }, [recarregar]);
 
   return (
     <DashboardDataContext.Provider
       value={{
-        stats,
-        processos,
-        agenda,
-        clientes,
-        documentos,
-        tarefas,
-        tarefasBusca,
-        contratos,
-        apontamentos,
-        modelos,
-        carregando,
-        erro,
-        atualizadoEm,
+        stats: dados ?? null,
+        processos: dados?.processos_recentes ?? VAZIO,
+        agenda: dados?.agenda ?? VAZIO,
+        documentos: dados?.documentos_recentes ?? VAZIO,
+        tarefas: dados?.minhas_tarefas ?? VAZIO,
+        novosNaSemana: dados?.novos_na_semana ?? {},
+        carregando: recurso.carregando && !dados,
+        erro: recurso.erro,
+        // Muda a cada resposta nova: a dashboard usa para piscar o
+        // indicador de "dados em tempo real".
+        versaoDados: dados,
         refresh,
       }}
     >

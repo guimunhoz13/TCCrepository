@@ -1,0 +1,36 @@
+@startuml
+!include skinparam.iuml
+title Diagrama de Containers (C4 — Nível 2)
+
+actor "Usuários do escritório /\nAdministrador do Sistema" as Usuarios
+
+package "Sistema Web de Advocacia" {
+  component "Frontend (PWA)\n<<Next.js / React>>" as Frontend
+  component "Service Worker\n<<offline e notificações push>>" as SW
+  component "Backend (API REST)\n<<Django / DRF>>\ndocumentação OpenAPI em /api/docs" as Backend
+  component "Rotinas agendadas\n<<manage.py: lembretes,\nDataJud, intimações>>" as Rotinas
+  database "Banco de Dados\n<<PostgreSQL — Supabase>>" as DB
+}
+
+cloud "API da OpenAI" as OpenAI
+cloud "Servidor SMTP" as SMTP
+cloud "DataJud (CNJ)" as DataJud
+cloud "DJEN (CNJ)" as DJEN
+cloud "Serviços de push" as Push
+
+Usuarios --> Frontend : HTTPS
+Frontend --> Backend : REST / JSON (JWT)
+Frontend -- SW
+Backend --> DB : ORM (psycopg2)
+Rotinas --> DB
+Backend --> OpenAI
+Backend --> SMTP
+Backend --> DataJud
+Backend --> DJEN
+Rotinas --> DataJud
+Rotinas --> DJEN
+Rotinas --> SMTP
+Backend --> Push : Web Push (VAPID)
+Push --> SW : entrega
+
+@enduml

@@ -1,19 +1,27 @@
 "use client";
 
-import { Fragment, useEffect, useState } from "react";
+import { useConfirmacao } from "@/contexts/ConfirmacaoContext";
+import { useAvisos } from "@/contexts/AvisosContext";
+
+import { Fragment, useCallback, useState } from "react";
+import { useListaPaginada, useRecurso } from "@/hooks/useRecurso";
+import RodapeLista from "@/components/ui/RodapeLista";
 import { usePanel } from "@/contexts/PanelContext";
 import { useDashboardData } from "@/contexts/DashboardDataContext";
 import { usePreferences } from "@/contexts/PreferencesContext";
 import OverlayPanel from "@/components/shell/OverlayPanel";
-import { ChevronDown, ChevronUp, CircleDollarSign, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronUp, CircleDollarSign, QrCode, Trash2 } from "lucide-react";
 import {
   getContratos,
   createContrato,
   deleteContrato,
   updateParcela,
   getProcessos,
-  normalizarLista,
+  listarTudo,
 } from "@/services/api";
+import LinhasCarregando from "@/components/ui/LinhasCarregando";
+import PixDaParcela from "@/components/panels/PixDaParcela";
+import { usePermissoes } from "@/hooks/usePermissoes";
 
 const formularioInicial = {
   processo: "",
@@ -32,36 +40,32 @@ function formatarMoeda(valor) {
 export default function ContratosPanel() {
   const { activePanel, panelTab } = usePanel();
   const { refresh: refreshDashboard } = useDashboardData();
+  const confirmar = useConfirmacao();
+  const avisar = useAvisos();
+  const pode = usePermissoes();
   const { t } = usePreferences();
-  const [contratos, setContratos] = useState([]);
-  const [processos, setProcessos] = useState([]);
   const [formulario, setFormulario] = useState(formularioInicial);
   const [contratoExpandido, setContratoExpandido] = useState(null);
-  const [carregando, setCarregando] = useState(true);
   const [salvando, setSalvando] = useState(false);
+  const [parcelaPix, setParcelaPix] = useState(null);
+  // Estável entre renderizações: a Janela fecha no Esc via efeito que
+  // depende dela.
+  const fecharPix = useCallback(() => setParcelaPix(null), []);
   const [erro, setErro] = useState("");
 
-  async function carregarDados() {
-    try {
-      setCarregando(true);
-      const [dadosContratos, dadosProcessos] = await Promise.all([
-        getContratos(),
-        getProcessos(),
-      ]);
-      setContratos(normalizarLista(dadosContratos));
-      setProcessos(normalizarLista(dadosProcessos));
-    } catch (error) {
-      setErro(error.message);
-    } finally {
-      setCarregando(false);
-    }
-  }
+  const painelAberto = activePanel === "contratos";
+  const lista = useListaPaginada((page) => getContratos({ page }), [], { ativo: painelAberto });
+  const recursoProcessos = useRecurso(() => listarTudo(getProcessos), [], {
+    ativo: painelAberto,
+  });
+  const contratos = lista.itens;
+  const processos = recursoProcessos.dados ?? [];
+  const carregando = lista.carregando && contratos.length === 0;
+  const erroCarga = lista.erro || recursoProcessos.erro;
 
-  useEffect(() => {
-    if (activePanel === "contratos") {
-      carregarDados();
-    }
-  }, [activePanel]);
+  function carregarDados() {
+    lista.recarregar();
+  }
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -78,7 +82,7 @@ export default function ContratosPanel() {
             : 1,
       });
       setFormulario(formularioInicial);
-      await carregarDados();
+      carregarDados();
       refreshDashboard().catch(() => {});
     } catch (error) {
       setErro(error.message);
@@ -98,10 +102,10 @@ export default function ContratosPanel() {
     <OverlayPanel
       tabs={[
         { id: "lista", label: t("aba_lista") },
-        { id: "novo", label: t("aba_novo") },
+        ...(pode("financeiro", "criar") ? [{ id: "novo", label: t("aba_novo") }] : []),
       ]}
     >
-      {erro && <div className="alert alert-error">{erro}</div>}
+      {(erro || erroCarga) && <div className="alert alert-error">{erro || erroCarga}</div>}
 
       {panelTab === "novo" ? (
         <form className="form-grid" onSubmit={handleSubmit}>
@@ -205,11 +209,7 @@ export default function ContratosPanel() {
               </tr>
             </thead>
             <tbody>
-              {carregando && (
-                <tr>
-                  <td colSpan="7">Carregando...</td>
-                </tr>
-              )}
+              {carregando && <LinhasCarregando colunas={7} />}
               {!carregando &&
                 contratos.map((contrato) => (
                   <Fragment key={contrato.id}>
@@ -250,21 +250,31 @@ export default function ContratosPanel() {
                               <ChevronDown size={15} />
                             )}
                           </button>
-                          <button
-                            type="button"
-                            className="row-action row-action-danger"
-                            title={t("acao_excluir")}
-                            aria-label={t("acao_excluir")}
-                            onClick={async () => {
-                              if (window.confirm("Excluir contrato?")) {
-                                await deleteContrato(contrato.id);
-                                carregarDados();
-                                refreshDashboard().catch(() => {});
-                              }
-                            }}
-                          >
-                            <Trash2 size={15} />
-                          </button>
+                          {pode("financeiro", "excluir") && (
+                            <button
+                              type="button"
+                              className="row-action row-action-danger"
+                              title={t("acao_excluir")}
+                              aria-label={t("acao_excluir")}
+                              onClick={async () => {
+                                const ok = await confirmar({
+                                  titulo: "Excluir contrato",
+                                  mensagem: "O contrato e todas as parcelas dele serão excluídos.",
+                                });
+                                if (!ok) return;
+                                try {
+                                  await deleteContrato(contrato.id);
+                                  avisar("Contrato excluído.");
+                                  carregarDados();
+                                  refreshDashboard().catch(() => {});
+                                } catch (error) {
+                                  avisar(error.message, "erro");
+                                }
+                              }}
+                            >
+                              <Trash2 size={15} />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -303,17 +313,32 @@ export default function ContratosPanel() {
                                     </span>
                                   </td>
                                   <td>
+                                    <div className="row-actions">
                                     {parcela.status !== "pago" && (
                                       <button
                                         type="button"
-                                        className="row-action row-action-success"
-                                        title={t("acao_marcar_pago")}
-                                        aria-label={t("acao_marcar_pago")}
-                                        onClick={() => handleMarcarPago(parcela.id)}
+                                        className="row-action"
+                                        title="Cobrar com PIX"
+                                        aria-label={`Cobrar a parcela ${parcela.numero} com PIX`}
+                                        onClick={() => setParcelaPix(parcela.id)}
                                       >
-                                        <CircleDollarSign size={15} />
+                                        <QrCode size={15} />
                                       </button>
                                     )}
+                                    {parcela.status !== "pago" && (
+                                      pode("financeiro", "editar") && (
+                                        <button
+                                          type="button"
+                                          className="row-action row-action-success"
+                                          title={t("acao_marcar_pago")}
+                                          aria-label={t("acao_marcar_pago")}
+                                          onClick={() => handleMarcarPago(parcela.id)}
+                                        >
+                                          <CircleDollarSign size={15} />
+                                        </button>
+                                      )
+                                    )}
+                                    </div>
                                   </td>
                                 </tr>
                               ))}
@@ -326,8 +351,16 @@ export default function ContratosPanel() {
                 ))}
             </tbody>
           </table>
+          <RodapeLista
+            quantidade={contratos.length}
+            total={lista.total}
+            temMais={lista.temMais}
+            carregandoMais={lista.carregandoMais}
+            onCarregarMais={lista.carregarMais}
+          />
         </div>
       )}
+      {parcelaPix && <PixDaParcela parcelaId={parcelaPix} onFechar={fecharPix} />}
     </OverlayPanel>
   );
 }

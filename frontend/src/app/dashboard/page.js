@@ -42,16 +42,11 @@ import { PanelProvider, usePanel, PANELS } from "@/contexts/PanelContext";
 import { DashboardDataProvider, useDashboardData } from "@/contexts/DashboardDataContext";
 import { PreferencesProvider } from "@/contexts/PreferencesContext";
 import useRegistroDeAtividade from "@/hooks/useRegistroDeAtividade";
+import { useAgora } from "@/hooks/useAgora";
+import { useAvisos } from "@/contexts/AvisosContext";
+import { usePermissoes } from "@/hooks/usePermissoes";
 import { badgeStatus, rotuloStatus } from "@/lib/statusProcesso";
 import { abrirDocumento } from "@/services/api";
-
-function contarUltimosDias(lista, campoData, dias) {
-  const limite = Date.now() - dias * 24 * 60 * 60 * 1000;
-  return lista.filter((item) => {
-    const valor = item?.[campoData];
-    return valor && new Date(valor).getTime() >= limite;
-  }).length;
-}
 
 function formatarPrazo(dataISO) {
   const data = new Date(dataISO);
@@ -105,18 +100,17 @@ function DashboardContent() {
     stats,
     processos,
     agenda,
-    clientes,
     documentos,
     tarefas,
-    tarefasBusca,
-    contratos,
-    apontamentos,
-    modelos,
+    novosNaSemana,
     carregando,
     erro,
-    atualizadoEm,
+    versaoDados,
     refresh,
   } = useDashboardData();
+  const agora = useAgora();
+  const avisar = useAvisos();
+  const pode = usePermissoes();
   const { openPanel } = usePanel();
   const [pulsar, setPulsar] = useState(false);
   const primeiraRenderizacao = useRef(true);
@@ -134,16 +128,21 @@ function DashboardContent() {
     }
   }, [erro, router]);
 
+  // Pisca o indicador "dados em tempo real" quando chega uma resposta nova
+  // (não na primeira carga).
   useEffect(() => {
-    if (!atualizadoEm) return;
+    if (!versaoDados) return undefined;
     if (primeiraRenderizacao.current) {
       primeiraRenderizacao.current = false;
-      return;
+      return undefined;
     }
-    setPulsar(true);
-    const timer = setTimeout(() => setPulsar(false), 1200);
-    return () => clearTimeout(timer);
-  }, [atualizadoEm]);
+    const inicio = setTimeout(() => setPulsar(true), 0);
+    const fim = setTimeout(() => setPulsar(false), 1200);
+    return () => {
+      clearTimeout(inicio);
+      clearTimeout(fim);
+    };
+  }, [versaoDados]);
 
   const totais = stats?.totais || {};
 
@@ -152,15 +151,13 @@ function DashboardContent() {
   const minhasTarefas = useMemo(() => tarefas.slice(0, 5), [tarefas]);
 
   const proximosCompromissos = useMemo(() => {
-    const agora = Date.now();
     return agenda
       .filter((e) => new Date(e.data_evento).getTime() >= agora)
       .sort((a, b) => new Date(a.data_evento) - new Date(b.data_evento))
       .slice(0, 5);
-  }, [agenda]);
+  }, [agenda, agora]);
 
   const prazosVencendo = useMemo(() => {
-    const agora = Date.now();
     const limite = agora + 3 * 24 * 60 * 60 * 1000;
     return agenda
       .filter((e) => {
@@ -169,15 +166,10 @@ function DashboardContent() {
       })
       .sort((a, b) => new Date(a.data_evento) - new Date(b.data_evento))
       .slice(0, 5);
-  }, [agenda]);
+  }, [agenda, agora]);
 
-  const ultimosDocumentos = useMemo(
-    () =>
-      [...documentos]
-        .sort((a, b) => new Date(b.enviado_em) - new Date(a.enviado_em))
-        .slice(0, 5),
-    [documentos]
-  );
+  // Já vêm do servidor como os cinco mais recentes.
+  const ultimosDocumentos = documentos;
 
   // Cada grupo de resultado já sabe a que painel pertence.
   function abrirResultadoBusca(painel) {
@@ -196,16 +188,7 @@ function DashboardContent() {
               ? `${stats.escritorio.nome} — visão geral`
               : "Visão geral do escritório"
           }
-          searchData={{
-            clientes,
-            processos,
-            documentos,
-            agenda,
-            tarefas: tarefasBusca,
-            contratos,
-            apontamentos,
-            modelos,
-          }}
+          comBusca
           onSelectSearchResult={abrirResultadoBusca}
           notificacoes={prazosVencendo}
           onSelectNotificacao={() => openPanel(PANELS.AGENDA, "lista")}
@@ -213,43 +196,41 @@ function DashboardContent() {
 
         {erro && <div className="alert alert-error">{erro}</div>}
 
-        <div className="dashboard-hero">
-          <div className="dashboard-hero-text">
-            <h1>Gestão eficiente para mais tempo no que realmente importa: o seu cliente.</h1>
-            <p>Clientes, processos, prazos e documentos num só lugar — atualizados em tempo real.</p>
-          </div>
-          <p className="dashboard-hero-quote">
-            &ldquo;Um bom escritório não corre atrás de prazos — ele os antecipa.&rdquo;
-          </p>
-        </div>
-
         <div className="dashboard-toolbar">
           <div className="quick-actions-bar">
-            <button
-              type="button"
-              className="quick-action-btn"
-              onClick={() => openPanel(PANELS.CLIENTES, "novo")}
-            >
-              <UserPlus size={16} /> Novo cliente
-            </button>
-            <button
-              type="button"
-              className="quick-action-btn"
-              onClick={() => openPanel(PANELS.PROCESSOS, "novo")}
-            >
-              <FilePlus size={16} /> Novo processo
-            </button>
-            <button
-              type="button"
-              className="quick-action-btn"
-              onClick={() => openPanel(PANELS.AGENDA, "novo")}
-            >
-              <CalendarPlus size={16} /> Nova audiência
-            </button>
-            <Link href="/assistente-ia" className="btn btn-primary ai-quick-btn">
-              <Bot size={18} />
-              Abrir Assistente IA
-            </Link>
+            {pode("clientes", "criar") && (
+              <button
+                type="button"
+                className="quick-action-btn"
+                onClick={() => openPanel(PANELS.CLIENTES, "novo")}
+              >
+                <UserPlus size={16} /> Novo cliente
+              </button>
+            )}
+            {pode("processos", "criar") && (
+              <button
+                type="button"
+                className="quick-action-btn"
+                onClick={() => openPanel(PANELS.PROCESSOS, "novo")}
+              >
+                <FilePlus size={16} /> Novo processo
+              </button>
+            )}
+            {pode("agenda", "criar") && (
+              <button
+                type="button"
+                className="quick-action-btn"
+                onClick={() => openPanel(PANELS.AGENDA, "novo")}
+              >
+                <CalendarPlus size={16} /> Nova audiência
+              </button>
+            )}
+            {pode("ia") && (
+              <Link href="/assistente-ia" className="btn btn-primary ai-quick-btn">
+                <Bot size={18} />
+                Abrir Assistente IA
+              </Link>
+            )}
             <a href="#noticias" className="btn btn-secondary">
               <Newspaper size={18} />
               Conferir notícias
@@ -262,87 +243,9 @@ function DashboardContent() {
           </span>
         </div>
 
-        <div className="stats-grid">
-          <StatCard
-            icon={Users}
-            label="Clientes"
-            valor={totais.clientes}
-            novos={contarUltimosDias(clientes, "criado_em", 7)}
-            carregando={carregando}
-            pulsar={pulsar}
-            onVerTodos={() => openPanel(PANELS.CLIENTES, "lista")}
-          />
-          <StatCard
-            icon={Briefcase}
-            label="Processos"
-            valor={totais.processos}
-            novos={contarUltimosDias(processos, "criado_em", 7)}
-            carregando={carregando}
-            pulsar={pulsar}
-            onVerTodos={() => openPanel(PANELS.PROCESSOS, "lista")}
-          />
-          <StatCard
-            icon={CalendarDays}
-            label="Audiências"
-            valor={totais.agenda}
-            novos={contarUltimosDias(agenda, "criado_em", 7)}
-            carregando={carregando}
-            pulsar={pulsar}
-            onVerTodos={() => openPanel(PANELS.AGENDA, "lista")}
-          />
-          <StatCard
-            icon={FileText}
-            label="Documentos"
-            valor={totais.documentos}
-            novos={contarUltimosDias(documentos, "enviado_em", 7)}
-            carregando={carregando}
-            pulsar={pulsar}
-            onVerTodos={() => openPanel(PANELS.DOCUMENTOS, "lista")}
-          />
-        </div>
-
-        <FinanceiroSection financeiro={stats?.financeiro} carregando={carregando} />
-
-        <div className="dashboard-grid" style={{ marginTop: 18 }}>
-          <div className="panel-card">
-            <h3>Próximos compromissos</h3>
-            {proximosCompromissos.length === 0 ? (
-              <div className="empty-state">
-                Nenhum compromisso agendado.
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  style={{ marginTop: 12 }}
-                  onClick={() => openPanel(PANELS.AGENDA, "novo")}
-                >
-                  Agendar compromisso
-                </button>
-              </div>
-            ) : (
-              <div className="list-widget">
-                {proximosCompromissos.map((evento) => (
-                  <div key={evento.id} className="compromisso-card">
-                    <div>
-                      <div className="compromisso-date">
-                        {new Date(evento.data_evento).toLocaleString("pt-BR", {
-                          day: "2-digit",
-                          month: "2-digit",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </div>
-                      <h4>{evento.titulo}</h4>
-                      <div className="compromisso-meta">
-                        {evento.numero_processo && <span>Proc. {evento.numero_processo}</span>}
-                        {evento.local_evento && <span>{evento.local_evento}</span>}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
+        {/* O que pede ação hoje vem primeiro: é para isso que se abre a
+            dashboard de manhã. */}
+        <div className="dashboard-grid dashboard-atencao">
           <div className="panel-card">
             <h3>Prazos vencendo</h3>
             {prazosVencendo.length === 0 ? (
@@ -372,11 +275,6 @@ function DashboardContent() {
               </div>
             )}
           </div>
-        </div>
-
-        {/* Linha própria: como terceiro filho de um grid de duas colunas,
-            este cartão ocupava a esquerda e deixava a direita vazia. */}
-        <div style={{ marginTop: 18 }}>
           <div className="panel-card">
             <h3>Minhas tarefas</h3>
             {minhasTarefas.length === 0 ? (
@@ -433,68 +331,96 @@ function DashboardContent() {
           </div>
         </div>
 
-        <div style={{ marginTop: 18 }}>
-          <ChartsSection
-            processosPorStatus={stats?.processos_por_status || []}
-            totais={totais}
+        <div className="stats-grid" style={{ marginTop: 18 }}>
+          <StatCard
+            icon={Users}
+            label="Clientes"
+            valor={totais.clientes}
+            novos={novosNaSemana.clientes}
+            carregando={carregando}
+            pulsar={pulsar}
+            onVerTodos={() => openPanel(PANELS.CLIENTES, "lista")}
+          />
+          <StatCard
+            icon={Briefcase}
+            label="Processos"
+            valor={totais.processos}
+            novos={novosNaSemana.processos}
+            carregando={carregando}
+            pulsar={pulsar}
+            onVerTodos={() => openPanel(PANELS.PROCESSOS, "lista")}
+          />
+          <StatCard
+            icon={CalendarDays}
+            label="Audiências"
+            valor={totais.agenda}
+            novos={novosNaSemana.agenda}
+            carregando={carregando}
+            pulsar={pulsar}
+            onVerTodos={() => openPanel(PANELS.AGENDA, "lista")}
+          />
+          <StatCard
+            icon={FileText}
+            label="Documentos"
+            valor={totais.documentos}
+            novos={novosNaSemana.documentos}
+            carregando={carregando}
+            pulsar={pulsar}
+            onVerTodos={() => openPanel(PANELS.DOCUMENTOS, "lista")}
           />
         </div>
 
-        <div className="dashboard-grid dashboard-grid-inicio" style={{ marginTop: 18 }}>
-          <div className="panel-card">
-            <h3>Processos recentes</h3>
-            <div className="table-wrap">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Processo</th>
-                    <th>Cliente</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {!carregando &&
-                    processos.slice(0, 5).map((processo) => (
-                      <tr
-                        key={processo.id}
-                        className="tr-clicavel"
-                        tabIndex={0}
-                        role="button"
-                        aria-label={`Ver ficha do processo ${processo.numero_processo}`}
-                        onClick={() =>
-                          openPanel(PANELS.PROCESSOS, "ficha", { processoId: processo.id })
-                        }
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" || e.key === " ") {
-                            e.preventDefault();
-                            openPanel(PANELS.PROCESSOS, "ficha", { processoId: processo.id });
-                          }
-                        }}
-                      >
-                        <td>{processo.numero_processo}</td>
-                        <td>
-                          <span className="avatar-cell">
-                            <Avatar src={processo.cliente_foto} nome={processo.cliente_nome} size={24} />
-                            {processo.cliente_nome}
-                          </span>
-                        </td>
-                        <td>
-                          <span className={`badge ${badgeStatus(processo.status)}`}>
-                            {rotuloStatus(processo.status)}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  {!carregando && processos.length === 0 && (
-                    <tr>
-                      <td colSpan="3">Nenhum processo cadastrado.</td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
+        {/* A API nem manda os valores para quem não tem acesso ao financeiro. */}
+        {(carregando || stats?.financeiro) && (
+          <FinanceiroSection financeiro={stats?.financeiro} carregando={carregando} />
+        )}
 
+        <div style={{ marginTop: 18 }}>
+          <ChartsSection
+            processosPorStatus={stats?.processos_por_status || []}
+            financeiroMensal={stats?.financeiro_mensal ?? null}
+          />
+        </div>
+
+        <div className="dashboard-grid" style={{ marginTop: 18 }}>
+          <div className="panel-card">
+            <h3>Próximos compromissos</h3>
+            {proximosCompromissos.length === 0 ? (
+              <div className="empty-state">
+                Nenhum compromisso agendado.
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  style={{ marginTop: 12 }}
+                  onClick={() => openPanel(PANELS.AGENDA, "novo")}
+                >
+                  Agendar compromisso
+                </button>
+              </div>
+            ) : (
+              <div className="list-widget">
+                {proximosCompromissos.map((evento) => (
+                  <div key={evento.id} className="compromisso-card">
+                    <div>
+                      <div className="compromisso-date">
+                        {new Date(evento.data_evento).toLocaleString("pt-BR", {
+                          day: "2-digit",
+                          month: "2-digit",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </div>
+                      <h4>{evento.titulo}</h4>
+                      <div className="compromisso-meta">
+                        {evento.numero_processo && <span>Proc. {evento.numero_processo}</span>}
+                        {evento.local_evento && <span>{evento.local_evento}</span>}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
           <div className="panel-card">
             <h3>Últimos documentos</h3>
             {ultimosDocumentos.length === 0 ? (
@@ -516,7 +442,7 @@ function DashboardContent() {
                     key={doc.id}
                     type="button"
                     className="doc-mini-card"
-                    onClick={() => abrirDocumento(doc.id).catch((error) => alert(error.message))}
+                    onClick={() => abrirDocumento(doc.id).catch((error) => avisar(error.message, "erro"))}
                   >
                     <span className="doc-mini-icon">
                       <FileText size={16} />
@@ -529,6 +455,65 @@ function DashboardContent() {
                 ))}
               </div>
             )}
+          </div>
+        </div>
+
+        <div style={{ marginTop: 18 }}>
+          <div className="panel-card">
+            <h3>Processos recentes</h3>
+            <div className="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Processo</th>
+                    <th>Cliente</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {!carregando &&
+                    processos.slice(0, 5).map((processo) => (
+                      <tr
+                        key={processo.id}
+                        className="tr-clicavel"
+                        onClick={(e) => {
+                          if (e.target.closest("button, a")) return;
+                          openPanel(PANELS.PROCESSOS, "ficha", { processoId: processo.id });
+                        }}
+                      >
+                        <td>
+                          <button
+                            type="button"
+                            className="link-celula"
+                            aria-label={`Ver ficha do processo ${processo.numero_processo}`}
+                            onClick={() =>
+                              openPanel(PANELS.PROCESSOS, "ficha", { processoId: processo.id })
+                            }
+                          >
+                            {processo.numero_processo}
+                          </button>
+                        </td>
+                        <td>
+                          <span className="avatar-cell">
+                            <Avatar src={processo.cliente_foto} nome={processo.cliente_nome} size={24} />
+                            {processo.cliente_nome}
+                          </span>
+                        </td>
+                        <td>
+                          <span className={`badge ${badgeStatus(processo.status)}`}>
+                            {rotuloStatus(processo.status)}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  {!carregando && processos.length === 0 && (
+                    <tr>
+                      <td colSpan="3">Nenhum processo cadastrado.</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
 

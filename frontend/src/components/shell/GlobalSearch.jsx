@@ -1,14 +1,17 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Search, X } from "lucide-react";
 import {
   MINIMO_CARACTERES,
-  buscarEmTudo,
+  agruparResultados,
   contarResultados,
 } from "@/lib/busca";
+import { buscarNoEscritorio } from "@/services/api";
+import { useRecurso } from "@/hooks/useRecurso";
+import { useValorAtrasado } from "@/hooks/useValorAtrasado";
 
-export default function GlobalSearch({ colecoes = {}, onSelect }) {
+export default function GlobalSearch({ onSelect }) {
   const [termo, setTermo] = useState("");
   const [aberto, setAberto] = useState(false);
   const containerRef = useRef(null);
@@ -23,8 +26,15 @@ export default function GlobalSearch({ colecoes = {}, onSelect }) {
     return () => document.removeEventListener("mousedown", aoClicarFora);
   }, []);
 
-  const grupos = useMemo(() => buscarEmTudo(termo, colecoes), [termo, colecoes]);
+  // Espera a pessoa parar de digitar antes de consultar o servidor.
+  const termoAtrasado = useValorAtrasado(termo.trim(), 250);
+  const pesquisar = termoAtrasado.length >= MINIMO_CARACTERES;
+  const busca = useRecurso(() => buscarNoEscritorio(termoAtrasado), [termoAtrasado], {
+    ativo: pesquisar,
+  });
+  const grupos = pesquisar ? agruparResultados(busca.dados) : [];
   const total = contarResultados(grupos);
+  const aguardando = termo.trim() !== termoAtrasado || busca.carregando;
 
   function selecionar(painel, item) {
     setTermo("");
@@ -38,6 +48,7 @@ export default function GlobalSearch({ colecoes = {}, onSelect }) {
       <input
         type="text"
         placeholder="Buscar em todo o escritório..."
+        aria-label="Buscar em todo o escritório"
         value={termo}
         onChange={(e) => {
           setTermo(e.target.value);
@@ -61,7 +72,11 @@ export default function GlobalSearch({ colecoes = {}, onSelect }) {
 
       {aberto && termo.trim().length >= MINIMO_CARACTERES && (
         <div className="global-search-results">
-          {total === 0 ? (
+          {busca.erro ? (
+            <div className="global-search-empty">{busca.erro}</div>
+          ) : aguardando && total === 0 ? (
+            <div className="global-search-empty">Buscando...</div>
+          ) : total === 0 ? (
             <div className="global-search-empty">
               Nada encontrado para &quot;{termo}&quot;.
             </div>

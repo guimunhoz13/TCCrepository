@@ -1,42 +1,34 @@
 "use client";
 
-import { Moon, Sun, LogOut, HelpCircle } from "lucide-react";
+import { Moon, Sun, LogOut, HelpCircle, Menu } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTheme } from "@/contexts/ThemeContext";
 import { usePreferences } from "@/contexts/PreferencesContext";
 import Avatar from "@/components/ui/Avatar";
 import GlobalSearch from "@/components/shell/GlobalSearch";
 import NotificationBell from "@/components/shell/NotificationBell";
-import { getUsuarioLogado, logout } from "@/services/api";
+import { logout } from "@/services/api";
+import { useUsuarioLogado } from "@/hooks/useUsuarioLogado";
 import { getSaudacaoCompleta } from "@/utils/greeting";
-import { useEffect, useState } from "react";
 import { useAjuda } from "@/contexts/AjudaContext";
+import { useMenuMovel } from "@/contexts/MenuMovelContext";
 
 export default function TopBar({
   title,
   subtitle,
   showGreeting = false,
-  searchData,
+  comBusca = false,
   onSelectSearchResult,
   notificacoes,
   onSelectNotificacao,
 }) {
   const { theme, toggleTheme } = useTheme();
   const { abrirAjuda } = useAjuda();
+  const menuMovel = useMenuMovel();
   const { t } = usePreferences();
   const router = useRouter();
 
-  // O usuário não deve ser carregado durante a renderização inicial,
-  // pois getUsuarioLogado() utiliza dados do navegador/localStorage.
-  const [usuario, setUsuario] = useState(null);
-
-  useEffect(() => {
-    const usuarioLogado = getUsuarioLogado();
-
-    if (usuarioLogado) {
-      setUsuario(usuarioLogado);
-    }
-  }, []);
+  const usuario = useUsuarioLogado();
 
   const displayTitle =
     showGreeting && usuario?.nome
@@ -50,6 +42,17 @@ export default function TopBar({
 
   return (
     <header className="topbar">
+      <button
+        type="button"
+        className="icon-btn menu-movel-btn"
+        onClick={menuMovel.abrir}
+        aria-label="Abrir o menu"
+        aria-expanded={menuMovel.aberto}
+        aria-controls="menu-principal"
+      >
+        <Menu size={20} />
+      </button>
+
       <div className="topbar-title">
         {showGreeting && (
           <div className="greeting-badge">
@@ -65,30 +68,21 @@ export default function TopBar({
       </div>
 
       <div className="topbar-actions">
-        {searchData && (
-          <GlobalSearch colecoes={searchData} onSelect={onSelectSearchResult} />
-        )}
+        {comBusca && <GlobalSearch onSelect={onSelectSearchResult} />}
 
         {notificacoes && (
           <NotificationBell eventos={notificacoes} onSelect={onSelectNotificacao} />
         )}
 
         <span className="topbar-user">
-          <span
-            style={{
-              color: "var(--text-secondary)",
-              fontSize: "0.9rem",
-            }}
-          >
-            {usuario?.nome || ""}
-          </span>
+          <span className="topbar-user-nome">{usuario?.nome || ""}</span>
           {usuario && <Avatar src={usuario.foto} nome={usuario.nome} size={30} />}
         </span>
 
         <button
           type="button"
           className="icon-btn"
-          onClick={abrirAjuda}
+          onClick={() => abrirAjuda()}
           aria-label="Abrir a central de ajuda"
           title="Como o sistema funciona"
         >

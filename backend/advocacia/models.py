@@ -66,9 +66,13 @@ class SuperAdmin(models.Model):
 
 class Usuario(models.Model):
 
+    # O que cada perfil pode fazer está em permissoes.py (MATRIZ).
     TIPOS_USUARIO = (
         ("admin", "Administrador"),
         ("advogado", "Advogado"),
+        ("estagiario", "Estagiário"),
+        ("financeiro", "Financeiro"),
+        ("secretaria", "Secretária"),
     )
 
     escritorio = models.ForeignKey(
@@ -122,6 +126,15 @@ class Usuario(models.Model):
     # por um administrador já autenticado são vouched for por ele, e em
     # desenvolvimento/teste isso quebraria o uso de e-mails fictícios.
     email_verificado = models.BooleanField(default=True)
+    # Verificação em duas etapas (ver dois_fatores.py). O segredo é gerado
+    # ao iniciar a configuração e só passa a valer depois que a pessoa
+    # confirma um código do aplicativo (totp_ativo).
+    totp_segredo = models.CharField(max_length=64, blank=True, default="")
+    totp_ativo = models.BooleanField(default=False)
+    totp_ultimo_passo = models.BigIntegerField(null=True, blank=True)
+    # Link privado de assinatura da agenda (.ics) no Google Agenda/Outlook.
+    # Quem tem o link lê a agenda sem login; gerar um novo invalida o antigo.
+    agenda_feed_token = models.CharField(max_length=64, blank=True, default="", db_index=True)
     criado_em = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -176,6 +189,13 @@ class Cliente(models.Model):
         ],
     )
     ativo = models.BooleanField(default=True)
+    # LGPD: autorização do titular para o tratamento dos dados, com a data
+    # em que foi registrada (preenchida sozinha ao marcar).
+    consentimento_lgpd = models.BooleanField(default=False)
+    consentimento_lgpd_em = models.DateTimeField(null=True, blank=True)
+    # Preenchido quando os dados pessoais são apagados a pedido do titular;
+    # o cadastro fica só como referência dos processos (ver anonimizar()).
+    anonimizado_em = models.DateTimeField(null=True, blank=True)
     criado_em = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -195,6 +215,40 @@ class Cliente(models.Model):
                 name="cliente_escritorio_cnpj_unico",
             ),
         ]
+
+    def save(self, *args, **kwargs):
+        if self.consentimento_lgpd and not self.consentimento_lgpd_em:
+            self.consentimento_lgpd_em = timezone.now()
+        elif not self.consentimento_lgpd:
+            self.consentimento_lgpd_em = None
+        super().save(*args, **kwargs)
+
+    def anonimizar(self):
+        """Apaga os dados pessoais do cliente (LGPD, art. 18, VI).
+
+        O cadastro não é excluído: processos, contratos e documentos do caso
+        são registro profissional que o escritório tem obrigação de guardar
+        (art. 16, I). Fica só um rótulo neutro no lugar do nome.
+        """
+        for arquivo in (self.foto, self.documento_identidade):
+            if arquivo:
+                arquivo.delete(save=False)
+        self.nome = f"Cliente anonimizado nº {self.pk}"
+        self.cpf = ""
+        self.cnpj = ""
+        self.email = ""
+        self.telefone = ""
+        self.endereco = ""
+        self.rg = ""
+        self.data_nascimento = None
+        self.estado_civil = ""
+        self.nacionalidade = ""
+        self.foto = None
+        self.documento_identidade = None
+        self.ativo = False
+        self.consentimento_lgpd = False
+        self.anonimizado_em = timezone.now()
+        self.save()
 
     def __str__(self):
         return self.nome
@@ -290,6 +344,10 @@ class Processo(models.Model):
 
     data_inicio = models.DateField(null=True, blank=True)
     data_fim = models.DateField(null=True, blank=True)
+
+    # Segredo de justiça: só o administrador e o advogado responsável veem
+    # o processo e o que pende dele (ver sigilo.py).
+    sigiloso = models.BooleanField(default=False)
 
     area_direito = models.CharField(max_length=20, choices=AREAS_DIREITO, blank=True, default="")
     vara = models.CharField(max_length=255, blank=True, default="")
@@ -701,6 +759,7 @@ class RegistroAuditoria(models.Model):
         ("criacao", "Registro criado"),
         ("edicao", "Registro editado"),
         ("exclusao", "Registro excluído"),
+        ("exportacao", "Dados exportados"),
     )
 
     escritorio = models.ForeignKey(
@@ -785,6 +844,19 @@ class ConfiguracaoEscritorio(models.Model):
     timezone = models.CharField(max_length=100, default="America/Sao_Paulo")
     formato_data = models.CharField(max_length=10, choices=FORMATOS_DATA, default="dmy")
     retencao_documentos = models.CharField(max_length=30, choices=RETENCOES, default="indeterminado")
+
+    # Recebimento por PIX: cada parcela de contrato ganha QR code e
+    # "copia e cola" com o valor certo (ver pix.py).
+    TIPOS_CHAVE_PIX = (
+        ("cpf_cnpj", "CPF ou CNPJ"),
+        ("email", "E-mail"),
+        ("telefone", "Celular"),
+        ("aleatoria", "Chave aleatória"),
+    )
+    tipo_chave_pix = models.CharField(max_length=10, choices=TIPOS_CHAVE_PIX, blank=True, default="")
+    chave_pix = models.CharField(max_length=77, blank=True, default="")
+    nome_recebedor_pix = models.CharField(max_length=25, blank=True, default="")
+    cidade_pix = models.CharField(max_length=15, blank=True, default="")
     atualizado_em = models.DateTimeField(auto_now=True)
 
     def __str__(self):
@@ -1050,3 +1122,78 @@ class ModeloDocumento(models.Model):
 
     def __str__(self):
         return self.nome
+
+
+class Intimacao(models.Model):
+    """Comunicação processual publicada no Diário de Justiça Eletrônico
+    Nacional (DJEN) em nome de um advogado do escritório.
+
+    Desde 2025 o DJEN concentra as intimações de todos os tribunais. O
+    sistema busca pela OAB de cada advogado, liga ao processo cadastrado
+    (pelo número) e já calcula o prazo e lança na agenda.
+    """
+
+    escritorio = models.ForeignKey(Escritorio, on_delete=models.CASCADE, related_name="intimacoes")
+    advogado = models.ForeignKey(
+        Advogado, on_delete=models.SET_NULL, null=True, blank=True, related_name="intimacoes"
+    )
+    processo = models.ForeignKey(
+        Processo, on_delete=models.SET_NULL, null=True, blank=True, related_name="intimacoes"
+    )
+
+    # Id da comunicação no DJEN: evita importar a mesma duas vezes.
+    identificador_externo = models.CharField(max_length=120)
+    numero_processo = models.CharField(max_length=30, blank=True, default="")
+    tribunal = models.CharField(max_length=20, blank=True, default="")
+    orgao = models.CharField(max_length=255, blank=True, default="")
+    tipo_comunicacao = models.CharField(max_length=100, blank=True, default="")
+    texto = models.TextField(blank=True, default="")
+    link = models.URLField(max_length=500, blank=True, default="")
+
+    data_disponibilizacao = models.DateField()
+    data_publicacao = models.DateField()
+
+    # Prazo lido do texto ("prazo de 15 dias"). Sem prazo no texto, vale o
+    # de 5 dias úteis do CPC, art. 218, § 3º — marcado como estimado para
+    # o advogado conferir.
+    prazo_dias = models.PositiveSmallIntegerField(null=True, blank=True)
+    prazo_dias_uteis = models.BooleanField(default=True)
+    prazo_estimado = models.BooleanField(default=False)
+    prazo_final = models.DateField(null=True, blank=True)
+    evento_agenda = models.ForeignKey(
+        Agenda, on_delete=models.SET_NULL, null=True, blank=True, related_name="intimacoes"
+    )
+
+    lida = models.BooleanField(default=False)
+    criado_em = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-data_disponibilizacao", "-id"]
+        verbose_name = "Intimação"
+        verbose_name_plural = "Intimações"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["escritorio", "identificador_externo"], name="intimacao_unica_por_escritorio"
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.tipo_comunicacao} — {self.numero_processo}"
+
+
+class InscricaoPush(models.Model):
+    """Aparelho (navegador ou app instalado) que aceitou notificações push.
+
+    Uma pessoa pode ter várias: o computador do escritório e o celular. A
+    inscrição é apagada quando o serviço de push avisa que expirou.
+    """
+
+    usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE, related_name="inscricoes_push")
+    endpoint = models.URLField(max_length=1000, unique=True)
+    p256dh = models.CharField(max_length=255)
+    auth = models.CharField(max_length=255)
+    navegador = models.CharField(max_length=255, blank=True, default="")
+    criado_em = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Push de {self.usuario.nome}"

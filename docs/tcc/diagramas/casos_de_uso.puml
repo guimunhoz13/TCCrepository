@@ -1,0 +1,88 @@
+@startuml
+!include skinparam.iuml
+left to right direction
+title Diagrama de Casos de Uso — Sistema de Gerenciamento de Escritório de Advocacia
+
+actor "Usuário do Escritório" as Usuario
+actor Administrador
+actor Advogado
+actor "Estagiário" as Estagiario
+actor Financeiro
+actor "Secretária" as Secretaria
+actor "Administrador do Sistema" as SuperAdmin
+
+Administrador --|> Usuario
+Advogado --|> Usuario
+Estagiario --|> Usuario
+Financeiro --|> Usuario
+Secretaria --|> Usuario
+
+rectangle "Sistema Web de Advocacia" {
+  usecase "Autenticar no Sistema" as UC1
+  usecase "Gerenciar Clientes" as UC2
+  usecase "Gerenciar Processos" as UC3
+  usecase "Registrar Movimentação\ndo Processo" as UC4
+  usecase "Gerenciar Agenda\n(Compromissos e Prazos)" as UC5
+  usecase "Gerenciar Contratos\ne Honorários" as UC6
+  usecase "Registrar Pagamento\nde Parcela" as UC7
+  usecase "Consultar Cliente" as UC8
+  usecase "Consultar Processo" as UC9
+  usecase "Exportar Relatório\n(PDF / E-mail)" as UC10
+  usecase "Enviar Contato via\nWhatsApp" as UC11
+  usecase "Consultar Assistente\nde IA" as UC12
+  usecase "Gerenciar Advogados" as UC13
+  usecase "Enviar Documento\ndo Processo" as UC14
+  usecase "Gerenciar Equipe e\nPerfis de Acesso" as UC16
+  usecase "Configurar Verificação\nem Duas Etapas" as UC17
+  usecase "Atender Pedido do\nTitular (LGPD)" as UC18
+  usecase "Tratar Intimações\ndo DJEN" as UC19
+  usecase "Cobrar Parcela\ncom PIX" as UC20
+  usecase "Atualizar o Cliente\nsobre o Andamento" as UC21
+  usecase "Acompanhar Tarefas\n(Quadro Kanban)" as UC22
+  usecase "Sincronizar Agenda\n(.ics / assinatura)" as UC23
+}
+
+rectangle "Painel Mestre (Plataforma)" {
+  usecase "Gerenciar Escritórios\nda Plataforma" as UC15
+}
+
+Usuario -- UC1
+Advogado -- UC2
+Advogado -- UC3
+Advogado -- UC4
+Advogado -- UC5
+Advogado -- UC6
+Advogado -- UC7
+Advogado -- UC8
+Advogado -- UC9
+Advogado -- UC14
+Administrador -- UC13
+Administrador -- UC2
+Administrador -- UC3
+SuperAdmin -- UC15
+Usuario -- UC17
+Usuario -- UC22
+Usuario -- UC23
+Administrador -- UC16
+Administrador -- UC18
+Advogado -- UC19
+Advogado -- UC21
+Financeiro -- UC6
+Financeiro -- UC20
+Estagiario -- UC4
+Secretaria -- UC5
+Secretaria -- UC2
+
+UC8 <. UC10 : <<extend>>
+UC9 <. UC10 : <<extend>>
+UC8 <. UC11 : <<extend>>
+UC3 <. UC12 : <<extend>>
+UC2 ..> UC1 : <<include>>
+UC3 ..> UC1 : <<include>>
+UC13 ..> UC1 : <<include>>
+UC15 ..> UC1 : <<include>>
+UC19 ..> UC5 : <<include>>
+UC7 <. UC20 : <<extend>>
+UC9 <. UC21 : <<extend>>
+
+@enduml

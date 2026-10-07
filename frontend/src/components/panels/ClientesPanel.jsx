@@ -1,11 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useConfirmacao } from "@/contexts/ConfirmacaoContext";
+import { useAvisos } from "@/contexts/AvisosContext";
+
+import { useState } from "react";
+import { useListaPaginada } from "@/hooks/useRecurso";
+import { useValorAtrasado } from "@/hooks/useValorAtrasado";
+import RodapeLista from "@/components/ui/RodapeLista";
 import { usePanel } from "@/contexts/PanelContext";
 import { useDashboardData } from "@/contexts/DashboardDataContext";
 import { usePreferences } from "@/contexts/PreferencesContext";
 import OverlayPanel from "@/components/shell/OverlayPanel";
-import { MessageCircle, Pencil, Trash2, UserCheck, UserX } from "lucide-react";
+import { Download, EyeOff, MessageCircle, Pencil, Trash2, UserCheck, UserX } from "lucide-react";
 import Avatar from "@/components/ui/Avatar";
 import { abrirWhatsApp, montarMensagemCliente } from "@/utils/whatsapp";
 import { formatarCEP, formatarCNPJ, formatarCPF, formatarRG, formatarTelefone } from "@/utils/mascaras";
@@ -15,9 +21,12 @@ import {
   createCliente,
   updateCliente,
   deleteCliente,
-  normalizarLista,
   abrirDocumentoIdentidadeCliente,
+  exportarDadosDoCliente,
+  anonimizarCliente,
 } from "@/services/api";
+import LinhasCarregando from "@/components/ui/LinhasCarregando";
+import { usePermissoes } from "@/hooks/usePermissoes";
 
 const formularioInicial = {
   tipo_pessoa: "fisica",
@@ -32,6 +41,7 @@ const formularioInicial = {
   estado_civil: "",
   nacionalidade: "Brasileira",
   ativo: true,
+  consentimento_lgpd: false,
 };
 
 const ESTADOS_CIVIS = [
@@ -46,8 +56,10 @@ const ESTADOS_CIVIS = [
 export default function ClientesPanel() {
   const { activePanel, panelTab, setPanelTab } = usePanel();
   const { refresh: refreshDashboard } = useDashboardData();
+  const confirmar = useConfirmacao();
+  const avisar = useAvisos();
+  const pode = usePermissoes();
   const { t } = usePreferences();
-  const [clientes, setClientes] = useState([]);
   const [busca, setBusca] = useState("");
   const [formulario, setFormulario] = useState(formularioInicial);
   const [cep, setCep] = useState("");
@@ -55,36 +67,19 @@ export default function ClientesPanel() {
   const [foto, setFoto] = useState(null);
   const [documentoIdentidade, setDocumentoIdentidade] = useState(null);
   const [clienteEditando, setClienteEditando] = useState(null);
-  const [carregando, setCarregando] = useState(true);
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState("");
   const [sucesso, setSucesso] = useState("");
 
-  async function carregarClientes(filtroBusca) {
-    try {
-      setCarregando(true);
-      const dados = await getClientes({ busca: filtroBusca ?? busca });
-      setClientes(normalizarLista(dados));
-    } catch (error) {
-      setErro(error.message);
-    } finally {
-      setCarregando(false);
-    }
-  }
-
-  useEffect(() => {
-    if (activePanel === "clientes") {
-      carregarClientes();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activePanel]);
-
-  useEffect(() => {
-    if (activePanel !== "clientes") return;
-    const timeout = setTimeout(() => carregarClientes(busca), 300);
-    return () => clearTimeout(timeout);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [busca]);
+  const buscaAtrasada = useValorAtrasado(busca);
+  const lista = useListaPaginada(
+    (page) => getClientes({ busca: buscaAtrasada, page }),
+    [buscaAtrasada],
+    { ativo: activePanel === "clientes" }
+  );
+  const clientes = lista.itens;
+  const carregando = lista.carregando && clientes.length === 0;
+  const carregarClientes = lista.recarregar;
 
   function handleIniciarEdicao(cliente) {
     setErro("");
@@ -105,6 +100,7 @@ export default function ClientesPanel() {
       estado_civil: cliente.estado_civil || "",
       nacionalidade: cliente.nacionalidade || "Brasileira",
       ativo: cliente.ativo !== undefined ? cliente.ativo : true,
+      consentimento_lgpd: Boolean(cliente.consentimento_lgpd),
     });
     setFoto(null);
     setDocumentoIdentidade(null);
@@ -163,6 +159,7 @@ export default function ClientesPanel() {
       payload.append("estado_civil", ehPessoaFisica ? formulario.estado_civil : "");
       payload.append("nacionalidade", formulario.nacionalidade);
       payload.append("ativo", formulario.ativo);
+      payload.append("consentimento_lgpd", formulario.consentimento_lgpd);
       if (foto) payload.append("foto", foto);
       if (documentoIdentidade) payload.append("documento_identidade", documentoIdentidade);
 
@@ -180,7 +177,7 @@ export default function ClientesPanel() {
       setDocumentoIdentidade(null);
       setClienteEditando(null);
       setPanelTab("lista");
-      await carregarClientes();
+      carregarClientes();
       refreshDashboard().catch(() => {});
     } catch (error) {
       setErro(error.message);
@@ -195,13 +192,12 @@ export default function ClientesPanel() {
     <OverlayPanel
       tabs={[
         { id: "lista", label: t("aba_lista") },
-        {
-          id: "novo",
-          label: clienteEditando ? t("acao_editar") : t("aba_novo"),
-        },
+        ...(pode("clientes", "criar") || clienteEditando
+          ? [{ id: "novo", label: clienteEditando ? t("acao_editar") : t("aba_novo") }]
+          : []),
       ]}
     >
-      {erro && <div className="alert alert-error">{erro}</div>}
+      {(erro || lista.erro) && <div className="alert alert-error">{erro || lista.erro}</div>}
       {sucesso && <div className="alert alert-success">{sucesso}</div>}
 
       {panelTab === "novo" ? (
@@ -389,6 +385,25 @@ export default function ClientesPanel() {
               onChange={(e) => setDocumentoIdentidade(e.target.files?.[0] || null)}
             />
           </div>
+          <label className="campo-marcar full">
+            <input
+              type="checkbox"
+              checked={formulario.consentimento_lgpd}
+              onChange={(e) =>
+                setFormulario({ ...formulario, consentimento_lgpd: e.target.checked })
+              }
+            />
+            <span>
+              <strong>O cliente autorizou o tratamento dos dados pessoais</strong>
+              <small>
+                {clienteEditando?.consentimento_lgpd_em
+                  ? `Consentimento registrado em ${new Date(
+                      clienteEditando.consentimento_lgpd_em
+                    ).toLocaleDateString("pt-BR")}.`
+                  : "LGPD, art. 7º, I — a data do aceite fica registrada ao salvar."}
+              </small>
+            </span>
+          </label>
           <div
             className="form-field full"
             style={{ display: "flex", gap: "10px", marginTop: "8px" }}
@@ -434,11 +449,7 @@ export default function ClientesPanel() {
               </tr>
             </thead>
             <tbody>
-              {carregando && (
-                <tr>
-                  <td colSpan="6">Carregando...</td>
-                </tr>
-              )}
+              {carregando && <LinhasCarregando colunas={6} />}
               {!carregando &&
                 clientes.map((cliente) => (
                   <tr key={cliente.id}>
@@ -454,18 +465,25 @@ export default function ClientesPanel() {
                       >
                         {cliente.ativo ? "Ativo" : "Inativo"}
                       </span>
+                      {cliente.anonimizado_em && (
+                        <span className="badge badge-muted" style={{ marginLeft: 6 }}>
+                          Anonimizado
+                        </span>
+                      )}
                     </td>
                     <td>
                       <div className="row-actions">
-                        <button
-                          type="button"
-                          className="row-action"
-                          title={t("acao_editar")}
-                          aria-label={t("acao_editar")}
-                          onClick={() => handleIniciarEdicao(cliente)}
-                        >
-                          <Pencil size={15} />
-                        </button>
+                        {pode("clientes", "editar") && (
+                          <button
+                            type="button"
+                            className="row-action"
+                            title={t("acao_editar")}
+                            aria-label={t("acao_editar")}
+                            onClick={() => handleIniciarEdicao(cliente)}
+                          >
+                            <Pencil size={15} />
+                          </button>
+                        )}
                         {cliente.telefone && (
                           <button
                             type="button"
@@ -479,54 +497,107 @@ export default function ClientesPanel() {
                             <MessageCircle size={15} />
                           </button>
                         )}
-                        <button
-                          type="button"
-                          className="row-action"
-                          title={cliente.ativo ? t("acao_inativar") : t("acao_ativar")}
-                          aria-label={cliente.ativo ? t("acao_inativar") : t("acao_ativar")}
-                          onClick={async () => {
-                            await updateCliente(cliente.id, {
-                              ativo: !cliente.ativo,
-                            });
-                            carregarClientes();
-                            refreshDashboard().catch(() => {});
-                          }}
-                        >
-                          {cliente.ativo ? <UserX size={15} /> : <UserCheck size={15} />}
-                        </button>
-                        <button
-                          type="button"
-                          className="row-action row-action-danger"
-                          title={t("acao_excluir")}
-                          aria-label={t("acao_excluir")}
-                          onClick={async () => {
-                            if (
-                              !window.confirm(`Excluir ${cliente.nome}?`)
-                            ) {
-                              return;
-                            }
-                            setErro("");
-                            try {
-                              await deleteCliente(cliente.id);
+                        {pode("clientes", "editar") && (
+                          <button
+                            type="button"
+                            className="row-action"
+                            title={cliente.ativo ? t("acao_inativar") : t("acao_ativar")}
+                            aria-label={cliente.ativo ? t("acao_inativar") : t("acao_ativar")}
+                            onClick={async () => {
+                              await updateCliente(cliente.id, {
+                                ativo: !cliente.ativo,
+                              });
                               carregarClientes();
                               refreshDashboard().catch(() => {});
-                            } catch (error) {
-                              // O back-end recusa excluir cliente com
-                              // processos, para não levar o histórico do
-                              // caso junto. Sem este tratamento, o clique
-                              // simplesmente não fazia nada.
-                              setErro(error.message);
+                            }}
+                          >
+                            {cliente.ativo ? <UserX size={15} /> : <UserCheck size={15} />}
+                          </button>
+                        )}
+                        {pode("clientes", "excluir") && !cliente.anonimizado_em && (
+                          <button
+                            type="button"
+                            className="row-action"
+                            title="Exportar dados do titular (LGPD)"
+                            aria-label="Exportar dados do titular (LGPD)"
+                            onClick={() =>
+                              exportarDadosDoCliente(cliente.id).catch((error) =>
+                                avisar(error.message, "erro")
+                              )
                             }
-                          }}
-                        >
-                          <Trash2 size={15} />
-                        </button>
+                          >
+                            <Download size={15} />
+                          </button>
+                        )}
+                        {pode("clientes", "excluir") && !cliente.anonimizado_em && (
+                          <button
+                            type="button"
+                            className="row-action row-action-danger"
+                            title="Anonimizar dados (LGPD)"
+                            aria-label="Anonimizar dados (LGPD)"
+                            onClick={async () => {
+                              const ok = await confirmar({
+                                titulo: "Anonimizar cliente",
+                                mensagem: `Os dados pessoais de ${cliente.nome} serão apagados de forma definitiva (nome, documentos, contato, endereço, foto). Os processos continuam no sistema, sem identificar a pessoa. Não dá para desfazer.`,
+                                acao: "Anonimizar",
+                              });
+                              if (!ok) return;
+                              try {
+                                await anonimizarCliente(cliente.id);
+                                avisar("Dados do cliente anonimizados.");
+                                carregarClientes();
+                                refreshDashboard().catch(() => {});
+                              } catch (error) {
+                                avisar(error.message, "erro");
+                              }
+                            }}
+                          >
+                            <EyeOff size={15} />
+                          </button>
+                        )}
+                        {pode("clientes", "excluir") && (
+                          <button
+                            type="button"
+                            className="row-action row-action-danger"
+                            title={t("acao_excluir")}
+                            aria-label={t("acao_excluir")}
+                            onClick={async () => {
+                              const ok = await confirmar({
+                                titulo: "Excluir cliente",
+                                mensagem: `${cliente.nome} será excluído. Se houver processos dele, o sistema recusa e sugere inativar.`,
+                              });
+                              if (!ok) return;
+                              setErro("");
+                              try {
+                                await deleteCliente(cliente.id);
+                                avisar("Cliente excluído.");
+                                carregarClientes();
+                                refreshDashboard().catch(() => {});
+                              } catch (error) {
+                                // O back-end recusa excluir cliente com
+                                // processos, para não levar o histórico do
+                                // caso junto. Sem este tratamento, o clique
+                                // simplesmente não fazia nada.
+                                setErro(error.message);
+                              }
+                            }}
+                          >
+                            <Trash2 size={15} />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
                 ))}
             </tbody>
           </table>
+          <RodapeLista
+            quantidade={clientes.length}
+            total={lista.total}
+            temMais={lista.temMais}
+            carregandoMais={lista.carregandoMais}
+            onCarregarMais={lista.carregarMais}
+          />
         </div>
       )}
     </OverlayPanel>

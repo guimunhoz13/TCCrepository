@@ -1,7 +1,11 @@
+from decimal import Decimal
+
 from django.contrib.auth.hashers import make_password
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
 from django.utils import timezone
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import extend_schema_field, inline_serializer
 from rest_framework import serializers
 
 from .validators import (
@@ -31,6 +35,7 @@ from .models import (
     PreferenciasUsuario,
     ConfiguracaoEscritorio,
     RegistroAuditoria,
+    Intimacao,
     ESTADOS_CIVIS,
 )
 
@@ -180,6 +185,10 @@ class UsuarioSerializer(serializers.ModelSerializer):
         source="escritorio.nome",
         read_only=True,
     )
+    tipo_usuario_display = serializers.CharField(
+        source="get_tipo_usuario_display",
+        read_only=True,
+    )
     # Mesma lógica do ClienteSerializer: a URL do documento de identidade
     # não sai na leitura, só a confirmação de que existe um enviado.
     documento_identidade_enviado = serializers.SerializerMethodField()
@@ -194,6 +203,8 @@ class UsuarioSerializer(serializers.ModelSerializer):
             "email",
             "telefone",
             "tipo_usuario",
+            "tipo_usuario_display",
+            "totp_ativo",
             "foto",
             "documento_identidade",
             "documento_identidade_enviado",
@@ -206,6 +217,7 @@ class UsuarioSerializer(serializers.ModelSerializer):
             "criado_em",
         ]
         read_only_fields = [
+            "totp_ativo",
             "id",
             "escritorio",
             "escritorio_nome",
@@ -221,7 +233,7 @@ class UsuarioSerializer(serializers.ModelSerializer):
             "documento_identidade": {"write_only": True},
         }
 
-    def get_documento_identidade_enviado(self, obj):
+    def get_documento_identidade_enviado(self, obj) -> bool:
         return bool(obj.documento_identidade)
 
     def validate(self, dados):
@@ -241,6 +253,40 @@ class UsuarioSerializer(serializers.ModelSerializer):
 
         instance.save()
         return instance
+
+
+PERFIS_SEM_OAB = ("admin", "estagiario", "financeiro", "secretaria")
+
+
+class MembroRegistroSerializer(serializers.Serializer):
+    """Cadastro de quem trabalha no escritório sem ser advogado (estagiário,
+    financeiro, secretária) ou de outro administrador. Advogado tem fluxo
+    próprio porque precisa do registro na OAB."""
+
+    nome = serializers.CharField(max_length=255)
+    email = serializers.EmailField(validators=[validar_email_real])
+    senha = serializers.CharField(write_only=True, validators=[validar_senha_forte])
+    telefone = serializers.CharField(
+        max_length=20, required=False, allow_blank=True, validators=[validar_telefone]
+    )
+    tipo_usuario = serializers.ChoiceField(
+        choices=[(c, r) for c, r in Usuario.TIPOS_USUARIO if c in PERFIS_SEM_OAB]
+    )
+
+    def validate_email(self, value):
+        if Usuario.objects.filter(email__iexact=value).exists():
+            raise serializers.ValidationError("E-mail já cadastrado.")
+        return value
+
+    def create(self, validated_data, escritorio):
+        return Usuario.objects.create(
+            escritorio=escritorio,
+            nome=validated_data["nome"],
+            email=validated_data["email"],
+            senha=make_password(validated_data["senha"]),
+            telefone=validated_data.get("telefone", ""),
+            tipo_usuario=validated_data["tipo_usuario"],
+        )
 
 
 class AdvogadoRegistroSerializer(serializers.Serializer):
@@ -326,9 +372,18 @@ class ClienteSerializer(serializers.ModelSerializer):
             "documento_identidade",
             "documento_identidade_enviado",
             "ativo",
+            "consentimento_lgpd",
+            "consentimento_lgpd_em",
+            "anonimizado_em",
             "criado_em",
         ]
-        read_only_fields = ["id", "criado_em", "documento_identidade_enviado"]
+        read_only_fields = [
+            "id",
+            "criado_em",
+            "documento_identidade_enviado",
+            "consentimento_lgpd_em",
+            "anonimizado_em",
+        ]
         extra_kwargs = {
             "cpf": {"validators": [validar_cpf]},
             "cnpj": {"validators": [validar_cnpj]},
@@ -337,7 +392,7 @@ class ClienteSerializer(serializers.ModelSerializer):
             "documento_identidade": {"write_only": True},
         }
 
-    def get_documento_identidade_enviado(self, obj):
+    def get_documento_identidade_enviado(self, obj) -> bool:
         return bool(obj.documento_identidade)
 
 
@@ -394,7 +449,7 @@ class AdvogadoSerializer(serializers.ModelSerializer):
             "oab": {"validators": [validar_oab]},
         }
 
-    def get_documento_identidade_enviado(self, obj):
+    def get_documento_identidade_enviado(self, obj) -> bool:
         return bool(obj.usuario.documento_identidade)
 
     def update(self, instance, validated_data):
@@ -423,6 +478,17 @@ class ProcessoSerializer(EscopoDoEscritorioMixin, serializers.ModelSerializer):
     )
     proximo_prazo = serializers.SerializerMethodField()
 
+    @extend_schema_field(
+        inline_serializer(
+            "ProximoPrazo",
+            {
+                "data_evento": serializers.DateTimeField(),
+                "prioridade": serializers.CharField(),
+                "atrasado": serializers.BooleanField(),
+            },
+            allow_null=True,
+        )
+    )
     def get_proximo_prazo(self, obj):
         """O prazo pendente mais próximo do processo, para a listagem
         sinalizar urgência sem abrir a ficha.
@@ -473,6 +539,7 @@ class ProcessoSerializer(EscopoDoEscritorioMixin, serializers.ModelSerializer):
             "oab_advogado_adverso",
             "percentual_honorarios_sucumbencia",
             "valor_estimado_honorarios_sucumbencia",
+            "sigiloso",
             "datajud_sincronizado_em",
             "proximo_prazo",
             "criado_em",
@@ -613,19 +680,19 @@ class AgendaSerializer(EscopoDoEscritorioMixin, serializers.ModelSerializer):
             "processo": {"required": False, "allow_null": True},
         }
 
-    def get_processo_titulo(self, obj):
+    def get_processo_titulo(self, obj) -> str | None:
         return obj.processo.titulo if obj.processo else None
 
-    def get_numero_processo(self, obj):
+    def get_numero_processo(self, obj) -> str | None:
         return obj.processo.numero_processo if obj.processo else None
 
-    def get_cliente_nome(self, obj):
+    def get_cliente_nome(self, obj) -> str | None:
         return obj.processo.cliente.nome if obj.processo else None
 
-    def get_advogado_nome(self, obj):
+    def get_advogado_nome(self, obj) -> str | None:
         return obj.processo.advogado.usuario.nome if obj.processo else None
 
-    def get_atrasado(self, obj):
+    def get_atrasado(self, obj) -> bool:
         from django.utils import timezone
 
         return not obj.cumprido and obj.data_evento < timezone.now()
@@ -658,13 +725,13 @@ class EscritorioAdminSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["id", "criado_em", "total_advogados", "total_clientes", "total_processos"]
 
-    def get_total_advogados(self, obj):
+    def get_total_advogados(self, obj) -> int:
         return obj.advogados.count()
 
-    def get_total_clientes(self, obj):
+    def get_total_clientes(self, obj) -> int:
         return obj.clientes.count()
 
-    def get_total_processos(self, obj):
+    def get_total_processos(self, obj) -> int:
         return obj.processos.count()
 
 
@@ -726,10 +793,10 @@ class ContratoSerializer(EscopoDoEscritorioMixin, serializers.ModelSerializer):
             "criado_em",
         ]
 
-    def get_valor_pago(self, obj):
+    def get_valor_pago(self, obj) -> Decimal:
         return sum((p.valor for p in obj.parcelas.all() if p.status == "pago"), 0)
 
-    def get_valor_pendente(self, obj):
+    def get_valor_pendente(self, obj) -> Decimal:
         return sum((p.valor for p in obj.parcelas.all() if p.status != "pago"), 0)
 
 
@@ -789,9 +856,24 @@ class ConfiguracaoEscritorioSerializer(serializers.ModelSerializer):
             "timezone",
             "formato_data",
             "retencao_documentos",
+            "tipo_chave_pix",
+            "chave_pix",
+            "nome_recebedor_pix",
+            "cidade_pix",
             "atualizado_em",
         ]
         read_only_fields = ["atualizado_em"]
+
+    def validate(self, dados):
+        from .pix import normalizar_chave
+
+        tipo = dados.get("tipo_chave_pix", getattr(self.instance, "tipo_chave_pix", ""))
+        if "chave_pix" in dados or "tipo_chave_pix" in dados:
+            chave = dados.get("chave_pix", getattr(self.instance, "chave_pix", ""))
+            if chave and not tipo:
+                raise serializers.ValidationError({"tipo_chave_pix": "Escolha o tipo da chave PIX."})
+            dados["chave_pix"] = normalizar_chave(tipo, chave)
+        return dados
 
 
 class TarefaSerializer(serializers.ModelSerializer):
@@ -976,3 +1058,37 @@ class ModeloDocumentoSerializer(serializers.ModelSerializer):
             "atualizado_em",
         ]
         read_only_fields = ["id", "tipo_display", "criado_em", "atualizado_em"]
+
+
+class IntimacaoSerializer(serializers.ModelSerializer):
+    advogado_nome = serializers.CharField(source="advogado.usuario.nome", read_only=True, default=None)
+    processo_titulo = serializers.CharField(source="processo.titulo", read_only=True, default=None)
+    cliente_nome = serializers.CharField(source="processo.cliente.nome", read_only=True, default=None)
+
+    class Meta:
+        model = Intimacao
+        fields = [
+            "id",
+            "advogado",
+            "advogado_nome",
+            "processo",
+            "processo_titulo",
+            "cliente_nome",
+            "numero_processo",
+            "tribunal",
+            "orgao",
+            "tipo_comunicacao",
+            "texto",
+            "link",
+            "data_disponibilizacao",
+            "data_publicacao",
+            "prazo_dias",
+            "prazo_dias_uteis",
+            "prazo_estimado",
+            "prazo_final",
+            "evento_agenda",
+            "lida",
+            "criado_em",
+        ]
+        # Só "lida" muda pela API; o resto vem do DJEN.
+        read_only_fields = [campo for campo in fields if campo != "lida"]

@@ -1,6 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useConfirmacao } from "@/contexts/ConfirmacaoContext";
+import { useAvisos } from "@/contexts/AvisosContext";
+
+import { useState } from "react";
+import { useListaPaginada, useRecurso } from "@/hooks/useRecurso";
+import { useUsuarioLogado } from "@/hooks/useUsuarioLogado";
+import RodapeLista from "@/components/ui/RodapeLista";
 import { Trash2 } from "lucide-react";
 import { usePanel } from "@/contexts/PanelContext";
 import { usePreferences } from "@/contexts/PreferencesContext";
@@ -15,9 +21,10 @@ import {
   deleteDespesa,
   getTempoDeUso,
   getProcessos,
-  getUsuarioLogado,
-  normalizarLista,
+  listarTudo,
 } from "@/services/api";
+import LinhasCarregando from "@/components/ui/LinhasCarregando";
+import { usePermissoes } from "@/hooks/usePermissoes";
 
 const TIPOS_DESPESA = [
   { value: "custas", label: "Custas processuais" },
@@ -66,54 +73,39 @@ const despesaInicial = {
 export default function HorasPanel() {
   const { activePanel, panelTab, setPanelTab } = usePanel();
   const { t } = usePreferences();
+  const confirmar = useConfirmacao();
+  const avisar = useAvisos();
+  const pode = usePermissoes();
 
-  const [processos, setProcessos] = useState([]);
-  const [apontamentos, setApontamentos] = useState([]);
-  const [despesas, setDespesas] = useState([]);
-  const [tempoUso, setTempoUso] = useState([]);
   const [mes, setMes] = useState(mesAtual());
   const [formHora, setFormHora] = useState(horaInicial);
   const [formDespesa, setFormDespesa] = useState(despesaInicial);
   const [erro, setErro] = useState("");
-  const [carregando, setCarregando] = useState(false);
 
   const ativo = activePanel === "horas";
-  const usuario = typeof window !== "undefined" ? getUsuarioLogado() : null;
+  const usuario = useUsuarioLogado();
 
-  const carregar = useCallback(async () => {
-    setCarregando(true);
-    try {
-      const [listaProcessos, listaHoras, listaDespesas] = await Promise.all([
-        getProcessos(),
-        getApontamentos(),
-        getDespesas(),
-      ]);
-      setProcessos(normalizarLista(listaProcessos));
-      setApontamentos(normalizarLista(listaHoras));
-      setDespesas(normalizarLista(listaDespesas));
-    } catch (e) {
-      setErro(e.message);
-    } finally {
-      setCarregando(false);
-    }
-  }, []);
+  const listaHoras = useListaPaginada((page) => getApontamentos({ page }), [], { ativo });
+  const listaDespesas = useListaPaginada((page) => getDespesas({ page }), [], { ativo });
+  const recursoProcessos = useRecurso(() => listarTudo(getProcessos), [], { ativo });
+  const recursoTempo = useRecurso(() => getTempoDeUso(mes), [mes], {
+    ativo: ativo && panelTab === "tempo",
+  });
 
-  useEffect(() => {
-    if (ativo) carregar();
-  }, [ativo, carregar]);
+  const processos = recursoProcessos.dados ?? [];
+  const apontamentos = listaHoras.itens;
+  const despesas = listaDespesas.itens;
+  const tempoUso = recursoTempo.dados?.usuarios ?? [];
+  const carregando =
+    (listaHoras.carregando && apontamentos.length === 0) ||
+    (listaDespesas.carregando && despesas.length === 0);
+  const erroCarga =
+    listaHoras.erro || listaDespesas.erro || recursoProcessos.erro || recursoTempo.erro;
 
-  const carregarTempo = useCallback(async (mesEscolhido) => {
-    try {
-      const dados = await getTempoDeUso(mesEscolhido);
-      setTempoUso(dados.usuarios || []);
-    } catch (e) {
-      setErro(e.message);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (ativo && panelTab === "tempo") carregarTempo(mes);
-  }, [ativo, panelTab, mes, carregarTempo]);
+  function carregar() {
+    listaHoras.recarregar();
+    listaDespesas.recarregar();
+  }
 
   async function salvarHora(evento) {
     evento.preventDefault();
@@ -167,18 +159,18 @@ export default function HorasPanel() {
     .reduce((soma, d) => soma + Number(d.valor), 0);
 
   const abas = [
-    { id: "horas", label: "Horas" },
-    { id: "nova-hora", label: "Apontar hora" },
-    { id: "despesas", label: "Despesas" },
-    { id: "nova-despesa", label: "Nova despesa" },
+    pode("horas") && { id: "horas", label: "Horas" },
+    pode("horas", "criar") && { id: "nova-hora", label: "Apontar hora" },
+    pode("despesas") && { id: "despesas", label: "Despesas" },
+    pode("despesas", "criar") && { id: "nova-despesa", label: "Nova despesa" },
     { id: "tempo", label: "Tempo de uso" },
-  ];
+  ].filter(Boolean);
 
   if (!ativo) return null;
 
   return (
     <OverlayPanel tabs={abas}>
-      {erro && <div className="form-error">{erro}</div>}
+      {(erro || erroCarga) && <div className="form-error">{erro || erroCarga}</div>}
 
       {panelTab === "horas" && (
         <>
@@ -203,11 +195,7 @@ export default function HorasPanel() {
               </tr>
             </thead>
             <tbody>
-              {carregando && (
-                <tr>
-                  <td colSpan="7">Carregando...</td>
-                </tr>
-              )}
+              {carregando && <LinhasCarregando colunas={7} />}
               {!carregando && apontamentos.length === 0 && (
                 <tr>
                   <td colSpan="7">Nenhuma hora apontada ainda.</td>
@@ -230,26 +218,43 @@ export default function HorasPanel() {
                     </td>
                     <td>
                       <div className="row-actions">
-                        <button
-                          type="button"
-                          className="row-action row-action-danger"
-                          title={t("acao_excluir")}
-                          aria-label={t("acao_excluir")}
-                          onClick={async () => {
-                            if (window.confirm("Excluir este apontamento?")) {
-                              await deleteApontamento(a.id);
-                              carregar();
-                            }
-                          }}
-                        >
-                          <Trash2 size={15} />
-                        </button>
+                        {pode("horas", "excluir") && (
+                          <button
+                            type="button"
+                            className="row-action row-action-danger"
+                            title={t("acao_excluir")}
+                            aria-label={t("acao_excluir")}
+                            onClick={async () => {
+                              const ok = await confirmar({
+                                titulo: "Excluir apontamento",
+                                mensagem: "As horas deste apontamento deixam de contar no faturamento.",
+                              });
+                              if (!ok) return;
+                              try {
+                                await deleteApontamento(a.id);
+                                avisar("Apontamento excluído.");
+                                carregar();
+                              } catch (error) {
+                                avisar(error.message, "erro");
+                              }
+                            }}
+                          >
+                            <Trash2 size={15} />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
                 ))}
             </tbody>
           </table>
+          <RodapeLista
+            quantidade={apontamentos.length}
+            total={listaHoras.total}
+            temMais={listaHoras.temMais}
+            carregandoMais={listaHoras.carregandoMais}
+            onCarregarMais={listaHoras.carregarMais}
+          />
         </>
       )}
 
@@ -363,11 +368,7 @@ export default function HorasPanel() {
               </tr>
             </thead>
             <tbody>
-              {carregando && (
-                <tr>
-                  <td colSpan="7">Carregando...</td>
-                </tr>
-              )}
+              {carregando && <LinhasCarregando colunas={7} />}
               {!carregando && despesas.length === 0 && (
                 <tr>
                   <td colSpan="7">Nenhuma despesa lançada ainda.</td>
@@ -393,39 +394,58 @@ export default function HorasPanel() {
                     <td>
                       <div className="row-actions">
                         {d.reembolsavel && !d.reembolsada && (
+                          pode("despesas", "editar") && (
+                            <button
+                              type="button"
+                              className="row-action row-action-success"
+                              title="Marcar como reembolsada"
+                              aria-label="Marcar como reembolsada"
+                              onClick={async () => {
+                                await updateDespesa(d.id, { reembolsada: true });
+                                carregar();
+                              }}
+                            >
+                              <span aria-hidden="true">R$</span>
+                            </button>
+                          )
+                        )}
+                        {pode("despesas", "excluir") && (
                           <button
                             type="button"
-                            className="row-action row-action-success"
-                            title="Marcar como reembolsada"
-                            aria-label="Marcar como reembolsada"
+                            className="row-action row-action-danger"
+                            title={t("acao_excluir")}
+                            aria-label={t("acao_excluir")}
                             onClick={async () => {
-                              await updateDespesa(d.id, { reembolsada: true });
-                              carregar();
+                              const ok = await confirmar({
+                                titulo: "Excluir despesa",
+                                mensagem: "A despesa sai do relatório do cliente e do reembolso.",
+                              });
+                              if (!ok) return;
+                              try {
+                                await deleteDespesa(d.id);
+                                avisar("Despesa excluída.");
+                                carregar();
+                              } catch (error) {
+                                avisar(error.message, "erro");
+                              }
                             }}
                           >
-                            <span aria-hidden="true">R$</span>
+                            <Trash2 size={15} />
                           </button>
                         )}
-                        <button
-                          type="button"
-                          className="row-action row-action-danger"
-                          title={t("acao_excluir")}
-                          aria-label={t("acao_excluir")}
-                          onClick={async () => {
-                            if (window.confirm("Excluir esta despesa?")) {
-                              await deleteDespesa(d.id);
-                              carregar();
-                            }
-                          }}
-                        >
-                          <Trash2 size={15} />
-                        </button>
                       </div>
                     </td>
                   </tr>
                 ))}
             </tbody>
           </table>
+          <RodapeLista
+            quantidade={despesas.length}
+            total={listaDespesas.total}
+            temMais={listaDespesas.temMais}
+            carregandoMais={listaDespesas.carregandoMais}
+            onCarregarMais={listaDespesas.carregarMais}
+          />
         </>
       )}
 

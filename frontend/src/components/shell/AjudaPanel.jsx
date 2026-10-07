@@ -16,14 +16,23 @@ export default function AjudaPanel({ aberto, painel = null, onFechar }) {
   const buscaRef = useRef(null);
   const conteudoRef = useRef(null);
 
-  // Ao abrir, começa no assunto do painel que está aberto; sem painel,
-  // na visão geral.
+  // Ao abrir, começa no assunto do painel que está aberto; sem painel, na
+  // visão geral. O ajuste acontece na própria renderização em que a ajuda
+  // abre (padrão do React para "estado que depende de uma prop"), em vez de
+  // num efeito que renderizaria tudo uma segunda vez.
+  const abertura = aberto ? `aberta:${painel ?? ""}` : "fechada";
+  const [aberturaAnterior, setAberturaAnterior] = useState("fechada");
+  if (abertura !== aberturaAnterior) {
+    setAberturaAnterior(abertura);
+    if (aberto) {
+      const contextual = secaoDoPainel(painel);
+      setSecaoId(contextual ? contextual.id : SECOES_AJUDA[0].id);
+      setTermo("");
+    }
+  }
+
   useEffect(() => {
-    if (!aberto) return;
-    const contextual = secaoDoPainel(painel);
-    setSecaoId(contextual ? contextual.id : SECOES_AJUDA[0].id);
-    setTermo("");
-    buscaRef.current?.focus();
+    if (aberto) buscaRef.current?.focus();
   }, [aberto, painel]);
 
   useEffect(() => {

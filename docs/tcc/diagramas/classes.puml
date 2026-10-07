@@ -1,0 +1,295 @@
+@startuml
+!include skinparam.iuml
+title Diagrama de Classes — Sistema de Gerenciamento de Escritório de Advocacia
+hide circle
+skinparam linetype ortho
+
+class SuperAdmin {
+  - nome : String
+  - email : String
+  - senha : String
+  - ativo : boolean
+  + autenticar() : boolean
+}
+
+class Escritorio {
+  - nome : String
+  - cnpj : String
+  - email : String
+  - telefone : String
+  - endereco : String
+  - ativo : boolean
+  - plano : PlanoEnum
+  - planoValidade : Date
+}
+
+abstract class Usuario {
+  - nome : String
+  - email : String
+  - senha : String
+  - telefone : String
+  - ativo : boolean
+  - tentativasLogin : int
+  - bloqueadoAte : DateTime
+  - emailVerificado : boolean
+  - perfil : PerfilEnum
+  - totpSegredo : String
+  - totpAtivo : boolean
+  - agendaFeedToken : String
+  + autenticar() : boolean
+  + alterarSenha() : void
+  + conferirCodigoTotp() : boolean
+  + pode(area, acao) : boolean
+}
+
+class Administrador
+class Estagiario
+class Financeiro
+class Secretaria
+class Advogado {
+  - oab : String
+  - especialidade : String
+  - valorHoraPadrao : Decimal
+}
+
+class Cliente {
+  - nome : String
+  - cpf : String
+  - email : String
+  - telefone : String
+  - endereco : String
+  - ativo : boolean
+  - consentimentoLgpd : boolean
+  - consentimentoLgpdEm : DateTime
+  - anonimizadoEm : DateTime
+  + exportarRelatorio() : File
+  + enviarRelatorioPorEmail() : void
+  + exportarDadosDoTitular() : JSON
+  + anonimizar() : void
+}
+
+class Processo {
+  - numeroProcesso : String
+  - titulo : String
+  - descricao : String
+  - status : StatusProcessoEnum
+  - dataInicio : Date
+  - dataFim : Date
+  - areaDireito : AreaDireitoEnum
+  - vara : String
+  - comarca : String
+  - valorCausa : Decimal
+  - nomeParteContraria : String
+  - nomeAdvogadoAdverso : String
+  - oabAdvogadoAdverso : String
+  - percentualHonorariosSucumbencia : Decimal
+  - datajudSincronizadoEm : DateTime
+  - sigiloso : boolean
+  + atualizarStatus() : void
+  + exportarRelatorio() : File
+  + calcularHonorariosSucumbencia() : Decimal
+  + consultarNoDataJud() : void
+  + resumirParaCliente() : String
+}
+
+class Movimentacao {
+  - descricao : String
+  - dataMovimentacao : DateTime
+  - origem : OrigemEnum
+  - identificadorExterno : String
+}
+
+class Documento {
+  - nomeArquivo : String
+  - arquivo : File
+  - enviadoEm : DateTime
+}
+
+class Agenda {
+  - tipo : TipoEventoEnum
+  - prioridade : PrioridadeEnum
+  - titulo : String
+  - descricao : String
+  - dataEvento : DateTime
+  - localEvento : String
+  - cumprido : boolean
+  + estaAtrasado() : boolean
+  + calcularPrazo() : Date
+}
+
+class Contrato {
+  - tipoHonorario : TipoHonorarioEnum
+  - valorTotal : Decimal
+  - formaPagamento : FormaPagamentoEnum
+  - numeroParcelas : int
+  - status : StatusContratoEnum
+  - observacoes : String
+  + gerarParcelas() : void
+  + calcularValorPago() : Decimal
+  + calcularValorPendente() : Decimal
+}
+
+class Parcela {
+  - numero : int
+  - valor : Decimal
+  - dataVencimento : Date
+  - status : StatusParcelaEnum
+  - pagoEm : DateTime
+  + marcarComoPago() : void
+  + gerarPix() : BRCode
+}
+
+class RegistroAuditoria {
+  - acao : AcaoAuditoriaEnum
+  - modelo : String
+  - objetoId : int
+  - descricao : String
+  - enderecoIp : String
+  - criadoEm : DateTime
+}
+
+class TokenRedefinicaoSenha {
+  - token : String
+  - criadoEm : DateTime
+  - expiraEm : DateTime
+  - usado : boolean
+  + estaValido() : boolean
+}
+
+class TokenVerificacaoEmail {
+  - token : String
+  - criadoEm : DateTime
+  - expiraEm : DateTime
+  - usado : boolean
+  + estaValido() : boolean
+}
+
+class ApontamentoHora {
+  - data : Date
+  - minutos : int
+  - descricao : String
+  - faturavel : boolean
+  - valorHora : Decimal
+  + calcularValor() : Decimal
+}
+
+class Despesa {
+  - tipo : TipoDespesaEnum
+  - descricao : String
+  - valor : Decimal
+  - data : Date
+  - reembolsavel : boolean
+  - reembolsada : boolean
+  - comprovante : File
+}
+
+class SessaoUso {
+  - inicio : DateTime
+  - ultimaAtividade : DateTime
+  + calcularDuracao() : int
+}
+
+class NotificacaoEnviada {
+  - tipo : TipoNotificacaoEnum
+  - chave : String
+  - enviadoEm : DateTime
+}
+
+class ModeloDocumento {
+  - nome : String
+  - tipo : TipoDocumentoEnum
+  - conteudo : String
+  + preencher() : String
+}
+
+class Tarefa {
+  - titulo : String
+  - descricao : String
+  - status : StatusTarefaEnum
+  - prioridade : PrioridadeEnum
+  - prazo : Date
+  - concluidaEm : DateTime
+  + estaAtrasada() : Boolean
+}
+
+class Intimacao {
+  - identificadorExterno : String
+  - numeroProcesso : String
+  - tribunal : String
+  - orgao : String
+  - tipoComunicacao : String
+  - texto : String
+  - dataDisponibilizacao : Date
+  - dataPublicacao : Date
+  - prazoDias : int
+  - prazoDiasUteis : boolean
+  - prazoEstimado : boolean
+  - prazoFinal : Date
+  - lida : boolean
+  + calcularPrazo() : Date
+  + lancarNaAgenda() : Agenda
+}
+
+class InscricaoPush {
+  - endpoint : String
+  - p256dh : String
+  - auth : String
+  - navegador : String
+  + notificar(titulo, corpo) : boolean
+}
+
+class ConfiguracaoEscritorio {
+  - tipoChavePix : TipoChavePixEnum
+  - chavePix : String
+  - nomeRecebedorPix : String
+  - cidadePix : String
+}
+
+Usuario <|-- Administrador
+Usuario <|-- Advogado
+Usuario <|-- Estagiario
+Usuario <|-- Financeiro
+Usuario <|-- Secretaria
+
+Escritorio "1" *-- "0..*" Usuario : emprega
+Escritorio "1" *-- "0..*" Cliente : atende
+Escritorio "1" *-- "0..*" Processo : gerencia
+SuperAdmin "1" ..> "0..*" Escritorio : administra
+
+Cliente "1" -- "0..*" Processo : possui
+Advogado "1" -- "0..*" Processo : responde por
+
+Processo "1" *-- "0..*" Movimentacao : registra
+Processo "1" *-- "0..*" Documento : anexa
+Processo "1" *-- "0..*" Agenda : programa
+Processo "1" o-- "0..1" Contrato : possui
+
+Contrato "1" *-- "1..*" Parcela : divide em
+
+Usuario "1" ..> "0..*" Movimentacao : autoria
+Escritorio "1" *-- "0..*" RegistroAuditoria : audita
+Usuario "1" -- "0..*" RegistroAuditoria : gera
+SuperAdmin "1" -- "0..*" RegistroAuditoria : gera
+Usuario "1" *-- "0..*" TokenRedefinicaoSenha : solicita
+Usuario "1" *-- "0..*" TokenVerificacaoEmail : confirma
+Escritorio "1" *-- "0..*" ApontamentoHora : contabiliza
+Processo "1" *-- "0..*" ApontamentoHora : consome
+Usuario "1" -- "0..*" ApontamentoHora : aponta
+Escritorio "1" *-- "0..*" Despesa : custeia
+Processo "1" *-- "0..*" Despesa : gera
+Escritorio "1" *-- "0..*" SessaoUso : mede
+Usuario "1" -- "0..*" SessaoUso : acumula
+Usuario "1" *-- "0..*" NotificacaoEnviada : recebe
+Agenda "1" ..> "0..*" NotificacaoEnviada : origina
+Escritorio "1" *-- "0..*" ModeloDocumento : mantém
+Escritorio "1" *-- "0..*" Tarefa : organiza
+Processo "0..1" -- "0..*" Tarefa : origina
+Usuario "1" -- "0..*" Tarefa : é responsável por
+Escritorio "1" *-- "0..*" Intimacao : recebe
+Advogado "0..1" -- "0..*" Intimacao : é intimado em
+Processo "0..1" -- "0..*" Intimacao : refere-se a
+Intimacao "0..1" --> "0..1" Agenda : lança prazo
+Usuario "1" *-- "0..*" InscricaoPush : inscreve
+Escritorio "1" *-- "1" ConfiguracaoEscritorio : configura
+
+@enduml

@@ -1,6 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useConfirmacao } from "@/contexts/ConfirmacaoContext";
+import { useAvisos } from "@/contexts/AvisosContext";
+
+import { useState } from "react";
+import { useListaPaginada, useRecurso } from "@/hooks/useRecurso";
+import { useUsuarioLogado } from "@/hooks/useUsuarioLogado";
+import RodapeLista from "@/components/ui/RodapeLista";
 import { Check, RotateCcw, Trash2 } from "lucide-react";
 import { usePanel } from "@/contexts/PanelContext";
 import { usePreferences } from "@/contexts/PreferencesContext";
@@ -12,9 +18,11 @@ import {
   deleteTarefa,
   getProcessos,
   getUsuarios,
-  getUsuarioLogado,
-  normalizarLista,
+  listarTudo,
 } from "@/services/api";
+import LinhasCarregando from "@/components/ui/LinhasCarregando";
+import TarefasQuadro from "@/components/panels/TarefasQuadro";
+import { usePermissoes } from "@/hooks/usePermissoes";
 
 const STATUS = [
   { value: "aberta", label: "Aberta" },
@@ -61,16 +69,15 @@ const tarefaInicial = {
 export default function TarefasPanel() {
   const { activePanel, panelTab, setPanelTab } = usePanel();
   const { t } = usePreferences();
+  const confirmar = useConfirmacao();
+  const avisar = useAvisos();
+  const pode = usePermissoes();
 
-  const [tarefas, setTarefas] = useState([]);
-  const [processos, setProcessos] = useState([]);
-  const [usuarios, setUsuarios] = useState([]);
   const [form, setForm] = useState(tarefaInicial);
   const [erro, setErro] = useState("");
-  const [carregando, setCarregando] = useState(false);
 
   const ativo = activePanel === "tarefas";
-  const usuario = typeof window !== "undefined" ? getUsuarioLogado() : null;
+  const usuario = useUsuarioLogado();
 
   // A aba decide o filtro: "minhas" traz só as do usuário logado, e as duas
   // deixam de fora o que já foi concluído ou cancelado.
@@ -81,28 +88,26 @@ export default function TarefasPanel() {
         ? { status: "abertas" }
         : { };
 
-  const carregar = useCallback(async (filtrosAtuais) => {
-    setCarregando(true);
-    try {
-      const [listaTarefas, listaProcessos, listaUsuarios] = await Promise.all([
-        getTarefas(filtrosAtuais),
-        getProcessos(),
-        getUsuarios(),
-      ]);
-      setTarefas(normalizarLista(listaTarefas));
-      setProcessos(normalizarLista(listaProcessos));
-      setUsuarios(normalizarLista(listaUsuarios).filter((u) => u.ativo));
-    } catch (e) {
-      setErro(e.message);
-    } finally {
-      setCarregando(false);
-    }
-  }, []);
+  const abaDeLista = panelTab !== "nova" && panelTab !== "quadro";
+  const lista = useListaPaginada(
+    (page) => getTarefas({ ...filtros, page }),
+    [panelTab],
+    { ativo: ativo && abaDeLista }
+  );
+  const auxiliares = useRecurso(
+    () => Promise.all([listarTudo(getProcessos), listarTudo(getUsuarios)]),
+    [],
+    { ativo }
+  );
+  const tarefas = lista.itens;
+  const [processos, todosUsuarios] = auxiliares.dados ?? [[], []];
+  const usuarios = todosUsuarios.filter((u) => u.ativo);
+  const carregando = lista.carregando && tarefas.length === 0;
+  const erroCarga = lista.erro || auxiliares.erro;
 
-  useEffect(() => {
-    if (ativo) carregar(filtros);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ativo, panelTab, carregar]);
+  function carregar() {
+    lista.recarregar();
+  }
 
   async function salvar(evento) {
     evento.preventDefault();
@@ -124,7 +129,7 @@ export default function TarefasPanel() {
     setErro("");
     try {
       await updateTarefa(tarefa.id, { status });
-      carregar(filtros);
+      carregar();
     } catch (e) {
       setErro(e.message);
     }
@@ -132,9 +137,10 @@ export default function TarefasPanel() {
 
   const abas = [
     { id: "minhas", label: "Minhas tarefas" },
+    { id: "quadro", label: "Quadro" },
     { id: "todas", label: "Do escritório" },
     { id: "historico", label: "Histórico" },
-    { id: "nova", label: "Nova tarefa" },
+    ...(pode("tarefas", "criar") ? [{ id: "nova", label: "Nova tarefa" }] : []),
   ];
 
   if (!ativo) return null;
@@ -143,14 +149,18 @@ export default function TarefasPanel() {
 
   return (
     <OverlayPanel tabs={abas}>
-      {erro && <div className="form-error">{erro}</div>}
+      {(erro || erroCarga) && <div className="form-error">{erro || erroCarga}</div>}
 
-      {panelTab !== "nova" && (
+      {panelTab === "quadro" && (
+        <TarefasQuadro ativo={ativo} podeEditar={pode("tarefas", "editar")} />
+      )}
+
+      {abaDeLista && (
         <>
           <div className="resumo-linha">
             <span>
               {panelTab === "historico" ? "Registros" : "Em aberto"}:{" "}
-              <strong>{tarefas.length}</strong>
+              <strong>{lista.total}</strong>
             </span>
             {atrasadas > 0 && (
               <span>
@@ -171,11 +181,7 @@ export default function TarefasPanel() {
               </tr>
             </thead>
             <tbody>
-              {carregando && (
-                <tr>
-                  <td colSpan="7">Carregando...</td>
-                </tr>
-              )}
+              {carregando && <LinhasCarregando colunas={7} />}
               {!carregando && tarefas.length === 0 && (
                 <tr>
                   <td colSpan="7">
@@ -217,58 +223,81 @@ export default function TarefasPanel() {
                     <td>
                       <div className="row-actions">
                         {tarefa.status === "aberta" && (
-                          <button
-                            type="button"
-                            className="row-action"
-                            title="Marcar como em andamento"
-                            aria-label="Marcar como em andamento"
-                            onClick={() => mudarStatus(tarefa, "em_andamento")}
-                          >
-                            <RotateCcw size={15} />
-                          </button>
+                          pode("tarefas", "editar") && (
+                            <button
+                              type="button"
+                              className="row-action"
+                              title="Marcar como em andamento"
+                              aria-label="Marcar como em andamento"
+                              onClick={() => mudarStatus(tarefa, "em_andamento")}
+                            >
+                              <RotateCcw size={15} />
+                            </button>
+                          )
                         )}
                         {tarefa.status !== "concluida" && tarefa.status !== "cancelada" && (
-                          <button
-                            type="button"
-                            className="row-action"
-                            title="Concluir tarefa"
-                            aria-label="Concluir tarefa"
-                            onClick={() => mudarStatus(tarefa, "concluida")}
-                          >
-                            <Check size={15} />
-                          </button>
+                          pode("tarefas", "editar") && (
+                            <button
+                              type="button"
+                              className="row-action"
+                              title="Concluir tarefa"
+                              aria-label="Concluir tarefa"
+                              onClick={() => mudarStatus(tarefa, "concluida")}
+                            >
+                              <Check size={15} />
+                            </button>
+                          )
                         )}
                         {(tarefa.status === "concluida" || tarefa.status === "cancelada") && (
+                          pode("tarefas", "editar") && (
+                            <button
+                              type="button"
+                              className="row-action"
+                              title="Reabrir tarefa"
+                              aria-label="Reabrir tarefa"
+                              onClick={() => mudarStatus(tarefa, "aberta")}
+                            >
+                              <RotateCcw size={15} />
+                            </button>
+                          )
+                        )}
+                        {pode("tarefas", "excluir") && (
                           <button
                             type="button"
-                            className="row-action"
-                            title="Reabrir tarefa"
-                            aria-label="Reabrir tarefa"
-                            onClick={() => mudarStatus(tarefa, "aberta")}
+                            className="row-action row-action-danger"
+                            title={t("acao_excluir")}
+                            aria-label={t("acao_excluir")}
+                            onClick={async () => {
+                              const ok = await confirmar({
+                                titulo: "Excluir tarefa",
+                                mensagem: `"${tarefa.titulo}" será excluída. Para guardar o histórico, prefira marcar como cancelada.`,
+                              });
+                              if (!ok) return;
+                              try {
+                                await deleteTarefa(tarefa.id);
+                                avisar("Tarefa excluída.");
+                                carregar();
+                              } catch (error) {
+                                avisar(error.message, "erro");
+                              }
+                            }}
                           >
-                            <RotateCcw size={15} />
+                            <Trash2 size={15} />
                           </button>
                         )}
-                        <button
-                          type="button"
-                          className="row-action row-action-danger"
-                          title={t("acao_excluir")}
-                          aria-label={t("acao_excluir")}
-                          onClick={async () => {
-                            if (window.confirm("Excluir esta tarefa?")) {
-                              await deleteTarefa(tarefa.id);
-                              carregar(filtros);
-                            }
-                          }}
-                        >
-                          <Trash2 size={15} />
-                        </button>
                       </div>
                     </td>
                   </tr>
                 ))}
             </tbody>
           </table>
+          <RodapeLista
+            quantidade={tarefas.length}
+            total={lista.total}
+            temMais={lista.temMais}
+            carregandoMais={lista.carregandoMais}
+            onCarregarMais={lista.carregarMais}
+          />
         </>
       )}
 

@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useState } from "react";
+import { useRecurso } from "@/hooks/useRecurso";
+import { useConfirmacao } from "@/contexts/ConfirmacaoContext";
 import {
   ArrowLeft,
   Pencil,
@@ -15,13 +17,14 @@ import {
   CalendarDays,
   ListChecks,
   FileText,
-  FileSignature,
-} from "lucide-react";
+  FileSignature, Lock, MessageCircle } from "lucide-react";
+import ResumoParaCliente from "@/components/panels/ResumoParaCliente";
 import { getFichaProcesso, createMovimentacao, deleteMovimentacao, abrirDocumento } from "@/services/api";
 import { badgeStatus, rotuloStatus } from "@/lib/statusProcesso";
 import { areaDireitoLabel } from "@/lib/areaDireito";
 import { TIPO_HONORARIO_LABEL, situacaoDespesa } from "@/lib/contrato";
 import { formatarData, formatarMoeda, formatarHoras } from "@/utils/formato";
+import { usePermissoes } from "@/hooks/usePermissoes";
 
 const FORMA_PAGAMENTO_LABEL = { avista: "À vista", parcelado: "Parcelado" };
 
@@ -68,38 +71,24 @@ function Campo({ rotulo, children }) {
 }
 
 export default function FichaProcesso({ processoId, onVoltar, onEditar }) {
-  const [dados, setDados] = useState(null);
-  const [carregando, setCarregando] = useState(true);
-  const [erro, setErro] = useState("");
+  const confirmar = useConfirmacao();
+  const pode = usePermissoes();
   const [novaMovimentacao, setNovaMovimentacao] = useState("");
   const [lancando, setLancando] = useState(false);
   const [erroMovimentacao, setErroMovimentacao] = useState("");
   const [excluindoMovId, setExcluindoMovId] = useState(null);
+  const [resumoAberto, setResumoAberto] = useState(false);
+  const fecharResumo = useCallback(() => setResumoAberto(false), []);
 
-  useEffect(() => {
-    if (!processoId) return;
-    let cancelado = false;
-    setCarregando(true);
-    setErro("");
-    getFichaProcesso(processoId)
-      .then((resposta) => {
-        if (!cancelado) setDados(resposta);
-      })
-      .catch((error) => {
-        if (!cancelado) setErro(error.message);
-      })
-      .finally(() => {
-        if (!cancelado) setCarregando(false);
-      });
-    return () => {
-      cancelado = true;
-    };
-  }, [processoId]);
-
-  async function recarregarMovimentacoes() {
-    const resposta = await getFichaProcesso(processoId);
-    setDados((atual) => ({ ...atual, movimentacoes: resposta.movimentacoes }));
-  }
+  const recurso = useRecurso(() => getFichaProcesso(processoId), [processoId], {
+    ativo: Boolean(processoId),
+  });
+  const dados = recurso.dados;
+  const carregando = recurso.carregando;
+  // Se a ficha já está na tela, uma falha ao recarregar (depois de lançar
+  // movimentação) não troca a ficha inteira pela mensagem de erro.
+  const erro = dados ? "" : recurso.erro;
+  const recarregarMovimentacoes = recurso.recarregar;
 
   async function handleLancarMovimentacao(event) {
     event.preventDefault();
@@ -109,7 +98,7 @@ export default function FichaProcesso({ processoId, onVoltar, onEditar }) {
       setLancando(true);
       await createMovimentacao({ processo: processoId, descricao: novaMovimentacao.trim() });
       setNovaMovimentacao("");
-      await recarregarMovimentacoes();
+      recarregarMovimentacoes();
     } catch (error) {
       setErroMovimentacao(error.message);
     } finally {
@@ -118,11 +107,15 @@ export default function FichaProcesso({ processoId, onVoltar, onEditar }) {
   }
 
   async function handleExcluirMovimentacao(id) {
-    if (!window.confirm("Excluir esta movimentação?")) return;
+    const ok = await confirmar({
+      titulo: "Excluir movimentação",
+      mensagem: "Este lançamento manual sai do histórico do processo.",
+    });
+    if (!ok) return;
     setExcluindoMovId(id);
     try {
       await deleteMovimentacao(id);
-      await recarregarMovimentacoes();
+      recarregarMovimentacoes();
     } catch (error) {
       setErroMovimentacao(error.message);
     } finally {
@@ -130,7 +123,7 @@ export default function FichaProcesso({ processoId, onVoltar, onEditar }) {
     }
   }
 
-  const VoltarBtn = () => (
+  const botaoVoltar = (
     <button
       type="button"
       className="btn btn-secondary"
@@ -144,7 +137,7 @@ export default function FichaProcesso({ processoId, onVoltar, onEditar }) {
   if (!processoId) {
     return (
       <div>
-        <VoltarBtn />
+        {botaoVoltar}
         <div className="empty-state">Nenhum processo selecionado.</div>
       </div>
     );
@@ -153,7 +146,7 @@ export default function FichaProcesso({ processoId, onVoltar, onEditar }) {
   if (carregando && !dados) {
     return (
       <div>
-        <VoltarBtn />
+        {botaoVoltar}
         <p>Carregando ficha do processo...</p>
       </div>
     );
@@ -162,7 +155,7 @@ export default function FichaProcesso({ processoId, onVoltar, onEditar }) {
   if (erro) {
     return (
       <div>
-        <VoltarBtn />
+        {botaoVoltar}
         <div className="alert alert-error">{erro}</div>
       </div>
     );
@@ -184,14 +177,20 @@ export default function FichaProcesso({ processoId, onVoltar, onEditar }) {
 
   return (
     <div>
-      <div style={{ display: "flex", gap: 10, marginBottom: 18 }}>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginBottom: 18 }}>
         <button type="button" className="btn btn-secondary" onClick={onVoltar}>
           <ArrowLeft size={15} /> Voltar à lista
         </button>
-        <button type="button" className="btn btn-secondary" onClick={() => onEditar(processo)}>
-          <Pencil size={15} /> Editar processo
+        {pode("processos", "editar") && (
+          <button type="button" className="btn btn-secondary" onClick={() => onEditar(processo)}>
+            <Pencil size={15} /> Editar processo
+          </button>
+        )}
+        <button type="button" className="btn btn-secondary" onClick={() => setResumoAberto(true)}>
+          <MessageCircle size={15} /> Atualizar o cliente
         </button>
       </div>
+      {resumoAberto && <ResumoParaCliente processoId={processo.id} onFechar={fecharResumo} />}
 
       <div className="ficha-identidade">
         <div>
@@ -202,6 +201,11 @@ export default function FichaProcesso({ processoId, onVoltar, onEditar }) {
           <span className={`badge ${badgeStatus(processo.status)}`}>
             {rotuloStatus(processo.status)}
           </span>
+          {processo.sigiloso && (
+            <span className="badge badge-muted" title="Só o administrador e o advogado responsável veem">
+              <Lock size={12} aria-hidden="true" /> Segredo de justiça
+            </span>
+          )}
           {processo.proximo_prazo && (
             <span
               className={`badge ${
@@ -364,6 +368,7 @@ export default function FichaProcesso({ processoId, onVoltar, onEditar }) {
 
         <div className="panel-card">
           <TituloSecao icon={History}>Movimentações</TituloSecao>
+          {pode("processos", "criar") && (
           <form onSubmit={handleLancarMovimentacao} style={{ marginBottom: 16 }}>
             <div className="form-field">
               <label>Lançar movimentação</label>
@@ -388,6 +393,7 @@ export default function FichaProcesso({ processoId, onVoltar, onEditar }) {
               {lancando ? "Lançando..." : "Lançar"}
             </button>
           </form>
+          )}
           {movimentacoes.length === 0 ? (
             <div className="empty-state">Nenhuma movimentação registrada.</div>
           ) : (
@@ -410,17 +416,17 @@ export default function FichaProcesso({ processoId, onVoltar, onEditar }) {
                       {mov.criado_por_nome && <span>Lançado por {mov.criado_por_nome}</span>}
                     </div>
                   </div>
-                  {mov.origem === "manual" && (
-                    <button
-                      type="button"
-                      className="row-action row-action-danger"
-                      title="Excluir movimentação"
-                      aria-label="Excluir movimentação"
-                      disabled={excluindoMovId === mov.id}
-                      onClick={() => handleExcluirMovimentacao(mov.id)}
-                    >
-                      <Trash2 size={15} />
-                    </button>
+                  {mov.origem === "manual" && pode("processos", "excluir") && (
+                      <button
+                        type="button"
+                        className="row-action row-action-danger"
+                        title="Excluir movimentação"
+                        aria-label="Excluir movimentação"
+                        disabled={excluindoMovId === mov.id}
+                        onClick={() => handleExcluirMovimentacao(mov.id)}
+                      >
+                        <Trash2 size={15} />
+                      </button>
                   )}
                 </div>
               ))}

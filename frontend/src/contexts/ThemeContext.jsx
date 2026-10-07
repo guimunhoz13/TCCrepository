@@ -1,32 +1,49 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useSyncExternalStore } from "react";
 
 const ThemeContext = createContext(null);
 
+const EVENTO_TEMA = "lexoffice:tema-alterado";
+const TEMA_PADRAO = "dark";
+
+function lerTema() {
+  const salvo = localStorage.getItem("theme");
+  return salvo === "light" || salvo === "dark" ? salvo : TEMA_PADRAO;
+}
+
+function assinar(aoMudar) {
+  window.addEventListener("storage", aoMudar);
+  window.addEventListener(EVENTO_TEMA, aoMudar);
+  return () => {
+    window.removeEventListener("storage", aoMudar);
+    window.removeEventListener(EVENTO_TEMA, aoMudar);
+  };
+}
+
 export function ThemeProvider({ children }) {
-  const [theme, setTheme] = useState(null);
+  // O tema mora no localStorage (o script do layout já o aplica antes da
+  // hidratação, sem piscar). No servidor vale o padrão.
+  const theme = useSyncExternalStore(assinar, lerTema, () => TEMA_PADRAO);
 
   useEffect(() => {
-    const saved = localStorage.getItem("theme");
-    const initial = saved === "light" || saved === "dark" ? saved : "dark";
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setTheme(initial);
-  }, []);
-
-  useEffect(() => {
-    if (!theme) return;
     document.documentElement.setAttribute("data-theme", theme);
     document.documentElement.style.colorScheme = theme;
-    localStorage.setItem("theme", theme);
   }, [theme]);
 
-  function toggleTheme() {
-    setTheme((current) => (current === "dark" ? "light" : "dark"));
-  }
+  const setTheme = useCallback((novo) => {
+    const valor = typeof novo === "function" ? novo(lerTema()) : novo;
+    if (valor !== "light" && valor !== "dark") return;
+    localStorage.setItem("theme", valor);
+    window.dispatchEvent(new Event(EVENTO_TEMA));
+  }, []);
+
+  const toggleTheme = useCallback(() => {
+    setTheme((atual) => (atual === "dark" ? "light" : "dark"));
+  }, [setTheme]);
 
   return (
-    <ThemeContext.Provider value={{ theme: theme || "dark", toggleTheme, setTheme }}>
+    <ThemeContext.Provider value={{ theme, toggleTheme, setTheme }}>
       {children}
     </ThemeContext.Provider>
   );

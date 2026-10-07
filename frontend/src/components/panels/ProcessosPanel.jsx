@@ -1,11 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useConfirmacao } from "@/contexts/ConfirmacaoContext";
+import { useAvisos } from "@/contexts/AvisosContext";
+
+import { useState } from "react";
+import { useListaPaginada, useRecurso } from "@/hooks/useRecurso";
+import { useValorAtrasado } from "@/hooks/useValorAtrasado";
+import RodapeLista from "@/components/ui/RodapeLista";
 import { usePanel, PANELS } from "@/contexts/PanelContext";
 import { useDashboardData } from "@/contexts/DashboardDataContext";
 import { usePreferences } from "@/contexts/PreferencesContext";
+import IntimacoesLista from "@/components/panels/IntimacoesLista";
 import OverlayPanel from "@/components/shell/OverlayPanel";
-import { Landmark, MessageCircle, RefreshCw, Trash2, AlertTriangle, Clock } from "lucide-react";
+import { Landmark, MessageCircle, RefreshCw, Trash2, AlertTriangle, Clock, Lock } from "lucide-react";
 import { abrirWhatsApp, montarMensagemProcesso } from "@/utils/whatsapp";
 import { badgeStatus, rotuloStatus } from "@/lib/statusProcesso";
 import FichaProcesso from "./FichaProcesso";
@@ -18,8 +25,10 @@ import {
   deleteProcesso,
   getClientes,
   getAdvogados,
-  normalizarLista,
+  listarTudo,
 } from "@/services/api";
+import LinhasCarregando from "@/components/ui/LinhasCarregando";
+import { usePermissoes } from "@/hooks/usePermissoes";
 
 const formularioInicial = {
   numero_processo: "",
@@ -38,6 +47,7 @@ const formularioInicial = {
   nome_advogado_adverso: "",
   oab_advogado_adverso: "",
   percentual_honorarios_sucumbencia: "",
+  sigiloso: false,
 };
 
 /** O prazo pendente mais próximo, resumido pro selo de urgência da
@@ -58,10 +68,10 @@ function rotuloUrgencia(prazo) {
 export default function ProcessosPanel() {
   const { activePanel, panelTab, panelParams, openPanel, setPanelTab } = usePanel();
   const { refresh: refreshDashboard } = useDashboardData();
+  const confirmar = useConfirmacao();
+  const avisar = useAvisos();
+  const pode = usePermissoes();
   const { t } = usePreferences();
-  const [processos, setProcessos] = useState([]);
-  const [clientes, setClientes] = useState([]);
-  const [advogados, setAdvogados] = useState([]);
   const [busca, setBusca] = useState("");
   const [consultando, setConsultando] = useState(null);
   const [avisoDataJud, setAvisoDataJud] = useState(null);
@@ -69,54 +79,36 @@ export default function ProcessosPanel() {
   const [filtroAdvogado, setFiltroAdvogado] = useState("");
   const [formulario, setFormulario] = useState(formularioInicial);
   const [formularioEdicao, setFormularioEdicao] = useState(null);
-  const [carregando, setCarregando] = useState(true);
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState("");
   const [sucesso, setSucesso] = useState("");
 
-  async function carregarDados(filtros = {}) {
-    try {
-      setCarregando(true);
-      const parametros = {
-        busca: filtros.busca ?? busca,
-        status: filtros.status ?? filtroStatus,
-        advogado: filtros.advogado ?? filtroAdvogado,
-      };
-      const [dadosProcessos, dadosClientes, dadosAdvogados] =
-        await Promise.all([
-          getProcessos(parametros),
-          getClientes(),
-          getAdvogados(),
-        ]);
-      setProcessos(normalizarLista(dadosProcessos));
-      setClientes(normalizarLista(dadosClientes));
-      setAdvogados(normalizarLista(dadosAdvogados));
-    } catch (error) {
-      setErro(error.message);
-    } finally {
-      setCarregando(false);
-    }
+  const painelAberto = activePanel === "processos";
+  const buscaAtrasada = useValorAtrasado(busca);
+  const lista = useListaPaginada(
+    (page) =>
+      getProcessos({
+        busca: buscaAtrasada,
+        status: filtroStatus,
+        advogado: filtroAdvogado,
+        page,
+      }),
+    [buscaAtrasada, filtroStatus, filtroAdvogado],
+    { ativo: painelAberto }
+  );
+  const auxiliares = useRecurso(
+    () => Promise.all([listarTudo(getClientes), listarTudo(getAdvogados)]),
+    [],
+    { ativo: painelAberto }
+  );
+  const processos = lista.itens;
+  const [clientes, advogados] = auxiliares.dados ?? [[], []];
+  const carregando = lista.carregando && processos.length === 0;
+  const erroCarga = lista.erro || auxiliares.erro;
+
+  function carregarDados() {
+    lista.recarregar();
   }
-
-  useEffect(() => {
-    if (activePanel === "processos") {
-      carregarDados();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activePanel]);
-
-  useEffect(() => {
-    if (activePanel !== "processos") return;
-    const timeout = setTimeout(() => carregarDados({ busca }), 300);
-    return () => clearTimeout(timeout);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [busca]);
-
-  useEffect(() => {
-    if (activePanel !== "processos") return;
-    carregarDados({ status: filtroStatus, advogado: filtroAdvogado });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filtroStatus, filtroAdvogado]);
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -138,7 +130,7 @@ export default function ProcessosPanel() {
       setFormulario(formularioInicial);
       setSucesso("Processo cadastrado com sucesso.");
       setPanelTab("lista");
-      await carregarDados();
+      carregarDados();
       refreshDashboard().catch(() => {});
     } catch (error) {
       setErro(error.message);
@@ -166,6 +158,7 @@ export default function ProcessosPanel() {
       nome_advogado_adverso: processo.nome_advogado_adverso || "",
       oab_advogado_adverso: processo.oab_advogado_adverso || "",
       percentual_honorarios_sucumbencia: processo.percentual_honorarios_sucumbencia || "",
+      sigiloso: Boolean(processo.sigiloso),
     });
     setErro("");
     setSucesso("");
@@ -192,7 +185,7 @@ export default function ProcessosPanel() {
       });
       setSucesso("Processo atualizado com sucesso.");
       setPanelTab("ficha");
-      await carregarDados();
+      carregarDados();
       refreshDashboard().catch(() => {});
     } catch (error) {
       setErro(error.message);
@@ -207,10 +200,11 @@ export default function ProcessosPanel() {
     <OverlayPanel
       tabs={[
         { id: "lista", label: t("aba_lista") },
-        { id: "novo", label: t("aba_novo") },
+        ...(pode("processos", "criar") ? [{ id: "novo", label: t("aba_novo") }] : []),
+        { id: "intimacoes", label: "Intimações" },
       ]}
     >
-      {erro && <div className="alert alert-error">{erro}</div>}
+      {(erro || erroCarga) && <div className="alert alert-error">{erro || erroCarga}</div>}
       {sucesso && <div className="alert alert-success">{sucesso}</div>}
       {avisoDataJud && (
         <div className={`alert ${avisoDataJud.erro ? "alert-error" : "alert-success"}`}>
@@ -218,7 +212,9 @@ export default function ProcessosPanel() {
         </div>
       )}
 
-      {panelTab === "novo" ? (
+      {panelTab === "intimacoes" ? (
+        <IntimacoesLista ativo podeEditar={pode("processos", "editar")} />
+      ) : panelTab === "novo" ? (
         <ProcessoForm
           formulario={formulario}
           setFormulario={setFormulario}
@@ -263,6 +259,7 @@ export default function ProcessosPanel() {
             </div>
             <div className="form-field">
               <select
+                aria-label="Filtrar por status"
                 value={filtroStatus}
                 onChange={(e) => setFiltroStatus(e.target.value)}
               >
@@ -275,6 +272,7 @@ export default function ProcessosPanel() {
             </div>
             <div className="form-field">
               <select
+                aria-label="Filtrar por advogado"
                 value={filtroAdvogado}
                 onChange={(e) => setFiltroAdvogado(e.target.value)}
               >
@@ -289,10 +287,10 @@ export default function ProcessosPanel() {
           </div>
           {!carregando && (
             <p className="celula-secundaria" style={{ marginBottom: 10 }}>
-              {processos.length === 0
+              {lista.total === 0
                 ? "Nenhum processo encontrado."
-                : `${processos.length} processo${processos.length > 1 ? "s" : ""} encontrado${
-                    processos.length > 1 ? "s" : ""
+                : `${lista.total} processo${lista.total > 1 ? "s" : ""} encontrado${
+                    lista.total > 1 ? "s" : ""
                   }.`}
             </p>
           )}
@@ -307,31 +305,38 @@ export default function ProcessosPanel() {
               </tr>
             </thead>
             <tbody>
-              {carregando && (
-                <tr>
-                  <td colSpan="5">Carregando...</td>
-                </tr>
-              )}
+              {carregando && <LinhasCarregando colunas={5} />}
               {!carregando &&
                 processos.map((processo) => (
                   <tr
                     key={processo.id}
                     className="tr-clicavel"
-                    tabIndex={0}
-                    role="button"
-                    aria-label={`Ver ficha do processo ${processo.numero_processo}`}
-                    onClick={() =>
-                      openPanel(PANELS.PROCESSOS, "ficha", { processoId: processo.id })
-                    }
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
-                        openPanel(PANELS.PROCESSOS, "ficha", { processoId: processo.id });
-                      }
+                    // Clicar em qualquer ponto da linha é atalho de mouse/toque;
+                    // para teclado e leitor de tela o caminho é o botão com o
+                    // número do processo. A linha em si não é um controle:
+                    // antes ela era role="button" com outros botões dentro,
+                    // o que leitores de tela não conseguem anunciar.
+                    onClick={(e) => {
+                      if (e.target.closest("button, a")) return;
+                      openPanel(PANELS.PROCESSOS, "ficha", { processoId: processo.id });
                     }}
                   >
                     <td>
-                      <strong>{processo.numero_processo}</strong>
+                      <button
+                        type="button"
+                        className="link-celula"
+                        aria-label={`Ver ficha do processo ${processo.numero_processo}`}
+                        onClick={() =>
+                          openPanel(PANELS.PROCESSOS, "ficha", { processoId: processo.id })
+                        }
+                      >
+                        {processo.numero_processo}
+                      </button>
+                      {processo.sigiloso && (
+                        <span className="selo-sigilo" title="Segredo de justiça">
+                          <Lock size={11} aria-hidden="true" /> Sigiloso
+                        </span>
+                      )}
                       {processo.titulo && (
                         <div className="celula-secundaria">{processo.titulo}</div>
                       )}
@@ -365,55 +370,59 @@ export default function ProcessosPanel() {
                     </td>
                     <td onClick={(e) => e.stopPropagation()}>
                       <div className="row-actions">
-                        <button
-                          type="button"
-                          className="row-action"
-                          title={t("acao_alternar_status")}
-                          aria-label={t("acao_alternar_status")}
-                          onClick={async () => {
-                            await updateProcesso(processo.id, {
-                              status:
-                                processo.status === "Em andamento"
-                                  ? "Concluido"
-                                  : "Em andamento",
-                            });
-                            carregarDados();
-                            refreshDashboard().catch(() => {});
-                          }}
-                        >
-                          <RefreshCw size={15} />
-                        </button>
-                        <button
-                          type="button"
-                          className="row-action"
-                          title="Consultar andamentos no DataJud (CNJ)"
-                          aria-label="Consultar andamentos no DataJud"
-                          disabled={consultando === processo.id}
-                          onClick={async () => {
-                            setConsultando(processo.id);
-                            setAvisoDataJud(null);
-                            try {
-                              const dados = await consultarDataJud(processo.id);
-                              setAvisoDataJud({
-                                erro: false,
-                                texto:
-                                  `${processo.numero_processo}: ` +
-                                  `${dados.movimentacoes_importadas} andamento(s) importado(s)` +
-                                  (dados.movimentacoes_ignoradas
-                                    ? `, ${dados.movimentacoes_ignoradas} já conhecido(s)`
-                                    : "") +
-                                  (dados.capa?.orgao_julgador ? ` — ${dados.capa.orgao_julgador}` : ""),
+                        {pode("processos", "editar") && (
+                          <button
+                            type="button"
+                            className="row-action"
+                            title={t("acao_alternar_status")}
+                            aria-label={t("acao_alternar_status")}
+                            onClick={async () => {
+                              await updateProcesso(processo.id, {
+                                status:
+                                  processo.status === "Em andamento"
+                                    ? "Concluido"
+                                    : "Em andamento",
                               });
                               carregarDados();
-                            } catch (e) {
-                              setAvisoDataJud({ erro: true, texto: e.message });
-                            } finally {
-                              setConsultando(null);
-                            }
-                          }}
-                        >
-                          <Landmark size={15} />
-                        </button>
+                              refreshDashboard().catch(() => {});
+                            }}
+                          >
+                            <RefreshCw size={15} />
+                          </button>
+                        )}
+                        {pode("processos", "editar") && (
+                          <button
+                            type="button"
+                            className="row-action"
+                            title="Consultar andamentos no DataJud (CNJ)"
+                            aria-label="Consultar andamentos no DataJud"
+                            disabled={consultando === processo.id}
+                            onClick={async () => {
+                              setConsultando(processo.id);
+                              setAvisoDataJud(null);
+                              try {
+                                const dados = await consultarDataJud(processo.id);
+                                setAvisoDataJud({
+                                  erro: false,
+                                  texto:
+                                    `${processo.numero_processo}: ` +
+                                    `${dados.movimentacoes_importadas} andamento(s) importado(s)` +
+                                    (dados.movimentacoes_ignoradas
+                                      ? `, ${dados.movimentacoes_ignoradas} já conhecido(s)`
+                                      : "") +
+                                    (dados.capa?.orgao_julgador ? ` — ${dados.capa.orgao_julgador}` : ""),
+                                });
+                                carregarDados();
+                              } catch (e) {
+                                setAvisoDataJud({ erro: true, texto: e.message });
+                              } finally {
+                                setConsultando(null);
+                              }
+                            }}
+                          >
+                            <Landmark size={15} />
+                          </button>
+                        )}
                         {(() => {
                           const clienteDoProcesso = clientes.find((c) => c.id === processo.cliente);
                           if (!clienteDoProcesso?.telefone) return null;
@@ -431,27 +440,44 @@ export default function ProcessosPanel() {
                             </button>
                           );
                         })()}
-                        <button
-                          type="button"
-                          className="row-action row-action-danger"
-                          title={t("acao_excluir")}
-                          aria-label={t("acao_excluir")}
-                          onClick={async () => {
-                            if (window.confirm("Excluir processo?")) {
-                              await deleteProcesso(processo.id);
-                              carregarDados();
-                              refreshDashboard().catch(() => {});
-                            }
-                          }}
-                        >
-                          <Trash2 size={15} />
-                        </button>
+                        {pode("processos", "excluir") && (
+                          <button
+                            type="button"
+                            className="row-action row-action-danger"
+                            title={t("acao_excluir")}
+                            aria-label={t("acao_excluir")}
+                            onClick={async () => {
+                              const ok = await confirmar({
+                                titulo: "Excluir processo",
+                                mensagem: `O processo ${processo.numero_processo} será excluído junto com movimentações, documentos, agenda e contrato. Isso não pode ser desfeito.`,
+                              });
+                              if (!ok) return;
+                              try {
+                                await deleteProcesso(processo.id);
+                                avisar("Processo excluído.");
+                                carregarDados();
+                                refreshDashboard().catch(() => {});
+                              } catch (error) {
+                                avisar(error.message, "erro");
+                              }
+                            }}
+                          >
+                            <Trash2 size={15} />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
                 ))}
             </tbody>
           </table>
+          <RodapeLista
+            quantidade={processos.length}
+            total={lista.total}
+            temMais={lista.temMais}
+            carregandoMais={lista.carregandoMais}
+            onCarregarMais={lista.carregarMais}
+          />
         </div>
       )}
     </OverlayPanel>

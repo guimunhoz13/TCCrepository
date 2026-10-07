@@ -1,6 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useConfirmacao } from "@/contexts/ConfirmacaoContext";
+import { useAvisos } from "@/contexts/AvisosContext";
+
+import { useState } from "react";
+import { useListaPaginada, useRecurso } from "@/hooks/useRecurso";
+import RodapeLista from "@/components/ui/RodapeLista";
 import { FileDown, Paperclip, Trash2 } from "lucide-react";
 import { usePanel } from "@/contexts/PanelContext";
 import { useDashboardData } from "@/contexts/DashboardDataContext";
@@ -11,44 +16,38 @@ import {
   createDocumento,
   deleteDocumento,
   getProcessos,
-  normalizarLista,
+  listarTudo,
   abrirDocumento,
 } from "@/services/api";
+import LinhasCarregando from "@/components/ui/LinhasCarregando";
+import { usePermissoes } from "@/hooks/usePermissoes";
 
 export default function DocumentosPanel() {
   const { activePanel, panelTab, setPanelTab } = usePanel();
   const { refresh: refreshDashboard } = useDashboardData();
+  const confirmar = useConfirmacao();
+  const avisar = useAvisos();
+  const pode = usePermissoes();
   const { t } = usePreferences();
-  const [documentos, setDocumentos] = useState([]);
-  const [processos, setProcessos] = useState([]);
   const [processoId, setProcessoId] = useState("");
   const [nomeArquivo, setNomeArquivo] = useState("");
   const [arquivo, setArquivo] = useState(null);
-  const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState("");
   const [sucesso, setSucesso] = useState("");
 
-  async function carregarDados() {
-    try {
-      setCarregando(true);
-      const [dadosDocumentos, dadosProcessos] = await Promise.all([
-        getDocumentos(),
-        getProcessos(),
-      ]);
-      setDocumentos(normalizarLista(dadosDocumentos));
-      setProcessos(normalizarLista(dadosProcessos));
-    } catch (error) {
-      setErro(error.message);
-    } finally {
-      setCarregando(false);
-    }
-  }
+  const painelAberto = activePanel === "documentos";
+  const lista = useListaPaginada((page) => getDocumentos({ page }), [], { ativo: painelAberto });
+  const recursoProcessos = useRecurso(() => listarTudo(getProcessos), [], {
+    ativo: painelAberto,
+  });
+  const documentos = lista.itens;
+  const processos = recursoProcessos.dados ?? [];
+  const carregando = lista.carregando && documentos.length === 0;
+  const erroCarga = lista.erro || recursoProcessos.erro;
 
-  useEffect(() => {
-    if (activePanel === "documentos") {
-      carregarDados();
-    }
-  }, [activePanel]);
+  function carregarDados() {
+    lista.recarregar();
+  }
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -72,7 +71,7 @@ export default function DocumentosPanel() {
       setArquivo(null);
       setSucesso("Documento enviado com sucesso.");
       setPanelTab("lista");
-      await carregarDados();
+      carregarDados();
       refreshDashboard().catch(() => {});
     } catch (error) {
       setErro(error.message);
@@ -85,10 +84,12 @@ export default function DocumentosPanel() {
     <OverlayPanel
       tabs={[
         { id: "lista", label: t("aba_lista") },
-        { id: "novo", label: t("acao_enviar_documento") },
+        ...(pode("documentos", "criar")
+          ? [{ id: "novo", label: t("acao_enviar_documento") }]
+          : []),
       ]}
     >
-      {erro && <div className="alert alert-error">{erro}</div>}
+      {(erro || erroCarga) && <div className="alert alert-error">{erro || erroCarga}</div>}
       {sucesso && <div className="alert alert-success">{sucesso}</div>}
 
       {panelTab === "novo" ? (
@@ -140,11 +141,7 @@ export default function DocumentosPanel() {
               </tr>
             </thead>
             <tbody>
-              {carregando && (
-                <tr>
-                  <td colSpan="4">Carregando...</td>
-                </tr>
-              )}
+              {carregando && <LinhasCarregando colunas={4} />}
               {!carregando &&
                 documentos.map((doc) => (
                   <tr key={doc.id}>
@@ -169,21 +166,31 @@ export default function DocumentosPanel() {
                         >
                           <FileDown size={15} />
                         </button>
-                        <button
-                          type="button"
-                          className="row-action row-action-danger"
-                          title={t("acao_excluir")}
-                          aria-label={t("acao_excluir")}
-                          onClick={async () => {
-                            if (window.confirm("Excluir documento?")) {
-                              await deleteDocumento(doc.id);
-                              carregarDados();
-                              refreshDashboard().catch(() => {});
-                            }
-                          }}
-                        >
-                          <Trash2 size={15} />
-                        </button>
+                        {pode("documentos", "excluir") && (
+                          <button
+                            type="button"
+                            className="row-action row-action-danger"
+                            title={t("acao_excluir")}
+                            aria-label={t("acao_excluir")}
+                            onClick={async () => {
+                              const ok = await confirmar({
+                                titulo: "Excluir documento",
+                                mensagem: `O arquivo "${doc.nome_arquivo}" será apagado do sistema.`,
+                              });
+                              if (!ok) return;
+                              try {
+                                await deleteDocumento(doc.id);
+                                avisar("Documento excluído.");
+                                carregarDados();
+                                refreshDashboard().catch(() => {});
+                              } catch (error) {
+                                avisar(error.message, "erro");
+                              }
+                            }}
+                          >
+                            <Trash2 size={15} />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -199,6 +206,13 @@ export default function DocumentosPanel() {
               )}
             </tbody>
           </table>
+          <RodapeLista
+            quantidade={documentos.length}
+            total={lista.total}
+            temMais={lista.temMais}
+            carregandoMais={lista.carregandoMais}
+            onCarregarMais={lista.carregarMais}
+          />
         </div>
       )}
     </OverlayPanel>

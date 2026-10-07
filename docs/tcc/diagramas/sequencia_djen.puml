@@ -1,0 +1,32 @@
+@startuml
+!include skinparam.iuml
+title Diagrama de Sequência — Importar intimação do DJEN e lançar o prazo
+
+actor "Rotina diária /\nusuário" as U
+participant "Backend\n(IntimacaoViewSet /\nbuscar_intimacoes)" as B
+participant "djen.py" as D
+participant "feriados.py" as F
+participant "DJEN (CNJ)" as API
+database "Banco de Dados" as DB
+participant "push.py" as P
+
+U -> B : buscar intimações
+B -> DB : advogados ativos do escritório
+loop para cada advogado com OAB "número/UF"
+  B -> D : buscar_comunicacoes(OAB, UF, últimos 7 dias)
+  D -> API : GET /comunicacao?numeroOab&ufOab
+  API --> D : itens publicados
+  loop para cada comunicação nova
+    D -> DB : já importada? (identificador_externo)
+    D -> DB : processo pelo número unificado
+    D -> D : detectar_prazo(texto)\n(sem prazo: 5 dias úteis, estimado)
+    D -> F : prazo_de_publicacao(disponibilização, dias)
+    F --> D : publicação (1º dia útil seguinte)\ne vencimento (dias úteis, feriados,\nrecesso de 20/12 a 20/01)
+    D -> DB : grava Intimacao
+    D -> DB : grava Agenda (tipo prazo)
+    D -> P : notificar advogado
+  end
+end
+B --> U : "N intimações novas"\n(ou aviso se o DJEN estiver fora do ar)
+
+@enduml

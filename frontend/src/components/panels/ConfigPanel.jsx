@@ -1,10 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRecurso } from "@/hooks/useRecurso";
+import { useConfirmacao } from "@/contexts/ConfirmacaoContext";
 import {
   X, User, Building2, Bell, Palette, Database, CreditCard,
   Eye, EyeOff, Trash2, Download, FileBarChart, Mail, MessageCircle, History,
+  ShieldCheck, UserPlus, BellRing,
 } from "lucide-react";
+import { cancelarEsteAparelho, inscreverEsteAparelho, inscricaoAtual, pushSuportado } from "@/utils/push";
+import { usePermissoes } from "@/hooks/usePermissoes";
 import { usePanel, PANELS } from "@/contexts/PanelContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { usePreferences } from "@/contexts/PreferencesContext";
@@ -25,7 +30,17 @@ import {
   enviarRelatorioProcessoPorEmail,
   getAuditoria,
   normalizarLista,
+  listarTudo,
+  salvarUsuarioLogado,
   logout,
+  configurarDoisFatores,
+  registrarMembro,
+  definirPerfilDoUsuario,
+  redefinirDoisFatoresDoUsuario,
+  getSituacaoPush,
+  inscreverPush,
+  cancelarPush,
+  testarPush,
 } from "@/services/api";
 import { gerarHtmlRelatorioCliente, gerarHtmlRelatorioProcesso, abrirRelatorio } from "@/utils/relatorio";
 import { abrirWhatsApp, montarMensagemCliente, montarMensagemProcesso } from "@/utils/whatsapp";
@@ -41,10 +56,29 @@ const TABS = [
   { id: "notificacoes", tKey: "config_notificacoes", icon: Bell },
   { id: "aparencia", tKey: "config_aparencia", icon: Palette },
   { id: "dados", tKey: "config_dados", icon: Database },
-  { id: "relatorios", tKey: "config_relatorios", icon: FileBarChart },
+  { id: "relatorios", tKey: "config_relatorios", icon: FileBarChart, area: "relatorios" },
   { id: "auditoria", tKey: "config_auditoria", icon: History, adminOnly: true },
   { id: "faturamento", tKey: "config_faturamento", icon: CreditCard },
 ];
+
+// Perfis que o administrador pode atribuir. Advogado entra pelo painel de
+// Advogados, que pede a OAB; aqui a troca de perfil aceita qualquer um.
+const PERFIS = [
+  { value: "admin", label: "Administrador" },
+  { value: "advogado", label: "Advogado" },
+  { value: "estagiario", label: "Estagiário" },
+  { value: "financeiro", label: "Financeiro" },
+  { value: "secretaria", label: "Secretária" },
+];
+const PERFIS_SEM_OAB = PERFIS.filter((perfil) => perfil.value !== "advogado");
+
+const DESCRICAO_PERFIL = {
+  admin: "Tudo, inclusive equipe, auditoria e dados do escritório.",
+  advogado: "Clientes, processos, agenda, documentos, financeiro e IA.",
+  estagiario: "Apoia nos processos e na agenda; não exclui nada e não vê o financeiro.",
+  financeiro: "Contratos, cobranças e despesas; o resto só consulta.",
+  secretaria: "Atendimento, clientes e agenda; não vê o financeiro nem a IA.",
+};
 
 const PREF_DEFAULT = {
   tema: "dark",
@@ -67,30 +101,33 @@ export default function ConfigPanel() {
   const { activePanel, closePanel } = usePanel();
   const { theme, setTheme } = useTheme();
   const { t, atualizarPreferencias } = usePreferences();
+  const pode = usePermissoes();
   const [activeTab, setActiveTab] = useState("conta");
-  const [dados, setDados] = useState(null);
-  const [carregando, setCarregando] = useState(false);
   const [erro, setErro] = useState("");
   const [sucesso, setSucesso] = useState("");
 
+  const recurso = useRecurso(getConfiguracoes, [], { ativo: activePanel === PANELS.CONFIG });
+  const carregando = recurso.carregando;
+  // As abas editam partes dos dados (perfil, escritório, preferências) e
+  // atualizam a tela sem recarregar tudo: a edição local vale enquanto for
+  // sobre a mesma resposta da API que a originou.
+  const [local, setLocal] = useState({ base: undefined, valor: null });
+  const dados =
+    local.base !== undefined && local.base === recurso.dados ? local.valor : recurso.dados ?? null;
+  function setDados(atualizar) {
+    setLocal({
+      base: recurso.dados,
+      valor: typeof atualizar === "function" ? atualizar(dados) : atualizar,
+    });
+  }
+
+  // O tema salvo na conta vale sobre o do navegador: aplica quando a
+  // configuração chega da API.
+  const respostaConfig = recurso.dados;
   useEffect(() => {
-    if (activePanel !== PANELS.CONFIG) return;
-    let ativo = true;
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setCarregando(true);
-    setErro("");
-    getConfiguracoes()
-      .then((res) => {
-        if (!ativo) return;
-        setDados(res);
-        if (res?.preferencias?.tema && res.preferencias.tema !== theme) {
-          setTheme(res.preferencias.tema);
-        }
-      })
-      .catch((e) => ativo && setErro(e.message))
-      .finally(() => ativo && setCarregando(false));
-    return () => { ativo = false; };
-  }, [activePanel]); // eslint-disable-line react-hooks/exhaustive-deps
+    const temaSalvo = respostaConfig?.preferencias?.tema;
+    if (temaSalvo && temaSalvo !== theme) setTheme(temaSalvo);
+  }, [respostaConfig]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function feedback(msg, isError = false) {
     if (isError) { setErro(msg); setSucesso(""); }
@@ -108,7 +145,7 @@ export default function ConfigPanel() {
         </div>
 
         <div className="overlay-tabs">
-          {TABS.filter((tab) => !tab.adminOnly || dados?.usuario?.tipo_usuario === "admin").map((tab) => {
+          {TABS.filter((tab) => (!tab.adminOnly || dados?.usuario?.tipo_usuario === "admin") && (!tab.area || pode(tab.area))).map((tab) => {
             const Icon = tab.icon;
             return (
               <button key={tab.id} className={`tab-btn ${activeTab === tab.id ? "active" : ""}`} onClick={() => { setActiveTab(tab.id); setErro(""); setSucesso(""); }}>
@@ -118,8 +155,8 @@ export default function ConfigPanel() {
           })}
         </div>
 
-        <div className="overlay-body">
-          {erro && <div className="alert alert-error">{erro}</div>}
+        <div className="overlay-body" tabIndex={0} role="region" aria-label="Conteúdo das configurações">
+          {(erro || recurso.erro) && <div className="alert alert-error">{erro || recurso.erro}</div>}
           {sucesso && <div className="alert alert-success">{sucesso}</div>}
           {carregando && <div className="empty-state">Carregando configurações...</div>}
 
@@ -136,13 +173,13 @@ export default function ConfigPanel() {
             <AparenciaTab preferencias={dados.preferencias || PREF_DEFAULT} setDados={setDados} feedback={feedback} theme={theme} setTheme={setTheme} atualizarPreferenciasGlobal={atualizarPreferencias} t={t} />
           )}
           {!carregando && dados && activeTab === "dados" && (
-            <DadosTab dados={dados} setDados={setDados} feedback={feedback} />
+            <DadosTab dados={dados} setDados={setDados} feedback={feedback} podeExportar={pode("exportar")} />
           )}
-          {!carregando && dados && activeTab === "relatorios" && (
+          {!carregando && dados && activeTab === "relatorios" && pode("relatorios") && (
             <RelatoriosTab feedback={feedback} t={t} />
           )}
           {!carregando && dados && activeTab === "auditoria" && dados.usuario.tipo_usuario === "admin" && (
-            <AuditoriaTab feedback={feedback} />
+            <AuditoriaTab />
           )}
           {!carregando && activeTab === "faturamento" && <FaturamentoTab />}
         </div>
@@ -171,7 +208,7 @@ function ContaTab({ usuario, setDados, feedback, t }) {
       setDados((d) => ({ ...d, usuario: res.usuario }));
       setFoto(null);
       const atual = JSON.parse(localStorage.getItem("usuarioLogado") || "{}");
-      localStorage.setItem("usuarioLogado", JSON.stringify({ ...atual, nome: res.usuario.nome, email: res.usuario.email, foto: res.usuario.foto }));
+      salvarUsuarioLogado({ ...atual, nome: res.usuario.nome, email: res.usuario.email, foto: res.usuario.foto });
       feedback(res.detail);
     } catch (e) { feedback(e.message, true); }
     finally { setSalvando(false); }
@@ -217,14 +254,14 @@ function ContaTab({ usuario, setDados, feedback, t }) {
         <Field label="Nome"><input value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} /></Field>
         <Field label="E-mail"><input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></Field>
         <Field label="Telefone"><input value={form.telefone} onChange={(e) => setForm({ ...form, telefone: formatarTelefone(e.target.value) })} placeholder="(00) 00000-0000" /></Field>
-        <Field label="Cargo"><input value={usuario.tipo_usuario === "admin" ? "Administrador" : "Advogado"} disabled /></Field>
+        <Field label="Perfil de acesso"><input value={usuario.tipo_usuario_display || usuario.tipo_usuario} disabled /></Field>
       </div>
       <Actions><button className="btn btn-primary btn-sm" onClick={salvarConta} disabled={salvando}>Salvar alterações</button></Actions>
     </Section>
 
     <Section title="Senha" description="A nova senha deve ter pelo menos 8 caracteres, 1 letra maiúscula, 1 número e 1 caractere especial.">
       <div className="form-grid">
-        <Field label="Senha atual" full><div className="password-field"><input type={showPassword ? "text" : "password"} value={senha.senha_atual} onChange={(e) => setSenha({ ...senha, senha_atual: e.target.value })} /><button type="button" className="password-toggle" onClick={() => setShowPassword(!showPassword)}>{showPassword ? <EyeOff size={16}/> : <Eye size={16}/>}</button></div></Field>
+        <Field label="Senha atual" full><div className="password-field"><input type={showPassword ? "text" : "password"} value={senha.senha_atual} onChange={(e) => setSenha({ ...senha, senha_atual: e.target.value })} /><button type="button" className="password-toggle" aria-label={showPassword ? "Ocultar senhas" : "Mostrar senhas"} aria-pressed={showPassword} onClick={() => setShowPassword(!showPassword)}>{showPassword ? <EyeOff size={16}/> : <Eye size={16}/>}</button></div></Field>
         <Field label="Nova senha">
           <input type={showPassword ? "text" : "password"} value={senha.nova_senha} onChange={(e) => setSenha({ ...senha, nova_senha: e.target.value })} />
           <RequisitosSenha senha={senha.nova_senha} />
@@ -233,7 +270,103 @@ function ContaTab({ usuario, setDados, feedback, t }) {
       </div>
       <Actions><button className="btn btn-secondary btn-sm" onClick={salvarSenha} disabled={salvando || !senhaAtendeRequisitos(senha.nova_senha)}>Alterar senha</button></Actions>
     </Section>
+
+    <DoisFatoresSection usuario={usuario} setDados={setDados} feedback={feedback} />
   </div>;
+}
+
+/**
+ * Verificação em duas etapas (TOTP): o QR code vai para o aplicativo
+ * autenticador e, a partir daí, o login pede o código de 6 dígitos além
+ * da senha. Para desligar, pede senha e código — quem pegou a sessão
+ * aberta não consegue tirar a proteção.
+ */
+function DoisFatoresSection({ usuario, setDados, feedback }) {
+  const [cadastro, setCadastro] = useState(null);
+  const [codigo, setCodigo] = useState("");
+  const [senha, setSenha] = useState("");
+  const [enviando, setEnviando] = useState(false);
+  const ativo = Boolean(usuario.totp_ativo);
+
+  async function executar(acao, dados) {
+    try {
+      setEnviando(true);
+      return await configurarDoisFatores(acao, dados);
+    } catch (e) {
+      feedback(e.message, true);
+      return null;
+    } finally {
+      setEnviando(false);
+    }
+  }
+
+  async function iniciar() {
+    const res = await executar("iniciar");
+    if (res) { setCadastro(res); setCodigo(""); }
+  }
+
+  async function ativar(evento) {
+    evento.preventDefault();
+    const res = await executar("ativar", { codigo: codigo.replace(/\D/g, "") });
+    if (!res) return;
+    setCadastro(null);
+    setCodigo("");
+    setDados((d) => ({ ...d, usuario: { ...d.usuario, totp_ativo: true } }));
+    feedback("Verificação em duas etapas ativada. No próximo login o código será pedido.");
+  }
+
+  async function desativar(evento) {
+    evento.preventDefault();
+    const res = await executar("desativar", { senha, codigo: codigo.replace(/\D/g, "") });
+    if (!res) return;
+    setSenha("");
+    setCodigo("");
+    setDados((d) => ({ ...d, usuario: { ...d.usuario, totp_ativo: false } }));
+    feedback("Verificação em duas etapas desativada.");
+  }
+
+  return (
+    <Section
+      title="Verificação em duas etapas"
+      description="Além da senha, o login pede um código do aplicativo autenticador do celular. Quem descobrir sua senha não entra sem ele."
+    >
+      {ativo && (
+        <form onSubmit={desativar}>
+          <p className="status-2fa"><ShieldCheck size={16} /> Ativa nesta conta.</p>
+          <div className="form-grid">
+            <Field label="Senha atual"><input type="password" autoComplete="current-password" value={senha} onChange={(e) => setSenha(e.target.value)} required /></Field>
+            <Field label="Código do aplicativo"><input inputMode="numeric" autoComplete="one-time-code" maxLength={7} value={codigo} onChange={(e) => setCodigo(e.target.value)} required /></Field>
+          </div>
+          <Actions><button className="btn btn-danger btn-sm" disabled={enviando}>Desativar</button></Actions>
+        </form>
+      )}
+
+      {!ativo && !cadastro && (
+        <Actions><button className="btn btn-primary btn-sm" onClick={iniciar} disabled={enviando}><ShieldCheck size={14} />Ativar verificação em duas etapas</button></Actions>
+      )}
+
+      {!ativo && cadastro && (
+        <form onSubmit={ativar}>
+          <div className="qr-2fa">
+            <img src={cadastro.qr_code} alt="QR code para cadastrar o LexOffice no aplicativo autenticador" />
+            <div>
+              <p>1. Abra o Google Authenticator, Authy ou Microsoft Authenticator e leia o QR code.</p>
+              <p>Sem câmera? Digite esta chave no aplicativo:</p>
+              <code>{cadastro.segredo}</code>
+              <p style={{ marginTop: 12 }}>2. Digite abaixo o código de 6 dígitos que apareceu.</p>
+            </div>
+          </div>
+          <div className="form-grid">
+            <Field label="Código do aplicativo"><input className="campo-codigo" inputMode="numeric" autoComplete="one-time-code" maxLength={7} placeholder="000000" value={codigo} onChange={(e) => setCodigo(e.target.value)} required autoFocus /></Field>
+          </div>
+          <Actions>
+            <button className="btn btn-primary btn-sm" disabled={enviando}>Confirmar e ativar</button>
+            <button type="button" className="btn btn-secondary btn-sm" onClick={() => setCadastro(null)} disabled={enviando}>Cancelar</button>
+          </Actions>
+        </form>
+      )}
+    </Section>
+  );
 }
 
 function EscritorioTab({ dados, setDados, feedback }) {
@@ -272,7 +405,7 @@ function EscritorioTab({ dados, setDados, feedback }) {
       const res = await updateEscritorio(form);
       setDados((d) => ({ ...d, escritorio: res.escritorio, configuracao_escritorio: res.configuracao_escritorio }));
       const atual = JSON.parse(localStorage.getItem("usuarioLogado") || "{}");
-      localStorage.setItem("usuarioLogado", JSON.stringify({ ...atual, escritorio_nome: res.escritorio.nome }));
+      salvarUsuarioLogado({ ...atual, escritorio_nome: res.escritorio.nome });
       feedback(res.detail);
     } catch (e) { feedback(e.message, true); }
   }
@@ -309,10 +442,200 @@ function EscritorioTab({ dados, setDados, feedback }) {
       {admin && <Actions><button className="btn btn-primary btn-sm" onClick={salvar}>Salvar alterações</button></Actions>}
     </Section>
 
-    <Section title="Equipe" description="Usuários atualmente cadastrados neste escritório.">
-      <div className="member-list">{dados.membros.map((m) => <div key={m.id} className="member-row"><Avatar src={m.foto} nome={m.nome} size={34} /><div className="member-info"><strong>{m.nome}</strong><span>{m.email}</span></div><span className="badge badge-muted">{m.tipo_usuario === "admin" ? "Administrador" : "Advogado"}</span></div>)}</div>
-    </Section>
+    {admin && <PixSection dados={dados} setDados={setDados} feedback={feedback} />}
+
+    <EquipeSection dados={dados} setDados={setDados} feedback={feedback} admin={admin} />
   </div>;
+}
+
+const TIPOS_CHAVE_PIX = [
+  { value: "cpf_cnpj", label: "CPF ou CNPJ" },
+  { value: "email", label: "E-mail" },
+  { value: "telefone", label: "Celular" },
+  { value: "aleatoria", label: "Chave aleatória" },
+];
+
+/** Chave PIX do escritório: com ela, cada parcela de contrato ganha QR code. */
+function PixSection({ dados, setDados, feedback }) {
+  const cfg = dados.configuracao_escritorio || {};
+  const [pix, setPix] = useState({
+    tipo_chave_pix: cfg.tipo_chave_pix || "",
+    chave_pix: cfg.chave_pix || "",
+    nome_recebedor_pix: cfg.nome_recebedor_pix || "",
+    cidade_pix: cfg.cidade_pix || dados.escritorio.cidade || "",
+  });
+  const [salvando, setSalvando] = useState(false);
+
+  async function salvar() {
+    try {
+      setSalvando(true);
+      const res = await updateEscritorio(pix);
+      setDados((d) => ({ ...d, configuracao_escritorio: res.configuracao_escritorio }));
+      setPix((atual) => ({ ...atual, chave_pix: res.configuracao_escritorio.chave_pix }));
+      feedback("Dados do PIX salvos. As parcelas dos contratos já podem ser cobradas com QR code.");
+    } catch (e) { feedback(e.message, true); }
+    finally { setSalvando(false); }
+  }
+
+  return (
+    <Section title="Recebimento por PIX" description="Com a chave cadastrada, cada parcela de contrato ganha QR code e PIX copia e cola com o valor certo, para mandar ao cliente.">
+      <div className="form-grid">
+        <Field label="Tipo da chave">
+          <select value={pix.tipo_chave_pix} onChange={(e) => setPix({ ...pix, tipo_chave_pix: e.target.value })}>
+            <option value="">Selecione</option>
+            {TIPOS_CHAVE_PIX.map((tipo) => <option key={tipo.value} value={tipo.value}>{tipo.label}</option>)}
+          </select>
+        </Field>
+        <Field label="Chave PIX"><input value={pix.chave_pix} maxLength={77} onChange={(e) => setPix({ ...pix, chave_pix: e.target.value })} /></Field>
+        <Field label="Nome do recebedor (até 25 letras)"><input value={pix.nome_recebedor_pix} maxLength={25} placeholder={dados.escritorio.nome.slice(0, 25)} onChange={(e) => setPix({ ...pix, nome_recebedor_pix: e.target.value })} /></Field>
+        <Field label="Cidade (até 15 letras)"><input value={pix.cidade_pix} maxLength={15} onChange={(e) => setPix({ ...pix, cidade_pix: e.target.value })} /></Field>
+      </div>
+      <Actions><button className="btn btn-primary btn-sm" onClick={salvar} disabled={salvando}>Salvar PIX</button></Actions>
+    </Section>
+  );
+}
+
+/**
+ * Equipe e perfis de acesso. O administrador inclui estagiário, financeiro,
+ * secretária ou outro administrador (advogado entra pelo painel de
+ * Advogados, com a OAB), troca o perfil de quem já está na equipe e
+ * desliga a verificação em duas etapas de quem perdeu o celular.
+ */
+function EquipeSection({ dados, setDados, feedback, admin }) {
+  const confirmar = useConfirmacao();
+  const novoMembro = { nome: "", email: "", telefone: "", senha: "", tipo_usuario: "estagiario" };
+  const [form, setForm] = useState(novoMembro);
+  const [incluindo, setIncluindo] = useState(false);
+  const [salvando, setSalvando] = useState(false);
+
+  function trocarMembro(atualizado) {
+    setDados((d) => ({
+      ...d,
+      membros: d.membros.map((m) => (m.id === atualizado.id ? { ...m, ...atualizado } : m)),
+    }));
+  }
+
+  async function mudarPerfil(membro, tipo_usuario) {
+    const rotulo = PERFIS.find((p) => p.value === tipo_usuario)?.label;
+    const ok = await confirmar({
+      titulo: "Mudar perfil de acesso",
+      mensagem: `${membro.nome} passa a ser ${rotulo}: ${DESCRICAO_PERFIL[tipo_usuario]}`,
+      acao: "Mudar perfil",
+      perigo: false,
+    });
+    if (!ok) return;
+    try {
+      trocarMembro(await definirPerfilDoUsuario(membro.id, tipo_usuario));
+      feedback(`Perfil de ${membro.nome} alterado para ${rotulo}.`);
+    } catch (e) { feedback(e.message, true); }
+  }
+
+  async function redefinir2fa(membro) {
+    const ok = await confirmar({
+      titulo: "Redefinir verificação em duas etapas",
+      mensagem: `${membro.nome} volta a entrar só com a senha e pode configurar o aplicativo de novo. Use quando a pessoa perdeu ou trocou de celular.`,
+      acao: "Redefinir",
+    });
+    if (!ok) return;
+    try {
+      trocarMembro(await redefinirDoisFatoresDoUsuario(membro.id));
+      feedback(`Verificação em duas etapas de ${membro.nome} redefinida.`);
+    } catch (e) { feedback(e.message, true); }
+  }
+
+  async function incluir(evento) {
+    evento.preventDefault();
+    if (!senhaAtendeRequisitos(form.senha)) {
+      feedback("A senha inicial não atende a todos os requisitos obrigatórios.", true);
+      return;
+    }
+    try {
+      setSalvando(true);
+      const membro = await registrarMembro(form);
+      setDados((d) => ({
+        ...d,
+        membros: [...d.membros, membro].sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR")),
+      }));
+      setForm(novoMembro);
+      setIncluindo(false);
+      feedback(`${membro.nome} incluído na equipe. Envie o e-mail e a senha inicial para essa pessoa entrar.`);
+    } catch (e) { feedback(e.message, true); }
+    finally { setSalvando(false); }
+  }
+
+  return (
+    <Section
+      title="Equipe e perfis de acesso"
+      description={admin ? "Cada perfil enxerga e altera só a sua parte do escritório. A API aplica as mesmas regras." : "Pessoas que trabalham neste escritório."}
+    >
+      <div className="member-list">
+        {dados.membros.map((m) => (
+          <div key={m.id} className="member-row">
+            <Avatar src={m.foto} nome={m.nome} size={34} />
+            <div className="member-info">
+              <strong>{m.nome}{!m.ativo && " (inativo)"}</strong>
+              <span>{m.email}</span>
+            </div>
+            {m.totp_ativo && (
+              <span className="badge badge-success" title="Verificação em duas etapas ativa"><ShieldCheck size={12} /> 2 etapas</span>
+            )}
+            {admin && m.id !== dados.usuario.id ? (
+              <>
+                <select
+                  className="member-role-select"
+                  aria-label={`Perfil de acesso de ${m.nome}`}
+                  value={m.tipo_usuario}
+                  onChange={(e) => mudarPerfil(m, e.target.value)}
+                >
+                  {PERFIS.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
+                </select>
+                {m.totp_ativo && (
+                  <button type="button" className="btn btn-secondary btn-sm" onClick={() => redefinir2fa(m)}>
+                    Redefinir 2 etapas
+                  </button>
+                )}
+              </>
+            ) : (
+              <span className="badge badge-muted">{m.tipo_usuario_display || m.tipo_usuario}</span>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {admin && !incluindo && (
+        <Actions>
+          <button type="button" className="btn btn-secondary btn-sm" onClick={() => setIncluindo(true)}>
+            <UserPlus size={14} />Incluir membro da equipe
+          </button>
+        </Actions>
+      )}
+
+      {admin && incluindo && (
+        <form onSubmit={incluir} style={{ marginTop: 16 }}>
+          <div className="form-grid">
+            <Field label="Nome"><input required maxLength={255} value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} /></Field>
+            <Field label="E-mail"><input type="email" required value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></Field>
+            <Field label="Telefone (opcional)"><input value={form.telefone} placeholder="(00) 00000-0000" onChange={(e) => setForm({ ...form, telefone: formatarTelefone(e.target.value) })} /></Field>
+            <Field label="Perfil de acesso">
+              <select value={form.tipo_usuario} onChange={(e) => setForm({ ...form, tipo_usuario: e.target.value })}>
+                {PERFIS_SEM_OAB.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
+              </select>
+              <span className="dica-campo">{DESCRICAO_PERFIL[form.tipo_usuario]}</span>
+            </Field>
+            <Field label="Senha inicial" full>
+              <input type="password" autoComplete="new-password" required value={form.senha} onChange={(e) => setForm({ ...form, senha: e.target.value })} />
+              <RequisitosSenha senha={form.senha} />
+            </Field>
+          </div>
+          <Actions>
+            <button className="btn btn-primary btn-sm" disabled={salvando || !senhaAtendeRequisitos(form.senha)}>{salvando ? "Incluindo..." : "Incluir na equipe"}</button>
+            <button type="button" className="btn btn-secondary btn-sm" onClick={() => { setIncluindo(false); setForm(novoMembro); }} disabled={salvando}>Cancelar</button>
+          </Actions>
+          <p className="dica-campo">Advogados entram pelo painel Advogados, que pede o número da OAB.</p>
+        </form>
+      )}
+    </Section>
+  );
 }
 
 function NotificacoesTab({ preferencias, setDados, feedback }) {
@@ -323,6 +646,7 @@ function NotificacoesTab({ preferencias, setDados, feedback }) {
     catch (e) { feedback(e.message, true); }
   }
   return <div className="settings-stack">
+    <PushSection feedback={feedback} />
     <Section title="E-mail" description="Escolha os avisos que deseja receber.">
       <ToggleRow label="Novo processo cadastrado" checked={p.notificacao_novo_processo} onChange={(v) => salvar({ notificacao_novo_processo: v })}/>
       <ToggleRow label="Novo documento anexado" checked={p.notificacao_novo_documento} onChange={(v) => salvar({ notificacao_novo_documento: v })}/>
@@ -340,6 +664,88 @@ function NotificacoesTab({ preferencias, setDados, feedback }) {
   </div>;
 }
 
+/**
+ * Notificações no celular e no navegador. Cada aparelho se inscreve
+ * separadamente; o que chega por push segue as mesmas escolhas do e-mail
+ * (tarefa atribuída, lembretes de prazo e audiência) e as intimações novas.
+ */
+function PushSection({ feedback }) {
+  const situacao = useRecurso(getSituacaoPush);
+  const aparelho = useRecurso(inscricaoAtual);
+  const [ocupado, setOcupado] = useState(false);
+  const servidor = situacao.dados;
+  const inscritoAqui = Boolean(aparelho.dados);
+
+  async function executar(acao, mensagem) {
+    try {
+      setOcupado(true);
+      await acao();
+      if (mensagem) feedback(mensagem);
+      situacao.recarregar();
+      aparelho.recarregar();
+    } catch (e) {
+      feedback(e.message, true);
+    } finally {
+      setOcupado(false);
+    }
+  }
+
+  const ativar = () =>
+    executar(async () => {
+      const inscricao = await inscreverEsteAparelho(servidor.chave_publica);
+      await inscreverPush(inscricao);
+    }, "Notificações ativadas neste aparelho.");
+
+  const desativar = () =>
+    executar(async () => {
+      const endpoint = await cancelarEsteAparelho();
+      if (endpoint) await cancelarPush(endpoint);
+    }, "Notificações desativadas neste aparelho.");
+
+  const testar = () =>
+    executar(async () => {
+      const res = await testarPush();
+      feedback(res.detail);
+    });
+
+  let conteudo;
+  if (situacao.carregando || aparelho.carregando) {
+    conteudo = <p className="dica-campo">Verificando…</p>;
+  } else if (!servidor?.ativo) {
+    conteudo = <p className="dica-campo">O servidor ainda não tem as chaves de notificação configuradas (VAPID). Peça ao administrador do sistema.</p>;
+  } else if (!pushSuportado()) {
+    conteudo = <p className="dica-campo">Este navegador não aceita notificações. No iPhone, instale o LexOffice na tela de início (Compartilhar › Adicionar à Tela de Início) e abra por lá.</p>;
+  } else {
+    conteudo = (
+      <>
+        <p className="status-2fa" style={{ color: inscritoAqui ? undefined : "var(--text-secondary)" }}>
+          <BellRing size={16} /> {inscritoAqui ? "Ativas neste aparelho." : "Desligadas neste aparelho."}
+          {servidor.aparelhos > 0 && ` Você tem ${servidor.aparelhos} aparelho(s) inscrito(s).`}
+        </p>
+        <Actions>
+          {inscritoAqui ? (
+            <>
+              <button className="btn btn-secondary btn-sm" onClick={testar} disabled={ocupado}>Enviar notificação de teste</button>
+              <button className="btn btn-secondary btn-sm" onClick={desativar} disabled={ocupado}>Desativar neste aparelho</button>
+            </>
+          ) : (
+            <button className="btn btn-primary btn-sm" onClick={ativar} disabled={ocupado}><BellRing size={14} />Ativar neste aparelho</button>
+          )}
+        </Actions>
+      </>
+    );
+  }
+
+  return (
+    <Section
+      title="No celular e no navegador"
+      description="Avisos na hora, mesmo com o sistema fechado: intimação nova, tarefa atribuída e lembretes de prazo e audiência."
+    >
+      {conteudo}
+    </Section>
+  );
+}
+
 function AparenciaTab({ preferencias, setDados, feedback, theme, setTheme, atualizarPreferenciasGlobal, t }) {
   const [p, setP] = useState({ ...PREF_DEFAULT, ...preferencias });
   async function salvar(campo, valor) {
@@ -353,13 +759,14 @@ function AparenciaTab({ preferencias, setDados, feedback, theme, setTheme, atual
   }
   return <div className="settings-stack">
     <Section title={t("aparencia_tema")}><div className="theme-toggle"><button className={`btn btn-sm ${theme === "light" ? "btn-primary" : "btn-secondary"}`} onClick={() => salvar("tema", "light")}>{t("aparencia_claro")}</button><button className={`btn btn-sm ${theme === "dark" ? "btn-primary" : "btn-secondary"}`} onClick={() => salvar("tema", "dark")}>{t("aparencia_escuro")}</button></div></Section>
-    <Section title={t("aparencia_densidade")}><Field><select value={p.densidade_tabela} onChange={(e) => salvar("densidade_tabela", e.target.value)}><option value="comfortable">{t("aparencia_confortavel")}</option><option value="compact">{t("aparencia_compacta")}</option></select></Field></Section>
-    <Section title={t("aparencia_idioma")}><Field><select value={p.idioma} onChange={(e) => salvar("idioma", e.target.value)}><option value="pt-BR">Português (Brasil)</option><option value="en-US">English (US)</option><option value="es-ES">Español</option></select></Field></Section>
-    <Section title={t("aparencia_pagina_inicial")}><Field><select value={p.pagina_inicial} onChange={(e) => salvar("pagina_inicial", e.target.value)}><option value="dashboard">{t("nav_dashboard")}</option><option value="agenda">{t("nav_agenda")}</option><option value="clientes">{t("nav_clientes")}</option><option value="processos">{t("nav_processos")}</option></select></Field></Section>
+    <Section title={t("aparencia_densidade")}><Field><select aria-label={t("aparencia_densidade")} value={p.densidade_tabela} onChange={(e) => salvar("densidade_tabela", e.target.value)}><option value="comfortable">{t("aparencia_confortavel")}</option><option value="compact">{t("aparencia_compacta")}</option></select></Field></Section>
+    <Section title={t("aparencia_idioma")}><Field><select aria-label={t("aparencia_idioma")} value={p.idioma} onChange={(e) => salvar("idioma", e.target.value)}><option value="pt-BR">Português (Brasil)</option><option value="en-US">English (US)</option><option value="es-ES">Español</option></select></Field></Section>
+    <Section title={t("aparencia_pagina_inicial")}><Field><select aria-label={t("aparencia_pagina_inicial")} value={p.pagina_inicial} onChange={(e) => salvar("pagina_inicial", e.target.value)}><option value="dashboard">{t("nav_dashboard")}</option><option value="agenda">{t("nav_agenda")}</option><option value="clientes">{t("nav_clientes")}</option><option value="processos">{t("nav_processos")}</option></select></Field></Section>
   </div>;
 }
 
-function DadosTab({ dados, setDados, feedback }) {
+function DadosTab({ dados, setDados, feedback, podeExportar }) {
+  const confirmar = useConfirmacao();
   const admin = dados.usuario.tipo_usuario === "admin";
   const [retencao, setRetencao] = useState(dados.configuracao_escritorio?.retencao_documentos || "indeterminado");
   const [senha, setSenha] = useState("");
@@ -371,49 +778,48 @@ function DadosTab({ dados, setDados, feedback }) {
     catch (e) { feedback(e.message, true); }
   }
   async function excluir() {
-    if (!window.confirm("Isto desativará o escritório e todos os usuários. Deseja continuar?")) return;
+    const ok = await confirmar({
+      titulo: "Desativar escritório",
+      mensagem: "O escritório e todos os usuários serão desativados e ninguém mais conseguirá entrar. Só o suporte reativa.",
+      acao: "Desativar",
+    });
+    if (!ok) return;
     try { const res = await desativarEscritorio({ senha, confirmacao }); feedback(res.detail); logout(); window.location.href = "/"; }
     catch (e) { feedback(e.message, true); }
   }
 
   return <div className="settings-stack">
-    <Section title="Exportar dados" description="Baixe os dados do escritório em CSV."><div className="export-row"><button className="btn btn-secondary btn-sm" onClick={() => exportarClientesCSV().catch((e) => feedback(e.message, true))}><Download size={14}/>Exportar clientes (CSV)</button><button className="btn btn-secondary btn-sm" onClick={() => exportarProcessosCSV().catch((e) => feedback(e.message, true))}><Download size={14}/>Exportar processos (CSV)</button></div></Section>
-    <Section title="Retenção de documentos" description="Preferência administrativa do escritório."><Field><select value={retencao} disabled={!admin} onChange={(e) => salvarRetencao(e.target.value)}><option value="1y">1 ano</option><option value="5y">5 anos</option><option value="indeterminado">Por tempo indeterminado</option></select></Field></Section>
+    {podeExportar && <Section title="Exportar dados" description="Baixe os dados do escritório em CSV."><div className="export-row"><button className="btn btn-secondary btn-sm" onClick={() => exportarClientesCSV().catch((e) => feedback(e.message, true))}><Download size={14}/>Exportar clientes (CSV)</button><button className="btn btn-secondary btn-sm" onClick={() => exportarProcessosCSV().catch((e) => feedback(e.message, true))}><Download size={14}/>Exportar processos (CSV)</button></div></Section>}
+    <Section title="Retenção de documentos" description="Preferência administrativa do escritório."><Field><select aria-label="Tempo de retenção de documentos" value={retencao} disabled={!admin} onChange={(e) => salvarRetencao(e.target.value)}><option value="1y">1 ano</option><option value="5y">5 anos</option><option value="indeterminado">Por tempo indeterminado</option></select></Field></Section>
     {admin && <Section title="Zona de risco" description="Esta ação desativa o escritório e impede novos logins." danger><div className="form-grid"><Field label="Senha do administrador"><input type="password" value={senha} onChange={(e) => setSenha(e.target.value)}/></Field><Field label='Digite EXCLUIR para confirmar'><input value={confirmacao} onChange={(e) => setConfirmacao(e.target.value)}/></Field></div><Actions><button className="btn btn-danger btn-sm" onClick={excluir} disabled={!senha || confirmacao !== "EXCLUIR"}><Trash2 size={14}/>Desativar escritório</button></Actions></Section>}
   </div>;
 }
 
 function RelatoriosTab({ feedback, t }) {
   const [tipo, setTipo] = useState("cliente");
-  const [clientes, setClientes] = useState([]);
-  const [processos, setProcessos] = useState([]);
   const [selecionado, setSelecionado] = useState("");
-  const [carregandoListas, setCarregandoListas] = useState(true);
   const [gerando, setGerando] = useState(false);
   const [emailDestino, setEmailDestino] = useState("");
   const [enviandoEmail, setEnviandoEmail] = useState(false);
   const [telefoneDestino, setTelefoneDestino] = useState("");
 
-  useEffect(() => {
-    let ativo = true;
-    Promise.all([getClientes(), getProcessos()])
-      .then(([dadosClientes, dadosProcessos]) => {
-        if (!ativo) return;
-        setClientes(normalizarLista(dadosClientes));
-        setProcessos(normalizarLista(dadosProcessos));
-      })
-      .catch((e) => ativo && feedback(e.message, true))
-      .finally(() => ativo && setCarregandoListas(false));
-    return () => { ativo = false; };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => { setSelecionado(""); }, [tipo]);
+  const listas = useRecurso(() => Promise.all([listarTudo(getClientes), listarTudo(getProcessos)]));
+  const [clientes, processos] = listas.dados ?? [[], []];
+  const carregandoListas = listas.carregando;
 
   const opcoes = tipo === "cliente" ? clientes : processos;
 
-  useEffect(() => {
-    if (!selecionado) { setEmailDestino(""); setTelefoneDestino(""); return; }
-    const item = opcoes.find((o) => String(o.id) === String(selecionado));
+  function escolherTipo(novoTipo) {
+    setTipo(novoTipo);
+    escolher("");
+  }
+
+  // Ao escolher o cliente/processo, já sugere o e-mail e o telefone dele
+  // como destino do relatório.
+  function escolher(id) {
+    setSelecionado(id);
+    if (!id) { setEmailDestino(""); setTelefoneDestino(""); return; }
+    const item = opcoes.find((o) => String(o.id) === String(id));
     if (tipo === "cliente") {
       setEmailDestino(item?.email || "");
       setTelefoneDestino(item?.telefone || "");
@@ -422,7 +828,7 @@ function RelatoriosTab({ feedback, t }) {
       const clienteDoProcesso = clientes.find((c) => c.id === item?.cliente);
       setTelefoneDestino(clienteDoProcesso?.telefone || "");
     }
-  }, [selecionado, tipo]); // eslint-disable-line react-hooks/exhaustive-deps
+  }
 
   async function gerar() {
     if (!selecionado) {
@@ -491,7 +897,7 @@ function RelatoriosTab({ feedback, t }) {
     <Section title={t("relatorios_gerar_titulo")} description={t("relatorios_gerar_desc")}>
       <div className="form-grid">
         <Field label={t("relatorios_tipo")}>
-          <select value={tipo} onChange={(e) => setTipo(e.target.value)}>
+          <select value={tipo} onChange={(e) => escolherTipo(e.target.value)}>
             <option value="cliente">{t("relatorios_cliente")}</option>
             <option value="processo">{t("relatorios_processo")}</option>
           </select>
@@ -499,7 +905,7 @@ function RelatoriosTab({ feedback, t }) {
         <Field label={tipo === "cliente" ? t("relatorios_cliente") : t("relatorios_processo")}>
           <select
             value={selecionado}
-            onChange={(e) => setSelecionado(e.target.value)}
+            onChange={(e) => escolher(e.target.value)}
             disabled={carregandoListas || opcoes.length === 0}
           >
             <option value="">{carregandoListas ? t("carregando") : t("relatorios_selecione")}</option>
@@ -511,6 +917,7 @@ function RelatoriosTab({ feedback, t }) {
           </select>
         </Field>
       </div>
+      {listas.erro && <div className="alert alert-error">{listas.erro}</div>}
       {!carregandoListas && opcoes.length === 0 && (
         <div className="empty-state">{t("nenhum_registro")}</div>
       )}
@@ -568,6 +975,7 @@ const ACOES_LABEL = {
   criacao: "Registro criado",
   edicao: "Registro editado",
   exclusao: "Registro excluído",
+  exportacao: "Dados exportados",
 };
 
 const ACOES_BADGE = {
@@ -577,23 +985,17 @@ const ACOES_BADGE = {
   criacao: "badge-success",
   edicao: "badge-muted",
   exclusao: "badge-danger",
+  exportacao: "badge-warning",
 };
 
-function AuditoriaTab({ feedback }) {
-  const [registros, setRegistros] = useState([]);
-  const [carregando, setCarregando] = useState(true);
-
-  useEffect(() => {
-    let ativo = true;
-    getAuditoria()
-      .then((res) => ativo && setRegistros(normalizarLista(res)))
-      .catch((e) => ativo && feedback(e.message, true))
-      .finally(() => ativo && setCarregando(false));
-    return () => { ativo = false; };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+function AuditoriaTab() {
+  const recurso = useRecurso(getAuditoria);
+  const registros = normalizarLista(recurso.dados);
+  const carregando = recurso.carregando;
 
   return <div className="settings-stack">
     <Section title="Registro de auditoria" description="Quem entrou no sistema e quem criou, editou ou excluiu registros — os 200 eventos mais recentes deste escritório.">
+      {recurso.erro && <div className="alert alert-error">{recurso.erro}</div>}
       {carregando && <div className="empty-state">Carregando registros...</div>}
       {!carregando && registros.length === 0 && <div className="empty-state">Nenhum evento de auditoria registrado ainda.</div>}
       {!carregando && registros.length > 0 && (
