@@ -25,19 +25,24 @@ export const SECOES_AJUDA = [
           "Clicar em Clientes, Processos ou qualquer outro item abre um painel por cima da dashboard. Fechar o painel devolve você exatamente onde estava, sem recarregar nada.",
       },
       {
-        titulo: "Dois perfis de acesso",
+        titulo: "Cinco perfis de acesso",
         texto:
-          "Administrador vê tudo e cadastra advogados. Advogado usa o sistema no dia a dia, mas não cadastra outros usuários nem consulta o registro de auditoria.",
+          "Administrador vê tudo e gerencia a equipe. Advogado usa o sistema no dia a dia. Estagiário cadastra e edita, mas não exclui nada nem vê o financeiro. Financeiro cuida de contratos, cobranças e despesas e só consulta o resto. Secretária cuida do atendimento, dos clientes e da agenda. Quando o seu perfil não pode fazer uma ação, o botão dela nem aparece.",
       },
       {
         titulo: "Busca no topo",
         texto:
-          "O campo de busca procura em clientes, processos e documentos ao mesmo tempo. Clicar em um resultado abre o painel correspondente já na ficha certa.",
+          "O campo de busca procura ao mesmo tempo em clientes, processos, documentos, tarefas, agenda, contratos, horas e modelos. Clicar em um resultado abre o painel correspondente já na ficha certa.",
       },
       {
         titulo: "Pode ser instalado como aplicativo",
         texto:
           "No celular ou no computador, o navegador oferece instalar o LexOffice. Instalado, ele abre direto no painel, em janela própria e com ícone na tela inicial.",
+      },
+      {
+        titulo: "Plano do escritório",
+        texto:
+          "Todo escritório começa no plano Gratuito, sem pagamento: até 3 usuários e 30 processos ativos. Os planos Básico e Profissional ampliam os limites e trazem as intimações do DJEN, a sincronização automática do DataJud e a IA. Atingir um limite só impede criar mais; nada é apagado. O plano atual e o uso ficam em Planos, no menu.",
       },
     ],
   },
@@ -89,12 +94,17 @@ export const SECOES_AJUDA = [
       {
         titulo: "Novo cliente",
         texto:
-          "Nome, CPF, e-mail, telefone e endereço. O CPF é conferido pelo dígito verificador e não pode repetir dentro do mesmo escritório.",
+          "Pessoa física (com CPF) ou jurídica (com CNPJ), e-mail, telefone e endereço — informando o CEP, rua, bairro, cidade e UF são preenchidos sozinhos. O CPF precisa ter 11 dígitos e o CNPJ 14, e nenhum dos dois pode repetir dentro do mesmo escritório.",
       },
       {
         titulo: "O que dá para fazer em cada linha",
         texto:
-          "Editar, inativar, gerar o relatório completo do cliente e enviar mensagem por WhatsApp com os dados já preenchidos.",
+          "Editar, enviar mensagem por WhatsApp com os dados já preenchidos, inativar, exportar os dados do titular, anonimizar e excluir.",
+      },
+      {
+        titulo: "LGPD",
+        texto:
+          "O cadastro registra se o cliente consentiu com o tratamento dos dados e quando. Se ele pedir, o escritório exporta os dados dele em arquivo ou anonimiza o cadastro. A anonimização não tem volta e pede confirmação; os processos continuam no sistema.",
       },
       {
         titulo: "Relatório do cliente",
@@ -113,7 +123,7 @@ export const SECOES_AJUDA = [
       {
         titulo: "Cadastro",
         texto:
-          "Número do processo, título, cliente, advogado responsável, área do direito, vara, comarca, tribunal, valor da causa e status. O número segue a numeração unificada do CNJ.",
+          "Número do processo, título, cliente, advogado responsável, área do direito, vara, comarca, valor da causa, parte contrária, advogado adverso, percentual de honorários de sucumbência e status. O número segue a numeração unificada do CNJ.",
       },
       {
         titulo: "Status",
@@ -123,12 +133,27 @@ export const SECOES_AJUDA = [
       {
         titulo: "Consulta ao tribunal (DataJud)",
         texto:
-          "O botão de consulta busca os andamentos do processo na API pública do CNJ e importa os que ainda não estavam no sistema, sem duplicar. Processos em andamento e suspensos também são sincronizados automaticamente, e quem optou por receber o aviso é notificado por e-mail quando aparece andamento novo.",
+          "O botão de consulta busca os andamentos do processo na API pública do CNJ e importa os que ainda não estavam no sistema, sem duplicar. Nos planos pagos, processos em andamento e suspensos também são sincronizados automaticamente, e quem optou por receber o aviso é notificado por e-mail quando aparece andamento novo.",
       },
       {
         titulo: "Movimentações",
         texto:
           "O histórico do processo. Cada movimentação guarda a data real do tribunal e se veio da consulta automática ou foi lançada à mão, com o nome de quem lançou.",
+      },
+      {
+        titulo: "Segredo de justiça",
+        texto:
+          "Um processo marcado como sigiloso ganha um selo e só aparece para o administrador e para o advogado responsável — na lista, na busca, nos relatórios, no calendário, nas intimações e no assistente de IA.",
+      },
+      {
+        titulo: "Intimações do DJEN",
+        texto:
+          "A aba Intimações busca as publicações do Diário de Justiça Eletrônico Nacional pela OAB de cada advogado, liga cada uma ao processo, lê o prazo no texto e lança o vencimento na agenda. Sem prazo no texto, o sistema adota 5 dias e marca como estimado. Confira sempre o texto ao lado do prazo. Disponível nos planos pagos.",
+      },
+      {
+        titulo: "Atualizar o cliente",
+        texto:
+          "Na ficha do processo, gera uma mensagem de WhatsApp explicando o andamento sem juridiquês. No plano Profissional quem escreve é a IA; nos outros, um modelo automático. Você sempre revisa antes de enviar.",
       },
     ],
   },
@@ -155,9 +180,19 @@ export const SECOES_AJUDA = [
           "Ao cadastrar um prazo, o sistema calcula a data-limite contando apenas dias úteis, já descontando fins de semana, feriados nacionais e os feriados locais cadastrados em Agenda › Feriados locais, como manda o CPC. O calendário do painel marca esses feriados e o recesso forense.",
       },
       {
+        titulo: "Feriados locais",
+        texto:
+          "Na aba Feriados locais, cadastre os feriados da sua comarca e as suspensões de expediente do tribunal, valendo só naquela data ou todo ano. Eles entram na calculadora de prazos, nas intimações do DJEN e no calendário do painel.",
+      },
+      {
         titulo: "Lembretes por e-mail",
         texto:
           "Quem ativou o lembrete recebe aviso antes do compromisso, com a antecedência escolhida nas Configurações. O mesmo vale para prazos. Há ainda um resumo semanal opcional, enviado toda segunda-feira.",
+      },
+      {
+        titulo: "Agenda no celular",
+        texto:
+          "A aba Sincronizar baixa a agenda em arquivo .ics ou cria um link privado que o Google Agenda, o Outlook ou o iPhone assinam e mantêm atualizado sozinhos.",
       },
     ],
   },
@@ -178,6 +213,11 @@ export const SECOES_AJUDA = [
         titulo: "As abas",
         texto:
           "Minhas tarefas mostra o que está em aberto para você. Do escritório mostra o que está em aberto para todos. Histórico traz tudo, inclusive o que já foi concluído ou cancelado.",
+      },
+      {
+        titulo: "Quadro",
+        texto:
+          "A aba Quadro mostra as tarefas em colunas — A fazer, Fazendo e Concluídas. Arraste o cartão ou use as setas dele, que funcionam também no teclado e no celular.",
       },
       {
         titulo: "Prioridade e prazo",
@@ -231,6 +271,11 @@ export const SECOES_AJUDA = [
         titulo: "Marcar parcela como paga",
         texto:
           "A data do pagamento é gravada no momento em que você marca. É ela que alimenta o “Recebido no mês” da dashboard.",
+      },
+      {
+        titulo: "Cobrança por PIX",
+        texto:
+          "Com a chave PIX cadastrada em Configurações › Escritório, cada parcela pendente ganha um QR code e o código copia e cola com o valor certo, que pode ser enviado ao cliente pelo WhatsApp. A baixa da parcela continua sendo feita por você.",
       },
     ],
   },
@@ -316,7 +361,7 @@ export const SECOES_AJUDA = [
       {
         titulo: "O que ele enxerga",
         texto:
-          "Apenas dados do escritório de quem está logado. A pergunta pode ser sobre um cliente ou processo específico, e o assistente recebe o contexto daquele registro.",
+          "Apenas dados do escritório de quem está logado — e processos em segredo de justiça só para quem pode vê-los. A pergunta pode ser sobre um cliente ou processo específico, e o assistente recebe o contexto daquele registro. Disponível no plano Profissional.",
       },
       {
         titulo: "Como usar bem",
@@ -335,12 +380,12 @@ export const SECOES_AJUDA = [
       {
         titulo: "Conta e Escritório",
         texto:
-          "Seus dados, foto e senha. Em Escritório ficam os dados que aparecem no cabeçalho dos relatórios e dos e-mails.",
+          "Em Conta ficam seus dados, foto, senha e a verificação em duas etapas. Em Escritório, os dados que aparecem nos relatórios e e-mails, a chave PIX das cobranças e a equipe, onde o administrador inclui membros e define o perfil de cada um.",
       },
       {
         titulo: "Notificações",
         texto:
-          "Liga e desliga cada aviso por e-mail: processo novo, documento anexado, mudança de status, andamento encontrado no tribunal, cliente novo, tarefa atribuída a você, lembrete de audiência e de prazo, e o resumo semanal. Também define com quantos dias de antecedência quer o lembrete.",
+          "Liga e desliga cada aviso por e-mail: processo novo, documento anexado, mudança de status, andamento encontrado no tribunal, cliente novo, tarefa atribuída a você, lembrete de audiência e de prazo, e o resumo semanal. Também define com quantos dias de antecedência quer o lembrete e ativa as notificações no celular e no navegador, que chegam mesmo com o sistema fechado.",
       },
       {
         titulo: "Aparência",
@@ -349,7 +394,8 @@ export const SECOES_AJUDA = [
       },
       {
         titulo: "Dados",
-        texto: "Exporta clientes e processos em CSV, para abrir no Excel.",
+        texto:
+          "Exporta clientes e processos em CSV, para abrir no Excel, e define a retenção de documentos. Na zona de risco, o administrador pode desativar o escritório.",
       },
       {
         titulo: "Relatórios",
@@ -360,6 +406,11 @@ export const SECOES_AJUDA = [
         titulo: "Auditoria",
         texto:
           "Só para administradores. Registra login, tentativa de login que falhou, criação, edição e exclusão, com usuário, data e endereço de origem.",
+      },
+      {
+        titulo: "Faturamento",
+        texto:
+          "Mostra o plano do escritório e quanto dele está em uso, com atalho para ver os planos.",
       },
     ],
   },
@@ -377,12 +428,12 @@ export const SECOES_AJUDA = [
       {
         titulo: "O sino de notificações",
         texto:
-          "Mostra os compromissos e prazos mais próximos. Clicar em um deles abre a agenda no evento.",
+          "Mostra os compromissos e prazos mais próximos. Clicar em um deles abre a agenda no evento. O calendário do painel marca os feriados e o recesso forense.",
       },
       {
         titulo: "Sessão e segurança",
         texto:
-          "Sair do sistema invalida o acesso no servidor, não só no navegador. Cinco tentativas de login erradas bloqueiam a conta temporariamente.",
+          "Sair do sistema invalida o acesso no servidor, não só no navegador. Três tentativas de senha erradas seguidas bloqueiam a conta por 15 minutos; na verificação em duas etapas, cinco códigos errados.",
       },
       {
         titulo: "Sem conexão",
