@@ -21,6 +21,9 @@ class Escritorio {
   - ativo : boolean
   - plano : PlanoEnum
   - planoValidade : Date
+  + planoEfetivo() : PlanoEnum
+  + temRecurso(recurso) : boolean
+  + verificarLimite(limite) : void
 }
 
 abstract class Usuario {
