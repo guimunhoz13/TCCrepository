@@ -21,6 +21,7 @@ import {
   listarTudo,
 } from "@/services/api";
 import LinhasCarregando from "@/components/ui/LinhasCarregando";
+import TarefasQuadro from "@/components/panels/TarefasQuadro";
 import { usePermissoes } from "@/hooks/usePermissoes";
 
 const STATUS = [
@@ -87,7 +88,7 @@ export default function TarefasPanel() {
         ? { status: "abertas" }
         : { };
 
-  const abaDeLista = panelTab !== "nova";
+  const abaDeLista = panelTab !== "nova" && panelTab !== "quadro";
   const lista = useListaPaginada(
     (page) => getTarefas({ ...filtros, page }),
     [panelTab],
@@ -136,6 +137,7 @@ export default function TarefasPanel() {
 
   const abas = [
     { id: "minhas", label: "Minhas tarefas" },
+    { id: "quadro", label: "Quadro" },
     { id: "todas", label: "Do escritório" },
     { id: "historico", label: "Histórico" },
     ...(pode("tarefas", "criar") ? [{ id: "nova", label: "Nova tarefa" }] : []),
@@ -149,7 +151,11 @@ export default function TarefasPanel() {
     <OverlayPanel tabs={abas}>
       {(erro || erroCarga) && <div className="form-error">{erro || erroCarga}</div>}
 
-      {panelTab !== "nova" && (
+      {panelTab === "quadro" && (
+        <TarefasQuadro ativo={ativo} podeEditar={pode("tarefas", "editar")} />
+      )}
+
+      {abaDeLista && (
         <>
           <div className="resumo-linha">
             <span>

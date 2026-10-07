@@ -6,7 +6,7 @@ from django.db.models.functions import Lower, TruncMonth
 from django.db.models import Prefetch
 from django.http import FileResponse, Http404, HttpResponse, JsonResponse
 from django.utils import timezone
-from datetime import date
+from datetime import date, timedelta
 from decimal import Decimal, ROUND_HALF_UP
 import csv
 import logging
@@ -3278,6 +3278,13 @@ class TarefaViewSet(
         status_filtro = self.request.query_params.get("status")
         if status_filtro == "abertas":
             queryset = queryset.exclude(status__in=Tarefa.STATUS_ENCERRADOS)
+        elif status_filtro == "quadro":
+            # Quadro Kanban: o que está por fazer, em andamento e o que foi
+            # concluído nas últimas duas semanas (o resto vira histórico).
+            queryset = queryset.filter(
+                Q(status__in=("aberta", "em_andamento"))
+                | Q(status="concluida", concluida_em__gte=timezone.now() - timedelta(days=14))
+            )
         elif status_filtro:
             queryset = queryset.filter(status=status_filtro)
 
