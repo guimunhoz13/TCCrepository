@@ -5,7 +5,7 @@ O documento `RT-TDS-2026-39` é gerado a partir de `gerar_rt.js` (conteúdo),
 biblioteca `docx`:
 
 ```bash
-cd docs/tcc && npm install docx && node main.js   # gera RT-TDS-2026-39_v1.2.docx
+cd docs/tcc && npm install docx && node main.js   # gera RT-TDS-2026-39_v1.3.docx
 ```
 
 Os diagramas ficam em `diagramas/*.puml` (PlantUML) e são renderizados com
@@ -20,8 +20,8 @@ renderizado (precisa de LibreOffice e poppler-utils):
 
 ```bash
 node main.js
-soffice --headless --convert-to pdf RT-TDS-2026-39_v1.2.docx
-python3 paginar.py RT-TDS-2026-39_v1.2.pdf   # grava paginas.json
+soffice --headless --convert-to pdf RT-TDS-2026-39_v1.3.docx
+python3 paginar.py RT-TDS-2026-39_v1.3.pdf   # grava paginas.json
 node main.js                                 # gera de novo com as páginas certas
 ```
 
@@ -54,3 +54,12 @@ Limite do Plano; fluxos alternativos em 4.2.2 e 4.2.4), o diagrama de classes,
 os protótipos (seção 6.26), os componentes, os trabalhos futuros (cobrança
 online das assinaturas), a conclusão e as contagens de testes (445 da API e 200
 de componentes).
+
+## Versão 1.3
+
+Incorpora os feriados locais no cálculo de prazos: RF50 e RN36; RN14, RN30 e
+RF22 revistas; FeriadoLocal nos diagramas de classes, de banco de dados e de
+casos de uso (Cadastrar Feriados Locais estende Gerenciar Agenda); tabela
+feriado_local na modelagem de dados; seção 6.27 com a aba de feriados e a
+calculadora; trabalhos futuros (importação do calendário dos tribunais),
+conclusão e contagens de testes (459 da API e 205 de componentes).

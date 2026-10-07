@@ -50,6 +50,6 @@ const doc = new Document({
 });
 
 Packer.toBuffer(doc).then((buffer) => {
-  fs.writeFileSync(`${__dirname}/RT-TDS-2026-39_v1.2.docx`, buffer);
+  fs.writeFileSync(`${__dirname}/RT-TDS-2026-39_v1.3.docx`, buffer);
   console.log("OK: documento gerado.");
 });
