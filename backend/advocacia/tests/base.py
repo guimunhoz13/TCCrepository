@@ -1,6 +1,7 @@
 """Utilitários compartilhados pelos testes: escritório, usuários, tokens e respostas simuladas."""
 
 from types import SimpleNamespace
+from unittest.mock import patch
 
 from django.contrib.auth.hashers import make_password
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -131,6 +132,10 @@ class _EquipeDoEscritorio(_EscritorioComDados):
     """Escritório com um membro de cada perfil."""
 
     def _equipe(self):
+        # Os e-mails de teste (n@n.com, x@equipe.com) não têm servidor de
+        # e-mail de verdade: sem isto, o teste dependeria do DNS da máquina
+        # (passava sem rede e falhava no CI, que resolve o domínio).
+        self.enterContext(patch("advocacia.validators._dominio_tem_mx", return_value=True))
         self.escritorio, self.admin, self.advogado, self.cliente = self._montar()
         self.membros = {"admin": self.admin}
         for perfil in ("advogado", "estagiario", "financeiro", "secretaria"):
