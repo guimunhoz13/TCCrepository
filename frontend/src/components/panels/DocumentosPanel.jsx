@@ -20,12 +20,14 @@ import {
   abrirDocumento,
 } from "@/services/api";
 import LinhasCarregando from "@/components/ui/LinhasCarregando";
+import { usePermissoes } from "@/hooks/usePermissoes";
 
 export default function DocumentosPanel() {
   const { activePanel, panelTab, setPanelTab } = usePanel();
   const { refresh: refreshDashboard } = useDashboardData();
   const confirmar = useConfirmacao();
   const avisar = useAvisos();
+  const pode = usePermissoes();
   const { t } = usePreferences();
   const [processoId, setProcessoId] = useState("");
   const [nomeArquivo, setNomeArquivo] = useState("");
@@ -82,7 +84,9 @@ export default function DocumentosPanel() {
     <OverlayPanel
       tabs={[
         { id: "lista", label: t("aba_lista") },
-        { id: "novo", label: t("acao_enviar_documento") },
+        ...(pode("documentos", "criar")
+          ? [{ id: "novo", label: t("acao_enviar_documento") }]
+          : []),
       ]}
     >
       {(erro || erroCarga) && <div className="alert alert-error">{erro || erroCarga}</div>}
@@ -162,29 +166,31 @@ export default function DocumentosPanel() {
                         >
                           <FileDown size={15} />
                         </button>
-                        <button
-                          type="button"
-                          className="row-action row-action-danger"
-                          title={t("acao_excluir")}
-                          aria-label={t("acao_excluir")}
-                          onClick={async () => {
-                            const ok = await confirmar({
-                              titulo: "Excluir documento",
-                              mensagem: `O arquivo "${doc.nome_arquivo}" será apagado do sistema.`,
-                            });
-                            if (!ok) return;
-                            try {
-                              await deleteDocumento(doc.id);
-                              avisar("Documento excluído.");
-                              carregarDados();
-                              refreshDashboard().catch(() => {});
-                            } catch (error) {
-                              avisar(error.message, "erro");
-                            }
-                          }}
-                        >
-                          <Trash2 size={15} />
-                        </button>
+                        {pode("documentos", "excluir") && (
+                          <button
+                            type="button"
+                            className="row-action row-action-danger"
+                            title={t("acao_excluir")}
+                            aria-label={t("acao_excluir")}
+                            onClick={async () => {
+                              const ok = await confirmar({
+                                titulo: "Excluir documento",
+                                mensagem: `O arquivo "${doc.nome_arquivo}" será apagado do sistema.`,
+                              });
+                              if (!ok) return;
+                              try {
+                                await deleteDocumento(doc.id);
+                                avisar("Documento excluído.");
+                                carregarDados();
+                                refreshDashboard().catch(() => {});
+                              } catch (error) {
+                                avisar(error.message, "erro");
+                              }
+                            }}
+                          >
+                            <Trash2 size={15} />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>

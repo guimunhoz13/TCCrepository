@@ -24,6 +24,7 @@ import {
   listarTudo,
 } from "@/services/api";
 import LinhasCarregando from "@/components/ui/LinhasCarregando";
+import { usePermissoes } from "@/hooks/usePermissoes";
 
 const TIPOS_DESPESA = [
   { value: "custas", label: "Custas processuais" },
@@ -74,6 +75,7 @@ export default function HorasPanel() {
   const { t } = usePreferences();
   const confirmar = useConfirmacao();
   const avisar = useAvisos();
+  const pode = usePermissoes();
 
   const [mes, setMes] = useState(mesAtual());
   const [formHora, setFormHora] = useState(horaInicial);
@@ -157,12 +159,12 @@ export default function HorasPanel() {
     .reduce((soma, d) => soma + Number(d.valor), 0);
 
   const abas = [
-    { id: "horas", label: "Horas" },
-    { id: "nova-hora", label: "Apontar hora" },
-    { id: "despesas", label: "Despesas" },
-    { id: "nova-despesa", label: "Nova despesa" },
+    pode("horas") && { id: "horas", label: "Horas" },
+    pode("horas", "criar") && { id: "nova-hora", label: "Apontar hora" },
+    pode("despesas") && { id: "despesas", label: "Despesas" },
+    pode("despesas", "criar") && { id: "nova-despesa", label: "Nova despesa" },
     { id: "tempo", label: "Tempo de uso" },
-  ];
+  ].filter(Boolean);
 
   if (!ativo) return null;
 
@@ -216,28 +218,30 @@ export default function HorasPanel() {
                     </td>
                     <td>
                       <div className="row-actions">
-                        <button
-                          type="button"
-                          className="row-action row-action-danger"
-                          title={t("acao_excluir")}
-                          aria-label={t("acao_excluir")}
-                          onClick={async () => {
-                            const ok = await confirmar({
-                              titulo: "Excluir apontamento",
-                              mensagem: "As horas deste apontamento deixam de contar no faturamento.",
-                            });
-                            if (!ok) return;
-                            try {
-                              await deleteApontamento(a.id);
-                              avisar("Apontamento excluído.");
-                              carregar();
-                            } catch (error) {
-                              avisar(error.message, "erro");
-                            }
-                          }}
-                        >
-                          <Trash2 size={15} />
-                        </button>
+                        {pode("horas", "excluir") && (
+                          <button
+                            type="button"
+                            className="row-action row-action-danger"
+                            title={t("acao_excluir")}
+                            aria-label={t("acao_excluir")}
+                            onClick={async () => {
+                              const ok = await confirmar({
+                                titulo: "Excluir apontamento",
+                                mensagem: "As horas deste apontamento deixam de contar no faturamento.",
+                              });
+                              if (!ok) return;
+                              try {
+                                await deleteApontamento(a.id);
+                                avisar("Apontamento excluído.");
+                                carregar();
+                              } catch (error) {
+                                avisar(error.message, "erro");
+                              }
+                            }}
+                          >
+                            <Trash2 size={15} />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -390,41 +394,45 @@ export default function HorasPanel() {
                     <td>
                       <div className="row-actions">
                         {d.reembolsavel && !d.reembolsada && (
+                          pode("despesas", "editar") && (
+                            <button
+                              type="button"
+                              className="row-action row-action-success"
+                              title="Marcar como reembolsada"
+                              aria-label="Marcar como reembolsada"
+                              onClick={async () => {
+                                await updateDespesa(d.id, { reembolsada: true });
+                                carregar();
+                              }}
+                            >
+                              <span aria-hidden="true">R$</span>
+                            </button>
+                          )
+                        )}
+                        {pode("despesas", "excluir") && (
                           <button
                             type="button"
-                            className="row-action row-action-success"
-                            title="Marcar como reembolsada"
-                            aria-label="Marcar como reembolsada"
+                            className="row-action row-action-danger"
+                            title={t("acao_excluir")}
+                            aria-label={t("acao_excluir")}
                             onClick={async () => {
-                              await updateDespesa(d.id, { reembolsada: true });
-                              carregar();
+                              const ok = await confirmar({
+                                titulo: "Excluir despesa",
+                                mensagem: "A despesa sai do relatório do cliente e do reembolso.",
+                              });
+                              if (!ok) return;
+                              try {
+                                await deleteDespesa(d.id);
+                                avisar("Despesa excluída.");
+                                carregar();
+                              } catch (error) {
+                                avisar(error.message, "erro");
+                              }
                             }}
                           >
-                            <span aria-hidden="true">R$</span>
+                            <Trash2 size={15} />
                           </button>
                         )}
-                        <button
-                          type="button"
-                          className="row-action row-action-danger"
-                          title={t("acao_excluir")}
-                          aria-label={t("acao_excluir")}
-                          onClick={async () => {
-                            const ok = await confirmar({
-                              titulo: "Excluir despesa",
-                              mensagem: "A despesa sai do relatório do cliente e do reembolso.",
-                            });
-                            if (!ok) return;
-                            try {
-                              await deleteDespesa(d.id);
-                              avisar("Despesa excluída.");
-                              carregar();
-                            } catch (error) {
-                              avisar(error.message, "erro");
-                            }
-                          }}
-                        >
-                          <Trash2 size={15} />
-                        </button>
                       </div>
                     </td>
                   </tr>

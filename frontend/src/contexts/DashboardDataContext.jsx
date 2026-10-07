@@ -1,7 +1,7 @@
 "use client";
 
-import { createContext, useCallback, useContext } from "react";
-import { getDashboardResumo } from "@/services/api";
+import { createContext, useCallback, useContext, useEffect } from "react";
+import { getDashboardResumo, getUsuarioLogado, salvarUsuarioLogado } from "@/services/api";
 import { useRecurso } from "@/hooks/useRecurso";
 
 const DashboardDataContext = createContext(null);
@@ -14,6 +14,23 @@ export function DashboardDataProvider({ children }) {
   const recurso = useRecurso(getDashboardResumo);
   const dados = recurso.dados;
   const recarregar = recurso.recarregar;
+
+  // O perfil pode ter mudado desde o login (o administrador trocou de
+  // estagiário para advogado, por exemplo): a dashboard traz as permissões
+  // atuais e o menu se ajusta sem precisar sair e entrar de novo.
+  const tipoAtual = dados?.tipo_usuario;
+  const permissoesAtuais = dados?.permissoes;
+  useEffect(() => {
+    if (!tipoAtual || !permissoesAtuais) return;
+    const salvo = getUsuarioLogado();
+    if (!salvo) return;
+    if (
+      salvo.tipo_usuario !== tipoAtual ||
+      JSON.stringify(salvo.permissoes) !== JSON.stringify(permissoesAtuais)
+    ) {
+      salvarUsuarioLogado({ ...salvo, tipo_usuario: tipoAtual, permissoes: permissoesAtuais });
+    }
+  }, [tipoAtual, permissoesAtuais]);
 
   // Os painéis chamam `refresh().catch(...)` depois de salvar algo; a
   // recarga em si é disparada aqui e acontece em segundo plano.

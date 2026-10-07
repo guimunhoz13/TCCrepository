@@ -25,6 +25,7 @@ import { usePreferences } from "@/contexts/PreferencesContext";
 import { useUsuarioLogado } from "@/hooks/useUsuarioLogado";
 import Logo from "@/components/ui/Logo";
 import { useMenuMovel } from "@/contexts/MenuMovelContext";
+import { usePermissoes } from "@/hooks/usePermissoes";
 
 const NAV_ITEMS = [
   {
@@ -35,53 +36,63 @@ const NAV_ITEMS = [
   },
   {
     id: PANELS.CLIENTES,
+    area: "clientes",
     tKey: "nav_clientes",
     icon: Users,
   },
   {
     id: PANELS.PROCESSOS,
+    area: "processos",
     tKey: "nav_processos",
     icon: Briefcase,
   },
   {
     id: PANELS.AGENDA,
+    area: "agenda",
     tKey: "nav_agenda",
     icon: CalendarDays,
   },
   {
     id: "compromissos",
+    area: "agenda",
     tKey: "nav_compromissos",
     icon: CalendarClock,
     href: "/dashboard/compromissos",
   },
   {
     id: "assistente-ia",
+    area: "ia",
     tKey: "nav_assistente",
     icon: Bot,
     href: "/assistente-ia",
   },
   {
     id: PANELS.DOCUMENTOS,
+    area: "documentos",
     tKey: "nav_documentos",
     icon: FileText,
   },
   {
     id: PANELS.CONTRATOS,
+    area: "financeiro",
     tKey: "nav_contratos",
     icon: ScrollText,
   },
   {
     id: PANELS.HORAS,
+    area: "horas",
     tKey: "nav_horas",
     icon: Timer,
   },
   {
     id: PANELS.TAREFAS,
+    area: "tarefas",
     tKey: "nav_tarefas",
     icon: ListChecks,
   },
   {
     id: PANELS.MODELOS,
+    area: "modelos",
     tKey: "nav_modelos",
     icon: FileSignature,
   },
@@ -115,6 +126,7 @@ const ATALHOS_CELULAR = ["dashboard", PANELS.CLIENTES, PANELS.PROCESSOS, PANELS.
 export default function AppSidebar() {
   const { activePanel, openPanel, closePanel } = usePanel();
   const menuMovel = useMenuMovel();
+  const pode = usePermissoes();
   const { t } = usePreferences();
   const router = useRouter();
   const pathname = usePathname();
@@ -147,9 +159,13 @@ export default function AppSidebar() {
   }
 
   const itensVisiveis = NAV_ITEMS.filter(
-    (item) => !item.adminOnly || usuario?.tipo_usuario === "admin"
+    (item) =>
+      (!item.adminOnly || usuario?.tipo_usuario === "admin") &&
+      (!item.area || pode(item.area))
   );
-  const atalhos = ATALHOS_CELULAR.map((id) => NAV_ITEMS.find((item) => item.id === id));
+  const atalhos = ATALHOS_CELULAR.map((id) => itensVisiveis.find((item) => item.id === id)).filter(
+    Boolean
+  );
 
   return (
     <>

@@ -21,6 +21,7 @@ import {
   listarTudo,
 } from "@/services/api";
 import LinhasCarregando from "@/components/ui/LinhasCarregando";
+import { usePermissoes } from "@/hooks/usePermissoes";
 
 const STATUS = [
   { value: "aberta", label: "Aberta" },
@@ -69,6 +70,7 @@ export default function TarefasPanel() {
   const { t } = usePreferences();
   const confirmar = useConfirmacao();
   const avisar = useAvisos();
+  const pode = usePermissoes();
 
   const [form, setForm] = useState(tarefaInicial);
   const [erro, setErro] = useState("");
@@ -136,7 +138,7 @@ export default function TarefasPanel() {
     { id: "minhas", label: "Minhas tarefas" },
     { id: "todas", label: "Do escritório" },
     { id: "historico", label: "Histórico" },
-    { id: "nova", label: "Nova tarefa" },
+    ...(pode("tarefas", "criar") ? [{ id: "nova", label: "Nova tarefa" }] : []),
   ];
 
   if (!ativo) return null;
@@ -215,60 +217,68 @@ export default function TarefasPanel() {
                     <td>
                       <div className="row-actions">
                         {tarefa.status === "aberta" && (
-                          <button
-                            type="button"
-                            className="row-action"
-                            title="Marcar como em andamento"
-                            aria-label="Marcar como em andamento"
-                            onClick={() => mudarStatus(tarefa, "em_andamento")}
-                          >
-                            <RotateCcw size={15} />
-                          </button>
+                          pode("tarefas", "editar") && (
+                            <button
+                              type="button"
+                              className="row-action"
+                              title="Marcar como em andamento"
+                              aria-label="Marcar como em andamento"
+                              onClick={() => mudarStatus(tarefa, "em_andamento")}
+                            >
+                              <RotateCcw size={15} />
+                            </button>
+                          )
                         )}
                         {tarefa.status !== "concluida" && tarefa.status !== "cancelada" && (
-                          <button
-                            type="button"
-                            className="row-action"
-                            title="Concluir tarefa"
-                            aria-label="Concluir tarefa"
-                            onClick={() => mudarStatus(tarefa, "concluida")}
-                          >
-                            <Check size={15} />
-                          </button>
+                          pode("tarefas", "editar") && (
+                            <button
+                              type="button"
+                              className="row-action"
+                              title="Concluir tarefa"
+                              aria-label="Concluir tarefa"
+                              onClick={() => mudarStatus(tarefa, "concluida")}
+                            >
+                              <Check size={15} />
+                            </button>
+                          )
                         )}
                         {(tarefa.status === "concluida" || tarefa.status === "cancelada") && (
+                          pode("tarefas", "editar") && (
+                            <button
+                              type="button"
+                              className="row-action"
+                              title="Reabrir tarefa"
+                              aria-label="Reabrir tarefa"
+                              onClick={() => mudarStatus(tarefa, "aberta")}
+                            >
+                              <RotateCcw size={15} />
+                            </button>
+                          )
+                        )}
+                        {pode("tarefas", "excluir") && (
                           <button
                             type="button"
-                            className="row-action"
-                            title="Reabrir tarefa"
-                            aria-label="Reabrir tarefa"
-                            onClick={() => mudarStatus(tarefa, "aberta")}
+                            className="row-action row-action-danger"
+                            title={t("acao_excluir")}
+                            aria-label={t("acao_excluir")}
+                            onClick={async () => {
+                              const ok = await confirmar({
+                                titulo: "Excluir tarefa",
+                                mensagem: `"${tarefa.titulo}" será excluída. Para guardar o histórico, prefira marcar como cancelada.`,
+                              });
+                              if (!ok) return;
+                              try {
+                                await deleteTarefa(tarefa.id);
+                                avisar("Tarefa excluída.");
+                                carregar();
+                              } catch (error) {
+                                avisar(error.message, "erro");
+                              }
+                            }}
                           >
-                            <RotateCcw size={15} />
+                            <Trash2 size={15} />
                           </button>
                         )}
-                        <button
-                          type="button"
-                          className="row-action row-action-danger"
-                          title={t("acao_excluir")}
-                          aria-label={t("acao_excluir")}
-                          onClick={async () => {
-                            const ok = await confirmar({
-                              titulo: "Excluir tarefa",
-                              mensagem: `"${tarefa.titulo}" será excluída. Para guardar o histórico, prefira marcar como cancelada.`,
-                            });
-                            if (!ok) return;
-                            try {
-                              await deleteTarefa(tarefa.id);
-                              avisar("Tarefa excluída.");
-                              carregar();
-                            } catch (error) {
-                              avisar(error.message, "erro");
-                            }
-                          }}
-                        >
-                          <Trash2 size={15} />
-                        </button>
                       </div>
                     </td>
                   </tr>

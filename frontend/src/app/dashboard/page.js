@@ -44,6 +44,7 @@ import { PreferencesProvider } from "@/contexts/PreferencesContext";
 import useRegistroDeAtividade from "@/hooks/useRegistroDeAtividade";
 import { useAgora } from "@/hooks/useAgora";
 import { useAvisos } from "@/contexts/AvisosContext";
+import { usePermissoes } from "@/hooks/usePermissoes";
 import { badgeStatus, rotuloStatus } from "@/lib/statusProcesso";
 import { abrirDocumento } from "@/services/api";
 
@@ -109,6 +110,7 @@ function DashboardContent() {
   } = useDashboardData();
   const agora = useAgora();
   const avisar = useAvisos();
+  const pode = usePermissoes();
   const { openPanel } = usePanel();
   const [pulsar, setPulsar] = useState(false);
   const primeiraRenderizacao = useRef(true);
@@ -196,31 +198,39 @@ function DashboardContent() {
 
         <div className="dashboard-toolbar">
           <div className="quick-actions-bar">
-            <button
-              type="button"
-              className="quick-action-btn"
-              onClick={() => openPanel(PANELS.CLIENTES, "novo")}
-            >
-              <UserPlus size={16} /> Novo cliente
-            </button>
-            <button
-              type="button"
-              className="quick-action-btn"
-              onClick={() => openPanel(PANELS.PROCESSOS, "novo")}
-            >
-              <FilePlus size={16} /> Novo processo
-            </button>
-            <button
-              type="button"
-              className="quick-action-btn"
-              onClick={() => openPanel(PANELS.AGENDA, "novo")}
-            >
-              <CalendarPlus size={16} /> Nova audiência
-            </button>
-            <Link href="/assistente-ia" className="btn btn-primary ai-quick-btn">
-              <Bot size={18} />
-              Abrir Assistente IA
-            </Link>
+            {pode("clientes", "criar") && (
+              <button
+                type="button"
+                className="quick-action-btn"
+                onClick={() => openPanel(PANELS.CLIENTES, "novo")}
+              >
+                <UserPlus size={16} /> Novo cliente
+              </button>
+            )}
+            {pode("processos", "criar") && (
+              <button
+                type="button"
+                className="quick-action-btn"
+                onClick={() => openPanel(PANELS.PROCESSOS, "novo")}
+              >
+                <FilePlus size={16} /> Novo processo
+              </button>
+            )}
+            {pode("agenda", "criar") && (
+              <button
+                type="button"
+                className="quick-action-btn"
+                onClick={() => openPanel(PANELS.AGENDA, "novo")}
+              >
+                <CalendarPlus size={16} /> Nova audiência
+              </button>
+            )}
+            {pode("ia") && (
+              <Link href="/assistente-ia" className="btn btn-primary ai-quick-btn">
+                <Bot size={18} />
+                Abrir Assistente IA
+              </Link>
+            )}
             <a href="#noticias" className="btn btn-secondary">
               <Newspaper size={18} />
               Conferir notícias
@@ -360,12 +370,15 @@ function DashboardContent() {
           />
         </div>
 
-        <FinanceiroSection financeiro={stats?.financeiro} carregando={carregando} />
+        {/* A API nem manda os valores para quem não tem acesso ao financeiro. */}
+        {(carregando || stats?.financeiro) && (
+          <FinanceiroSection financeiro={stats?.financeiro} carregando={carregando} />
+        )}
 
         <div style={{ marginTop: 18 }}>
           <ChartsSection
             processosPorStatus={stats?.processos_por_status || []}
-            financeiroMensal={stats?.financeiro_mensal || []}
+            financeiroMensal={stats?.financeiro_mensal ?? null}
           />
         </div>
 

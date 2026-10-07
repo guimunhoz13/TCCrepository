@@ -198,6 +198,21 @@ export default function ProcessoForm({
         )}
       </div>
 
+      <label className="campo-marcar full">
+        <input
+          type="checkbox"
+          checked={Boolean(formulario.sigiloso)}
+          onChange={(e) => setFormulario({ ...formulario, sigiloso: e.target.checked })}
+        />
+        <span>
+          <strong>Segredo de justiça</strong>
+          <small>
+            Só o administrador e o advogado responsável veem este processo e o que pende dele
+            (documentos, agenda, contrato, horas).
+          </small>
+        </span>
+      </label>
+
       <div className="form-sticky-footer">
         {onCancelar && (
           <button

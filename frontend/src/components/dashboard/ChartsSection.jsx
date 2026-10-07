@@ -34,7 +34,7 @@ function CustomTooltip({ active, payload }) {
   );
 }
 
-export default function ChartsSection({ processosPorStatus = [], financeiroMensal = [] }) {
+export default function ChartsSection({ processosPorStatus = [], financeiroMensal = null }) {
   const [fatiaAtiva, setFatiaAtiva] = useState(null);
   const { theme } = useTheme();
 
@@ -57,7 +57,7 @@ export default function ChartsSection({ processosPorStatus = [], financeiroMensa
   const totalProcessos = pieData.reduce((soma, item) => soma + item.value, 0);
 
   return (
-    <div className="dashboard-grid">
+    <div className={`dashboard-grid ${financeiroMensal ? "" : "dashboard-grid-unico"}`}>
       <div className="panel-card">
         <h3>Processos por status</h3>
         {pieData.length === 0 ? (
@@ -132,7 +132,7 @@ export default function ChartsSection({ processosPorStatus = [], financeiroMensa
         )}
       </div>
 
-      <ReceitaDespesas serie={financeiroMensal} />
+      {financeiroMensal && <ReceitaDespesas serie={financeiroMensal} />}
     </div>
   );
 }

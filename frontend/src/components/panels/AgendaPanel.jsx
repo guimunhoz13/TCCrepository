@@ -21,6 +21,7 @@ import {
   listarTudo,
 } from "@/services/api";
 import LinhasCarregando from "@/components/ui/LinhasCarregando";
+import { usePermissoes } from "@/hooks/usePermissoes";
 
 const formularioInicial = {
   processo: "",
@@ -211,6 +212,7 @@ export default function AgendaPanel() {
   const { refresh: refreshDashboard } = useDashboardData();
   const confirmar = useConfirmacao();
   const avisar = useAvisos();
+  const pode = usePermissoes();
   const { t } = usePreferences();
   const [filtroTipo, setFiltroTipo] = useState("");
   const [formulario, setFormulario] = useState(formularioInicial);
@@ -336,7 +338,7 @@ export default function AgendaPanel() {
     <OverlayPanel
       tabs={[
         { id: "lista", label: t("aba_lista") },
-        { id: "novo", label: t("aba_novo") },
+        ...(pode("agenda", "criar") ? [{ id: "novo", label: t("aba_novo") }] : []),
       ]}
     >
       {(erro || erroCarga) && <div className="alert alert-error">{erro || erroCarga}</div>}
@@ -427,58 +429,66 @@ export default function AgendaPanel() {
                     <td>
                       <div className="row-actions">
                         {evento.cumprido ? (
+                          pode("agenda", "editar") && (
+                            <button
+                              type="button"
+                              className="row-action"
+                              title="Reabrir evento"
+                              aria-label="Reabrir evento"
+                              onClick={() => handleAlternarCumprido(evento, false)}
+                            >
+                              <RotateCcw size={15} />
+                            </button>
+                          )
+                        ) : (
+                          pode("agenda", "editar") && (
+                            <button
+                              type="button"
+                              className="row-action row-action-success"
+                              title="Marcar como cumprido"
+                              aria-label="Marcar como cumprido"
+                              onClick={() => handleAlternarCumprido(evento, true)}
+                            >
+                              <Check size={15} />
+                            </button>
+                          )
+                        )}
+                        {pode("agenda", "editar") && (
                           <button
                             type="button"
                             className="row-action"
-                            title="Reabrir evento"
-                            aria-label="Reabrir evento"
-                            onClick={() => handleAlternarCumprido(evento, false)}
+                            title="Editar evento"
+                            aria-label="Editar evento"
+                            onClick={() => iniciarEdicao(evento)}
                           >
-                            <RotateCcw size={15} />
-                          </button>
-                        ) : (
-                          <button
-                            type="button"
-                            className="row-action row-action-success"
-                            title="Marcar como cumprido"
-                            aria-label="Marcar como cumprido"
-                            onClick={() => handleAlternarCumprido(evento, true)}
-                          >
-                            <Check size={15} />
+                            <Pencil size={15} />
                           </button>
                         )}
-                        <button
-                          type="button"
-                          className="row-action"
-                          title="Editar evento"
-                          aria-label="Editar evento"
-                          onClick={() => iniciarEdicao(evento)}
-                        >
-                          <Pencil size={15} />
-                        </button>
-                        <button
-                          type="button"
-                          className="row-action row-action-danger"
-                          title={t("acao_excluir")}
-                          aria-label={t("acao_excluir")}
-                          onClick={async () => {
-                            const ok = await confirmar({
-                              titulo: "Excluir evento",
-                              mensagem: `"${evento.titulo}" sairá da agenda e dos lembretes.`,
-                            });
-                            if (!ok) return;
-                            try {
-                              await deleteAgenda(evento.id);
-                              avisar("Evento excluído.");
-                              carregarDados();
-                              refreshDashboard().catch(() => {});
-                            } catch (error) {
-                              avisar(error.message, "erro");
-                            }
-                          }}
-                        >
-                          <Trash2 size={15} />
-                        </button>
+                        {pode("agenda", "excluir") && (
+                          <button
+                            type="button"
+                            className="row-action row-action-danger"
+                            title={t("acao_excluir")}
+                            aria-label={t("acao_excluir")}
+                            onClick={async () => {
+                              const ok = await confirmar({
+                                titulo: "Excluir evento",
+                                mensagem: `"${evento.titulo}" sairá da agenda e dos lembretes.`,
+                              });
+                              if (!ok) return;
+                              try {
+                                await deleteAgenda(evento.id);
+                                avisar("Evento excluído.");
+                                carregarDados();
+                                refreshDashboard().catch(() => {});
+                              } catch (error) {
+                                avisar(error.message, "erro");
+                              }
+                            }}
+                          >
+                            <Trash2 size={15} />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>

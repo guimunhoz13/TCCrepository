@@ -3584,7 +3584,8 @@ button.doc-mini-card {
 
   .barra-inferior {
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
     position: fixed;
     left: 0;
     right: 0;
@@ -4048,4 +4049,130 @@ button.doc-mini-card {
   .sync-indicator {
     display: none;
   }
+}
+
+.dashboard-grid.dashboard-grid-unico {
+  grid-template-columns: 1fr;
+}
+
+/* Caixa de marcar com título e explicação (segredo de justiça, LGPD). */
+.campo-marcar {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--ink-soft);
+  cursor: pointer;
+}
+
+.campo-marcar.full {
+  grid-column: 1 / -1;
+}
+
+.campo-marcar input {
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  accent-color: var(--accent);
+  flex-shrink: 0;
+}
+
+.campo-marcar span {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.campo-marcar small {
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.selo-sigilo {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 8px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-strong);
+  vertical-align: middle;
+}
+
+/* Login em duas etapas e configuração do autenticador. */
+.campo-codigo {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 1.4rem;
+  letter-spacing: 0.4em;
+  text-align: center;
+}
+
+.link-botao {
+  background: none;
+  border: 0;
+  padding: 0;
+  color: var(--accent-text, var(--accent));
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.qr-2fa {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  margin: 12px 0 16px;
+}
+
+.qr-2fa img {
+  width: 168px;
+  height: 168px;
+  padding: 8px;
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+}
+
+.qr-2fa code {
+  display: inline-block;
+  margin-top: 6px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: var(--ink-soft);
+  font-size: 0.82rem;
+  word-break: break-all;
+}
+
+.status-2fa {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 12px;
+  color: var(--success-text, var(--success));
+  font-weight: 600;
+}
+
+.dica-campo {
+  display: block;
+  margin-top: 6px;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
+.member-row {
+  flex-wrap: wrap;
+}
+
+.member-row .badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }

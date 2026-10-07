@@ -21,6 +21,7 @@ import {
   listarTudo,
 } from "@/services/api";
 import LinhasCarregando from "@/components/ui/LinhasCarregando";
+import { usePermissoes } from "@/hooks/usePermissoes";
 
 const TIPOS = [
   { value: "procuracao", label: "Procuração" },
@@ -51,6 +52,7 @@ export default function ModelosPanel() {
   const { t } = usePreferences();
   const confirmar = useConfirmacao();
   const avisar = useAvisos();
+  const pode = usePermissoes();
 
   const [formulario, setFormulario] = useState(modeloInicial);
   const [editandoId, setEditandoId] = useState(null);
@@ -132,7 +134,9 @@ export default function ModelosPanel() {
 
   const abas = [
     { id: "lista", label: "Modelos" },
-    { id: "novo", label: editandoId ? "Editar modelo" : "Novo modelo" },
+    ...(pode("modelos", "criar") || editandoId
+      ? [{ id: "novo", label: editandoId ? "Editar modelo" : "Novo modelo" }]
+      : []),
     { id: "gerar", label: "Gerar documento" },
   ];
 
@@ -169,37 +173,41 @@ export default function ModelosPanel() {
                   <td>{new Date(modelo.atualizado_em).toLocaleDateString("pt-BR")}</td>
                   <td>
                     <div className="row-actions">
-                      <button
-                        type="button"
-                        className="row-action"
-                        title={t("acao_editar")}
-                        aria-label={t("acao_editar")}
-                        onClick={() => editar(modelo)}
-                      >
-                        <Pencil size={15} />
-                      </button>
-                      <button
-                        type="button"
-                        className="row-action row-action-danger"
-                        title={t("acao_excluir")}
-                        aria-label={t("acao_excluir")}
-                        onClick={async () => {
-                          const ok = await confirmar({
-                            titulo: "Excluir modelo",
-                            mensagem: `O modelo "${modelo.nome}" será excluído. Documentos já gerados não são afetados.`,
-                          });
-                          if (!ok) return;
-                          try {
-                            await deleteModeloDocumento(modelo.id);
-                            avisar("Modelo excluído.");
-                            carregar();
-                          } catch (error) {
-                            avisar(error.message, "erro");
-                          }
-                        }}
-                      >
-                        <Trash2 size={15} />
-                      </button>
+                      {pode("modelos", "editar") && (
+                        <button
+                          type="button"
+                          className="row-action"
+                          title={t("acao_editar")}
+                          aria-label={t("acao_editar")}
+                          onClick={() => editar(modelo)}
+                        >
+                          <Pencil size={15} />
+                        </button>
+                      )}
+                      {pode("modelos", "excluir") && (
+                        <button
+                          type="button"
+                          className="row-action row-action-danger"
+                          title={t("acao_excluir")}
+                          aria-label={t("acao_excluir")}
+                          onClick={async () => {
+                            const ok = await confirmar({
+                              titulo: "Excluir modelo",
+                              mensagem: `O modelo "${modelo.nome}" será excluído. Documentos já gerados não são afetados.`,
+                            });
+                            if (!ok) return;
+                            try {
+                              await deleteModeloDocumento(modelo.id);
+                              avisar("Modelo excluído.");
+                              carregar();
+                            } catch (error) {
+                              avisar(error.message, "erro");
+                            }
+                          }}
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>

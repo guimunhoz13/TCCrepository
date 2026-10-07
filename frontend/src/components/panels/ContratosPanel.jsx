@@ -20,6 +20,7 @@ import {
   listarTudo,
 } from "@/services/api";
 import LinhasCarregando from "@/components/ui/LinhasCarregando";
+import { usePermissoes } from "@/hooks/usePermissoes";
 
 const formularioInicial = {
   processo: "",
@@ -40,6 +41,7 @@ export default function ContratosPanel() {
   const { refresh: refreshDashboard } = useDashboardData();
   const confirmar = useConfirmacao();
   const avisar = useAvisos();
+  const pode = usePermissoes();
   const { t } = usePreferences();
   const [formulario, setFormulario] = useState(formularioInicial);
   const [contratoExpandido, setContratoExpandido] = useState(null);
@@ -95,7 +97,7 @@ export default function ContratosPanel() {
     <OverlayPanel
       tabs={[
         { id: "lista", label: t("aba_lista") },
-        { id: "novo", label: t("aba_novo") },
+        ...(pode("financeiro", "criar") ? [{ id: "novo", label: t("aba_novo") }] : []),
       ]}
     >
       {(erro || erroCarga) && <div className="alert alert-error">{erro || erroCarga}</div>}
@@ -243,29 +245,31 @@ export default function ContratosPanel() {
                               <ChevronDown size={15} />
                             )}
                           </button>
-                          <button
-                            type="button"
-                            className="row-action row-action-danger"
-                            title={t("acao_excluir")}
-                            aria-label={t("acao_excluir")}
-                            onClick={async () => {
-                              const ok = await confirmar({
-                                titulo: "Excluir contrato",
-                                mensagem: "O contrato e todas as parcelas dele serão excluídos.",
-                              });
-                              if (!ok) return;
-                              try {
-                                await deleteContrato(contrato.id);
-                                avisar("Contrato excluído.");
-                                carregarDados();
-                                refreshDashboard().catch(() => {});
-                              } catch (error) {
-                                avisar(error.message, "erro");
-                              }
-                            }}
-                          >
-                            <Trash2 size={15} />
-                          </button>
+                          {pode("financeiro", "excluir") && (
+                            <button
+                              type="button"
+                              className="row-action row-action-danger"
+                              title={t("acao_excluir")}
+                              aria-label={t("acao_excluir")}
+                              onClick={async () => {
+                                const ok = await confirmar({
+                                  titulo: "Excluir contrato",
+                                  mensagem: "O contrato e todas as parcelas dele serão excluídos.",
+                                });
+                                if (!ok) return;
+                                try {
+                                  await deleteContrato(contrato.id);
+                                  avisar("Contrato excluído.");
+                                  carregarDados();
+                                  refreshDashboard().catch(() => {});
+                                } catch (error) {
+                                  avisar(error.message, "erro");
+                                }
+                              }}
+                            >
+                              <Trash2 size={15} />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -305,15 +309,17 @@ export default function ContratosPanel() {
                                   </td>
                                   <td>
                                     {parcela.status !== "pago" && (
-                                      <button
-                                        type="button"
-                                        className="row-action row-action-success"
-                                        title={t("acao_marcar_pago")}
-                                        aria-label={t("acao_marcar_pago")}
-                                        onClick={() => handleMarcarPago(parcela.id)}
-                                      >
-                                        <CircleDollarSign size={15} />
-                                      </button>
+                                      pode("financeiro", "editar") && (
+                                        <button
+                                          type="button"
+                                          className="row-action row-action-success"
+                                          title={t("acao_marcar_pago")}
+                                          aria-label={t("acao_marcar_pago")}
+                                          onClick={() => handleMarcarPago(parcela.id)}
+                                        >
+                                          <CircleDollarSign size={15} />
+                                        </button>
+                                      )
                                     )}
                                   </td>
                                 </tr>

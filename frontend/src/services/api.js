@@ -138,6 +138,14 @@ export async function login(email, senha) {
   });
 }
 
+/** Segunda fase do login, quando a conta tem verificação em duas etapas. */
+export async function loginSegundoFator(desafio, codigo) {
+  return request("/login/2fa/", {
+    method: "POST",
+    body: JSON.stringify({ desafio, codigo }),
+  });
+}
+
 export async function solicitarRedefinicaoSenha(email) {
   return request("/login/esqueci-senha/", {
     method: "POST",
@@ -497,6 +505,39 @@ export function exportarClientesCSV() {
 
 export function exportarProcessosCSV() {
   return downloadArquivo("/configuracoes/exportar/processos/", "processos.csv");
+}
+
+// LGPD — pedidos do titular dos dados.
+export function exportarDadosDoCliente(clienteId) {
+  return downloadArquivo(`/clientes/${clienteId}/exportar-dados/`, `dados-cliente-${clienteId}.json`);
+}
+
+export async function anonimizarCliente(clienteId) {
+  return request(`/clientes/${clienteId}/anonimizar/`, { method: "POST" });
+}
+
+// Equipe do escritório (membros sem OAB, perfis de acesso, 2FA).
+export async function registrarMembro(data) {
+  return request("/equipe/registrar/", { method: "POST", body: JSON.stringify(data) });
+}
+
+export async function definirPerfilDoUsuario(usuarioId, tipo_usuario) {
+  return request(`/usuarios/${usuarioId}/definir-perfil/`, {
+    method: "POST",
+    body: JSON.stringify({ tipo_usuario }),
+  });
+}
+
+export async function redefinirDoisFatoresDoUsuario(usuarioId) {
+  return request(`/usuarios/${usuarioId}/redefinir-2fa/`, { method: "POST" });
+}
+
+// Verificação em duas etapas da própria conta.
+export async function configurarDoisFatores(acao, dados = {}) {
+  return request("/configuracoes/2fa/", {
+    method: "POST",
+    body: JSON.stringify({ acao, ...dados }),
+  });
 }
 
 export async function getRelatorioCliente(clienteId) {

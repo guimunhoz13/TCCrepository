@@ -6,7 +6,9 @@ import { useConfirmacao } from "@/contexts/ConfirmacaoContext";
 import {
   X, User, Building2, Bell, Palette, Database, CreditCard,
   Eye, EyeOff, Trash2, Download, FileBarChart, Mail, MessageCircle, History,
+  ShieldCheck, UserPlus,
 } from "lucide-react";
+import { usePermissoes } from "@/hooks/usePermissoes";
 import { usePanel, PANELS } from "@/contexts/PanelContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { usePreferences } from "@/contexts/PreferencesContext";
@@ -30,6 +32,10 @@ import {
   listarTudo,
   salvarUsuarioLogado,
   logout,
+  configurarDoisFatores,
+  registrarMembro,
+  definirPerfilDoUsuario,
+  redefinirDoisFatoresDoUsuario,
 } from "@/services/api";
 import { gerarHtmlRelatorioCliente, gerarHtmlRelatorioProcesso, abrirRelatorio } from "@/utils/relatorio";
 import { abrirWhatsApp, montarMensagemCliente, montarMensagemProcesso } from "@/utils/whatsapp";
@@ -45,10 +51,29 @@ const TABS = [
   { id: "notificacoes", tKey: "config_notificacoes", icon: Bell },
   { id: "aparencia", tKey: "config_aparencia", icon: Palette },
   { id: "dados", tKey: "config_dados", icon: Database },
-  { id: "relatorios", tKey: "config_relatorios", icon: FileBarChart },
+  { id: "relatorios", tKey: "config_relatorios", icon: FileBarChart, area: "relatorios" },
   { id: "auditoria", tKey: "config_auditoria", icon: History, adminOnly: true },
   { id: "faturamento", tKey: "config_faturamento", icon: CreditCard },
 ];
+
+// Perfis que o administrador pode atribuir. Advogado entra pelo painel de
+// Advogados, que pede a OAB; aqui a troca de perfil aceita qualquer um.
+const PERFIS = [
+  { value: "admin", label: "Administrador" },
+  { value: "advogado", label: "Advogado" },
+  { value: "estagiario", label: "Estagiário" },
+  { value: "financeiro", label: "Financeiro" },
+  { value: "secretaria", label: "Secretária" },
+];
+const PERFIS_SEM_OAB = PERFIS.filter((perfil) => perfil.value !== "advogado");
+
+const DESCRICAO_PERFIL = {
+  admin: "Tudo, inclusive equipe, auditoria e dados do escritório.",
+  advogado: "Clientes, processos, agenda, documentos, financeiro e IA.",
+  estagiario: "Apoia nos processos e na agenda; não exclui nada e não vê o financeiro.",
+  financeiro: "Contratos, cobranças e despesas; o resto só consulta.",
+  secretaria: "Atendimento, clientes e agenda; não vê o financeiro nem a IA.",
+};
 
 const PREF_DEFAULT = {
   tema: "dark",
@@ -71,6 +96,7 @@ export default function ConfigPanel() {
   const { activePanel, closePanel } = usePanel();
   const { theme, setTheme } = useTheme();
   const { t, atualizarPreferencias } = usePreferences();
+  const pode = usePermissoes();
   const [activeTab, setActiveTab] = useState("conta");
   const [erro, setErro] = useState("");
   const [sucesso, setSucesso] = useState("");
@@ -114,7 +140,7 @@ export default function ConfigPanel() {
         </div>
 
         <div className="overlay-tabs">
-          {TABS.filter((tab) => !tab.adminOnly || dados?.usuario?.tipo_usuario === "admin").map((tab) => {
+          {TABS.filter((tab) => (!tab.adminOnly || dados?.usuario?.tipo_usuario === "admin") && (!tab.area || pode(tab.area))).map((tab) => {
             const Icon = tab.icon;
             return (
               <button key={tab.id} className={`tab-btn ${activeTab === tab.id ? "active" : ""}`} onClick={() => { setActiveTab(tab.id); setErro(""); setSucesso(""); }}>
@@ -142,9 +168,9 @@ export default function ConfigPanel() {
             <AparenciaTab preferencias={dados.preferencias || PREF_DEFAULT} setDados={setDados} feedback={feedback} theme={theme} setTheme={setTheme} atualizarPreferenciasGlobal={atualizarPreferencias} t={t} />
           )}
           {!carregando && dados && activeTab === "dados" && (
-            <DadosTab dados={dados} setDados={setDados} feedback={feedback} />
+            <DadosTab dados={dados} setDados={setDados} feedback={feedback} podeExportar={pode("exportar")} />
           )}
-          {!carregando && dados && activeTab === "relatorios" && (
+          {!carregando && dados && activeTab === "relatorios" && pode("relatorios") && (
             <RelatoriosTab feedback={feedback} t={t} />
           )}
           {!carregando && dados && activeTab === "auditoria" && dados.usuario.tipo_usuario === "admin" && (
@@ -223,7 +249,7 @@ function ContaTab({ usuario, setDados, feedback, t }) {
         <Field label="Nome"><input value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} /></Field>
         <Field label="E-mail"><input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></Field>
         <Field label="Telefone"><input value={form.telefone} onChange={(e) => setForm({ ...form, telefone: formatarTelefone(e.target.value) })} placeholder="(00) 00000-0000" /></Field>
-        <Field label="Cargo"><input value={usuario.tipo_usuario === "admin" ? "Administrador" : "Advogado"} disabled /></Field>
+        <Field label="Perfil de acesso"><input value={usuario.tipo_usuario_display || usuario.tipo_usuario} disabled /></Field>
       </div>
       <Actions><button className="btn btn-primary btn-sm" onClick={salvarConta} disabled={salvando}>Salvar alterações</button></Actions>
     </Section>
@@ -239,7 +265,103 @@ function ContaTab({ usuario, setDados, feedback, t }) {
       </div>
       <Actions><button className="btn btn-secondary btn-sm" onClick={salvarSenha} disabled={salvando || !senhaAtendeRequisitos(senha.nova_senha)}>Alterar senha</button></Actions>
     </Section>
+
+    <DoisFatoresSection usuario={usuario} setDados={setDados} feedback={feedback} />
   </div>;
+}
+
+/**
+ * Verificação em duas etapas (TOTP): o QR code vai para o aplicativo
+ * autenticador e, a partir daí, o login pede o código de 6 dígitos além
+ * da senha. Para desligar, pede senha e código — quem pegou a sessão
+ * aberta não consegue tirar a proteção.
+ */
+function DoisFatoresSection({ usuario, setDados, feedback }) {
+  const [cadastro, setCadastro] = useState(null);
+  const [codigo, setCodigo] = useState("");
+  const [senha, setSenha] = useState("");
+  const [enviando, setEnviando] = useState(false);
+  const ativo = Boolean(usuario.totp_ativo);
+
+  async function executar(acao, dados) {
+    try {
+      setEnviando(true);
+      return await configurarDoisFatores(acao, dados);
+    } catch (e) {
+      feedback(e.message, true);
+      return null;
+    } finally {
+      setEnviando(false);
+    }
+  }
+
+  async function iniciar() {
+    const res = await executar("iniciar");
+    if (res) { setCadastro(res); setCodigo(""); }
+  }
+
+  async function ativar(evento) {
+    evento.preventDefault();
+    const res = await executar("ativar", { codigo: codigo.replace(/\D/g, "") });
+    if (!res) return;
+    setCadastro(null);
+    setCodigo("");
+    setDados((d) => ({ ...d, usuario: { ...d.usuario, totp_ativo: true } }));
+    feedback("Verificação em duas etapas ativada. No próximo login o código será pedido.");
+  }
+
+  async function desativar(evento) {
+    evento.preventDefault();
+    const res = await executar("desativar", { senha, codigo: codigo.replace(/\D/g, "") });
+    if (!res) return;
+    setSenha("");
+    setCodigo("");
+    setDados((d) => ({ ...d, usuario: { ...d.usuario, totp_ativo: false } }));
+    feedback("Verificação em duas etapas desativada.");
+  }
+
+  return (
+    <Section
+      title="Verificação em duas etapas"
+      description="Além da senha, o login pede um código do aplicativo autenticador do celular. Quem descobrir sua senha não entra sem ele."
+    >
+      {ativo && (
+        <form onSubmit={desativar}>
+          <p className="status-2fa"><ShieldCheck size={16} /> Ativa nesta conta.</p>
+          <div className="form-grid">
+            <Field label="Senha atual"><input type="password" autoComplete="current-password" value={senha} onChange={(e) => setSenha(e.target.value)} required /></Field>
+            <Field label="Código do aplicativo"><input inputMode="numeric" autoComplete="one-time-code" maxLength={7} value={codigo} onChange={(e) => setCodigo(e.target.value)} required /></Field>
+          </div>
+          <Actions><button className="btn btn-danger btn-sm" disabled={enviando}>Desativar</button></Actions>
+        </form>
+      )}
+
+      {!ativo && !cadastro && (
+        <Actions><button className="btn btn-primary btn-sm" onClick={iniciar} disabled={enviando}><ShieldCheck size={14} />Ativar verificação em duas etapas</button></Actions>
+      )}
+
+      {!ativo && cadastro && (
+        <form onSubmit={ativar}>
+          <div className="qr-2fa">
+            <img src={cadastro.qr_code} alt="QR code para cadastrar o LexOffice no aplicativo autenticador" />
+            <div>
+              <p>1. Abra o Google Authenticator, Authy ou Microsoft Authenticator e leia o QR code.</p>
+              <p>Sem câmera? Digite esta chave no aplicativo:</p>
+              <code>{cadastro.segredo}</code>
+              <p style={{ marginTop: 12 }}>2. Digite abaixo o código de 6 dígitos que apareceu.</p>
+            </div>
+          </div>
+          <div className="form-grid">
+            <Field label="Código do aplicativo"><input className="campo-codigo" inputMode="numeric" autoComplete="one-time-code" maxLength={7} placeholder="000000" value={codigo} onChange={(e) => setCodigo(e.target.value)} required autoFocus /></Field>
+          </div>
+          <Actions>
+            <button className="btn btn-primary btn-sm" disabled={enviando}>Confirmar e ativar</button>
+            <button type="button" className="btn btn-secondary btn-sm" onClick={() => setCadastro(null)} disabled={enviando}>Cancelar</button>
+          </Actions>
+        </form>
+      )}
+    </Section>
+  );
 }
 
 function EscritorioTab({ dados, setDados, feedback }) {
@@ -315,10 +437,151 @@ function EscritorioTab({ dados, setDados, feedback }) {
       {admin && <Actions><button className="btn btn-primary btn-sm" onClick={salvar}>Salvar alterações</button></Actions>}
     </Section>
 
-    <Section title="Equipe" description="Usuários atualmente cadastrados neste escritório.">
-      <div className="member-list">{dados.membros.map((m) => <div key={m.id} className="member-row"><Avatar src={m.foto} nome={m.nome} size={34} /><div className="member-info"><strong>{m.nome}</strong><span>{m.email}</span></div><span className="badge badge-muted">{m.tipo_usuario === "admin" ? "Administrador" : "Advogado"}</span></div>)}</div>
-    </Section>
+    <EquipeSection dados={dados} setDados={setDados} feedback={feedback} admin={admin} />
   </div>;
+}
+
+/**
+ * Equipe e perfis de acesso. O administrador inclui estagiário, financeiro,
+ * secretária ou outro administrador (advogado entra pelo painel de
+ * Advogados, com a OAB), troca o perfil de quem já está na equipe e
+ * desliga a verificação em duas etapas de quem perdeu o celular.
+ */
+function EquipeSection({ dados, setDados, feedback, admin }) {
+  const confirmar = useConfirmacao();
+  const novoMembro = { nome: "", email: "", telefone: "", senha: "", tipo_usuario: "estagiario" };
+  const [form, setForm] = useState(novoMembro);
+  const [incluindo, setIncluindo] = useState(false);
+  const [salvando, setSalvando] = useState(false);
+
+  function trocarMembro(atualizado) {
+    setDados((d) => ({
+      ...d,
+      membros: d.membros.map((m) => (m.id === atualizado.id ? { ...m, ...atualizado } : m)),
+    }));
+  }
+
+  async function mudarPerfil(membro, tipo_usuario) {
+    const rotulo = PERFIS.find((p) => p.value === tipo_usuario)?.label;
+    const ok = await confirmar({
+      titulo: "Mudar perfil de acesso",
+      mensagem: `${membro.nome} passa a ser ${rotulo}: ${DESCRICAO_PERFIL[tipo_usuario]}`,
+      acao: "Mudar perfil",
+      perigo: false,
+    });
+    if (!ok) return;
+    try {
+      trocarMembro(await definirPerfilDoUsuario(membro.id, tipo_usuario));
+      feedback(`Perfil de ${membro.nome} alterado para ${rotulo}.`);
+    } catch (e) { feedback(e.message, true); }
+  }
+
+  async function redefinir2fa(membro) {
+    const ok = await confirmar({
+      titulo: "Redefinir verificação em duas etapas",
+      mensagem: `${membro.nome} volta a entrar só com a senha e pode configurar o aplicativo de novo. Use quando a pessoa perdeu ou trocou de celular.`,
+      acao: "Redefinir",
+    });
+    if (!ok) return;
+    try {
+      trocarMembro(await redefinirDoisFatoresDoUsuario(membro.id));
+      feedback(`Verificação em duas etapas de ${membro.nome} redefinida.`);
+    } catch (e) { feedback(e.message, true); }
+  }
+
+  async function incluir(evento) {
+    evento.preventDefault();
+    if (!senhaAtendeRequisitos(form.senha)) {
+      feedback("A senha inicial não atende a todos os requisitos obrigatórios.", true);
+      return;
+    }
+    try {
+      setSalvando(true);
+      const membro = await registrarMembro(form);
+      setDados((d) => ({
+        ...d,
+        membros: [...d.membros, membro].sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR")),
+      }));
+      setForm(novoMembro);
+      setIncluindo(false);
+      feedback(`${membro.nome} incluído na equipe. Envie o e-mail e a senha inicial para essa pessoa entrar.`);
+    } catch (e) { feedback(e.message, true); }
+    finally { setSalvando(false); }
+  }
+
+  return (
+    <Section
+      title="Equipe e perfis de acesso"
+      description={admin ? "Cada perfil enxerga e altera só a sua parte do escritório. A API aplica as mesmas regras." : "Pessoas que trabalham neste escritório."}
+    >
+      <div className="member-list">
+        {dados.membros.map((m) => (
+          <div key={m.id} className="member-row">
+            <Avatar src={m.foto} nome={m.nome} size={34} />
+            <div className="member-info">
+              <strong>{m.nome}{!m.ativo && " (inativo)"}</strong>
+              <span>{m.email}</span>
+            </div>
+            {m.totp_ativo && (
+              <span className="badge badge-success" title="Verificação em duas etapas ativa"><ShieldCheck size={12} /> 2 etapas</span>
+            )}
+            {admin && m.id !== dados.usuario.id ? (
+              <>
+                <select
+                  className="member-role-select"
+                  aria-label={`Perfil de acesso de ${m.nome}`}
+                  value={m.tipo_usuario}
+                  onChange={(e) => mudarPerfil(m, e.target.value)}
+                >
+                  {PERFIS.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
+                </select>
+                {m.totp_ativo && (
+                  <button type="button" className="btn btn-secondary btn-sm" onClick={() => redefinir2fa(m)}>
+                    Redefinir 2 etapas
+                  </button>
+                )}
+              </>
+            ) : (
+              <span className="badge badge-muted">{m.tipo_usuario_display || m.tipo_usuario}</span>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {admin && !incluindo && (
+        <Actions>
+          <button type="button" className="btn btn-secondary btn-sm" onClick={() => setIncluindo(true)}>
+            <UserPlus size={14} />Incluir membro da equipe
+          </button>
+        </Actions>
+      )}
+
+      {admin && incluindo && (
+        <form onSubmit={incluir} style={{ marginTop: 16 }}>
+          <div className="form-grid">
+            <Field label="Nome"><input required maxLength={255} value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} /></Field>
+            <Field label="E-mail"><input type="email" required value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></Field>
+            <Field label="Telefone (opcional)"><input value={form.telefone} placeholder="(00) 00000-0000" onChange={(e) => setForm({ ...form, telefone: formatarTelefone(e.target.value) })} /></Field>
+            <Field label="Perfil de acesso">
+              <select value={form.tipo_usuario} onChange={(e) => setForm({ ...form, tipo_usuario: e.target.value })}>
+                {PERFIS_SEM_OAB.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
+              </select>
+              <span className="dica-campo">{DESCRICAO_PERFIL[form.tipo_usuario]}</span>
+            </Field>
+            <Field label="Senha inicial" full>
+              <input type="password" autoComplete="new-password" required value={form.senha} onChange={(e) => setForm({ ...form, senha: e.target.value })} />
+              <RequisitosSenha senha={form.senha} />
+            </Field>
+          </div>
+          <Actions>
+            <button className="btn btn-primary btn-sm" disabled={salvando || !senhaAtendeRequisitos(form.senha)}>{salvando ? "Incluindo..." : "Incluir na equipe"}</button>
+            <button type="button" className="btn btn-secondary btn-sm" onClick={() => { setIncluindo(false); setForm(novoMembro); }} disabled={salvando}>Cancelar</button>
+          </Actions>
+          <p className="dica-campo">Advogados entram pelo painel Advogados, que pede o número da OAB.</p>
+        </form>
+      )}
+    </Section>
+  );
 }
 
 function NotificacoesTab({ preferencias, setDados, feedback }) {
@@ -365,7 +628,7 @@ function AparenciaTab({ preferencias, setDados, feedback, theme, setTheme, atual
   </div>;
 }
 
-function DadosTab({ dados, setDados, feedback }) {
+function DadosTab({ dados, setDados, feedback, podeExportar }) {
   const confirmar = useConfirmacao();
   const admin = dados.usuario.tipo_usuario === "admin";
   const [retencao, setRetencao] = useState(dados.configuracao_escritorio?.retencao_documentos || "indeterminado");
@@ -389,7 +652,7 @@ function DadosTab({ dados, setDados, feedback }) {
   }
 
   return <div className="settings-stack">
-    <Section title="Exportar dados" description="Baixe os dados do escritório em CSV."><div className="export-row"><button className="btn btn-secondary btn-sm" onClick={() => exportarClientesCSV().catch((e) => feedback(e.message, true))}><Download size={14}/>Exportar clientes (CSV)</button><button className="btn btn-secondary btn-sm" onClick={() => exportarProcessosCSV().catch((e) => feedback(e.message, true))}><Download size={14}/>Exportar processos (CSV)</button></div></Section>
+    {podeExportar && <Section title="Exportar dados" description="Baixe os dados do escritório em CSV."><div className="export-row"><button className="btn btn-secondary btn-sm" onClick={() => exportarClientesCSV().catch((e) => feedback(e.message, true))}><Download size={14}/>Exportar clientes (CSV)</button><button className="btn btn-secondary btn-sm" onClick={() => exportarProcessosCSV().catch((e) => feedback(e.message, true))}><Download size={14}/>Exportar processos (CSV)</button></div></Section>}
     <Section title="Retenção de documentos" description="Preferência administrativa do escritório."><Field><select aria-label="Tempo de retenção de documentos" value={retencao} disabled={!admin} onChange={(e) => salvarRetencao(e.target.value)}><option value="1y">1 ano</option><option value="5y">5 anos</option><option value="indeterminado">Por tempo indeterminado</option></select></Field></Section>
     {admin && <Section title="Zona de risco" description="Esta ação desativa o escritório e impede novos logins." danger><div className="form-grid"><Field label="Senha do administrador"><input type="password" value={senha} onChange={(e) => setSenha(e.target.value)}/></Field><Field label='Digite EXCLUIR para confirmar'><input value={confirmacao} onChange={(e) => setConfirmacao(e.target.value)}/></Field></div><Actions><button className="btn btn-danger btn-sm" onClick={excluir} disabled={!senha || confirmacao !== "EXCLUIR"}><Trash2 size={14}/>Desativar escritório</button></Actions></Section>}
   </div>;
@@ -575,6 +838,7 @@ const ACOES_LABEL = {
   criacao: "Registro criado",
   edicao: "Registro editado",
   exclusao: "Registro excluído",
+  exportacao: "Dados exportados",
 };
 
 const ACOES_BADGE = {
@@ -584,6 +848,7 @@ const ACOES_BADGE = {
   criacao: "badge-success",
   edicao: "badge-muted",
   exclusao: "badge-danger",
+  exportacao: "badge-warning",
 };
 
 function AuditoriaTab() {
