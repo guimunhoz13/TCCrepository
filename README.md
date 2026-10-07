@@ -127,6 +127,17 @@ sincronização às 5h:
 Sem SMTP configurado (`EMAIL_HOST_USER`/`EMAIL_HOST_PASSWORD`), o Django cai
 no backend de console e apenas imprime os e-mails — veja `backend/.env.example`.
 
+## Cálculo de prazos e feriados locais
+
+A calculadora da agenda e as intimações do DJEN contam os prazos em dias
+úteis. Elas pulam os fins de semana, os feriados nacionais (inclusive os
+móveis, calculados a partir da Páscoa) e o recesso forense de 20/12 a 20/01.
+Feriados municipais e estaduais e suspensões de expediente variam por comarca
+e são cadastrados pelo escritório em **Agenda › Feriados locais**. Um feriado
+pode valer só naquela data ou repetir todo ano. O sistema não traz uma lista
+pronta, porque quem define o calendário forense é cada tribunal. A calculadora
+mostra quais feriados locais mudaram a contagem.
+
 ## Planos
 
 Todo escritório novo entra no plano **Gratuito**, sem pagamento nem cartão. Os

@@ -127,6 +127,17 @@ entity agenda {
   cumprido : BOOLEAN
 }
 
+entity feriado_local {
+  * id : SERIAL <<PK>>
+  --
+  # escritorio_id : INT <<FK>>
+  data : DATE
+  descricao : VARCHAR(120)
+  abrangencia : VARCHAR(120)
+  anual : BOOLEAN
+  criado_em : TIMESTAMP
+}
+
 entity contrato {
   * id : SERIAL <<PK>>
   --
@@ -332,6 +343,7 @@ usuario ||--o{ sessao_uso
 usuario ||--o{ notificacao_enviada
 agenda ||--o{ notificacao_enviada
 escritorio ||--o{ modelo_documento
+escritorio ||--o{ feriado_local
 escritorio ||--o{ tarefa
 processo |o--o{ tarefa
 usuario ||--o{ tarefa

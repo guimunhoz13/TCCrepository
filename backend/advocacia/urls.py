@@ -22,6 +22,7 @@ from .views import (
     DocumentoViewSet,
     CalcularPrazoView,
     AgendaViewSet,
+    FeriadoLocalViewSet,
     AgendaFeedView,
     ContratoViewSet,
     ParcelaViewSet,
@@ -69,6 +70,7 @@ router.register(r"processos", ProcessoViewSet, basename="processo")
 router.register(r"movimentacoes", MovimentacaoViewSet, basename="movimentacao")
 router.register(r"documentos", DocumentoViewSet, basename="documento")
 router.register(r"agenda", AgendaViewSet, basename="agenda")
+router.register(r"feriados-locais", FeriadoLocalViewSet, basename="feriado-local")
 router.register(r"contratos", ContratoViewSet, basename="contrato")
 router.register(r"parcelas", ParcelaViewSet, basename="parcela")
 router.register(r"apontamentos", ApontamentoHoraViewSet, basename="apontamento")

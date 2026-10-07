@@ -12,7 +12,7 @@ from .equipe import EscritorioViewSet, UsuarioViewSet, MembroRegistroView, Advog
 from .clientes import ClienteViewSet  # noqa: F401
 from .processos import ProcessoViewSet, MovimentacaoViewSet, DocumentoViewSet  # noqa: F401
 from .intimacoes import IntimacaoViewSet  # noqa: F401
-from .agenda import CalcularPrazoView, AgendaViewSet, AgendaFeedView  # noqa: F401
+from .agenda import CalcularPrazoView, AgendaViewSet, AgendaFeedView, FeriadoLocalViewSet  # noqa: F401
 from .financeiro import ContratoViewSet, ParcelaViewSet  # noqa: F401
 from .horas_e_despesas import ApontamentoHoraViewSet, DespesaViewSet  # noqa: F401
 from .ia import AssistenteIAView  # noqa: F401
@@ -53,6 +53,7 @@ __all__ = [
     "CalcularPrazoView",
     "AgendaViewSet",
     "AgendaFeedView",
+    "FeriadoLocalViewSet",
     "ContratoViewSet",
     "ParcelaViewSet",
     "ApontamentoHoraViewSet",

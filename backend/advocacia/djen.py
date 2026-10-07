@@ -12,8 +12,8 @@ Comunica PJe. Aqui o sistema:
   4. lança o prazo na agenda, para entrar nos lembretes e no calendário.
 
 O cálculo é uma ajuda, não substitui a conferência do advogado: o texto
-pode ter prazos diferentes para partes diferentes, e feriados locais não
-entram na conta. Por isso a tela mostra o texto inteiro ao lado do prazo.
+pode ter prazos diferentes para partes diferentes, e só entram na conta os
+feriados locais que o escritório cadastrou. Por isso a tela mostra o texto inteiro ao lado do prazo.
 """
 
 import json
@@ -28,7 +28,7 @@ from django.conf import settings
 from django.utils import timezone
 
 from .datajud import apenas_digitos
-from .feriados import prazo_de_publicacao
+from .feriados import FeriadosLocais, prazo_de_publicacao
 
 logger = logging.getLogger(__name__)
 
@@ -218,7 +218,9 @@ def registrar_intimacao(escritorio, advogado, dados):
     prazo = detectar_prazo(dados["texto"])
     estimado = prazo is None
     dias, uteis = prazo or (PRAZO_PADRAO_DIAS, True)
-    publicacao, final = prazo_de_publicacao(dados["data_disponibilizacao"], dias, uteis)
+    publicacao, final = prazo_de_publicacao(
+        dados["data_disponibilizacao"], dias, uteis, locais=FeriadosLocais.do_escritorio(escritorio)
+    )
 
     intimacao = Intimacao.objects.create(
         escritorio=escritorio,

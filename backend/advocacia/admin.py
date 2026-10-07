@@ -8,6 +8,7 @@ from .models import (
     Movimentacao,
     Documento,
     Agenda,
+    FeriadoLocal,
     Contrato,
     Parcela,
     ApontamentoHora,
@@ -529,3 +530,11 @@ class ModeloDocumentoAdmin(admin.ModelAdmin):
     ordering = (
         'nome',
     )
+
+
+@admin.register(FeriadoLocal)
+class FeriadoLocalAdmin(admin.ModelAdmin):
+
+    list_display = ('data', 'descricao', 'abrangencia', 'anual', 'escritorio')
+    list_filter = ('anual',)
+    search_fields = ('descricao', 'abrangencia', 'escritorio__nome')

@@ -22,6 +22,8 @@ import {
 } from "@/services/api";
 import LinhasCarregando from "@/components/ui/LinhasCarregando";
 import AgendaSincronizar from "@/components/panels/AgendaSincronizar";
+import AgendaFeriados from "@/components/panels/AgendaFeriados";
+import { formatarData } from "@/utils/formato";
 import { usePermissoes } from "@/hooks/usePermissoes";
 
 const formularioInicial = {
@@ -58,6 +60,7 @@ function EventoForm({
   setCalculadora,
   calculando,
   onCalcularPrazo,
+  feriadosConsiderados,
   onSubmit,
   submitLabel,
   onCancelar,
@@ -154,6 +157,15 @@ function EventoForm({
               </button>
             </div>
           </div>
+          {feriadosConsiderados?.length > 0 && (
+            <p role="status" style={{ marginTop: 8, fontSize: "0.85rem", color: "var(--text-secondary)" }}>
+              {feriadosConsiderados.length === 1 ? "Feriado local considerado" : "Feriados locais considerados"}:{" "}
+              {feriadosConsiderados
+                .map((f) => `${formatarData(f.data)}${f.descricao ? ` — ${f.descricao}` : ""}`)
+                .join(", ")}
+              .
+            </p>
+          )}
         </div>
       )}
       <div className="form-field">
@@ -220,6 +232,7 @@ export default function AgendaPanel() {
   const [formularioEdicao, setFormularioEdicao] = useState(null);
   const [calculadora, setCalculadora] = useState(calculadoraInicial);
   const [calculando, setCalculando] = useState(false);
+  const [feriadosConsiderados, setFeriadosConsiderados] = useState([]);
   const [erro, setErro] = useState("");
   const [sucesso, setSucesso] = useState("");
 
@@ -322,10 +335,13 @@ export default function AgendaPanel() {
         dias: Number(calculadora.dias_prazo),
         dias_uteis: calculadora.dias_uteis,
       });
-      setFormulario((f) => ({
+      // Preenche o formulário que está aberto: o de novo evento ou o de edição.
+      const preencher = panelTab === "editar" ? setFormularioEdicao : setFormulario;
+      preencher((f) => ({
         ...f,
         data_evento: `${resultado.data_final}T00:00`,
       }));
+      setFeriadosConsiderados(resultado.feriados_locais || []);
     } catch (error) {
       setErro(error.message);
     } finally {
@@ -340,6 +356,7 @@ export default function AgendaPanel() {
       tabs={[
         { id: "lista", label: t("aba_lista") },
         ...(pode("agenda", "criar") ? [{ id: "novo", label: t("aba_novo") }] : []),
+        { id: "feriados", label: "Feriados locais" },
         { id: "sincronizar", label: "Sincronizar" },
       ]}
     >
@@ -348,6 +365,8 @@ export default function AgendaPanel() {
 
       {panelTab === "sincronizar" ? (
         <AgendaSincronizar />
+      ) : panelTab === "feriados" ? (
+        <AgendaFeriados />
       ) : panelTab === "novo" ? (
         <EventoForm
           formulario={formulario}
@@ -357,6 +376,7 @@ export default function AgendaPanel() {
           setCalculadora={setCalculadora}
           calculando={calculando}
           onCalcularPrazo={handleCalcularPrazo}
+          feriadosConsiderados={feriadosConsiderados}
           onSubmit={handleSubmit}
           submitLabel={t("acao_agendar_evento")}
         />
@@ -370,6 +390,7 @@ export default function AgendaPanel() {
             setCalculadora={setCalculadora}
             calculando={calculando}
             onCalcularPrazo={handleCalcularPrazo}
+            feriadosConsiderados={feriadosConsiderados}
             onSubmit={handleSubmitEdicao}
             submitLabel="Salvar alterações"
             onCancelar={() => setPanelTab("lista")}

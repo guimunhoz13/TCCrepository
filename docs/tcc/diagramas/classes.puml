@@ -120,6 +120,14 @@ class Agenda {
   + calcularPrazo() : Date
 }
 
+class FeriadoLocal {
+  - data : Date
+  - descricao : String
+  - abrangencia : String
+  - anual : boolean
+  + caiEm(data) : boolean
+}
+
 class Contrato {
   - tipoHonorario : TipoHonorarioEnum
   - valorTotal : Decimal
@@ -286,6 +294,7 @@ Usuario "1" *-- "0..*" NotificacaoEnviada : recebe
 Agenda "1" ..> "0..*" NotificacaoEnviada : origina
 Escritorio "1" *-- "0..*" ModeloDocumento : mantém
 Escritorio "1" *-- "0..*" Tarefa : organiza
+Escritorio "1" *-- "0..*" FeriadoLocal : observa
 Processo "0..1" -- "0..*" Tarefa : origina
 Usuario "1" -- "0..*" Tarefa : é responsável por
 Escritorio "1" *-- "0..*" Intimacao : recebe
