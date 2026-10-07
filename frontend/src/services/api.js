@@ -823,3 +823,16 @@ export async function getPlanos() {
 export async function getPlanoAtual() {
   return request("/plano/");
 }
+
+// Feriados locais e suspensões de expediente (entram no cálculo de prazos).
+export async function getFeriadosLocais() {
+  return request("/feriados-locais/");
+}
+
+export async function criarFeriadoLocal(dados) {
+  return request("/feriados-locais/", { method: "POST", body: JSON.stringify(dados) });
+}
+
+export async function excluirFeriadoLocal(id) {
+  return request(`/feriados-locais/${id}/`, { method: "DELETE" });
+}

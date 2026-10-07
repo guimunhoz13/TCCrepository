@@ -16,7 +16,7 @@ Todos os usuários entram com a mesma senha (padrão Demo@1234):
     secretaria@demo.lexoffice.app  Secretária
 """
 
-from datetime import datetime, time, timedelta
+from datetime import date, datetime, time, timedelta
 from decimal import Decimal
 
 from django.contrib.auth.hashers import make_password
@@ -33,6 +33,7 @@ from advocacia.models import (
     Contrato,
     Despesa,
     Escritorio,
+    FeriadoLocal,
     Movimentacao,
     Parcela,
     PreferenciasUsuario,
@@ -69,6 +70,7 @@ class Command(BaseCommand):
         # Processo protege cliente e advogado (PROTECT): apaga na ordem.
         Processo.objects.filter(escritorio=escritorio).delete()
         Tarefa.objects.filter(escritorio=escritorio).delete()
+        FeriadoLocal.objects.filter(escritorio=escritorio).delete()
         Usuario.objects.filter(escritorio=escritorio).delete()
         escritorio.delete()
 
@@ -206,6 +208,16 @@ class Command(BaseCommand):
                 status=situacao, prazo=hoje + timedelta(days=dias), criado_por=dono.usuario,
                 processo=trabalhista if "réplica" in titulo or "testemunha" in titulo else None,
             )
+
+        # Feriados da comarca, que entram no cálculo de prazos.
+        FeriadoLocal.objects.create(
+            escritorio=escritorio, data=date(hoje.year, 7, 9), descricao="Revolução Constitucionalista",
+            abrangencia="Estado de São Paulo", anual=True,
+        )
+        FeriadoLocal.objects.create(
+            escritorio=escritorio, data=date(hoje.year, 12, 2), descricao="Aniversário de Araçatuba",
+            abrangencia="Comarca de Araçatuba", anual=True,
+        )
 
         contrato = Contrato.objects.create(
             escritorio=escritorio, processo=trabalhista, tipo_honorario="fixo",
