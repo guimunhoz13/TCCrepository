@@ -14,7 +14,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from ..calendario import eventos_para_calendario, gerar_ics
-from ..feriados import FeriadosLocais, calcular_prazo, feriados_locais_no_periodo
+from ..feriados import FeriadosLocais, calcular_prazo, calendario_do_ano, feriados_locais_no_periodo
 from ..mixins import (
     EscritorioScopedMixin,
     get_usuario_from_request,
@@ -116,6 +116,19 @@ class AgendaViewSet(
 
     permission_classes = [IsAuthenticated, PermissaoPorPerfil]
     area_permissao = "agenda"
+
+    @extend_schema(summary="Feriados e recesso forense de um ano, para o calendário", responses={200: OpenApiTypes.OBJECT})
+    @action(detail=False, methods=["get"], url_path="feriados")
+    def feriados(self, request):
+        """Feriados nacionais, feriados locais do escritório e recesso
+        forense do ano pedido (?ano=2026; padrão: o ano atual)."""
+        try:
+            ano = int(request.query_params.get("ano") or date.today().year)
+        except ValueError:
+            ano = date.today().year
+        if not 1900 <= ano <= 2200:
+            return Response({"detail": "Ano fora do intervalo aceito."}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(calendario_do_ano(ano, FeriadosLocais.do_escritorio(self.get_escritorio())))
 
     def get_queryset(self):
 

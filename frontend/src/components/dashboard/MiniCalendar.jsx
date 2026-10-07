@@ -2,8 +2,10 @@
 
 import { useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, Plus, Maximize2, Minimize2 } from "lucide-react";
+import { useRecurso } from "@/hooks/useRecurso";
 import {
   createAgenda,
+  getFeriadosDoAno,
   getProcessos,
   normalizarLista,
 } from "@/services/api";
@@ -14,6 +16,26 @@ function formatarDataLocal(ano, mes, dia) {
   const m = String(mes + 1).padStart(2, "0");
   const d = String(dia).padStart(2, "0");
   return `${ano}-${m}-${d}`;
+}
+
+/**
+ * Situação de um dia no calendário forense: feriado (nacional ou do
+ * escritório) e/ou recesso de 20/12 a 20/01. Vem da API, a mesma fonte do
+ * cálculo de prazos, para o calendário e a calculadora nunca discordarem.
+ */
+export function situacaoDoDia(dataISO, calendario) {
+  const feriado = calendario?.feriados?.find((f) => f.data === dataISO) || null;
+  const recesso = Boolean(
+    calendario?.recesso?.some((periodo) => periodo.inicio <= dataISO && dataISO <= periodo.fim)
+  );
+  return { feriado, recesso };
+}
+
+export function descreverSituacao({ feriado, recesso }) {
+  const partes = [];
+  if (feriado) partes.push(`${feriado.tipo === "local" ? "Feriado local" : "Feriado nacional"}: ${feriado.nome}`);
+  if (recesso) partes.push("Recesso forense: prazos processuais suspensos (CPC, art. 220)");
+  return partes;
 }
 
 export default function MiniCalendar({ eventos = [], onEventoCriado }) {
@@ -36,6 +58,7 @@ export default function MiniCalendar({ eventos = [], onEventoCriado }) {
 
   const ano = viewDate.getFullYear();
   const mes = viewDate.getMonth();
+  const { dados: calendario } = useRecurso(() => getFeriadosDoAno(ano), [ano]);
 
   const { dias, mesAtual } = useMemo(() => {
     const primeiroDia = new Date(ano, mes, 1);
@@ -192,6 +215,8 @@ export default function MiniCalendar({ eventos = [], onEventoCriado }) {
             ano === hoje.getFullYear();
           const hasEvent = eventosPorDia.has(dia);
           const isSelected = diaSelecionado === dia;
+          const situacao = situacaoDoDia(formatarDataLocal(ano, mes, dia), calendario);
+          const avisos = descreverSituacao(situacao);
 
           return (
             <button
@@ -199,7 +224,11 @@ export default function MiniCalendar({ eventos = [], onEventoCriado }) {
               key={`${ano}-${mes}-${dia}`}
               className={`calendar-cell ${hasEvent ? "has-event" : ""} ${
                 isToday ? "today" : ""
-              } ${isSelected ? "selected" : ""}`}
+              } ${isSelected ? "selected" : ""} ${situacao.feriado ? "holiday" : ""} ${
+                situacao.recesso ? "recesso" : ""
+              }`}
+              title={avisos.join(" · ") || undefined}
+              aria-label={[String(dia), ...avisos].join(". ")}
               onClick={() => {
                 setDiaSelecionado(dia);
                 setMostrarForm(false);
@@ -211,6 +240,12 @@ export default function MiniCalendar({ eventos = [], onEventoCriado }) {
         })}
       </div>
 
+      <div className="calendar-legend" aria-hidden="true">
+        <span><i className="legend-holiday" /> Feriado</span>
+        <span><i className="legend-recesso" /> Recesso forense</span>
+        <span><i className="legend-event" /> Compromisso</span>
+      </div>
+
       {diaSelecionado && (
         <div className="calendar-day-detail">
           <h4>
@@ -220,6 +255,14 @@ export default function MiniCalendar({ eventos = [], onEventoCriado }) {
               month: "long",
             })}
           </h4>
+
+          {descreverSituacao(
+            situacaoDoDia(formatarDataLocal(ano, mes, diaSelecionado), calendario)
+          ).map((aviso) => (
+            <p key={aviso} className="calendar-holiday-note">
+              {aviso}
+            </p>
+          ))}
 
           {eventosDoDia.length === 0 && !mostrarForm && (
             <p style={{ color: "var(--text-muted)", fontSize: "0.875rem" }}>

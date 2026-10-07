@@ -24,8 +24,8 @@ def _pascoa(ano):
     return date(ano, mes, dia)
 
 
-def feriados_nacionais(ano):
-    """Conjunto de feriados nacionais brasileiros de um ano — os que
+def feriados_nacionais_com_nome(ano):
+    """Feriados nacionais brasileiros de um ano, com o nome — os que
     suspendem prazo processual em todo o território nacional. Feriados
     estaduais/municipais e suspensões de expediente variam por comarca e
     entram por FeriadosLocais, cadastrados pelo escritório.
@@ -33,20 +33,25 @@ def feriados_nacionais(ano):
     pascoa = _pascoa(ano)
 
     return {
-        date(ano, 1, 1),  # Confraternização Universal
-        pascoa - timedelta(days=48),  # Carnaval (segunda-feira)
-        pascoa - timedelta(days=47),  # Carnaval (terça-feira)
-        pascoa - timedelta(days=2),  # Sexta-feira Santa
-        pascoa + timedelta(days=60),  # Corpus Christi
-        date(ano, 4, 21),  # Tiradentes
-        date(ano, 5, 1),  # Dia do Trabalho
-        date(ano, 9, 7),  # Independência do Brasil
-        date(ano, 10, 12),  # Nossa Senhora Aparecida
-        date(ano, 11, 2),  # Finados
-        date(ano, 11, 15),  # Proclamação da República
-        date(ano, 11, 20),  # Dia Nacional de Zumbi e da Consciência Negra (Lei 14.759/2023)
-        date(ano, 12, 25),  # Natal
+        date(ano, 1, 1): "Confraternização Universal",
+        pascoa - timedelta(days=48): "Carnaval",
+        pascoa - timedelta(days=47): "Carnaval",
+        pascoa - timedelta(days=2): "Sexta-feira Santa",
+        pascoa + timedelta(days=60): "Corpus Christi",
+        date(ano, 4, 21): "Tiradentes",
+        date(ano, 5, 1): "Dia do Trabalho",
+        date(ano, 9, 7): "Independência do Brasil",
+        date(ano, 10, 12): "Nossa Senhora Aparecida",
+        date(ano, 11, 2): "Finados",
+        date(ano, 11, 15): "Proclamação da República",
+        date(ano, 11, 20): "Dia Nacional de Zumbi e da Consciência Negra",  # Lei 14.759/2023
+        date(ano, 12, 25): "Natal",
     }
+
+
+def feriados_nacionais(ano):
+    """Conjunto das datas de feriado nacional de um ano."""
+    return set(feriados_nacionais_com_nome(ano))
 
 
 class FeriadosLocais:
@@ -179,3 +184,30 @@ def prazo_de_publicacao(data_disponibilizacao, dias, dias_uteis=True, locais=SEM
     if not eh_dia_util_forense(data, locais):
         data = proximo_dia_util_forense(data, locais)
     return publicacao, data
+
+
+def calendario_do_ano(ano, locais=SEM_FERIADOS_LOCAIS):
+    """Feriados nacionais e locais de um ano e o recesso forense, para o
+    calendário da tela — a mesma fonte usada no cálculo de prazos."""
+    feriados = [
+        {"data": data.isoformat(), "nome": nome, "tipo": "nacional"}
+        for data, nome in feriados_nacionais_com_nome(ano).items()
+    ]
+    nacionais = feriados_nacionais(ano)
+    for chave, nome in locais.descricoes.items():
+        try:
+            data = date(ano, *chave) if isinstance(chave, tuple) else chave
+        except ValueError:  # 29/02 anual em ano que não é bissexto
+            continue
+        if data.year == ano and data not in nacionais:
+            feriados.append({"data": data.isoformat(), "nome": nome, "tipo": "local"})
+    feriados.sort(key=lambda feriado: feriado["data"])
+    return {
+        "feriados": feriados,
+        # CPC, art. 220: de 20/12 a 20/01 os prazos ficam suspensos.
+        "recesso": [
+            {"inicio": date(ano, 1, 1).isoformat(), "fim": date(ano, 1, 20).isoformat()},
+            {"inicio": date(ano, 12, 20).isoformat(), "fim": date(ano, 12, 31).isoformat()},
+        ],
+    }
+
