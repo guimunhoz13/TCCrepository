@@ -14,6 +14,7 @@ cloud "DJEN / Comunica PJe (CNJ)\nintimações por OAB" as DJEN
 cloud "Serviços de push\n(Google, Apple, Mozilla)" as Push
 cloud "Aplicativos de agenda\n(Google Agenda, Outlook,\niPhone)" as Agenda
 cloud "WhatsApp" as Whats
+cloud "BrasilAPI e ViaCEP\n(dados públicos de\nCNPJ e CEP)" as Publicas
 
 Equipe --> Sistema : usa (web ou app instalado)
 Master --> Sistema : administra escritórios
@@ -23,6 +24,7 @@ Sistema --> Email : lembretes, relatórios
 Sistema --> DataJud : consulta andamentos
 Sistema --> DJEN : busca intimações
 Sistema --> Push : notificações cifradas
+Sistema --> Publicas : preenche empresa e endereço
 Agenda --> Sistema : assina o calendário (.ics)
 Sistema ..> Whats : mensagem pronta (aberta pelo usuário)
 Whats ..> Cliente : resumo do andamento, PIX (pago no app do banco)
