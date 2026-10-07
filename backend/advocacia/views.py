@@ -16,6 +16,7 @@ import unicodedata
 logger = logging.getLogger(__name__)
 
 from .feriados import calcular_prazo
+from .calendario import eventos_para_calendario, gerar_ics
 from .modelos_documento import VARIAVEIS_DISPONIVEIS, montar_contexto, preencher
 from .datajud import ErroDataJud, consultar_processo, importar_movimentacoes
 from .autenticacao import conta_ativa
@@ -2069,6 +2070,75 @@ class AgendaViewSet(
             queryset = queryset.filter(cumprido=(cumprido == "true"))
 
         return queryset
+
+    @action(detail=False, methods=["get"], url_path="exportar-ics")
+    def exportar_ics(self, request):
+        """Agenda em .ics para importar no Google Agenda, Outlook ou iPhone."""
+        escritorio = self.get_escritorio()
+        conteudo = gerar_ics(
+            eventos_para_calendario(self.get_queryset()),
+            f"LexOffice — {escritorio.nome}" if escritorio else "LexOffice",
+        )
+        resposta = HttpResponse(conteudo, content_type="text/calendar; charset=utf-8")
+        resposta["Content-Disposition"] = 'attachment; filename="agenda-lexoffice.ics"'
+        return resposta
+
+    @action(detail=False, methods=["get", "post", "delete"], url_path="assinatura")
+    def assinatura(self, request):
+        """Link privado para o aplicativo de agenda assinar.
+
+        GET mostra o link atual (se houver), POST gera um novo — o antigo
+        para de funcionar na hora — e DELETE desliga a assinatura.
+        """
+        usuario = get_usuario_from_request(request)
+        if request.method == "POST":
+            usuario.agenda_feed_token = secrets.token_urlsafe(32)
+            usuario.save(update_fields=["agenda_feed_token"])
+        elif request.method == "DELETE":
+            usuario.agenda_feed_token = ""
+            usuario.save(update_fields=["agenda_feed_token"])
+
+        url = ""
+        if usuario.agenda_feed_token:
+            url = request.build_absolute_uri(f"/api/agenda/feed/{usuario.agenda_feed_token}.ics")
+        return Response({"url": url})
+
+
+class AgendaFeedView(APIView):
+    """Agenda assinada pelo Google Agenda/Outlook, sem login.
+
+    O aplicativo de agenda não envia token JWT; quem autoriza é o próprio
+    link, longo e aleatório. Segue as mesmas regras da tela: só o
+    escritório da pessoa, sem processos sigilosos que ela não veria, e
+    nada se a conta, o escritório ou o perfil não permitirem mais.
+    """
+
+    authentication_classes = []
+    permission_classes = [AllowAny]
+
+    def get(self, request, token):
+        usuario = (
+            Usuario.objects.select_related("escritorio")
+            .filter(agenda_feed_token=token)
+            .first()
+            if len(token) >= 32
+            else None
+        )
+        if (
+            usuario is None
+            or not usuario.ativo
+            or not usuario.escritorio.ativo
+            or not pode(usuario, "agenda")
+        ):
+            raise Http404
+
+        eventos = esconder_sigilosos(
+            Agenda.objects.filter(escritorio=usuario.escritorio), usuario
+        )
+        conteudo = gerar_ics(
+            eventos_para_calendario(eventos), f"LexOffice — {usuario.escritorio.nome}"
+        )
+        return HttpResponse(conteudo, content_type="text/calendar; charset=utf-8")
 
 
 # =========================================================

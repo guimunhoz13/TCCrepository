@@ -249,6 +249,23 @@ export async function getAgenda(params) {
   return request(`/agenda/${buildQuery(params)}`);
 }
 
+// Agenda no Google Agenda / Outlook / iPhone (iCalendar).
+export function exportarAgendaICS() {
+  return downloadArquivo("/agenda/exportar-ics/", "agenda-lexoffice.ics");
+}
+
+export async function getAssinaturaAgenda() {
+  return request("/agenda/assinatura/");
+}
+
+export async function gerarAssinaturaAgenda() {
+  return request("/agenda/assinatura/", { method: "POST" });
+}
+
+export async function desligarAssinaturaAgenda() {
+  return request("/agenda/assinatura/", { method: "DELETE" });
+}
+
 export async function createAgenda(data) {
   return request("/agenda/", {
     method: "POST",

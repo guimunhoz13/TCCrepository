@@ -4176,3 +4176,45 @@ button.doc-mini-card {
   align-items: center;
   gap: 4px;
 }
+
+/* Agenda › Sincronizar */
+.bloco-sincronizar {
+  padding: 18px 20px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--bg-card, var(--ink-soft));
+}
+
+.bloco-sincronizar h4 {
+  margin: 0 0 6px;
+  font-size: 0.95rem;
+}
+
+.bloco-sincronizar > p {
+  margin: 0 0 14px;
+  font-size: 0.86rem;
+  line-height: 1.55;
+  color: var(--text-secondary);
+}
+
+.campo-link {
+  width: 100%;
+  margin-bottom: 10px;
+  padding: 10px 12px;
+  border-radius: 9px;
+  border: 1px solid var(--border-strong);
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 0.8rem;
+}
+
+.lista-como-assinar {
+  margin: 16px 0 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 6px;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}

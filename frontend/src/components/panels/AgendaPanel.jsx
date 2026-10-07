@@ -21,6 +21,7 @@ import {
   listarTudo,
 } from "@/services/api";
 import LinhasCarregando from "@/components/ui/LinhasCarregando";
+import AgendaSincronizar from "@/components/panels/AgendaSincronizar";
 import { usePermissoes } from "@/hooks/usePermissoes";
 
 const formularioInicial = {
@@ -339,12 +340,15 @@ export default function AgendaPanel() {
       tabs={[
         { id: "lista", label: t("aba_lista") },
         ...(pode("agenda", "criar") ? [{ id: "novo", label: t("aba_novo") }] : []),
+        { id: "sincronizar", label: "Sincronizar" },
       ]}
     >
       {(erro || erroCarga) && <div className="alert alert-error">{erro || erroCarga}</div>}
       {sucesso && <div className="alert alert-success">{sucesso}</div>}
 
-      {panelTab === "novo" ? (
+      {panelTab === "sincronizar" ? (
+        <AgendaSincronizar />
+      ) : panelTab === "novo" ? (
         <EventoForm
           formulario={formulario}
           setFormulario={setFormulario}

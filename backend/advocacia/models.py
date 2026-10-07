@@ -132,6 +132,9 @@ class Usuario(models.Model):
     totp_segredo = models.CharField(max_length=64, blank=True, default="")
     totp_ativo = models.BooleanField(default=False)
     totp_ultimo_passo = models.BigIntegerField(null=True, blank=True)
+    # Link privado de assinatura da agenda (.ics) no Google Agenda/Outlook.
+    # Quem tem o link lê a agenda sem login; gerar um novo invalida o antigo.
+    agenda_feed_token = models.CharField(max_length=64, blank=True, default="", db_index=True)
     criado_em = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
