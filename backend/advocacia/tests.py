@@ -1,3 +1,4 @@
+import json
 import csv
 import io
 from datetime import date, timedelta
@@ -1794,8 +1795,10 @@ class PainelMestreAPITestCase(APITestCase):
             HTTP_AUTHORIZATION=f"Bearer {_gerar_token_master(self.superadmin)}"
         )
         resposta = self.client.get("/api/clientes/")
-        self.assertEqual(resposta.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(resposta.data["results"]), 0)
+        # O token mestre não tem perfil de escritório, então a matriz de
+        # permissões recusa antes mesmo de chegar ao filtro por escritório.
+        self.assertEqual(resposta.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertNotIn("Cliente X", str(resposta.data))
 
 
 class ValidadoresDeUploadTestCase(TestCase):
@@ -5646,3 +5649,315 @@ class BuscaGlobalAPITestCase(_EscritorioComDados, APITestCase):
         Cliente.objects.create(escritorio=outro, nome="Segredo Alheio")
 
         self.assertEqual(self._buscar("segredo").data["clientes"], [])
+
+
+class _EquipeDoEscritorio(_EscritorioComDados):
+    """Escritório com um membro de cada perfil."""
+
+    def _equipe(self):
+        self.escritorio, self.admin, self.advogado, self.cliente = self._montar()
+        self.membros = {"admin": self.admin}
+        for perfil in ("advogado", "estagiario", "financeiro", "secretaria"):
+            self.membros[perfil] = _criar_usuario(
+                self.escritorio, email=f"{perfil}@equipe.com", nome=perfil.title(), tipo_usuario=perfil
+            )
+
+    def _como(self, perfil):
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Bearer {_gerar_token_de_acesso(self.membros[perfil])}"
+        )
+
+
+class PerfisDeAcessoAPITestCase(_EquipeDoEscritorio, APITestCase):
+
+    def setUp(self):
+        self._equipe()
+        self.processo = self._processo(self.escritorio, self.cliente, self.advogado, "P-1")
+        self.contrato = Contrato.objects.create(
+            escritorio=self.escritorio, processo=self.processo, valor_total=Decimal("1000")
+        )
+
+    def test_estagiario_cadastra_cliente_mas_nao_exclui(self):
+        self._como("estagiario")
+        criado = self.client.post(
+            "/api/clientes/",
+            {"nome": "Novo", "email": "n@n.com", "telefone": "11999999999", "endereco": "Rua"},
+            format="json",
+        )
+        self.assertEqual(criado.status_code, status.HTTP_201_CREATED, criado.data)
+        self.assertEqual(
+            self.client.delete(f"/api/clientes/{criado.data['id']}/").status_code,
+            status.HTTP_403_FORBIDDEN,
+        )
+
+    def test_estagiario_e_secretaria_nao_veem_o_financeiro(self):
+        for perfil in ("estagiario", "secretaria"):
+            self._como(perfil)
+            self.assertEqual(self.client.get("/api/contratos/").status_code, status.HTTP_403_FORBIDDEN)
+            painel = self.client.get("/api/dashboard/").data
+            self.assertNotIn("financeiro", painel)
+            self.assertIsNone(painel["financeiro_mensal"])
+
+    def test_financeiro_cuida_dos_contratos_mas_nao_altera_processo(self):
+        self._como("financeiro")
+        self.assertEqual(self.client.get("/api/contratos/").status_code, status.HTTP_200_OK)
+        resposta = self.client.patch(f"/api/processos/{self.processo.id}/", {"titulo": "x"}, format="json")
+        self.assertEqual(resposta.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_secretaria_agenda_compromisso_mas_nao_usa_a_ia(self):
+        self._como("secretaria")
+        agendado = self.client.post(
+            "/api/agenda/",
+            {"titulo": "Reunião", "descricao": "Primeira conversa", "tipo": "compromisso",
+             "data_evento": "2030-01-10T10:00:00Z"},
+            format="json",
+        )
+        self.assertEqual(agendado.status_code, status.HTTP_201_CREATED, agendado.data)
+        self.assertEqual(
+            self.client.post("/api/assistente-ia/", {"mensagem": "oi"}, format="json").status_code,
+            status.HTTP_403_FORBIDDEN,
+        )
+
+    def test_busca_nao_traz_area_que_o_perfil_nao_ve(self):
+        self._como("estagiario")
+        resultado = self.client.get("/api/busca/", {"q": "P-1"}).data
+        self.assertIn("processos", resultado)
+        self.assertNotIn("contratos", resultado)
+
+    def test_login_devolve_as_permissoes_do_perfil(self):
+        login = self.client.post(
+            "/api/login/", {"email": "estagiario@equipe.com", "senha": "senha12345"}, format="json"
+        )
+        permissoes = login.data["usuario"]["permissoes"]
+        self.assertEqual(permissoes["clientes"], ["criar", "editar", "ver"])
+        self.assertEqual(permissoes["financeiro"], [])
+
+    def test_admin_cadastra_membro_sem_oab_e_ele_consegue_entrar(self):
+        self._como("admin")
+        resposta = self.client.post(
+            "/api/equipe/registrar/",
+            {"nome": "Bia", "email": "bia@equipe.com", "senha": "Senha@Forte123", "tipo_usuario": "secretaria"},
+            format="json",
+        )
+        self.assertEqual(resposta.status_code, status.HTTP_201_CREATED, resposta.data)
+        login = self.client.post(
+            "/api/login/", {"email": "bia@equipe.com", "senha": "Senha@Forte123"}, format="json"
+        )
+        self.assertEqual(login.data["usuario"]["tipo_usuario"], "secretaria")
+
+    def test_so_admin_cadastra_membro(self):
+        self._como("advogado")
+        resposta = self.client.post(
+            "/api/equipe/registrar/",
+            {"nome": "X", "email": "x@equipe.com", "senha": "Senha@Forte123", "tipo_usuario": "financeiro"},
+            format="json",
+        )
+        self.assertEqual(resposta.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_admin_troca_perfil_para_financeiro(self):
+        self._como("admin")
+        resposta = self.client.post(
+            f"/api/usuarios/{self.membros['estagiario'].id}/definir-perfil/",
+            {"tipo_usuario": "financeiro"},
+        )
+        self.assertEqual(resposta.status_code, status.HTTP_200_OK, resposta.data)
+        self.assertEqual(resposta.data["tipo_usuario_display"], "Financeiro")
+
+
+class ProcessoSigilosoAPITestCase(_EquipeDoEscritorio, APITestCase):
+
+    def setUp(self):
+        self._equipe()
+        # self.advogado (Advogado do admin) é o responsável pelo sigiloso.
+        responsavel = _criar_usuario(self.escritorio, email="resp@equipe.com", tipo_usuario="advogado")
+        self.membros["responsavel"] = responsavel
+        adv = Advogado.objects.create(escritorio=self.escritorio, usuario=responsavel, oab="9/SP")
+        self.sigiloso = self._processo(self.escritorio, self.cliente, adv, "SEGREDO-1", titulo="Guarda")
+        self.sigiloso.sigiloso = True
+        self.sigiloso.save()
+        self.comum = self._processo(self.escritorio, self.cliente, adv, "COMUM-1")
+        Agenda.objects.create(
+            escritorio=self.escritorio, processo=self.sigiloso, titulo="Audiência sigilosa",
+            data_evento=timezone.now() + timedelta(days=1),
+        )
+
+    def _numeros(self):
+        return [p["numero_processo"] for p in self.client.get("/api/processos/").data["results"]]
+
+    def test_outro_advogado_nao_ve_o_processo_nem_o_que_pende_dele(self):
+        self._como("advogado")
+        self.assertEqual(self._numeros(), ["COMUM-1"])
+        self.assertEqual(
+            self.client.get(f"/api/processos/{self.sigiloso.id}/").status_code,
+            status.HTTP_404_NOT_FOUND,
+        )
+        agenda = [e["titulo"] for e in self.client.get("/api/agenda/").data["results"]]
+        self.assertNotIn("Audiência sigilosa", agenda)
+        self.assertEqual(self.client.get("/api/busca/", {"q": "segredo"}).data["processos"], [])
+        painel = self.client.get("/api/dashboard/").data
+        self.assertNotIn("SEGREDO-1", str(painel["processos_recentes"]))
+
+    def test_responsavel_e_administrador_veem(self):
+        for perfil in ("responsavel", "admin"):
+            self._como(perfil)
+            self.assertIn("SEGREDO-1", self._numeros())
+
+    def test_relatorio_do_cliente_omite_o_sigiloso_para_quem_nao_pode(self):
+        self._como("advogado")
+        relatorio = self.client.get(f"/api/configuracoes/relatorio/cliente/{self.cliente.id}/").data
+        self.assertNotIn("SEGREDO-1", str(relatorio))
+        self.assertIn("COMUM-1", str(relatorio))
+
+
+@override_settings(DEBUG=True)
+class VerificacaoEmDuasEtapasAPITestCase(APITestCase):
+
+    def setUp(self):
+        self.escritorio = _criar_escritorio()
+        self.usuario = _criar_usuario(self.escritorio)
+
+    def _autenticar(self):
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {_gerar_token_de_acesso(self.usuario)}")
+
+    def _ativar(self):
+        import pyotp
+
+        self._autenticar()
+        segredo = self.client.post("/api/configuracoes/2fa/", {"acao": "iniciar"}).data["segredo"]
+        totp = pyotp.TOTP(segredo)
+        ativado = self.client.post("/api/configuracoes/2fa/", {"acao": "ativar", "codigo": totp.now()})
+        self.assertEqual(ativado.status_code, status.HTTP_200_OK, ativado.data)
+        self.client.credentials()
+        return totp
+
+    def _codigo_seguinte(self, totp):
+        import time
+
+        return totp.at(time.time() + totp.interval)
+
+    def _login(self):
+        return self.client.post(
+            "/api/login/", {"email": "ana@escritorio.com", "senha": "senha12345"}, format="json"
+        )
+
+    def test_iniciar_devolve_qr_code_sem_ativar_ainda(self):
+        self._autenticar()
+        resposta = self.client.post("/api/configuracoes/2fa/", {"acao": "iniciar"})
+        self.assertTrue(resposta.data["qr_code"].startswith("data:image/svg+xml;base64,"))
+        self.assertIn("otpauth://totp/", resposta.data["uri"])
+        self.usuario.refresh_from_db()
+        self.assertFalse(self.usuario.totp_ativo)
+
+    def test_com_2fa_ativo_a_senha_sozinha_nao_abre_sessao(self):
+        self._ativar()
+        resposta = self._login()
+        self.assertTrue(resposta.data["requer_2fa"])
+        self.assertNotIn("access", resposta.data)
+
+    def test_desafio_mais_codigo_abre_a_sessao(self):
+        totp = self._ativar()
+        desafio = self._login().data["desafio"]
+        resposta = self.client.post(
+            "/api/login/2fa/", {"desafio": desafio, "codigo": self._codigo_seguinte(totp)}
+        )
+        self.assertEqual(resposta.status_code, status.HTTP_200_OK, resposta.data)
+        self.assertIn("access", resposta.data)
+
+    def test_codigo_errado_e_recusado(self):
+        self._ativar()
+        desafio = self._login().data["desafio"]
+        resposta = self.client.post("/api/login/2fa/", {"desafio": desafio, "codigo": "000000"})
+        self.assertEqual(resposta.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_mesmo_codigo_nao_serve_duas_vezes(self):
+        totp = self._ativar()
+        codigo = self._codigo_seguinte(totp)
+        primeira = self.client.post("/api/login/2fa/", {"desafio": self._login().data["desafio"], "codigo": codigo})
+        self.assertEqual(primeira.status_code, status.HTTP_200_OK)
+        segunda = self.client.post("/api/login/2fa/", {"desafio": self._login().data["desafio"], "codigo": codigo})
+        self.assertEqual(segunda.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_desafio_adulterado_e_recusado(self):
+        totp = self._ativar()
+        desafio = self._login().data["desafio"] + "x"
+        resposta = self.client.post("/api/login/2fa/", {"desafio": desafio, "codigo": totp.now()})
+        self.assertEqual(resposta.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_desativar_exige_senha_e_codigo(self):
+        totp = self._ativar()
+        self._autenticar()
+        sem_senha = self.client.post(
+            "/api/configuracoes/2fa/", {"acao": "desativar", "senha": "errada", "codigo": self._codigo_seguinte(totp)}
+        )
+        self.assertEqual(sem_senha.status_code, status.HTTP_400_BAD_REQUEST)
+        ok = self.client.post(
+            "/api/configuracoes/2fa/", {"acao": "desativar", "senha": "senha12345", "codigo": self._codigo_seguinte(totp)}
+        )
+        self.assertEqual(ok.status_code, status.HTTP_200_OK, ok.data)
+        self.assertIn("access", self._login().data)
+
+    def test_admin_redefine_2fa_de_quem_perdeu_o_celular(self):
+        self._ativar()
+        admin = _criar_usuario(self.escritorio, email="chefe@escritorio.com")
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {_gerar_token_de_acesso(admin)}")
+        resposta = self.client.post(f"/api/usuarios/{self.usuario.id}/redefinir-2fa/")
+        self.assertEqual(resposta.status_code, status.HTTP_200_OK)
+        self.client.credentials()
+        self.assertIn("access", self._login().data)
+
+
+class LgpdClienteAPITestCase(_EquipeDoEscritorio, APITestCase):
+
+    def setUp(self):
+        self._equipe()
+        self.cliente.nome = "Fulano de Tal"
+        self.cliente.cpf = "12345678900"
+        self.cliente.email = "titular@ex.com"
+        self.cliente.telefone = "11988887777"
+        self.cliente.save()
+        self.processo = self._processo(self.escritorio, self.cliente, self.advogado, "L-1")
+
+    def test_consentimento_registra_a_data_sozinho(self):
+        self._como("advogado")
+        resposta = self.client.patch(
+            f"/api/clientes/{self.cliente.id}/", {"consentimento_lgpd": True}, format="json"
+        )
+        self.assertTrue(resposta.data["consentimento_lgpd"])
+        self.assertIsNotNone(resposta.data["consentimento_lgpd_em"])
+
+    def test_exporta_os_dados_do_titular_em_json(self):
+        self._como("advogado")
+        resposta = self.client.get(f"/api/clientes/{self.cliente.id}/exportar-dados/")
+        self.assertEqual(resposta.status_code, status.HTTP_200_OK)
+        self.assertIn("attachment", resposta["Content-Disposition"])
+        dados = json.loads(resposta.content)
+        self.assertEqual(dados["cliente"]["cpf"], "12345678900")
+        self.assertEqual(dados["processos"][0]["numero"], "L-1")
+        self.assertTrue(RegistroAuditoria.objects.filter(acao="exportacao").exists())
+
+    def test_estagiario_nao_atende_pedido_do_titular(self):
+        self._como("estagiario")
+        self.assertEqual(
+            self.client.get(f"/api/clientes/{self.cliente.id}/exportar-dados/").status_code,
+            status.HTTP_403_FORBIDDEN,
+        )
+
+    def test_anonimizar_apaga_dados_pessoais_e_mantem_o_processo(self):
+        nome = self.cliente.nome
+        RegistroAuditoria.objects.create(
+            escritorio=self.escritorio, acao="criacao", descricao=f"{nome} cadastrado."
+        )
+        self._como("advogado")
+        resposta = self.client.post(f"/api/clientes/{self.cliente.id}/anonimizar/")
+        self.assertEqual(resposta.status_code, status.HTTP_200_OK, resposta.data)
+
+        self.cliente.refresh_from_db()
+        self.assertEqual(self.cliente.cpf, "")
+        self.assertEqual(self.cliente.email, "")
+        self.assertFalse(self.cliente.ativo)
+        self.assertIsNotNone(self.cliente.anonimizado_em)
+        self.assertTrue(Processo.objects.filter(pk=self.processo.pk, cliente=self.cliente).exists())
+        self.assertFalse(RegistroAuditoria.objects.filter(descricao__icontains=nome).exists())
+
+        de_novo = self.client.post(f"/api/clientes/{self.cliente.id}/anonimizar/")
+        self.assertEqual(de_novo.status_code, status.HTTP_400_BAD_REQUEST)

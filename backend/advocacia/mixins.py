@@ -5,6 +5,7 @@ from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.permissions import BasePermission
 
 from .models import RegistroAuditoria, SuperAdmin, Usuario
+from .sigilo import caminho_ate_processo, esconder_sigilosos
 
 
 def get_usuario_from_request(request):
@@ -126,7 +127,16 @@ class EscritorioScopedMixin:
         return contexto
 
     def get_queryset(self):
-        queryset = super().get_queryset()
+        queryset = self._filtrar_por_escritorio(super().get_queryset())
+
+        # Processo em segredo de justiça (e o que pende dele) só para o
+        # administrador e o advogado responsável — ver sigilo.py.
+        caminho = caminho_ate_processo(queryset.model)
+        if caminho is not None:
+            queryset = esconder_sigilosos(queryset, self.get_usuario(), caminho)
+        return queryset
+
+    def _filtrar_por_escritorio(self, queryset):
         escritorio = self.get_escritorio()
 
         if not escritorio:

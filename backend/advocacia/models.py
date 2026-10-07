@@ -66,9 +66,13 @@ class SuperAdmin(models.Model):
 
 class Usuario(models.Model):
 
+    # O que cada perfil pode fazer está em permissoes.py (MATRIZ).
     TIPOS_USUARIO = (
         ("admin", "Administrador"),
         ("advogado", "Advogado"),
+        ("estagiario", "Estagiário"),
+        ("financeiro", "Financeiro"),
+        ("secretaria", "Secretária"),
     )
 
     escritorio = models.ForeignKey(
@@ -122,6 +126,12 @@ class Usuario(models.Model):
     # por um administrador já autenticado são vouched for por ele, e em
     # desenvolvimento/teste isso quebraria o uso de e-mails fictícios.
     email_verificado = models.BooleanField(default=True)
+    # Verificação em duas etapas (ver dois_fatores.py). O segredo é gerado
+    # ao iniciar a configuração e só passa a valer depois que a pessoa
+    # confirma um código do aplicativo (totp_ativo).
+    totp_segredo = models.CharField(max_length=64, blank=True, default="")
+    totp_ativo = models.BooleanField(default=False)
+    totp_ultimo_passo = models.BigIntegerField(null=True, blank=True)
     criado_em = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -176,6 +186,13 @@ class Cliente(models.Model):
         ],
     )
     ativo = models.BooleanField(default=True)
+    # LGPD: autorização do titular para o tratamento dos dados, com a data
+    # em que foi registrada (preenchida sozinha ao marcar).
+    consentimento_lgpd = models.BooleanField(default=False)
+    consentimento_lgpd_em = models.DateTimeField(null=True, blank=True)
+    # Preenchido quando os dados pessoais são apagados a pedido do titular;
+    # o cadastro fica só como referência dos processos (ver anonimizar()).
+    anonimizado_em = models.DateTimeField(null=True, blank=True)
     criado_em = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -195,6 +212,40 @@ class Cliente(models.Model):
                 name="cliente_escritorio_cnpj_unico",
             ),
         ]
+
+    def save(self, *args, **kwargs):
+        if self.consentimento_lgpd and not self.consentimento_lgpd_em:
+            self.consentimento_lgpd_em = timezone.now()
+        elif not self.consentimento_lgpd:
+            self.consentimento_lgpd_em = None
+        super().save(*args, **kwargs)
+
+    def anonimizar(self):
+        """Apaga os dados pessoais do cliente (LGPD, art. 18, VI).
+
+        O cadastro não é excluído: processos, contratos e documentos do caso
+        são registro profissional que o escritório tem obrigação de guardar
+        (art. 16, I). Fica só um rótulo neutro no lugar do nome.
+        """
+        for arquivo in (self.foto, self.documento_identidade):
+            if arquivo:
+                arquivo.delete(save=False)
+        self.nome = f"Cliente anonimizado nº {self.pk}"
+        self.cpf = ""
+        self.cnpj = ""
+        self.email = ""
+        self.telefone = ""
+        self.endereco = ""
+        self.rg = ""
+        self.data_nascimento = None
+        self.estado_civil = ""
+        self.nacionalidade = ""
+        self.foto = None
+        self.documento_identidade = None
+        self.ativo = False
+        self.consentimento_lgpd = False
+        self.anonimizado_em = timezone.now()
+        self.save()
 
     def __str__(self):
         return self.nome
@@ -290,6 +341,10 @@ class Processo(models.Model):
 
     data_inicio = models.DateField(null=True, blank=True)
     data_fim = models.DateField(null=True, blank=True)
+
+    # Segredo de justiça: só o administrador e o advogado responsável veem
+    # o processo e o que pende dele (ver sigilo.py).
+    sigiloso = models.BooleanField(default=False)
 
     area_direito = models.CharField(max_length=20, choices=AREAS_DIREITO, blank=True, default="")
     vara = models.CharField(max_length=255, blank=True, default="")
@@ -701,6 +756,7 @@ class RegistroAuditoria(models.Model):
         ("criacao", "Registro criado"),
         ("edicao", "Registro editado"),
         ("exclusao", "Registro excluído"),
+        ("exportacao", "Dados exportados"),
     )
 
     escritorio = models.ForeignKey(

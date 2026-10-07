@@ -1,9 +1,10 @@
 from django.conf import settings
+from django.db import transaction
 from django.contrib.auth.hashers import check_password, make_password
 from django.db.models import CharField, Count, F, Func, Q, Sum, Value
 from django.db.models.functions import Lower, TruncMonth
 from django.db.models import Prefetch
-from django.http import FileResponse, Http404, HttpResponse
+from django.http import FileResponse, Http404, HttpResponse, JsonResponse
 from django.utils import timezone
 from datetime import date
 from decimal import Decimal, ROUND_HALF_UP
@@ -84,6 +85,7 @@ from .serializers import (
     EscritorioAdminSerializer,
     UsuarioSerializer,
     AdvogadoRegistroSerializer,
+    MembroRegistroSerializer,
     ClienteSerializer,
     AdvogadoSerializer,
     ProcessoSerializer,
@@ -101,6 +103,16 @@ from .serializers import (
     RegistroAuditoriaSerializer,
 )
 
+from .dois_fatores import (
+    abrir_desafio,
+    assinar_desafio,
+    conferir_codigo,
+    novo_segredo,
+    qr_code_svg,
+    uri_de_cadastro,
+)
+from .sigilo import caminho_ate_processo, esconder_sigilosos, processos_ocultos
+from .permissoes import EDITAR, EXCLUIR, PERFIS, VER, PermissaoPorPerfil, permissoes_do_perfil, pode
 from .ia_service import (
     TAMANHO_MAXIMO_MENSAGEM_IA,
     gerar_resposta_ia,
@@ -281,6 +293,22 @@ class LogoutView(APIView):
 # LOGIN
 # =========================================================
 
+def _dados_do_usuario_logado(request, usuario):
+    """O que o frontend guarda sobre quem entrou — inclusive o que o perfil
+    pode fazer, para esconder da tela o que a API recusaria."""
+    return {
+        "id": usuario.id,
+        "nome": usuario.nome,
+        "email": usuario.email,
+        "tipo_usuario": usuario.tipo_usuario,
+        "tipo_usuario_display": usuario.get_tipo_usuario_display(),
+        "escritorio_id": usuario.escritorio_id,
+        "escritorio_nome": usuario.escritorio.nome,
+        "foto": request.build_absolute_uri(usuario.foto.url) if usuario.foto else None,
+        "permissoes": permissoes_do_perfil(usuario.tipo_usuario),
+    }
+
+
 class LoginView(APIView):
 
     permission_classes = [AllowAny]
@@ -392,42 +420,109 @@ class LoginView(APIView):
             usuario.bloqueado_ate = None
             usuario.save(update_fields=["tentativas_login", "bloqueado_ate"])
 
-        registrar_auditoria(
-            request,
-            "login_sucesso",
-            usuario=usuario,
-            escritorio=usuario.escritorio,
-            descricao=f"Login realizado por {usuario.email}.",
+        # Com a verificação em duas etapas ativa, a senha certa não abre a
+        # sessão: devolve um desafio de 5 minutos que só vale junto com o
+        # código do aplicativo (LoginSegundoFatorView).
+        if usuario.totp_ativo:
+            return Response(
+                {"requer_2fa": True, "desafio": assinar_desafio(usuario)},
+                status=status.HTTP_200_OK,
+            )
+
+        return _abrir_sessao(request, usuario)
+
+
+def _abrir_sessao(request, usuario):
+    registrar_auditoria(
+        request,
+        "login_sucesso",
+        usuario=usuario,
+        escritorio=usuario.escritorio,
+        descricao=f"Login realizado por {usuario.email}.",
+    )
+
+    refresh = RefreshToken()
+
+    refresh["user_id"] = usuario.id
+    refresh["nome"] = usuario.nome
+    refresh["email"] = usuario.email
+    refresh["tipo_usuario"] = usuario.tipo_usuario
+    refresh["escritorio_id"] = usuario.escritorio_id
+    refresh["escritorio_nome"] = usuario.escritorio.nome
+    refresh["session_version"] = usuario.session_version
+
+    return Response(
+        {
+            "refresh": str(refresh),
+            "access": str(refresh.access_token),
+            "usuario": _dados_do_usuario_logado(request, usuario),
+        },
+        status=status.HTTP_200_OK,
+    )
+
+
+TENTATIVAS_SEGUNDO_FATOR = 5
+
+
+class LoginSegundoFatorView(APIView):
+    """Segunda fase do login: desafio (da primeira fase) + código do app."""
+
+    permission_classes = [AllowAny]
+    authentication_classes = []
+    throttle_scope = "login"
+
+    def post(self, request):
+        aberto = abrir_desafio(request.data.get("desafio", ""))
+        if not aberto:
+            return Response(
+                {"detail": "A verificação expirou. Entre com e-mail e senha novamente."},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+
+        usuario_id, versao = aberto
+        usuario = (
+            Usuario.objects.select_related("escritorio")
+            .filter(pk=usuario_id, ativo=True, escritorio__ativo=True, totp_ativo=True)
+            .first()
         )
+        # Troca de senha no meio do caminho também invalida o desafio.
+        if not usuario or usuario.session_version != versao:
+            return Response(
+                {"detail": "A verificação expirou. Entre com e-mail e senha novamente."},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
 
-        refresh = RefreshToken()
+        if usuario.bloqueado_ate and usuario.bloqueado_ate > timezone.now():
+            return Response(
+                {"detail": "Conta bloqueada por excesso de tentativas. Tente mais tarde."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
 
-        refresh["user_id"] = usuario.id
-        refresh["nome"] = usuario.nome
-        refresh["email"] = usuario.email
-        refresh["tipo_usuario"] = usuario.tipo_usuario
-        refresh["escritorio_id"] = usuario.escritorio_id
-        refresh["escritorio_nome"] = usuario.escritorio.nome
-        refresh["session_version"] = usuario.session_version
+        if not conferir_codigo(usuario, request.data.get("codigo")):
+            usuario.tentativas_login += 1
+            campos = ["tentativas_login"]
+            if usuario.tentativas_login >= TENTATIVAS_SEGUNDO_FATOR:
+                usuario.bloqueado_ate = timezone.now() + timezone.timedelta(minutes=15)
+                usuario.tentativas_login = 0
+                campos.append("bloqueado_ate")
+            usuario.save(update_fields=campos)
+            registrar_auditoria(
+                request,
+                "login_falha",
+                usuario=usuario,
+                escritorio=usuario.escritorio,
+                descricao=f"Código de verificação em duas etapas inválido para {usuario.email}.",
+            )
+            return Response(
+                {"detail": "Código inválido. Confira o aplicativo autenticador."},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
 
-        return Response(
-            {
-                "refresh": str(refresh),
+        if usuario.tentativas_login:
+            usuario.tentativas_login = 0
+            usuario.save(update_fields=["tentativas_login"])
 
-                "access": str(refresh.access_token),
-
-                "usuario": {
-                    "id": usuario.id,
-                    "nome": usuario.nome,
-                    "email": usuario.email,
-                    "tipo_usuario": usuario.tipo_usuario,
-                    "escritorio_id": usuario.escritorio_id,
-                    "escritorio_nome": usuario.escritorio.nome,
-                    "foto": request.build_absolute_uri(usuario.foto.url) if usuario.foto else None,
-                },
-            },
-            status=status.HTTP_200_OK,
-        )
+        return _abrir_sessao(request, usuario)
 
 
 # =========================================================
@@ -814,7 +909,7 @@ class DashboardResumoView(APIView):
         semana_passada = timezone.now() - timezone.timedelta(days=7)
 
         processos = (
-            Processo.objects.filter(escritorio=escritorio)
+            esconder_sigilosos(Processo.objects.filter(escritorio=escritorio), usuario)
             .select_related("cliente", "advogado__usuario")
             .prefetch_related(
                 Prefetch(
@@ -827,24 +922,30 @@ class DashboardResumoView(APIView):
             .order_by("-criado_em")[:n]
         )
         documentos = (
-            Documento.objects.filter(processo__escritorio=escritorio)
+            esconder_sigilosos(Documento.objects.filter(processo__escritorio=escritorio), usuario)
             .select_related("processo")
             .order_by("-enviado_em")[:n]
         )
         minhas_tarefas = ordenacao_de_trabalho(
-            Tarefa.objects.filter(escritorio=escritorio, responsavel=usuario)
+            esconder_sigilosos(
+                Tarefa.objects.filter(escritorio=escritorio, responsavel=usuario), usuario
+            )
             .exclude(status__in=Tarefa.STATUS_ENCERRADOS)
             .select_related("processo", "processo__cliente", "responsavel", "criado_por")
         )[:n]
         # O calendário navega entre meses, então a agenda vai inteira — mas
         # só ela, e não mais junto com todas as outras listas.
         agenda = (
-            Agenda.objects.filter(escritorio=escritorio)
+            esconder_sigilosos(Agenda.objects.filter(escritorio=escritorio), usuario)
             .select_related("processo__cliente", "processo__advogado__usuario")
             .order_by("data_evento")
         )
 
         dados = _estatisticas_do_escritorio(escritorio)
+        # Quem não tem acesso ao financeiro (estagiário, secretária) não
+        # recebe valores — nem para a tela esconder depois.
+        if not pode(usuario, "financeiro", VER):
+            dados.pop("financeiro", None)
         dados.update({
             "novos_na_semana": {
                 "clientes": Cliente.objects.filter(
@@ -864,7 +965,11 @@ class DashboardResumoView(APIView):
             "documentos_recentes": DocumentoSerializer(documentos, many=True, context=contexto).data,
             "minhas_tarefas": TarefaSerializer(minhas_tarefas, many=True, context=contexto).data,
             "agenda": AgendaSerializer(agenda, many=True, context=contexto).data,
-            "financeiro_mensal": _financeiro_mensal(escritorio),
+            "financeiro_mensal": (
+                _financeiro_mensal(escritorio) if pode(usuario, "financeiro", VER) else None
+            ),
+            "tipo_usuario": usuario.tipo_usuario,
+            "permissoes": permissoes_do_perfil(usuario.tipo_usuario),
         })
         return Response(dados)
 
@@ -975,8 +1080,20 @@ class BuscaGlobalView(APIView):
             ),
         }
 
+        # Cada área só entra na busca se o perfil puder vê-la; processos
+        # sigilosos (e o que pende deles) ficam de fora para quem não pode.
+        area_do_grupo = {
+            "clientes": "clientes", "processos": "processos", "tarefas": "tarefas",
+            "agenda": "agenda", "documentos": "documentos", "contratos": "financeiro",
+            "apontamentos": "horas", "modelos": "modelos",
+        }
         resultado = {}
         for chave, (queryset, campos, serializer) in grupos.items():
+            if not pode(usuario, area_do_grupo[chave], VER):
+                continue
+            caminho = caminho_ate_processo(queryset.model)
+            if caminho is not None:
+                queryset = esconder_sigilosos(queryset, usuario, caminho)
             itens = _filtrar_sem_acento(queryset, campos, termo)[: self.POR_GRUPO]
             resultado[chave] = serializer(itens, many=True, context=contexto).data
         return Response(resultado)
@@ -1121,9 +1238,27 @@ class UsuarioViewSet(
         )
         return Response(UsuarioSerializer(alvo).data)
 
+    @action(detail=True, methods=["post"], url_path="redefinir-2fa")
+    def redefinir_2fa(self, request, pk=None):
+        """O administrador desliga a verificação em duas etapas de um membro
+        que perdeu o celular; ele volta a entrar só com a senha e pode
+        configurar de novo."""
+        admin = self._exigir_admin()
+        alvo = self.get_object()
+        alvo.totp_ativo = False
+        alvo.totp_segredo = ""
+        alvo.totp_ultimo_passo = None
+        alvo.save(update_fields=["totp_ativo", "totp_segredo", "totp_ultimo_passo"])
+        registrar_auditoria(
+            request, "edicao", alvo,
+            descricao="Verificação em duas etapas redefinida pelo administrador.",
+            escritorio=admin.escritorio,
+        )
+        return Response(UsuarioSerializer(alvo).data)
+
     @action(detail=True, methods=["post"], url_path="definir-perfil")
     def definir_perfil(self, request, pk=None):
-        """Troca o perfil de acesso (administrador/advogado) de outra pessoa.
+        """Troca o perfil de acesso de outra pessoa.
 
         Nunca do próprio solicitante: era exatamente assim que um advogado
         se promovia a administrador. O escritório também não pode ficar
@@ -1140,9 +1275,10 @@ class UsuarioViewSet(
             )
 
         novo_perfil = request.data.get("tipo_usuario")
-        if novo_perfil not in ("admin", "advogado"):
+        perfis_validos = [codigo for codigo, _ in PERFIS]
+        if novo_perfil not in perfis_validos:
             return Response(
-                {"tipo_usuario": ["Informe 'admin' ou 'advogado'."]},
+                {"tipo_usuario": [f"Informe um destes perfis: {', '.join(perfis_validos)}."]},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -1169,6 +1305,33 @@ class UsuarioViewSet(
             escritorio=admin.escritorio,
         )
         return Response(UsuarioSerializer(alvo).data)
+
+
+class MembroRegistroView(APIView):
+    """Inclui no escritório alguém que não é advogado (estagiário,
+    financeiro, secretária) ou outro administrador. Só o administrador."""
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        admin = get_usuario_from_request(request)
+        if not admin or admin.tipo_usuario != "admin":
+            return Response(
+                {"detail": "Somente administradores podem cadastrar membros da equipe."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        serializer = MembroRegistroSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        membro = serializer.create(serializer.validated_data, admin.escritorio)
+        registrar_auditoria(
+            request,
+            "criacao",
+            membro,
+            descricao=f"Membro {membro.nome} incluído como {membro.get_tipo_usuario_display()}.",
+            escritorio=admin.escritorio,
+        )
+        return Response(UsuarioSerializer(membro).data, status=status.HTTP_201_CREATED)
 
 
 # =========================================================
@@ -1250,7 +1413,15 @@ class ClienteViewSet(
 
     serializer_class = ClienteSerializer
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, PermissaoPorPerfil]
+    area_permissao = "clientes"
+    # Pedidos do titular (LGPD) exigem o mesmo nível de quem pode excluir o
+    # cliente — administrador e advogado.
+    acoes_permissao = {
+        'documento_identidade_download': VER,
+        'exportar_dados': EXCLUIR,
+        'anonimizar': EXCLUIR,
+    }
 
     def get_queryset(self):
 
@@ -1324,6 +1495,122 @@ class ClienteViewSet(
         cliente = self.get_object()
         return _resposta_download_arquivo(cliente.documento_identidade)
 
+    @action(detail=True, methods=["get"], url_path="exportar-dados")
+    def exportar_dados(self, request, pk=None):
+        """Direito de acesso do titular (LGPD, art. 18, II): tudo o que o
+        escritório guarda sobre o cliente, num arquivo JSON legível."""
+        cliente = self.get_object()
+        usuario = self.get_usuario()
+        dados = _dados_do_titular(cliente, usuario)
+        registrar_auditoria(
+            request, "exportacao", cliente,
+            descricao="Dados do titular exportados (LGPD).",
+            escritorio=usuario.escritorio,
+        )
+        resposta = JsonResponse(dados, json_dumps_params={"ensure_ascii": False, "indent": 2})
+        resposta["Content-Disposition"] = f'attachment; filename="dados-cliente-{cliente.pk}.json"'
+        return resposta
+
+    @action(detail=True, methods=["post"], url_path="anonimizar")
+    def anonimizar(self, request, pk=None):
+        """Eliminação a pedido do titular (LGPD, art. 18, VI): apaga os
+        dados pessoais e mantém o vínculo com os processos, que o escritório
+        precisa guardar. Também tira o nome dos registros de auditoria."""
+        cliente = self.get_object()
+        usuario = self.get_usuario()
+        if cliente.anonimizado_em:
+            return Response(
+                {"detail": "Este cliente já foi anonimizado."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        nome_anterior = cliente.nome
+        with transaction.atomic():
+            cliente.anonimizar()
+            for registro in RegistroAuditoria.objects.filter(
+                escritorio=cliente.escritorio, descricao__icontains=nome_anterior
+            ):
+                registro.descricao = registro.descricao.replace(nome_anterior, cliente.nome)
+                registro.save(update_fields=["descricao"])
+            registrar_auditoria(
+                request, "edicao", cliente,
+                descricao="Dados pessoais anonimizados a pedido do titular (LGPD).",
+                escritorio=usuario.escritorio,
+            )
+        return Response(ClienteSerializer(cliente, context={"request": request}).data)
+
+
+def _dados_do_titular(cliente, usuario):
+    def data(valor):
+        return valor.isoformat() if valor else None
+
+    processos = esconder_sigilosos(cliente.processos.all(), usuario).select_related(
+        "advogado__usuario"
+    )
+    return {
+        "gerado_em": timezone.now().isoformat(),
+        "escritorio": cliente.escritorio.nome,
+        "base_legal": "Lei 13.709/2018 (LGPD), art. 18, II — confirmação e acesso aos dados.",
+        "cliente": {
+            "nome": cliente.nome,
+            "tipo_pessoa": cliente.get_tipo_pessoa_display(),
+            "cpf": cliente.cpf,
+            "cnpj": cliente.cnpj,
+            "rg": cliente.rg,
+            "email": cliente.email,
+            "telefone": cliente.telefone,
+            "endereco": cliente.endereco,
+            "data_nascimento": data(cliente.data_nascimento),
+            "estado_civil": cliente.get_estado_civil_display() if cliente.estado_civil else "",
+            "nacionalidade": cliente.nacionalidade,
+            "foto_enviada": bool(cliente.foto),
+            "documento_identidade_enviado": bool(cliente.documento_identidade),
+            "consentimento_lgpd": cliente.consentimento_lgpd,
+            "consentimento_lgpd_em": data(cliente.consentimento_lgpd_em),
+            "cadastrado_em": data(cliente.criado_em),
+        },
+        "processos": [
+            {
+                "numero": processo.numero_processo,
+                "titulo": processo.titulo,
+                "status": processo.status,
+                "advogado_responsavel": processo.advogado.usuario.nome,
+                "inicio": data(processo.data_inicio),
+                "movimentacoes": [
+                    {"data": data(m.data_movimentacao), "descricao": m.descricao}
+                    for m in processo.movimentacoes.order_by("data_movimentacao")
+                ],
+                "compromissos": [
+                    {"data": data(a.data_evento), "titulo": a.titulo, "tipo": a.tipo}
+                    for a in processo.eventos_agenda.order_by("data_evento")
+                ],
+                "documentos": [
+                    {"nome": d.nome_arquivo, "enviado_em": data(d.enviado_em)}
+                    for d in processo.documentos.order_by("enviado_em")
+                ],
+            }
+            for processo in processos
+        ],
+        "contratos": [
+            {
+                "processo": contrato.processo.numero_processo,
+                "valor_total": str(contrato.valor_total),
+                "parcelas": [
+                    {
+                        "numero": p.numero,
+                        "valor": str(p.valor),
+                        "vencimento": data(p.data_vencimento),
+                        "status": p.status,
+                    }
+                    for p in contrato.parcelas.order_by("numero")
+                ],
+            }
+            for contrato in esconder_sigilosos(
+                Contrato.objects.filter(processo__cliente=cliente), usuario
+            ).select_related("processo")
+        ],
+    }
+
 
 # =========================================================
 # ADVOGADOS
@@ -1338,7 +1625,8 @@ class AdvogadoViewSet(
 
     serializer_class = AdvogadoSerializer
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, PermissaoPorPerfil]
+    area_permissao = "advogados"
 
     def get_queryset(self):
 
@@ -1376,7 +1664,9 @@ class ProcessoViewSet(
 
     serializer_class = ProcessoSerializer
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, PermissaoPorPerfil]
+    area_permissao = "processos"
+    acoes_permissao = {'ficha': VER, 'consultar_datajud': EDITAR}
 
     def get_queryset(self):
 
@@ -1599,7 +1889,8 @@ class MovimentacaoViewSet(
 
     serializer_class = MovimentacaoSerializer
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, PermissaoPorPerfil]
+    area_permissao = "processos"
 
     def get_queryset(self):
 
@@ -1658,7 +1949,9 @@ class DocumentoViewSet(
 
     serializer_class = DocumentoSerializer
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, PermissaoPorPerfil]
+    area_permissao = "documentos"
+    acoes_permissao = {'download': VER}
 
     def get_queryset(self):
 
@@ -1706,7 +1999,9 @@ class CalcularPrazoView(APIView):
     o preenchimento da agenda ao cadastrar um prazo processual (RN — CPC
     art. 219: prazos processuais cíveis contam em dias úteis)."""
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, PermissaoPorPerfil]
+    area_permissao = "agenda"
+    acoes_permissao = {None: VER}
 
     def post(self, request):
         data_inicio_str = request.data.get("data_inicio", "")
@@ -1748,7 +2043,8 @@ class AgendaViewSet(
 
     serializer_class = AgendaSerializer
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, PermissaoPorPerfil]
+    area_permissao = "agenda"
 
     def get_queryset(self):
 
@@ -1823,7 +2119,8 @@ class ContratoViewSet(
 
     serializer_class = ContratoSerializer
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, PermissaoPorPerfil]
+    area_permissao = "financeiro"
 
     def get_queryset(self):
 
@@ -1856,7 +2153,8 @@ class ParcelaViewSet(
 
     serializer_class = ParcelaSerializer
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, PermissaoPorPerfil]
+    area_permissao = "financeiro"
 
     def get_queryset(self):
 
@@ -1883,7 +2181,9 @@ class ParcelaViewSet(
 
 class AssistenteIAView(APIView):
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, PermissaoPorPerfil]
+    area_permissao = "ia"
+    acoes_permissao = {None: VER}
 
     # Cada chamada é cobrada pela OpenAI: o limite geral por usuário
     # (1000/min) deixaria uma conta comprometida gerar uma conta alta.
@@ -2089,6 +2389,77 @@ class ConfiguracoesSenhaView(APIView):
         })
 
 
+class ConfiguracoesDoisFatoresView(APIView):
+    """Liga e desliga a verificação em duas etapas da própria conta.
+
+    POST {"acao": "iniciar"} — gera o segredo e devolve o QR code.
+    POST {"acao": "ativar", "codigo"} — confirma com um código do app.
+    POST {"acao": "desativar", "senha", "codigo"} — exige os dois.
+    """
+
+    permission_classes = [IsAuthenticated]
+    throttle_scope = "sensivel"
+
+    def post(self, request):
+        usuario = get_usuario_from_request(request)
+        if not usuario:
+            return Response({"detail": "Usuário não identificado."}, status=status.HTTP_401_UNAUTHORIZED)
+
+        acao = request.data.get("acao")
+
+        if acao == "iniciar":
+            if usuario.totp_ativo:
+                return Response(
+                    {"detail": "A verificação em duas etapas já está ativa."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            usuario.totp_segredo = novo_segredo()
+            usuario.totp_ultimo_passo = None
+            usuario.save(update_fields=["totp_segredo", "totp_ultimo_passo"])
+            uri = uri_de_cadastro(usuario, usuario.totp_segredo)
+            return Response({"segredo": usuario.totp_segredo, "uri": uri, "qr_code": qr_code_svg(uri)})
+
+        if acao == "ativar":
+            if usuario.totp_ativo:
+                return Response({"detail": "Já está ativa."}, status=status.HTTP_400_BAD_REQUEST)
+            if not conferir_codigo(usuario, request.data.get("codigo")):
+                return Response(
+                    {"codigo": ["Código inválido. Confira se o relógio do celular está certo."]},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            usuario.totp_ativo = True
+            usuario.save(update_fields=["totp_ativo"])
+            registrar_auditoria(
+                request, "edicao", usuario,
+                descricao="Verificação em duas etapas ativada.",
+                escritorio=usuario.escritorio,
+            )
+            return Response({"totp_ativo": True})
+
+        if acao == "desativar":
+            if not usuario.totp_ativo:
+                return Response({"detail": "Não está ativa."}, status=status.HTTP_400_BAD_REQUEST)
+            if not check_password(request.data.get("senha", ""), usuario.senha):
+                return Response({"senha": ["Senha incorreta."]}, status=status.HTTP_400_BAD_REQUEST)
+            if not conferir_codigo(usuario, request.data.get("codigo")):
+                return Response({"codigo": ["Código inválido."]}, status=status.HTTP_400_BAD_REQUEST)
+            usuario.totp_ativo = False
+            usuario.totp_segredo = ""
+            usuario.totp_ultimo_passo = None
+            usuario.save(update_fields=["totp_ativo", "totp_segredo", "totp_ultimo_passo"])
+            registrar_auditoria(
+                request, "edicao", usuario,
+                descricao="Verificação em duas etapas desativada.",
+                escritorio=usuario.escritorio,
+            )
+            return Response({"totp_ativo": False})
+
+        return Response(
+            {"acao": ["Use 'iniciar', 'ativar' ou 'desativar'."]},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+
 class ConfiguracoesPreferenciasView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -2209,22 +2580,26 @@ def _montar_dados_relatorio_cliente(usuario, cliente_id, request=None):
     quando o cliente não existe ou não pertence ao escritório do usuário."""
 
     cliente = Cliente.objects.get(id=cliente_id, escritorio=usuario.escritorio)
+    ocultos = processos_ocultos(usuario).values("pk")
 
     processos = (
         Processo.objects
         .filter(cliente=cliente)
+        .exclude(pk__in=ocultos)
         .select_related("advogado__usuario")
         .order_by("-criado_em")
     )
     documentos = (
         Documento.objects
         .filter(processo__cliente=cliente)
+        .exclude(processo__in=ocultos)
         .select_related("processo")
         .order_by("-enviado_em")
     )
     agenda = (
         Agenda.objects
         .filter(processo__cliente=cliente)
+        .exclude(processo__in=ocultos)
         .select_related("processo")
         .order_by("data_evento")
     )
@@ -2232,6 +2607,7 @@ def _montar_dados_relatorio_cliente(usuario, cliente_id, request=None):
     contratos = list(
         Contrato.objects
         .filter(processo__cliente=cliente)
+        .exclude(processo__in=ocultos)
         .select_related("processo")
         .prefetch_related("parcelas")
         .order_by("-criado_em")
@@ -2239,12 +2615,14 @@ def _montar_dados_relatorio_cliente(usuario, cliente_id, request=None):
     apontamentos = list(
         ApontamentoHora.objects
         .filter(processo__cliente=cliente)
+        .exclude(processo__in=ocultos)
         .select_related("processo", "usuario")
         .order_by("-data")
     )
     despesas = list(
         Despesa.objects
         .filter(processo__cliente=cliente)
+        .exclude(processo__in=ocultos)
         .select_related("processo")
         .order_by("-data")
     )
@@ -2278,7 +2656,7 @@ def _montar_dados_relatorio_processo(usuario, processo_id, request=None):
     quando o processo não existe ou não pertence ao escritório do usuário."""
 
     processo = (
-        Processo.objects
+        esconder_sigilosos(Processo.objects, usuario)
         .select_related("cliente", "advogado__usuario")
         .get(id=processo_id, escritorio=usuario.escritorio)
     )
@@ -2321,7 +2699,9 @@ def _montar_dados_relatorio_processo(usuario, processo_id, request=None):
 
 
 class RelatorioClienteView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, PermissaoPorPerfil]
+    area_permissao = "relatorios"
+    acoes_permissao = {None: VER}
 
     def get(self, request, cliente_id):
         usuario = get_usuario_from_request(request)
@@ -2337,7 +2717,9 @@ class RelatorioClienteView(APIView):
 
 
 class RelatorioProcessoView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, PermissaoPorPerfil]
+    area_permissao = "relatorios"
+    acoes_permissao = {None: VER}
 
     def get(self, request, processo_id):
         usuario = get_usuario_from_request(request)
@@ -2353,7 +2735,9 @@ class RelatorioProcessoView(APIView):
 
 
 class RelatorioClienteEmailView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, PermissaoPorPerfil]
+    area_permissao = "relatorios"
+    acoes_permissao = {None: VER}
     throttle_scope = "sensivel"
 
     def post(self, request, cliente_id):
@@ -2385,7 +2769,9 @@ class RelatorioClienteEmailView(APIView):
 
 
 class RelatorioProcessoEmailView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, PermissaoPorPerfil]
+    area_permissao = "relatorios"
+    acoes_permissao = {None: VER}
     throttle_scope = "sensivel"
 
     def post(self, request, processo_id):
@@ -2436,7 +2822,9 @@ def _linha_csv_segura(valores):
 
 
 class ExportarClientesCSVView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, PermissaoPorPerfil]
+    area_permissao = "exportar"
+    acoes_permissao = {None: VER}
 
     def get(self, request):
         usuario = get_usuario_from_request(request)
@@ -2458,7 +2846,9 @@ class ExportarClientesCSVView(APIView):
 
 
 class ExportarProcessosCSVView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, PermissaoPorPerfil]
+    area_permissao = "exportar"
+    acoes_permissao = {None: VER}
 
     def get(self, request):
         usuario = get_usuario_from_request(request)
@@ -2469,7 +2859,11 @@ class ExportarProcessosCSVView(APIView):
         response.write("\ufeff")
         writer = csv.writer(response, delimiter=";")
         writer.writerow(["Número", "Título", "Status", "Cliente", "Advogado", "Data início", "Data fim"])
-        queryset = Processo.objects.filter(escritorio=usuario.escritorio).select_related("cliente", "advogado__usuario").order_by("numero_processo")
+        queryset = (
+            esconder_sigilosos(Processo.objects.filter(escritorio=usuario.escritorio), usuario)
+            .select_related("cliente", "advogado__usuario")
+            .order_by("numero_processo")
+        )
         for processo in queryset:
             writer.writerow(_linha_csv_segura([
                 processo.numero_processo, processo.titulo, processo.get_status_display(),
@@ -2656,7 +3050,8 @@ class ApontamentoHoraViewSet(
 
     serializer_class = ApontamentoHoraSerializer
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, PermissaoPorPerfil]
+    area_permissao = "horas"
 
     def get_queryset(self):
         queryset = super().get_queryset().select_related("processo", "usuario")
@@ -2704,7 +3099,8 @@ class DespesaViewSet(
 
     serializer_class = DespesaSerializer
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, PermissaoPorPerfil]
+    area_permissao = "despesas"
 
     def get_queryset(self):
         queryset = super().get_queryset().select_related("processo", "processo__cliente")
@@ -2788,7 +3184,8 @@ class TarefaViewSet(
 
     serializer_class = TarefaSerializer
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, PermissaoPorPerfil]
+    area_permissao = "tarefas"
 
     def get_queryset(self):
         queryset = ordenacao_de_trabalho(
@@ -2965,7 +3362,9 @@ class ModeloDocumentoViewSet(
 
     serializer_class = ModeloDocumentoSerializer
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, PermissaoPorPerfil]
+    area_permissao = "modelos"
+    acoes_permissao = {'variaveis': VER, 'gerar': VER}
 
     @action(detail=False, methods=["get"], url_path="variaveis")
     def variaveis(self, request):
@@ -2996,7 +3395,10 @@ class ModeloDocumentoViewSet(
         # não seja usado para preencher — e vazar — dados alheios.
         if processo_id:
             processo = (
-                Processo.objects.filter(pk=processo_id, escritorio=escritorio)
+                esconder_sigilosos(
+                    Processo.objects.filter(pk=processo_id, escritorio=escritorio),
+                    self.get_usuario(),
+                )
                 .select_related("cliente", "advogado__usuario")
                 .first()
             )

@@ -180,6 +180,10 @@ class UsuarioSerializer(serializers.ModelSerializer):
         source="escritorio.nome",
         read_only=True,
     )
+    tipo_usuario_display = serializers.CharField(
+        source="get_tipo_usuario_display",
+        read_only=True,
+    )
     # Mesma lógica do ClienteSerializer: a URL do documento de identidade
     # não sai na leitura, só a confirmação de que existe um enviado.
     documento_identidade_enviado = serializers.SerializerMethodField()
@@ -194,6 +198,8 @@ class UsuarioSerializer(serializers.ModelSerializer):
             "email",
             "telefone",
             "tipo_usuario",
+            "tipo_usuario_display",
+            "totp_ativo",
             "foto",
             "documento_identidade",
             "documento_identidade_enviado",
@@ -206,6 +212,7 @@ class UsuarioSerializer(serializers.ModelSerializer):
             "criado_em",
         ]
         read_only_fields = [
+            "totp_ativo",
             "id",
             "escritorio",
             "escritorio_nome",
@@ -241,6 +248,40 @@ class UsuarioSerializer(serializers.ModelSerializer):
 
         instance.save()
         return instance
+
+
+PERFIS_SEM_OAB = ("admin", "estagiario", "financeiro", "secretaria")
+
+
+class MembroRegistroSerializer(serializers.Serializer):
+    """Cadastro de quem trabalha no escritório sem ser advogado (estagiário,
+    financeiro, secretária) ou de outro administrador. Advogado tem fluxo
+    próprio porque precisa do registro na OAB."""
+
+    nome = serializers.CharField(max_length=255)
+    email = serializers.EmailField(validators=[validar_email_real])
+    senha = serializers.CharField(write_only=True, validators=[validar_senha_forte])
+    telefone = serializers.CharField(
+        max_length=20, required=False, allow_blank=True, validators=[validar_telefone]
+    )
+    tipo_usuario = serializers.ChoiceField(
+        choices=[(c, r) for c, r in Usuario.TIPOS_USUARIO if c in PERFIS_SEM_OAB]
+    )
+
+    def validate_email(self, value):
+        if Usuario.objects.filter(email__iexact=value).exists():
+            raise serializers.ValidationError("E-mail já cadastrado.")
+        return value
+
+    def create(self, validated_data, escritorio):
+        return Usuario.objects.create(
+            escritorio=escritorio,
+            nome=validated_data["nome"],
+            email=validated_data["email"],
+            senha=make_password(validated_data["senha"]),
+            telefone=validated_data.get("telefone", ""),
+            tipo_usuario=validated_data["tipo_usuario"],
+        )
 
 
 class AdvogadoRegistroSerializer(serializers.Serializer):
@@ -326,9 +367,18 @@ class ClienteSerializer(serializers.ModelSerializer):
             "documento_identidade",
             "documento_identidade_enviado",
             "ativo",
+            "consentimento_lgpd",
+            "consentimento_lgpd_em",
+            "anonimizado_em",
             "criado_em",
         ]
-        read_only_fields = ["id", "criado_em", "documento_identidade_enviado"]
+        read_only_fields = [
+            "id",
+            "criado_em",
+            "documento_identidade_enviado",
+            "consentimento_lgpd_em",
+            "anonimizado_em",
+        ]
         extra_kwargs = {
             "cpf": {"validators": [validar_cpf]},
             "cnpj": {"validators": [validar_cnpj]},
@@ -473,6 +523,7 @@ class ProcessoSerializer(EscopoDoEscritorioMixin, serializers.ModelSerializer):
             "oab_advogado_adverso",
             "percentual_honorarios_sucumbencia",
             "valor_estimado_honorarios_sucumbencia",
+            "sigiloso",
             "datajud_sincronizado_em",
             "proximo_prazo",
             "criado_em",

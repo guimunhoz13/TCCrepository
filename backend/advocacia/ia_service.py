@@ -3,6 +3,7 @@ import os
 from django.conf import settings
 
 from .models import Cliente, Processo
+from .sigilo import esconder_sigilosos
 
 
 TAMANHO_MAXIMO_MENSAGEM_IA = 4000
@@ -62,7 +63,7 @@ def montar_contexto_sistema(usuario, cliente_id=None, processo_id=None):
     if processo_id:
         try:
             processo = (
-                Processo.objects
+                esconder_sigilosos(Processo.objects, usuario)
                 .select_related("cliente", "advogado__usuario")
                 .prefetch_related(
                     "movimentacoes",

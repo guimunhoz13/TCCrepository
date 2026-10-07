@@ -22,6 +22,8 @@ from advocacia.emails import (
     montar_email_resumo_semanal,
 )
 from advocacia.models import Agenda, NotificacaoEnviada, Parcela, Processo, Usuario
+from advocacia.permissoes import VER, pode
+from advocacia.sigilo import esconder_sigilosos
 
 logger = logging.getLogger(__name__)
 
@@ -90,12 +92,15 @@ class Command(BaseCommand):
         limite = agora + timezone.timedelta(days=preferencias.antecedencia_audiencia)
 
         eventos = (
-            Agenda.objects.filter(
-                escritorio=usuario.escritorio,
-                cumprido=False,
-                tipo__in=tipos,
-                data_evento__gte=agora,
-                data_evento__lte=limite,
+            esconder_sigilosos(
+                Agenda.objects.filter(
+                    escritorio=usuario.escritorio,
+                    cumprido=False,
+                    tipo__in=tipos,
+                    data_evento__gte=agora,
+                    data_evento__lte=limite,
+                ),
+                usuario,
             )
             .select_related("processo")
             .order_by("data_evento")
@@ -132,30 +137,43 @@ class Command(BaseCommand):
         ha_sete_dias = agora - timezone.timedelta(days=7)
 
         eventos = list(
-            Agenda.objects.filter(
-                escritorio=escritorio,
-                cumprido=False,
-                data_evento__gte=agora,
-                data_evento__lte=em_sete_dias,
+            esconder_sigilosos(
+                Agenda.objects.filter(
+                    escritorio=escritorio,
+                    cumprido=False,
+                    data_evento__gte=agora,
+                    data_evento__lte=em_sete_dias,
+                ),
+                usuario,
             )
             .select_related("processo")
             .order_by("data_evento")
         )
 
         processos_novos = list(
-            Processo.objects.filter(escritorio=escritorio, criado_em__gte=ha_sete_dias).order_by("-criado_em")
+            esconder_sigilosos(
+                Processo.objects.filter(escritorio=escritorio, criado_em__gte=ha_sete_dias),
+                usuario,
+            ).order_by("-criado_em")
         )
 
-        parcelas = list(
-            Parcela.objects.filter(
-                contrato__escritorio=escritorio,
-                status="pendente",
-                data_vencimento__gte=agora.date(),
-                data_vencimento__lte=em_sete_dias.date(),
+        # Cobranças só no resumo de quem tem acesso ao financeiro.
+        parcelas = []
+        if pode(usuario, "financeiro", VER):
+            parcelas = list(
+                esconder_sigilosos(
+                    Parcela.objects.filter(
+                        contrato__escritorio=escritorio,
+                        status="pendente",
+                        data_vencimento__gte=agora.date(),
+                        data_vencimento__lte=em_sete_dias.date(),
+                    ),
+                    usuario,
+                    "contrato__processo",
+                )
+                .select_related("contrato__processo")
+                .order_by("data_vencimento")
             )
-            .select_related("contrato__processo")
-            .order_by("data_vencimento")
-        )
 
         assunto, corpo_html, corpo_texto = montar_email_resumo_semanal(
             usuario.nome, escritorio.nome, eventos, processos_novos, parcelas
