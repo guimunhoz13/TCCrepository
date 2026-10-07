@@ -12,9 +12,9 @@ from django.test import override_settings
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from .models import InscricaoPush, Tarefa
-from .push import gerar_chaves, notificar_usuario
-from .tests import _EquipeDoEscritorio
+from ..models import InscricaoPush, Tarefa
+from ..push import gerar_chaves, notificar_usuario
+from .base import _EquipeDoEscritorio
 
 PUBLICA, PRIVADA = gerar_chaves()
 

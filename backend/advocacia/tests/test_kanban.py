@@ -4,8 +4,8 @@ from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from .models import Tarefa
-from .tests import _EquipeDoEscritorio
+from ..models import Tarefa
+from .base import _EquipeDoEscritorio
 
 
 class QuadroDeTarefasAPITestCase(_EquipeDoEscritorio, APITestCase):

@@ -4,9 +4,9 @@ from django.test import TestCase
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from .models import Advogado, ConfiguracaoEscritorio, Contrato, Parcela
-from .pix import ErroPix, crc16, montar_payload, normalizar_chave
-from .tests import _EquipeDoEscritorio, _criar_usuario
+from ..models import Advogado, Contrato, Parcela
+from ..pix import ErroPix, crc16, montar_payload, normalizar_chave
+from .base import _criar_usuario, _EquipeDoEscritorio
 
 
 def _campos(payload):

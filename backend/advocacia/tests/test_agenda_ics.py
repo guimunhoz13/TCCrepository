@@ -5,9 +5,9 @@ from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from .calendario import _dobrar, _escapar, gerar_ics
-from .models import Advogado, Agenda
-from .tests import _EquipeDoEscritorio, _criar_usuario
+from ..calendario import _dobrar, _escapar, gerar_ics
+from ..models import Advogado, Agenda
+from .base import _criar_usuario, _EquipeDoEscritorio
 
 
 class FormatoICalendarTestCase(TestCase):

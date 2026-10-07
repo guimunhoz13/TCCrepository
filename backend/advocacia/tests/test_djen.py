@@ -8,10 +8,10 @@ from django.test import TestCase
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from .djen import detectar_prazo, interpretar_item, separar_oab
-from .feriados import prazo_de_publicacao
-from .models import Advogado, Agenda, Intimacao
-from .tests import _EquipeDoEscritorio, _criar_usuario
+from ..djen import detectar_prazo, interpretar_item, separar_oab
+from ..feriados import prazo_de_publicacao
+from ..models import Advogado, Agenda, Intimacao
+from .base import _criar_usuario, _EquipeDoEscritorio
 
 NUMERO = "0001234-56.2026.8.26.0100"
 

@@ -6,9 +6,9 @@ from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from .models import Agenda, Movimentacao
-from .resumo_cliente import traduzir_andamento
-from .tests import _EquipeDoEscritorio, _resposta_openai
+from ..models import Agenda, Movimentacao
+from ..resumo_cliente import traduzir_andamento
+from .base import _EquipeDoEscritorio, _resposta_openai
 
 
 class ResumoParaClienteAPITestCase(_EquipeDoEscritorio, APITestCase):
