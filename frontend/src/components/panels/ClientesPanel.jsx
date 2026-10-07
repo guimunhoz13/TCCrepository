@@ -16,6 +16,7 @@ import Avatar from "@/components/ui/Avatar";
 import { abrirWhatsApp, montarMensagemCliente } from "@/utils/whatsapp";
 import { formatarCEP, formatarCNPJ, formatarCPF, formatarRG, formatarTelefone } from "@/utils/mascaras";
 import { buscarEnderecoPorCep } from "@/utils/cep";
+import { avisoDaEmpresa, buscarEmpresaPorCnpj, enderecoDaEmpresa } from "@/utils/cnpj";
 import {
   getClientes,
   createCliente,
@@ -64,6 +65,8 @@ export default function ClientesPanel() {
   const [formulario, setFormulario] = useState(formularioInicial);
   const [cep, setCep] = useState("");
   const [buscandoCep, setBuscandoCep] = useState(false);
+  const [buscandoCnpj, setBuscandoCnpj] = useState(false);
+  const [avisoCnpj, setAvisoCnpj] = useState("");
   const [foto, setFoto] = useState(null);
   const [documentoIdentidade, setDocumentoIdentidade] = useState(null);
   const [clienteEditando, setClienteEditando] = useState(null);
@@ -105,7 +108,29 @@ export default function ClientesPanel() {
     setFoto(null);
     setDocumentoIdentidade(null);
     setCep("");
+    setAvisoCnpj("");
     setPanelTab("novo");
+  }
+
+  // Preenche só o que ainda está vazio: nunca sobrescreve o que foi digitado.
+  async function handleBuscarCnpj(valor) {
+    if ((valor || "").replace(/\D/g, "").length !== 14) return;
+    try {
+      setBuscandoCnpj(true);
+      const empresa = await buscarEmpresaPorCnpj(valor);
+      setAvisoCnpj(avisoDaEmpresa(empresa));
+      if (!empresa) return;
+      setFormulario((atual) => ({
+        ...atual,
+        nome: atual.nome || empresa.razaoSocial,
+        email: atual.email || empresa.email,
+        telefone: atual.telefone || (empresa.telefone ? formatarTelefone(empresa.telefone) : ""),
+        endereco: atual.endereco || enderecoDaEmpresa(empresa),
+      }));
+      if (empresa.cep) setCep((atual) => atual || formatarCEP(empresa.cep));
+    } finally {
+      setBuscandoCnpj(false);
+    }
   }
 
   async function handleBuscarCep(valor) {
@@ -131,6 +156,7 @@ export default function ClientesPanel() {
     setClienteEditando(null);
     setFormulario(formularioInicial);
     setCep("");
+    setAvisoCnpj("");
     setFoto(null);
     setDocumentoIdentidade(null);
     setPanelTab("lista");
@@ -173,6 +199,7 @@ export default function ClientesPanel() {
 
       setFormulario(formularioInicial);
       setCep("");
+      setAvisoCnpj("");
       setFoto(null);
       setDocumentoIdentidade(null);
       setClienteEditando(null);
@@ -235,8 +262,15 @@ export default function ClientesPanel() {
                     cnpj: formatarCNPJ(e.target.value),
                   })
                 }
+                onBlur={(e) => handleBuscarCnpj(e.target.value)}
+                aria-describedby="aviso-cnpj"
                 required
               />
+              {(buscandoCnpj || avisoCnpj) && (
+                <span id="aviso-cnpj" role="status" style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>
+                  {buscandoCnpj ? "Buscando dados da empresa..." : avisoCnpj}
+                </span>
+              )}
             </div>
           ) : (
             <div className="form-field">

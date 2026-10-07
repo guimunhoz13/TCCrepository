@@ -16,7 +16,7 @@ const csp = [
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' https://fonts.gstatic.com",
   `img-src 'self' blob: data: ${API_ORIGIN}`,
-  `connect-src 'self' ${API_ORIGIN} https://viacep.com.br${isDev ? " ws: wss:" : ""}`,
+  `connect-src 'self' ${API_ORIGIN} https://viacep.com.br https://brasilapi.com.br${isDev ? " ws: wss:" : ""}`,
   `frame-src 'self' blob: ${API_ORIGIN}`,
   "worker-src 'self'",
   "manifest-src 'self'",
