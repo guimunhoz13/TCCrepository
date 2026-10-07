@@ -5,7 +5,7 @@ O documento `RT-TDS-2026-39` é gerado a partir de `gerar_rt.js` (conteúdo),
 biblioteca `docx`:
 
 ```bash
-cd docs/tcc && npm install docx && node main.js   # gera RT-TDS-2026-39_v1.1.docx
+cd docs/tcc && npm install docx && node main.js   # gera RT-TDS-2026-39_v1.2.docx
 ```
 
 Os diagramas ficam em `diagramas/*.puml` (PlantUML) e são renderizados com
@@ -20,8 +20,8 @@ renderizado (precisa de LibreOffice e poppler-utils):
 
 ```bash
 node main.js
-soffice --headless --convert-to pdf RT-TDS-2026-39_v1.1.docx
-python3 paginar.py RT-TDS-2026-39_v1.1.pdf   # grava paginas.json
+soffice --headless --convert-to pdf RT-TDS-2026-39_v1.2.docx
+python3 paginar.py RT-TDS-2026-39_v1.2.pdf   # grava paginas.json
 node main.js                                 # gera de novo com as páginas certas
 ```
 
@@ -42,3 +42,15 @@ ponta a ponta no CI. Foram revistos o resumo, a introdução, o backlog
 uso, classes, banco de dados, contexto, containers, componentes e sequência
 do DJEN), os protótipos (seções 6.14 a 6.25), a arquitetura (seção 7.4,
 integração contínua), os trabalhos futuros, a conclusão e as referências.
+
+## Versão 1.2
+
+Incorpora os planos de assinatura: o Gratuito, sem pagamento, para qualquer
+escritório, e o Básico e o Profissional com mais limites e recursos. Foram
+revistos o resumo, a descrição da solução, os objetivos, o escopo, o Business
+Model Canvas (modelo freemium), o backlog (RF49), as regras de negócio (RN35),
+os casos de uso (ator Visitante, Consultar Plano e Uso dos Limites e Verificar
+Limite do Plano; fluxos alternativos em 4.2.2 e 4.2.4), o diagrama de classes,
+os protótipos (seção 6.26), os componentes, os trabalhos futuros (cobrança
+online das assinaturas), a conclusão e as contagens de testes (445 da API e 200
+de componentes).

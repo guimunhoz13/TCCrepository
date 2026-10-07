@@ -10,6 +10,7 @@ actor "Estagiário" as Estagiario
 actor Financeiro
 actor "Secretária" as Secretaria
 actor "Administrador do Sistema" as SuperAdmin
+actor "Visitante" as Visitante
 
 Administrador --|> Usuario
 Advogado --|> Usuario
@@ -40,6 +41,9 @@ rectangle "Sistema Web de Advocacia" {
   usecase "Atualizar o Cliente\nsobre o Andamento" as UC21
   usecase "Acompanhar Tarefas\n(Quadro Kanban)" as UC22
   usecase "Sincronizar Agenda\n(.ics / assinatura)" as UC23
+  usecase "Cadastrar Escritório\n(plano Gratuito)" as UC24
+  usecase "Consultar Plano e\nUso dos Limites" as UC25
+  usecase "Verificar Limite\ndo Plano" as UC26
 }
 
 rectangle "Painel Mestre (Plataforma)" {
@@ -84,5 +88,11 @@ UC15 ..> UC1 : <<include>>
 UC19 ..> UC5 : <<include>>
 UC7 <. UC20 : <<extend>>
 UC9 <. UC21 : <<extend>>
+Visitante -- UC24
+Usuario -- UC25
+UC3 ..> UC26 : <<include>>
+UC16 ..> UC26 : <<include>>
+UC12 ..> UC26 : <<include>>
+UC19 ..> UC26 : <<include>>
 
 @enduml
