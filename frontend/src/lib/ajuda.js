@@ -94,7 +94,7 @@ export const SECOES_AJUDA = [
       {
         titulo: "Novo cliente",
         texto:
-          "Pessoa física (com CPF) ou jurídica (com CNPJ), e-mail, telefone e endereço — informando o CEP, rua, bairro, cidade e UF são preenchidos sozinhos. O CPF precisa ter 11 dígitos e o CNPJ 14, e nenhum dos dois pode repetir dentro do mesmo escritório.",
+          "Pessoa física (com CPF) ou jurídica (com CNPJ), e-mail, telefone e endereço — informando o CEP, rua, bairro, cidade e UF são preenchidos sozinhos. Para pessoa jurídica, ao informar o CNPJ, razão social, e-mail, telefone e endereço vêm do cadastro da Receita Federal, só nos campos que estiverem vazios — confira antes de salvar. O CPF precisa ter 11 dígitos e o CNPJ 14, e nenhum dos dois pode repetir dentro do mesmo escritório.",
       },
       {
         titulo: "O que dá para fazer em cada linha",
