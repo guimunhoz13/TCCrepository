@@ -15,7 +15,7 @@ const CODIGO = readFileSync(
 );
 
 /** Carrega o service worker num escopo falso e devolve os handlers dele. */
-function carregarServiceWorker() {
+function carregarServiceWorker(extras = {}) {
   const handlers = {};
   const escopo = {
     addEventListener: (nome, fn) => {
@@ -39,6 +39,7 @@ function carregarServiceWorker() {
     Response,
     Promise,
   };
+  Object.assign(escopo, extras);
   contexto.self = escopo;
 
   vm.createContext(contexto);
@@ -72,8 +73,14 @@ describe("service worker", () => {
     handlers = carregarServiceWorker();
   });
 
-  test("registra os três ciclos de vida", () => {
-    expect(Object.keys(handlers).sort()).toEqual(["activate", "fetch", "install"]);
+  test("registra os ciclos de vida e os eventos de notificação", () => {
+    expect(Object.keys(handlers).sort()).toEqual([
+      "activate",
+      "fetch",
+      "install",
+      "notificationclick",
+      "push",
+    ]);
   });
 
   test("nunca intercepta chamadas de API", () => {
@@ -110,5 +117,45 @@ describe("service worker", () => {
     expect(
       despachar(handlers, req("https://lexoffice.app/dashboard", { mode: "navigate" }))
     ).toBe(true);
+  });
+
+  test("mostra a notificação push com título, texto e destino", async () => {
+    const mostradas = [];
+    const sw = carregarServiceWorker({
+      registration: { showNotification: (titulo, opcoes) => mostradas.push({ titulo, opcoes }) },
+    });
+    let espera;
+    sw.push({
+      data: { json: () => ({ titulo: "Prazo amanhã", corpo: "Contestação", url: "/dashboard", tag: "l-1" }) },
+      waitUntil: (promessa) => {
+        espera = promessa;
+      },
+    });
+    await espera;
+    expect(mostradas).toHaveLength(1);
+    expect(mostradas[0].titulo).toBe("Prazo amanhã");
+    expect(mostradas[0].opcoes.body).toBe("Contestação");
+    expect(mostradas[0].opcoes.tag).toBe("l-1");
+    expect(mostradas[0].opcoes.data.url).toBe("/dashboard");
+  });
+
+  test("clique na notificação abre o sistema quando não há aba aberta", async () => {
+    const abertas = [];
+    const sw = carregarServiceWorker({
+      clients: {
+        claim: () => Promise.resolve(),
+        matchAll: () => Promise.resolve([]),
+        openWindow: (url) => abertas.push(url),
+      },
+    });
+    let espera;
+    sw.notificationclick({
+      notification: { close: () => {}, data: { url: "/dashboard" } },
+      waitUntil: (promessa) => {
+        espera = promessa;
+      },
+    });
+    await espera;
+    expect(abertas).toEqual(["https://lexoffice.app/dashboard"]);
   });
 });

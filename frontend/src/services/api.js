@@ -580,6 +580,23 @@ export async function marcarIntimacaoComoLida(id) {
   return request(`/intimacoes/${id}/`, { method: "PATCH", body: JSON.stringify({ lida: true }) });
 }
 
+// Notificações push.
+export async function getSituacaoPush() {
+  return request("/push/");
+}
+
+export async function inscreverPush(inscricao) {
+  return request("/push/inscrever/", { method: "POST", body: JSON.stringify(inscricao) });
+}
+
+export async function cancelarPush(endpoint) {
+  return request("/push/cancelar/", { method: "POST", body: JSON.stringify({ endpoint }) });
+}
+
+export async function testarPush() {
+  return request("/push/testar/", { method: "POST" });
+}
+
 export async function getRelatorioCliente(clienteId) {
   return request(`/configuracoes/relatorio/cliente/${clienteId}/`);
 }

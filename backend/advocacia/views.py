@@ -20,6 +20,7 @@ from .calendario import eventos_para_calendario, gerar_ics
 from .pix import ErroPix, pix_da_parcela
 from .resumo_cliente import gerar_resumo_para_cliente
 from .djen import importar_intimacoes
+from .push import notificar_usuario, push_ativo
 from .modelos_documento import VARIAVEIS_DISPONIVEIS, montar_contexto, preencher
 from .datajud import ErroDataJud, consultar_processo, importar_movimentacoes
 from .autenticacao import conta_ativa
@@ -82,6 +83,7 @@ from .models import (
     TokenRedefinicaoSenha,
     TokenVerificacaoEmail,
     Intimacao,
+    InscricaoPush,
 )
 
 from .serializers import (
@@ -3260,11 +3262,20 @@ def _avisar_responsavel(request, tarefa, escritorio, autor):
 
     if autor is not None and responsavel.pk == autor.pk:
         return
-    if not responsavel.email or not responsavel.ativo:
+    if not responsavel.ativo:
         return
 
     preferencias = getattr(responsavel, "preferencias", None)
     if preferencias is not None and not preferencias.notificacao_tarefa_atribuida:
+        return
+
+    notificar_usuario(
+        responsavel,
+        "Nova tarefa para você",
+        tarefa.titulo + (f" — prazo {tarefa.prazo:%d/%m}" if tarefa.prazo else ""),
+        tag=f"tarefa-{tarefa.pk}",
+    )
+    if not responsavel.email:
         return
 
     linhas = [("Tarefa", tarefa.titulo), ("Prioridade", tarefa.get_prioridade_display())]
@@ -3610,3 +3621,78 @@ class IntimacaoViewSet(EscritorioScopedMixin, viewsets.ModelViewSet):
             },
             status=status.HTTP_200_OK if not resultado["erros"] or novas else status.HTTP_502_BAD_GATEWAY,
         )
+
+
+# =========================================================
+# NOTIFICAÇÕES PUSH
+# =========================================================
+
+class PushView(APIView):
+    """Situação do push para quem está logado: se o servidor tem chaves,
+    a chave pública para o navegador se inscrever e quantos aparelhos
+    a pessoa já inscreveu."""
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        usuario = get_usuario_from_request(request)
+        return Response({
+            "ativo": push_ativo(),
+            "chave_publica": settings.VAPID_PUBLIC_KEY if push_ativo() else "",
+            "aparelhos": usuario.inscricoes_push.count() if usuario else 0,
+        })
+
+
+class PushInscreverView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        usuario = get_usuario_from_request(request)
+        if not push_ativo():
+            return Response(
+                {"detail": "As notificações push não estão configuradas neste servidor."},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+        endpoint = str(request.data.get("endpoint") or "")
+        chaves = request.data.get("keys") or {}
+        if not endpoint.startswith("https://") or not chaves.get("p256dh") or not chaves.get("auth"):
+            return Response({"detail": "Inscrição inválida."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # O mesmo aparelho pode trocar de dono (outra pessoa entra no
+        # mesmo navegador): a inscrição passa a ser de quem está logado.
+        InscricaoPush.objects.update_or_create(
+            endpoint=endpoint[:1000],
+            defaults={
+                "usuario": usuario,
+                "p256dh": str(chaves["p256dh"])[:255],
+                "auth": str(chaves["auth"])[:255],
+                "navegador": request.META.get("HTTP_USER_AGENT", "")[:255],
+            },
+        )
+        return Response({"aparelhos": usuario.inscricoes_push.count()}, status=status.HTTP_201_CREATED)
+
+
+class PushCancelarView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        usuario = get_usuario_from_request(request)
+        InscricaoPush.objects.filter(usuario=usuario, endpoint=request.data.get("endpoint", "")).delete()
+        return Response({"aparelhos": usuario.inscricoes_push.count()})
+
+
+class PushTestarView(APIView):
+    permission_classes = [IsAuthenticated]
+    throttle_scope = "sensivel"
+
+    def post(self, request):
+        usuario = get_usuario_from_request(request)
+        enviados = notificar_usuario(
+            usuario, "LexOffice", "Notificações funcionando neste aparelho.", tag="teste"
+        )
+        if not enviados:
+            return Response(
+                {"detail": "Nenhum aparelho recebeu. Ative as notificações neste aparelho primeiro."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        return Response({"detail": f"Notificação enviada para {enviados} aparelho(s)."})

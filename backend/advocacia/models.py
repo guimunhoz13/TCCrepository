@@ -1179,3 +1179,21 @@ class Intimacao(models.Model):
 
     def __str__(self):
         return f"{self.tipo_comunicacao} — {self.numero_processo}"
+
+
+class InscricaoPush(models.Model):
+    """Aparelho (navegador ou app instalado) que aceitou notificações push.
+
+    Uma pessoa pode ter várias: o computador do escritório e o celular. A
+    inscrição é apagada quando o serviço de push avisa que expirou.
+    """
+
+    usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE, related_name="inscricoes_push")
+    endpoint = models.URLField(max_length=1000, unique=True)
+    p256dh = models.CharField(max_length=255)
+    auth = models.CharField(max_length=255)
+    navegador = models.CharField(max_length=255, blank=True, default="")
+    criado_em = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Push de {self.usuario.nome}"

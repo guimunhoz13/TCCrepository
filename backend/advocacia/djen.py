@@ -233,6 +233,17 @@ def registrar_intimacao(escritorio, advogado, dados):
     )
     intimacao.evento_agenda = _lancar_prazo_na_agenda(intimacao)
     intimacao.save(update_fields=["evento_agenda"])
+
+    from .push import notificar_usuario
+
+    if advogado is not None:
+        notificar_usuario(
+            advogado.usuario,
+            f"Nova {intimacao.tipo_comunicacao.lower()} — {intimacao.numero_processo}",
+            f"{intimacao.tribunal}: prazo até {intimacao.prazo_final:%d/%m}"
+            + (" (estimado)" if intimacao.prazo_estimado else ""),
+            tag=f"intimacao-{intimacao.pk}",
+        )
     return intimacao
 
 

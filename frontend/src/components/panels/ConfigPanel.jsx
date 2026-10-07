@@ -6,8 +6,9 @@ import { useConfirmacao } from "@/contexts/ConfirmacaoContext";
 import {
   X, User, Building2, Bell, Palette, Database, CreditCard,
   Eye, EyeOff, Trash2, Download, FileBarChart, Mail, MessageCircle, History,
-  ShieldCheck, UserPlus,
+  ShieldCheck, UserPlus, BellRing,
 } from "lucide-react";
+import { cancelarEsteAparelho, inscreverEsteAparelho, inscricaoAtual, pushSuportado } from "@/utils/push";
 import { usePermissoes } from "@/hooks/usePermissoes";
 import { usePanel, PANELS } from "@/contexts/PanelContext";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -36,6 +37,10 @@ import {
   registrarMembro,
   definirPerfilDoUsuario,
   redefinirDoisFatoresDoUsuario,
+  getSituacaoPush,
+  inscreverPush,
+  cancelarPush,
+  testarPush,
 } from "@/services/api";
 import { gerarHtmlRelatorioCliente, gerarHtmlRelatorioProcesso, abrirRelatorio } from "@/utils/relatorio";
 import { abrirWhatsApp, montarMensagemCliente, montarMensagemProcesso } from "@/utils/whatsapp";
@@ -641,6 +646,7 @@ function NotificacoesTab({ preferencias, setDados, feedback }) {
     catch (e) { feedback(e.message, true); }
   }
   return <div className="settings-stack">
+    <PushSection feedback={feedback} />
     <Section title="E-mail" description="Escolha os avisos que deseja receber.">
       <ToggleRow label="Novo processo cadastrado" checked={p.notificacao_novo_processo} onChange={(v) => salvar({ notificacao_novo_processo: v })}/>
       <ToggleRow label="Novo documento anexado" checked={p.notificacao_novo_documento} onChange={(v) => salvar({ notificacao_novo_documento: v })}/>
@@ -656,6 +662,88 @@ function NotificacoesTab({ preferencias, setDados, feedback }) {
       <ToggleRow label="Resumo semanal por e-mail" checked={p.resumo_semanal} onChange={(v) => salvar({ resumo_semanal: v })}/>
     </Section>
   </div>;
+}
+
+/**
+ * Notificações no celular e no navegador. Cada aparelho se inscreve
+ * separadamente; o que chega por push segue as mesmas escolhas do e-mail
+ * (tarefa atribuída, lembretes de prazo e audiência) e as intimações novas.
+ */
+function PushSection({ feedback }) {
+  const situacao = useRecurso(getSituacaoPush);
+  const aparelho = useRecurso(inscricaoAtual);
+  const [ocupado, setOcupado] = useState(false);
+  const servidor = situacao.dados;
+  const inscritoAqui = Boolean(aparelho.dados);
+
+  async function executar(acao, mensagem) {
+    try {
+      setOcupado(true);
+      await acao();
+      if (mensagem) feedback(mensagem);
+      situacao.recarregar();
+      aparelho.recarregar();
+    } catch (e) {
+      feedback(e.message, true);
+    } finally {
+      setOcupado(false);
+    }
+  }
+
+  const ativar = () =>
+    executar(async () => {
+      const inscricao = await inscreverEsteAparelho(servidor.chave_publica);
+      await inscreverPush(inscricao);
+    }, "Notificações ativadas neste aparelho.");
+
+  const desativar = () =>
+    executar(async () => {
+      const endpoint = await cancelarEsteAparelho();
+      if (endpoint) await cancelarPush(endpoint);
+    }, "Notificações desativadas neste aparelho.");
+
+  const testar = () =>
+    executar(async () => {
+      const res = await testarPush();
+      feedback(res.detail);
+    });
+
+  let conteudo;
+  if (situacao.carregando || aparelho.carregando) {
+    conteudo = <p className="dica-campo">Verificando…</p>;
+  } else if (!servidor?.ativo) {
+    conteudo = <p className="dica-campo">O servidor ainda não tem as chaves de notificação configuradas (VAPID). Peça ao administrador do sistema.</p>;
+  } else if (!pushSuportado()) {
+    conteudo = <p className="dica-campo">Este navegador não aceita notificações. No iPhone, instale o LexOffice na tela de início (Compartilhar › Adicionar à Tela de Início) e abra por lá.</p>;
+  } else {
+    conteudo = (
+      <>
+        <p className="status-2fa" style={{ color: inscritoAqui ? undefined : "var(--text-secondary)" }}>
+          <BellRing size={16} /> {inscritoAqui ? "Ativas neste aparelho." : "Desligadas neste aparelho."}
+          {servidor.aparelhos > 0 && ` Você tem ${servidor.aparelhos} aparelho(s) inscrito(s).`}
+        </p>
+        <Actions>
+          {inscritoAqui ? (
+            <>
+              <button className="btn btn-secondary btn-sm" onClick={testar} disabled={ocupado}>Enviar notificação de teste</button>
+              <button className="btn btn-secondary btn-sm" onClick={desativar} disabled={ocupado}>Desativar neste aparelho</button>
+            </>
+          ) : (
+            <button className="btn btn-primary btn-sm" onClick={ativar} disabled={ocupado}><BellRing size={14} />Ativar neste aparelho</button>
+          )}
+        </Actions>
+      </>
+    );
+  }
+
+  return (
+    <Section
+      title="No celular e no navegador"
+      description="Avisos na hora, mesmo com o sistema fechado: intimação nova, tarefa atribuída e lembretes de prazo e audiência."
+    >
+      {conteudo}
+    </Section>
+  );
 }
 
 function AparenciaTab({ preferencias, setDados, feedback, theme, setTheme, atualizarPreferenciasGlobal, t }) {

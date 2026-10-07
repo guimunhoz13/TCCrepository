@@ -96,3 +96,39 @@ self.addEventListener("fetch", (evento) => {
     );
   }
 });
+
+// Notificações push: o servidor manda {titulo, corpo, url, tag} cifrado;
+// o navegador decifra e entrega aqui, mesmo com o sistema fechado.
+self.addEventListener("push", (evento) => {
+  let dados = {};
+  try {
+    dados = evento.data ? evento.data.json() : {};
+  } catch {
+    dados = { corpo: evento.data ? evento.data.text() : "" };
+  }
+  evento.waitUntil(
+    self.registration.showNotification(dados.titulo || "LexOffice", {
+      body: dados.corpo || "",
+      icon: "/icon-192.png",
+      badge: "/icon-192.png",
+      tag: dados.tag,
+      data: { url: dados.url || "/dashboard" },
+    })
+  );
+});
+
+// Clique na notificação: volta para a aba do sistema que já estiver aberta
+// ou abre uma nova no endereço indicado.
+self.addEventListener("notificationclick", (evento) => {
+  evento.notification.close();
+  const destino = new URL(evento.notification.data?.url || "/dashboard", self.location.origin).href;
+  evento.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((abas) => {
+      const aba = abas.find((cliente) => cliente.url.startsWith(self.location.origin));
+      if (aba) {
+        return aba.focus().then(() => (aba.navigate ? aba.navigate(destino) : aba));
+      }
+      return self.clients.openWindow(destino);
+    })
+  );
+});

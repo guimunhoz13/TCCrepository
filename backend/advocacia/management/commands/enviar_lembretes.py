@@ -23,6 +23,7 @@ from advocacia.emails import (
 )
 from advocacia.models import Agenda, NotificacaoEnviada, Parcela, Processo, Usuario
 from advocacia.permissoes import VER, pode
+from advocacia.push import notificar_usuario
 from advocacia.sigilo import esconder_sigilosos
 
 logger = logging.getLogger(__name__)
@@ -122,6 +123,14 @@ class Command(BaseCommand):
 
             if self._entregar(usuario, assunto, corpo_html, corpo_texto, "lembrete_evento", chave, evento):
                 enviados += 1
+                if not self.dry_run:
+                    quando = "hoje" if dias <= 0 else ("amanhã" if dias == 1 else f"em {dias} dias")
+                    notificar_usuario(
+                        usuario,
+                        f"{'Prazo' if evento.tipo == 'prazo' else 'Compromisso'} {quando}",
+                        evento.titulo,
+                        tag=f"lembrete-{evento.pk}",
+                    )
 
         return enviados
 

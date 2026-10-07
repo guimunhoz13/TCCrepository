@@ -59,6 +59,13 @@ DATAJUD_URL_BASE = os.getenv("DATAJUD_URL_BASE", "")
 # chave). Configurável para apontar a um servidor de teste.
 DJEN_API_URL = os.getenv("DJEN_API_URL", "")
 
+# Notificações push (Web Push/VAPID). Gere o par com
+# `python manage.py gerar_chaves_vapid`. Sem as chaves, o push fica
+# desligado e o sistema segue só com e-mail.
+VAPID_PUBLIC_KEY = os.getenv("VAPID_PUBLIC_KEY", "")
+VAPID_PRIVATE_KEY = os.getenv("VAPID_PRIVATE_KEY", "")
+VAPID_EMAIL = os.getenv("VAPID_EMAIL", "")
+
 
 # APPLICATIONS
 
