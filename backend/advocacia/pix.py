@@ -17,14 +17,6 @@ from decimal import Decimal
 
 from .dois_fatores import qr_code_svg
 
-TIPOS_CHAVE = (
-    ("cpf_cnpj", "CPF ou CNPJ"),
-    ("email", "E-mail"),
-    ("telefone", "Celular"),
-    ("aleatoria", "Chave aleatória"),
-)
-
-
 class ErroPix(Exception):
     """Dado insuficiente para montar o PIX, com mensagem para o usuário."""
 

@@ -135,3 +135,59 @@ class FeriadosLocaisAPITestCase(_EquipeDoEscritorio, APITestCase):
         self.assertEqual(intimacao.data_publicacao, date(2026, 7, 10))
         _, sem_feriado = prazo_de_publicacao(date(2026, 7, 8), 15)
         self.assertGreater(intimacao.prazo_final, sem_feriado)
+
+
+class CalendarioDeFeriadosAPITestCase(_EquipeDoEscritorio, APITestCase):
+    """O calendário da tela mostra os mesmos feriados usados no cálculo."""
+
+    def setUp(self):
+        self._equipe()
+        self._como("secretaria")
+
+    def _ano(self, ano=2026):
+        resposta = self.client.get(f"/api/agenda/feriados/?ano={ano}")
+        self.assertEqual(resposta.status_code, status.HTTP_200_OK, resposta.data)
+        return resposta.data
+
+    def test_lista_os_feriados_nacionais_com_nome(self):
+        feriados = {f["data"]: f for f in self._ano()["feriados"]}
+        self.assertEqual(feriados["2026-12-25"]["nome"], "Natal")
+        self.assertEqual(feriados["2026-12-25"]["tipo"], "nacional")
+        # Páscoa de 2026 em 05/04: Carnaval em 16 e 17/02, Corpus Christi em 04/06.
+        self.assertEqual(feriados["2026-02-16"]["nome"], "Carnaval")
+        self.assertEqual(feriados["2026-06-04"]["nome"], "Corpus Christi")
+        self.assertEqual(len([f for f in feriados.values() if f["tipo"] == "nacional"]), 13)
+
+    def test_inclui_os_feriados_locais_do_escritorio(self):
+        FeriadoLocal.objects.create(
+            escritorio=self.escritorio, data=date(2025, 7, 9), descricao="Revolução Constitucionalista", anual=True
+        )
+        FeriadoLocal.objects.create(escritorio=self.escritorio, data=date(2027, 3, 3), descricao="Outro ano")
+        locais = [f for f in self._ano()["feriados"] if f["tipo"] == "local"]
+        self.assertEqual(locais, [{"data": "2026-07-09", "nome": "Revolução Constitucionalista", "tipo": "local"}])
+
+    def test_feriado_local_na_data_de_um_nacional_nao_aparece_duas_vezes(self):
+        FeriadoLocal.objects.create(escritorio=self.escritorio, data=date(2026, 12, 25), descricao="Repetido")
+        natal = [f for f in self._ano()["feriados"] if f["data"] == "2026-12-25"]
+        self.assertEqual(len(natal), 1)
+
+    def test_29_de_fevereiro_anual_nao_quebra_ano_comum(self):
+        FeriadoLocal.objects.create(escritorio=self.escritorio, data=date(2028, 2, 29), descricao="Bissexto", anual=True)
+        self.assertFalse(any(f["nome"] == "Bissexto" for f in self._ano(2026)["feriados"]))
+        # 2028 não serve: 29/02/2028 é terça de Carnaval.
+        self.assertTrue(any(f["nome"] == "Bissexto" for f in self._ano(2032)["feriados"]))
+
+    def test_informa_o_recesso_forense(self):
+        self.assertEqual(
+            self._ano()["recesso"],
+            [{"inicio": "2026-01-01", "fim": "2026-01-20"}, {"inicio": "2026-12-20", "fim": "2026-12-31"}],
+        )
+
+    def test_ano_invalido(self):
+        self.assertEqual(self.client.get("/api/agenda/feriados/?ano=99999").status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(self.client.get("/api/agenda/feriados/?ano=abc").status_code, status.HTTP_200_OK)
+
+    def test_feriados_de_outro_escritorio_nao_aparecem(self):
+        outro = _criar_escritorio(nome="Outro", cnpj="99888777000166", email="o@o.com")
+        FeriadoLocal.objects.create(escritorio=outro, data=date(2026, 8, 1), descricao="Do outro")
+        self.assertFalse(any(f["nome"] == "Do outro" for f in self._ano()["feriados"]))

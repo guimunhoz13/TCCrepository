@@ -825,6 +825,11 @@ export async function getPlanoAtual() {
 }
 
 // Feriados locais e suspensões de expediente (entram no cálculo de prazos).
+// Feriados nacionais e locais e recesso forense de um ano, para o calendário.
+export async function getFeriadosDoAno(ano) {
+  return request(`/agenda/feriados/${buildQuery({ ano })}`);
+}
+
 export async function getFeriadosLocais() {
   return request("/feriados-locais/");
 }

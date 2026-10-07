@@ -152,7 +152,7 @@ export const SECOES_AJUDA = [
       {
         titulo: "Cálculo em dias úteis",
         texto:
-          "Ao cadastrar um prazo, o sistema calcula a data-limite contando apenas dias úteis, já descontando fins de semana e feriados nacionais, como manda o CPC.",
+          "Ao cadastrar um prazo, o sistema calcula a data-limite contando apenas dias úteis, já descontando fins de semana, feriados nacionais e os feriados locais cadastrados em Agenda › Feriados locais, como manda o CPC. O calendário do painel marca esses feriados e o recesso forense.",
       },
       {
         titulo: "Lembretes por e-mail",

@@ -1109,6 +1109,64 @@ tbody tr:hover {
   background: var(--accent);
 }
 
+/* Feriado em vermelho, como nos calendários de papel; recesso forense com
+   borda tracejada (os prazos ficam suspensos, mas há expediente). */
+.calendar-cell.holiday {
+  color: var(--danger);
+  background: var(--danger-soft);
+  font-weight: 700;
+}
+
+.calendar-cell.recesso {
+  border: 1px dashed var(--border-strong);
+}
+
+.calendar-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  justify-content: center;
+  margin-top: 12px;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.calendar-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.calendar-legend i {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+}
+
+.calendar-legend .legend-holiday {
+  background: var(--danger-soft);
+  border: 1px solid var(--danger);
+}
+
+.calendar-legend .legend-recesso {
+  border: 1px dashed var(--border-strong);
+}
+
+.calendar-legend .legend-event {
+  border-radius: 50%;
+  width: 6px;
+  height: 6px;
+  background: var(--accent);
+}
+
+.calendar-holiday-note {
+  color: var(--danger);
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
 .calendar-cell.today {
   outline: 1.5px solid var(--ink);
   outline-offset: 1px;

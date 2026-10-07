@@ -127,8 +127,9 @@ export default function IntimacoesLista({ ativo, podeEditar }) {
       </div>
       <p className="dica-campo" style={{ marginTop: 0, marginBottom: 14 }}>
         Busca pela OAB de cada advogado no Diário de Justiça Eletrônico Nacional. O prazo
-        conta do primeiro dia útil após a publicação, sem fins de semana, feriados nacionais
-        e recesso forense — confira feriados locais e o texto antes de confiar na data.
+        conta do primeiro dia útil após a publicação, sem fins de semana, feriados nacionais,
+        recesso forense e os feriados locais cadastrados na agenda — confira o texto antes de
+        confiar na data.
       </p>
 
       {lista.erro && <div className="alert alert-error">{lista.erro}</div>}
