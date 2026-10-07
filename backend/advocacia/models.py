@@ -844,6 +844,19 @@ class ConfiguracaoEscritorio(models.Model):
     timezone = models.CharField(max_length=100, default="America/Sao_Paulo")
     formato_data = models.CharField(max_length=10, choices=FORMATOS_DATA, default="dmy")
     retencao_documentos = models.CharField(max_length=30, choices=RETENCOES, default="indeterminado")
+
+    # Recebimento por PIX: cada parcela de contrato ganha QR code e
+    # "copia e cola" com o valor certo (ver pix.py).
+    TIPOS_CHAVE_PIX = (
+        ("cpf_cnpj", "CPF ou CNPJ"),
+        ("email", "E-mail"),
+        ("telefone", "Celular"),
+        ("aleatoria", "Chave aleatória"),
+    )
+    tipo_chave_pix = models.CharField(max_length=10, choices=TIPOS_CHAVE_PIX, blank=True, default="")
+    chave_pix = models.CharField(max_length=77, blank=True, default="")
+    nome_recebedor_pix = models.CharField(max_length=25, blank=True, default="")
+    cidade_pix = models.CharField(max_length=15, blank=True, default="")
     atualizado_em = models.DateTimeField(auto_now=True)
 
     def __str__(self):

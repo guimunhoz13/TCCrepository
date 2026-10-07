@@ -3,14 +3,14 @@
 import { useConfirmacao } from "@/contexts/ConfirmacaoContext";
 import { useAvisos } from "@/contexts/AvisosContext";
 
-import { Fragment, useState } from "react";
+import { Fragment, useCallback, useState } from "react";
 import { useListaPaginada, useRecurso } from "@/hooks/useRecurso";
 import RodapeLista from "@/components/ui/RodapeLista";
 import { usePanel } from "@/contexts/PanelContext";
 import { useDashboardData } from "@/contexts/DashboardDataContext";
 import { usePreferences } from "@/contexts/PreferencesContext";
 import OverlayPanel from "@/components/shell/OverlayPanel";
-import { ChevronDown, ChevronUp, CircleDollarSign, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronUp, CircleDollarSign, QrCode, Trash2 } from "lucide-react";
 import {
   getContratos,
   createContrato,
@@ -20,6 +20,7 @@ import {
   listarTudo,
 } from "@/services/api";
 import LinhasCarregando from "@/components/ui/LinhasCarregando";
+import PixDaParcela from "@/components/panels/PixDaParcela";
 import { usePermissoes } from "@/hooks/usePermissoes";
 
 const formularioInicial = {
@@ -46,6 +47,10 @@ export default function ContratosPanel() {
   const [formulario, setFormulario] = useState(formularioInicial);
   const [contratoExpandido, setContratoExpandido] = useState(null);
   const [salvando, setSalvando] = useState(false);
+  const [parcelaPix, setParcelaPix] = useState(null);
+  // Estável entre renderizações: a Janela fecha no Esc via efeito que
+  // depende dela.
+  const fecharPix = useCallback(() => setParcelaPix(null), []);
   const [erro, setErro] = useState("");
 
   const painelAberto = activePanel === "contratos";
@@ -308,6 +313,18 @@ export default function ContratosPanel() {
                                     </span>
                                   </td>
                                   <td>
+                                    <div className="row-actions">
+                                    {parcela.status !== "pago" && (
+                                      <button
+                                        type="button"
+                                        className="row-action"
+                                        title="Cobrar com PIX"
+                                        aria-label={`Cobrar a parcela ${parcela.numero} com PIX`}
+                                        onClick={() => setParcelaPix(parcela.id)}
+                                      >
+                                        <QrCode size={15} />
+                                      </button>
+                                    )}
                                     {parcela.status !== "pago" && (
                                       pode("financeiro", "editar") && (
                                         <button
@@ -321,6 +338,7 @@ export default function ContratosPanel() {
                                         </button>
                                       )
                                     )}
+                                    </div>
                                   </td>
                                 </tr>
                               ))}
@@ -342,6 +360,7 @@ export default function ContratosPanel() {
           />
         </div>
       )}
+      {parcelaPix && <PixDaParcela parcelaId={parcelaPix} onFechar={fecharPix} />}
     </OverlayPanel>
   );
 }

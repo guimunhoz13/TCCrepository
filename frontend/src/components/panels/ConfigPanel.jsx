@@ -437,8 +437,57 @@ function EscritorioTab({ dados, setDados, feedback }) {
       {admin && <Actions><button className="btn btn-primary btn-sm" onClick={salvar}>Salvar alterações</button></Actions>}
     </Section>
 
+    {admin && <PixSection dados={dados} setDados={setDados} feedback={feedback} />}
+
     <EquipeSection dados={dados} setDados={setDados} feedback={feedback} admin={admin} />
   </div>;
+}
+
+const TIPOS_CHAVE_PIX = [
+  { value: "cpf_cnpj", label: "CPF ou CNPJ" },
+  { value: "email", label: "E-mail" },
+  { value: "telefone", label: "Celular" },
+  { value: "aleatoria", label: "Chave aleatória" },
+];
+
+/** Chave PIX do escritório: com ela, cada parcela de contrato ganha QR code. */
+function PixSection({ dados, setDados, feedback }) {
+  const cfg = dados.configuracao_escritorio || {};
+  const [pix, setPix] = useState({
+    tipo_chave_pix: cfg.tipo_chave_pix || "",
+    chave_pix: cfg.chave_pix || "",
+    nome_recebedor_pix: cfg.nome_recebedor_pix || "",
+    cidade_pix: cfg.cidade_pix || dados.escritorio.cidade || "",
+  });
+  const [salvando, setSalvando] = useState(false);
+
+  async function salvar() {
+    try {
+      setSalvando(true);
+      const res = await updateEscritorio(pix);
+      setDados((d) => ({ ...d, configuracao_escritorio: res.configuracao_escritorio }));
+      setPix((atual) => ({ ...atual, chave_pix: res.configuracao_escritorio.chave_pix }));
+      feedback("Dados do PIX salvos. As parcelas dos contratos já podem ser cobradas com QR code.");
+    } catch (e) { feedback(e.message, true); }
+    finally { setSalvando(false); }
+  }
+
+  return (
+    <Section title="Recebimento por PIX" description="Com a chave cadastrada, cada parcela de contrato ganha QR code e PIX copia e cola com o valor certo, para mandar ao cliente.">
+      <div className="form-grid">
+        <Field label="Tipo da chave">
+          <select value={pix.tipo_chave_pix} onChange={(e) => setPix({ ...pix, tipo_chave_pix: e.target.value })}>
+            <option value="">Selecione</option>
+            {TIPOS_CHAVE_PIX.map((tipo) => <option key={tipo.value} value={tipo.value}>{tipo.label}</option>)}
+          </select>
+        </Field>
+        <Field label="Chave PIX"><input value={pix.chave_pix} maxLength={77} onChange={(e) => setPix({ ...pix, chave_pix: e.target.value })} /></Field>
+        <Field label="Nome do recebedor (até 25 letras)"><input value={pix.nome_recebedor_pix} maxLength={25} placeholder={dados.escritorio.nome.slice(0, 25)} onChange={(e) => setPix({ ...pix, nome_recebedor_pix: e.target.value })} /></Field>
+        <Field label="Cidade (até 15 letras)"><input value={pix.cidade_pix} maxLength={15} onChange={(e) => setPix({ ...pix, cidade_pix: e.target.value })} /></Field>
+      </div>
+      <Actions><button className="btn btn-primary btn-sm" onClick={salvar} disabled={salvando}>Salvar PIX</button></Actions>
+    </Section>
+  );
 }
 
 /**

@@ -840,9 +840,24 @@ class ConfiguracaoEscritorioSerializer(serializers.ModelSerializer):
             "timezone",
             "formato_data",
             "retencao_documentos",
+            "tipo_chave_pix",
+            "chave_pix",
+            "nome_recebedor_pix",
+            "cidade_pix",
             "atualizado_em",
         ]
         read_only_fields = ["atualizado_em"]
+
+    def validate(self, dados):
+        from .pix import normalizar_chave
+
+        tipo = dados.get("tipo_chave_pix", getattr(self.instance, "tipo_chave_pix", ""))
+        if "chave_pix" in dados or "tipo_chave_pix" in dados:
+            chave = dados.get("chave_pix", getattr(self.instance, "chave_pix", ""))
+            if chave and not tipo:
+                raise serializers.ValidationError({"tipo_chave_pix": "Escolha o tipo da chave PIX."})
+            dados["chave_pix"] = normalizar_chave(tipo, chave)
+        return dados
 
 
 class TarefaSerializer(serializers.ModelSerializer):

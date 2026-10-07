@@ -557,6 +557,11 @@ export async function configurarDoisFatores(acao, dados = {}) {
   });
 }
 
+// PIX (BR Code) de uma parcela de contrato.
+export async function getPixDaParcela(parcelaId) {
+  return request(`/parcelas/${parcelaId}/pix/`);
+}
+
 export async function getRelatorioCliente(clienteId) {
   return request(`/configuracoes/relatorio/cliente/${clienteId}/`);
 }

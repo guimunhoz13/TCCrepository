@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 
 from .feriados import calcular_prazo
 from .calendario import eventos_para_calendario, gerar_ics
+from .pix import ErroPix, pix_da_parcela
 from .modelos_documento import VARIAVEIS_DISPONIVEIS, montar_contexto, preencher
 from .datajud import ErroDataJud, consultar_processo, importar_movimentacoes
 from .autenticacao import conta_ativa
@@ -2235,6 +2236,20 @@ class ParcelaViewSet(
             .order_by("data_vencimento")
         )
 
+    @action(detail=True, methods=["get"], url_path="pix")
+    def pix(self, request, pk=None):
+        """QR code e "copia e cola" do PIX desta parcela."""
+        parcela = self.get_object()
+        if parcela.status == "pago":
+            return Response({"detail": "Esta parcela já está paga."}, status=status.HTTP_400_BAD_REQUEST)
+        configuracao, _ = ConfiguracaoEscritorio.objects.get_or_create(
+            escritorio=parcela.contrato.escritorio
+        )
+        try:
+            return Response(pix_da_parcela(parcela, configuracao))
+        except ErroPix as erro:
+            return Response({"detail": str(erro)}, status=status.HTTP_400_BAD_REQUEST)
+
     def perform_update(self, serializer):
         parcela = serializer.instance
         novo_status = serializer.validated_data.get("status", parcela.status)
@@ -2574,7 +2589,14 @@ class ConfiguracoesEscritorioView(APIView):
         usuario.escritorio.save()
 
         config, _ = ConfiguracaoEscritorio.objects.get_or_create(escritorio=usuario.escritorio)
-        config_data = {k: request.data[k] for k in ["timezone", "formato_data", "retencao_documentos"] if k in request.data}
+        config_data = {
+            k: request.data[k]
+            for k in [
+                "timezone", "formato_data", "retencao_documentos",
+                "tipo_chave_pix", "chave_pix", "nome_recebedor_pix", "cidade_pix",
+            ]
+            if k in request.data
+        }
         config_serializer = ConfiguracaoEscritorioSerializer(config, data=config_data, partial=True)
         config_serializer.is_valid(raise_exception=True)
         config_serializer.save()
