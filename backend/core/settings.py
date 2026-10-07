@@ -88,7 +88,6 @@ INSTALLED_APPS = [
 
     # projeto
     'advocacia',
-    'api',
 
 ]
 
