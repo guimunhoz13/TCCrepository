@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { registrarEscritorio } from "@/services/api";
 import { formatarCEP, formatarCNPJ, formatarTelefone } from "@/utils/mascaras";
 import { buscarEnderecoPorCep } from "@/utils/cep";
+import { avisoDaEmpresa, buscarEmpresaPorCnpj } from "@/utils/cnpj";
 import { senhaAtendeRequisitos } from "@/utils/senha";
 import RequisitosSenha from "@/components/ui/RequisitosSenha";
 
@@ -25,11 +26,39 @@ export default function RegisterForm() {
   });
   const [cep, setCep] = useState("");
   const [buscandoCep, setBuscandoCep] = useState(false);
+  const [buscandoCnpj, setBuscandoCnpj] = useState(false);
+  const [avisoCnpj, setAvisoCnpj] = useState("");
   const [erro, setErro] = useState("");
   const [carregando, setCarregando] = useState(false);
 
   function alterarCampo(campo, valor) {
     setForm((atual) => ({ ...atual, [campo]: valor }));
+  }
+
+  // Preenche só o que ainda está vazio: nunca sobrescreve o que foi digitado.
+  async function handleBuscarCnpj(valor) {
+    if ((valor || "").replace(/\D/g, "").length !== 14) return;
+    try {
+      setBuscandoCnpj(true);
+      const empresa = await buscarEmpresaPorCnpj(valor);
+      setAvisoCnpj(avisoDaEmpresa(empresa));
+      if (!empresa) return;
+      setForm((atual) => ({
+        ...atual,
+        nome_escritorio: atual.nome_escritorio || empresa.nomeFantasia || empresa.razaoSocial,
+        telefone_escritorio:
+          atual.telefone_escritorio || (empresa.telefone ? formatarTelefone(empresa.telefone) : ""),
+        email_escritorio: atual.email_escritorio || empresa.email,
+        endereco_escritorio:
+          atual.endereco_escritorio ||
+          [empresa.logradouro, empresa.complemento, empresa.bairro].filter(Boolean).join(", "),
+        cidade: atual.cidade || empresa.cidade,
+        estado: atual.estado || empresa.estado,
+      }));
+      if (empresa.cep) setCep((atual) => atual || formatarCEP(empresa.cep));
+    } finally {
+      setBuscandoCnpj(false);
+    }
   }
 
   async function handleBuscarCep(valor) {
@@ -104,8 +133,15 @@ export default function RegisterForm() {
           <input
             value={form.cnpj}
             onChange={(e) => alterarCampo("cnpj", formatarCNPJ(e.target.value))}
+            onBlur={(e) => handleBuscarCnpj(e.target.value)}
+            aria-describedby="aviso-cnpj"
             required
           />
+          {(buscandoCnpj || avisoCnpj) && (
+            <span id="aviso-cnpj" role="status" style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>
+              {buscandoCnpj ? "Buscando dados da empresa..." : avisoCnpj}
+            </span>
+          )}
         </div>
         <div className="form-field">
           <label>Telefone</label>
