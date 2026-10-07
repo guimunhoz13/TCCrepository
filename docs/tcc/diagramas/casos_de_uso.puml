@@ -45,6 +45,7 @@ rectangle "Sistema Web de Advocacia" {
   usecase "Consultar Plano e\nUso dos Limites" as UC25
   usecase "Verificar Limite\ndo Plano" as UC26
   usecase "Cadastrar Feriados\nLocais" as UC27
+  usecase "Preencher Dados\npelo CNPJ" as UC28
 }
 
 rectangle "Painel Mestre (Plataforma)" {
@@ -94,6 +95,8 @@ Usuario -- UC25
 Advogado -- UC27
 Secretaria -- UC27
 UC5 <. UC27 : <<extend>>
+UC2 <. UC28 : <<extend>>
+UC24 <. UC28 : <<extend>>
 UC3 ..> UC26 : <<include>>
 UC16 ..> UC26 : <<include>>
 UC12 ..> UC26 : <<include>>

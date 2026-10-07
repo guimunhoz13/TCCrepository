@@ -5,7 +5,7 @@ O documento `RT-TDS-2026-39` é gerado a partir de `gerar_rt.js` (conteúdo),
 biblioteca `docx`:
 
 ```bash
-cd docs/tcc && npm install docx && node main.js   # gera RT-TDS-2026-39_v1.3.docx
+cd docs/tcc && npm install docx && node main.js   # gera RT-TDS-2026-39_v1.4.docx
 ```
 
 Os diagramas ficam em `diagramas/*.puml` (PlantUML) e são renderizados com
@@ -20,8 +20,8 @@ renderizado (precisa de LibreOffice e poppler-utils):
 
 ```bash
 node main.js
-soffice --headless --convert-to pdf RT-TDS-2026-39_v1.3.docx
-python3 paginar.py RT-TDS-2026-39_v1.3.pdf   # grava paginas.json
+soffice --headless --convert-to pdf RT-TDS-2026-39_v1.4.docx
+python3 paginar.py RT-TDS-2026-39_v1.4.pdf   # grava paginas.json
 node main.js                                 # gera de novo com as páginas certas
 ```
 
@@ -63,3 +63,12 @@ casos de uso (Cadastrar Feriados Locais estende Gerenciar Agenda); tabela
 feriado_local na modelagem de dados; seção 6.27 com a aba de feriados e a
 calculadora; trabalhos futuros (importação do calendário dos tribunais),
 conclusão e contagens de testes (459 da API e 205 de componentes).
+
+## Versão 1.4
+
+Incorpora o preenchimento dos dados da empresa pelo CNPJ (BrasilAPI): RF51,
+RNF21 e RN37; resumo e escopo revistos; caso de uso Preencher Dados pelo CNPJ
+(estende Gerenciar Clientes e Cadastrar Escritório); BrasilAPI e ViaCEP no
+diagrama de contexto; seção 6.28 com o cadastro de cliente e a criação de
+escritório preenchidos; conclusão, referências e contagens de testes (466 da
+API e 221 de componentes).
