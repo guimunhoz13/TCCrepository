@@ -1122,3 +1122,60 @@ class ModeloDocumento(models.Model):
 
     def __str__(self):
         return self.nome
+
+
+class Intimacao(models.Model):
+    """Comunicação processual publicada no Diário de Justiça Eletrônico
+    Nacional (DJEN) em nome de um advogado do escritório.
+
+    Desde 2025 o DJEN concentra as intimações de todos os tribunais. O
+    sistema busca pela OAB de cada advogado, liga ao processo cadastrado
+    (pelo número) e já calcula o prazo e lança na agenda.
+    """
+
+    escritorio = models.ForeignKey(Escritorio, on_delete=models.CASCADE, related_name="intimacoes")
+    advogado = models.ForeignKey(
+        Advogado, on_delete=models.SET_NULL, null=True, blank=True, related_name="intimacoes"
+    )
+    processo = models.ForeignKey(
+        Processo, on_delete=models.SET_NULL, null=True, blank=True, related_name="intimacoes"
+    )
+
+    # Id da comunicação no DJEN: evita importar a mesma duas vezes.
+    identificador_externo = models.CharField(max_length=120)
+    numero_processo = models.CharField(max_length=30, blank=True, default="")
+    tribunal = models.CharField(max_length=20, blank=True, default="")
+    orgao = models.CharField(max_length=255, blank=True, default="")
+    tipo_comunicacao = models.CharField(max_length=100, blank=True, default="")
+    texto = models.TextField(blank=True, default="")
+    link = models.URLField(max_length=500, blank=True, default="")
+
+    data_disponibilizacao = models.DateField()
+    data_publicacao = models.DateField()
+
+    # Prazo lido do texto ("prazo de 15 dias"). Sem prazo no texto, vale o
+    # de 5 dias úteis do CPC, art. 218, § 3º — marcado como estimado para
+    # o advogado conferir.
+    prazo_dias = models.PositiveSmallIntegerField(null=True, blank=True)
+    prazo_dias_uteis = models.BooleanField(default=True)
+    prazo_estimado = models.BooleanField(default=False)
+    prazo_final = models.DateField(null=True, blank=True)
+    evento_agenda = models.ForeignKey(
+        Agenda, on_delete=models.SET_NULL, null=True, blank=True, related_name="intimacoes"
+    )
+
+    lida = models.BooleanField(default=False)
+    criado_em = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-data_disponibilizacao", "-id"]
+        verbose_name = "Intimação"
+        verbose_name_plural = "Intimações"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["escritorio", "identificador_externo"], name="intimacao_unica_por_escritorio"
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.tipo_comunicacao} — {self.numero_processo}"

@@ -28,6 +28,7 @@ from .views import (
     ApontamentoHoraViewSet,
     DespesaViewSet,
     TarefaViewSet,
+    IntimacaoViewSet,
     ModeloDocumentoViewSet,
     RegistrarAtividadeView,
     TempoDeUsoView,
@@ -67,6 +68,7 @@ router.register(r"parcelas", ParcelaViewSet, basename="parcela")
 router.register(r"apontamentos", ApontamentoHoraViewSet, basename="apontamento")
 router.register(r"despesas", DespesaViewSet, basename="despesa")
 router.register(r"tarefas", TarefaViewSet, basename="tarefa")
+router.register(r"intimacoes", IntimacaoViewSet, basename="intimacao")
 router.register(r"modelos-documento", ModeloDocumentoViewSet, basename="modelo-documento")
 router.register(r"auditoria", AuditoriaViewSet, basename="auditoria")
 

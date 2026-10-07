@@ -567,6 +567,19 @@ export async function gerarResumoParaCliente(processoId) {
   return request(`/processos/${processoId}/resumo-cliente/`, { method: "POST" });
 }
 
+// Intimações do DJEN.
+export async function getIntimacoes(params) {
+  return request(`/intimacoes/${buildQuery(params)}`);
+}
+
+export async function buscarIntimacoesNoDjen() {
+  return request("/intimacoes/buscar/", { method: "POST" });
+}
+
+export async function marcarIntimacaoComoLida(id) {
+  return request(`/intimacoes/${id}/`, { method: "PATCH", body: JSON.stringify({ lida: true }) });
+}
+
 export async function getRelatorioCliente(clienteId) {
   return request(`/configuracoes/relatorio/cliente/${clienteId}/`);
 }

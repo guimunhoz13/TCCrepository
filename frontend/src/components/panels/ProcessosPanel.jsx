@@ -10,6 +10,7 @@ import RodapeLista from "@/components/ui/RodapeLista";
 import { usePanel, PANELS } from "@/contexts/PanelContext";
 import { useDashboardData } from "@/contexts/DashboardDataContext";
 import { usePreferences } from "@/contexts/PreferencesContext";
+import IntimacoesLista from "@/components/panels/IntimacoesLista";
 import OverlayPanel from "@/components/shell/OverlayPanel";
 import { Landmark, MessageCircle, RefreshCw, Trash2, AlertTriangle, Clock, Lock } from "lucide-react";
 import { abrirWhatsApp, montarMensagemProcesso } from "@/utils/whatsapp";
@@ -200,6 +201,7 @@ export default function ProcessosPanel() {
       tabs={[
         { id: "lista", label: t("aba_lista") },
         ...(pode("processos", "criar") ? [{ id: "novo", label: t("aba_novo") }] : []),
+        { id: "intimacoes", label: "Intimações" },
       ]}
     >
       {(erro || erroCarga) && <div className="alert alert-error">{erro || erroCarga}</div>}
@@ -210,7 +212,9 @@ export default function ProcessosPanel() {
         </div>
       )}
 
-      {panelTab === "novo" ? (
+      {panelTab === "intimacoes" ? (
+        <IntimacoesLista ativo podeEditar={pode("processos", "editar")} />
+      ) : panelTab === "novo" ? (
         <ProcessoForm
           formulario={formulario}
           setFormulario={setFormulario}

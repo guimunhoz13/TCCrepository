@@ -55,6 +55,9 @@ FRONTEND_URL = os.environ.get('FRONTEND_URL', 'http://localhost:3000')
 # Sem ela, a consulta de processo é recusada com uma mensagem explicativa.
 DATAJUD_API_KEY = os.getenv("DATAJUD_API_KEY", "")
 DATAJUD_URL_BASE = os.getenv("DATAJUD_URL_BASE", "")
+# Intimações do Diário de Justiça Eletrônico Nacional (consulta pública, sem
+# chave). Configurável para apontar a um servidor de teste.
+DJEN_API_URL = os.getenv("DJEN_API_URL", "")
 
 
 # APPLICATIONS

@@ -106,9 +106,20 @@ atrapalhar o envio dos lembretes. Opções: `--dry-run`, `--limite N`
 Processos concluídos ou arquivados não são consultados, e a rotina exige
 `DATAJUD_API_KEY` configurada.
 
-Exemplo de agendamento no cron — lembretes às 7h, sincronização às 5h:
+As intimações publicadas no Diário de Justiça Eletrônico Nacional (DJEN)
+são buscadas pela OAB de cada advogado (no formato `123456/SP`). Cada uma é
+ligada ao processo cadastrado, o prazo é lido do texto (ou estimado em 5
+dias úteis, CPC art. 218 § 3º) e lançado na agenda:
+
+```bash
+cd backend && python manage.py buscar_intimacoes   # --dias N (padrão 7)
+```
+
+Exemplo de agendamento no cron — intimações às 6h, lembretes às 7h,
+sincronização às 5h:
 
 ```cron
+0 6 * * * cd /caminho/para/backend && /caminho/para/python manage.py buscar_intimacoes
 0 7 * * * cd /caminho/para/backend && /caminho/para/python manage.py enviar_lembretes
 0 5 * * * cd /caminho/para/backend && /caminho/para/python manage.py sincronizar_datajud
 ```

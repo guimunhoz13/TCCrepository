@@ -31,6 +31,7 @@ from .models import (
     PreferenciasUsuario,
     ConfiguracaoEscritorio,
     RegistroAuditoria,
+    Intimacao,
     ESTADOS_CIVIS,
 )
 
@@ -1042,3 +1043,37 @@ class ModeloDocumentoSerializer(serializers.ModelSerializer):
             "atualizado_em",
         ]
         read_only_fields = ["id", "tipo_display", "criado_em", "atualizado_em"]
+
+
+class IntimacaoSerializer(serializers.ModelSerializer):
+    advogado_nome = serializers.CharField(source="advogado.usuario.nome", read_only=True, default=None)
+    processo_titulo = serializers.CharField(source="processo.titulo", read_only=True, default=None)
+    cliente_nome = serializers.CharField(source="processo.cliente.nome", read_only=True, default=None)
+
+    class Meta:
+        model = Intimacao
+        fields = [
+            "id",
+            "advogado",
+            "advogado_nome",
+            "processo",
+            "processo_titulo",
+            "cliente_nome",
+            "numero_processo",
+            "tribunal",
+            "orgao",
+            "tipo_comunicacao",
+            "texto",
+            "link",
+            "data_disponibilizacao",
+            "data_publicacao",
+            "prazo_dias",
+            "prazo_dias_uteis",
+            "prazo_estimado",
+            "prazo_final",
+            "evento_agenda",
+            "lida",
+            "criado_em",
+        ]
+        # Só "lida" muda pela API; o resto vem do DJEN.
+        read_only_fields = [campo for campo in fields if campo != "lida"]
