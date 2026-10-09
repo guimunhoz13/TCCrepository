@@ -9,7 +9,7 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 
 from ..feriados import FeriadosLocais, calcular_prazo, feriados_locais_no_periodo, prazo_de_publicacao
-from ..models import FeriadoLocal, Intimacao
+from ..models import Advogado, Cliente, FeriadoLocal, Intimacao
 from .base import _criar_escritorio, _criar_usuario, _EquipeDoEscritorio, _gerar_token_de_acesso
 from .test_djen import NUMERO, _item
 
@@ -29,6 +29,11 @@ class CalculoComFeriadosLocaisTestCase(TestCase):
         self.assertEqual(
             calcular_prazo(date(2026, 7, 8), 1, dias_uteis=False, locais=NOVE_DE_JULHO), date(2026, 7, 9)
         )
+
+    def test_dias_uteis_pulam_suspensao_de_dezembro_a_janeiro(self):
+        self.assertEqual(calcular_prazo(date(2026, 12, 18), 1), date(2027, 1, 21))
+        self.assertEqual(calcular_prazo(date(2027, 1, 20), 1), date(2027, 1, 21))
+        self.assertEqual(calcular_prazo(date(2026, 12, 18), 1, dias_uteis=False), date(2026, 12, 19))
 
     def test_feriado_anual_vale_em_qualquer_ano(self):
         # 09/07/2027 é sexta-feira.
@@ -122,6 +127,52 @@ class FeriadosLocaisAPITestCase(_EquipeDoEscritorio, APITestCase):
             resposta.data["feriados_locais"], [{"data": "2026-07-09", "descricao": "Revolução Constitucionalista"}]
         )
 
+    def test_feriado_de_comarca_so_vale_para_processo_da_comarca(self):
+        self._como("admin")
+        self._cadastrar(abrangencia="Comarca de Araçatuba")
+        processo_a = self._processo(self.escritorio, self.cliente, self.advogado, "PROC-A")
+        processo_a.comarca = "Araçatuba"
+        processo_a.save(update_fields=["comarca"])
+        processo_b = self._processo(self.escritorio, self.cliente, self.advogado, "PROC-B")
+        processo_b.comarca = "Bauru"
+        processo_b.save(update_fields=["comarca"])
+
+        for processo, esperado in ((processo_a, "2026-07-10"), (processo_b, "2026-07-09")):
+            resposta = self.client.post(
+                "/api/agenda/calcular-prazo/",
+                {"data_inicio": "2026-07-08", "dias": 1, "processo": processo.pk}, format="json",
+            )
+            self.assertEqual(resposta.status_code, status.HTTP_200_OK, resposta.data)
+            self.assertEqual(resposta.data["data_final"], esperado)
+
+        sem_processo = self.client.post(
+            "/api/agenda/calcular-prazo/", {"data_inicio": "2026-07-08", "dias": 1}, format="json"
+        )
+        self.assertEqual(sem_processo.data["data_final"], "2026-07-09")
+
+    def test_mesma_data_pode_ser_cadastrada_para_comarcas_distintas(self):
+        self._como("admin")
+        self.assertEqual(self._cadastrar(abrangencia="Araçatuba").status_code, status.HTTP_201_CREATED)
+        self.assertEqual(self._cadastrar(abrangencia="Bauru").status_code, status.HTTP_201_CREATED)
+
+    def test_calculadora_rejeita_processo_alheio_e_booleano_invalido(self):
+        self._como("admin")
+        outro = _criar_escritorio(nome="Outro", cnpj="99888777000166", email="o@o.com")
+        outro_usuario = _criar_usuario(outro, email="dono@outro.com")
+        outro_cliente = Cliente.objects.create(escritorio=outro, nome="Cliente do outro")
+        outro_advogado = Advogado.objects.create(escritorio=outro, usuario=outro_usuario, oab="999999/SP")
+        outro_processo = self._processo(outro, outro_cliente, outro_advogado, "PROC-OUTRO")
+        resposta = self.client.post(
+            "/api/agenda/calcular-prazo/",
+            {"data_inicio": "2026-07-08", "dias": 1, "processo": outro_processo.pk}, format="json",
+        )
+        self.assertEqual(resposta.status_code, status.HTTP_404_NOT_FOUND)
+        resposta = self.client.post(
+            "/api/agenda/calcular-prazo/",
+            {"data_inicio": "2026-07-08", "dias": 1, "dias_uteis": "false"}, format="json",
+        )
+        self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
+
     @patch("advocacia.djen._chamar_api")
     def test_intimacao_do_djen_considera_o_feriado_local(self, api):
         self.advogado.oab = "123456/SP"
@@ -135,6 +186,20 @@ class FeriadosLocaisAPITestCase(_EquipeDoEscritorio, APITestCase):
         self.assertEqual(intimacao.data_publicacao, date(2026, 7, 10))
         _, sem_feriado = prazo_de_publicacao(date(2026, 7, 8), 15)
         self.assertGreater(intimacao.prazo_final, sem_feriado)
+
+    @patch("advocacia.djen._chamar_api")
+    def test_djen_ignora_feriado_de_outro_tribunal(self, api):
+        self.advogado.oab = "123456/SP"
+        self.advogado.save(update_fields=["oab"])
+        self._processo(self.escritorio, self.cliente, self.advogado, NUMERO)
+        FeriadoLocal.objects.create(
+            escritorio=self.escritorio, data=date(2026, 7, 9), descricao="Somente TJMG", abrangencia="TJMG"
+        )
+        api.return_value = {"items": [_item(disponibilizacao="2026-07-08")]}
+        self._como("advogado")
+        self.assertEqual(self.client.post("/api/intimacoes/buscar/").status_code, status.HTTP_200_OK)
+        intimacao = Intimacao.objects.get()
+        self.assertEqual(intimacao.data_publicacao, date(2026, 7, 9))
 
 
 class CalendarioDeFeriadosAPITestCase(_EquipeDoEscritorio, APITestCase):
@@ -191,3 +256,15 @@ class CalendarioDeFeriadosAPITestCase(_EquipeDoEscritorio, APITestCase):
         outro = _criar_escritorio(nome="Outro", cnpj="99888777000166", email="o@o.com")
         FeriadoLocal.objects.create(escritorio=outro, data=date(2026, 8, 1), descricao="Do outro")
         self.assertFalse(any(f["nome"] == "Do outro" for f in self._ano()["feriados"]))
+
+    def test_calendario_identifica_duas_abrangencias_na_mesma_data(self):
+        FeriadoLocal.objects.create(
+            escritorio=self.escritorio, data=date(2026, 7, 9), descricao="Feriado municipal", abrangencia="Araçatuba"
+        )
+        FeriadoLocal.objects.create(
+            escritorio=self.escritorio, data=date(2026, 7, 9), descricao="Suspensão", abrangencia="TJSP"
+        )
+        locais = [f for f in self._ano()["feriados"] if f["data"] == "2026-07-09" and f["tipo"] == "local"]
+        self.assertEqual(len(locais), 1)
+        self.assertIn("Araçatuba", locais[0]["nome"])
+        self.assertIn("TJSP", locais[0]["nome"])

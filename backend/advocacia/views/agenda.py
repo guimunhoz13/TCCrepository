@@ -4,6 +4,7 @@ import secrets
 from datetime import date
 
 from django.http import Http404, HttpResponse
+from django.shortcuts import get_object_or_404
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework import serializers as campos
@@ -22,6 +23,7 @@ from ..mixins import (
 from ..models import (
     Agenda,
     FeriadoLocal,
+    Processo,
     Usuario,
 )
 from ..permissoes import VER, PermissaoPorPerfil, pode
@@ -42,13 +44,14 @@ from ..sigilo import esconder_sigilosos
         "data_inicio": campos.DateField(),
         "dias": campos.IntegerField(min_value=1),
         "dias_uteis": campos.BooleanField(default=True),
+        "processo": campos.IntegerField(required=False, min_value=1),
     }),
     responses={200: OpenApiTypes.OBJECT},
 )
 class CalcularPrazoView(APIView):
     """Calcula a data final de um prazo a partir de uma data de início e
     uma quantidade de dias, contando em dias úteis (pulando fins de semana
-    e feriados nacionais e locais) ou em dias corridos, conforme solicitado. Apoia
+    e feriados nacionais e locais aplicáveis) ou em dias corridos, conforme solicitado. Apoia
     o preenchimento da agenda ao cadastrar um prazo processual (RN — CPC
     art. 219: prazos processuais cíveis contam em dias úteis)."""
 
@@ -60,6 +63,7 @@ class CalcularPrazoView(APIView):
         data_inicio_str = request.data.get("data_inicio", "")
         dias = request.data.get("dias")
         dias_uteis = request.data.get("dias_uteis", True)
+        processo_id = request.data.get("processo")
 
         if not data_inicio_str or dias in (None, ""):
             return Response(
@@ -82,9 +86,26 @@ class CalcularPrazoView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        if not isinstance(dias_uteis, bool):
+            return Response({"detail": "Informe dias_uteis como verdadeiro ou falso."}, status=status.HTTP_400_BAD_REQUEST)
+
         usuario = get_usuario_from_request(request)
-        locais = FeriadosLocais.do_escritorio(usuario.escritorio) if usuario else FeriadosLocais()
-        data_final = calcular_prazo(data_inicio, dias, dias_uteis=bool(dias_uteis), locais=locais)
+        comarca = ""
+        if processo_id not in (None, ""):
+            try:
+                processo_id = int(processo_id)
+                if processo_id <= 0:
+                    raise ValueError
+            except (ValueError, TypeError):
+                return Response({"detail": "Processo inválido."}, status=status.HTTP_400_BAD_REQUEST)
+            processo = get_object_or_404(
+                esconder_sigilosos(Processo.objects.filter(escritorio=usuario.escritorio), usuario),
+                pk=processo_id,
+            )
+            comarca = processo.comarca
+
+        locais = FeriadosLocais.do_escritorio(usuario.escritorio, comarca=comarca) if usuario else FeriadosLocais()
+        data_final = calcular_prazo(data_inicio, dias, dias_uteis=dias_uteis, locais=locais)
 
         return Response({
             "data_final": data_final.isoformat(),
@@ -128,7 +149,9 @@ class AgendaViewSet(
             ano = date.today().year
         if not 1900 <= ano <= 2200:
             return Response({"detail": "Ano fora do intervalo aceito."}, status=status.HTTP_400_BAD_REQUEST)
-        return Response(calendario_do_ano(ano, FeriadosLocais.do_escritorio(self.get_escritorio())))
+        return Response(calendario_do_ano(
+            ano, FeriadosLocais.do_escritorio(self.get_escritorio(), incluir_todos=True)
+        ))
 
     def get_queryset(self):
 
