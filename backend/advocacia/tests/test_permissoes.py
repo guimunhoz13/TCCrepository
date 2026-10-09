@@ -99,6 +99,36 @@ class IsolamentoEAutorizacaoTestCase(APITestCase):
 
         self.assertEqual(resposta.status_code, status.HTTP_200_OK, resposta.data)
 
+    def test_colega_ve_apenas_resumo_da_equipe(self):
+        self.admin_a.cpf = "12345678909"
+        self.admin_a.rg = "123456789"
+        self.admin_a.save(update_fields=["cpf", "rg"])
+
+        for resposta in (
+            self.client.get("/api/usuarios/"),
+            self.client.get(f"/api/usuarios/{self.admin_a.pk}/"),
+        ):
+            self.assertEqual(resposta.status_code, status.HTTP_200_OK)
+            membro = resposta.data["results"][0] if "results" in resposta.data else (
+                resposta.data[0] if isinstance(resposta.data, list) else resposta.data
+            )
+            self.assertNotIn("cpf", membro)
+            self.assertNotIn("rg", membro)
+            self.assertNotIn("data_nascimento", membro)
+            self.assertNotIn("documento_identidade_enviado", membro)
+
+        configuracoes = self.client.get("/api/configuracoes/")
+        self.assertEqual(configuracoes.status_code, status.HTTP_200_OK)
+        self.assertTrue(any(membro["id"] == self.admin_a.pk for membro in configuracoes.data["membros"]))
+        self.assertTrue(all("cpf" not in membro and "rg" not in membro for membro in configuracoes.data["membros"]))
+        self.assertIn("cpf", configuracoes.data["usuario"])
+
+    def test_admin_pode_consultar_dados_completos_de_membro(self):
+        self._entrar_como(self.admin_a)
+        resposta = self.client.get(f"/api/usuarios/{self.advogado_a.pk}/")
+        self.assertEqual(resposta.status_code, status.HTTP_200_OK)
+        self.assertIn("cpf", resposta.data)
+
     def test_administrador_troca_o_perfil_de_outro(self):
         self._entrar_como(self.admin_a)
 

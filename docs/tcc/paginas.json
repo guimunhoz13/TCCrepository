@@ -12,12 +12,12 @@
  "3. Requisitos e Regras de Negócio": 10,
  "3.1. Requisitos Funcionais": 10,
  "3.2. Requisitos Não Funcionais": 13,
- "3.3. Regras de Negócio": 15,
- "4. Modelagem de Sistemas": 21,
- "4.1. Diagrama de Casos de Uso": 21,
+ "3.3. Regras de Negócio": 14,
+ "4. Modelagem de Sistemas": 20,
+ "4.1. Diagrama de Casos de Uso": 20,
  "4.2. Especificação dos Casos de Uso": 23,
  "4.3. Diagrama de Classes": 25,
- "4.4. Diagramas de Sequência": 27,
+ "4.4. Diagramas de Sequência": 26,
  "5. Modelagem de Dados": 28,
  "6. Protótipos das Funcionalidades Principais": 30,
  "6.1. Tela de Login": 31,
@@ -26,7 +26,7 @@
  "6.4. Painel Mestre (Administrador do Sistema)": 32,
  "6.5. Registro de Auditoria": 32,
  "6.6. Cálculo de Prazo em Dias Úteis": 33,
- "6.7. Horas Trabalhadas e Despesas Processuais": 34,
+ "6.7. Horas Trabalhadas e Despesas Processuais": 33,
  "6.8. Consulta Processual no DataJud": 34,
  "6.9. Modelos de Documento": 34,
  "6.10. Indicadores Financeiros do Escritório": 35,
@@ -55,5 +55,5 @@
  "7.4. Integração Contínua e Qualidade": 50,
  "8. Trabalhos Futuros": 50,
  "9. Conclusão": 51,
- "10. Referências Bibliográficas": 55
+ "10. Referências Bibliográficas": 54
 }

@@ -22,9 +22,11 @@ from ..permissoes import PERFIS, PermissaoPorPerfil
 from ..planos import USUARIOS, verificar_limite
 from ..serializers import (
     AdvogadoRegistroSerializer,
+    AdvogadoResumoSerializer,
     AdvogadoSerializer,
     EscritorioSerializer,
     MembroRegistroSerializer,
+    UsuarioResumoSerializer,
     UsuarioSerializer,
 )
 from .comum import _resposta_download_arquivo
@@ -54,7 +56,6 @@ class EscritorioViewSet(
         return Escritorio.objects.filter(
             id=escritorio.id
         )
-
 
 # =========================================================
 # USUÁRIOS
@@ -89,6 +90,20 @@ class UsuarioViewSet(
             )
             .order_by("-criado_em")
         )
+
+    def get_serializer_class(self):
+        if self.action == "list":
+            return UsuarioResumoSerializer
+        return UsuarioSerializer
+
+    def retrieve(self, request, *args, **kwargs):
+        alvo = self.get_object()
+        usuario = self.get_usuario()
+        serializer = (
+            UsuarioSerializer if usuario.tipo_usuario == "admin" or alvo.pk == usuario.pk
+            else UsuarioResumoSerializer
+        )
+        return Response(serializer(alvo, context=self.get_serializer_context()).data)
 
     def _exigir_admin(self):
         usuario = self.get_usuario()
@@ -362,7 +377,28 @@ class AdvogadoViewSet(
             .order_by("-id")
         )
 
+    def get_serializer_class(self):
+        usuario = self.get_usuario()
+        if self.action == "list" and (not usuario or usuario.tipo_usuario != "admin"):
+            return AdvogadoResumoSerializer
+        return AdvogadoSerializer
+
+    def retrieve(self, request, *args, **kwargs):
+        alvo = self.get_object()
+        usuario = self.get_usuario()
+        serializer = (
+            AdvogadoSerializer if usuario.tipo_usuario == "admin" or alvo.usuario_id == usuario.pk
+            else AdvogadoResumoSerializer
+        )
+        return Response(serializer(alvo, context=self.get_serializer_context()).data)
+
+    def create(self, request, *args, **kwargs):
+        raise PermissionDenied("Use o cadastro de advogado para criar uma conta profissional.")
+
     def perform_update(self, serializer):
+        usuario = self.get_usuario()
+        if serializer.instance.usuario_id != usuario.pk and usuario.tipo_usuario != "admin":
+            raise PermissionDenied("Apenas o administrador pode alterar outro advogado.")
         oab = serializer.validated_data.get("oab")
         if oab:
             escritorio = self.get_escritorio()
@@ -372,3 +408,8 @@ class AdvogadoViewSet(
             if conflito.exists():
                 raise ValidationError({"oab": ["OAB já cadastrada neste escritório."]})
         super().perform_update(serializer)
+
+    def perform_destroy(self, instance):
+        if self.get_usuario().tipo_usuario != "admin":
+            raise PermissionDenied("Apenas o administrador pode excluir advogados.")
+        super().perform_destroy(instance)

@@ -28,6 +28,7 @@ from ..serializers import (
     ConfiguracaoEscritorioSerializer,
     EscritorioSerializer,
     PreferenciasUsuarioSerializer,
+    UsuarioResumoSerializer,
     UsuarioSerializer,
 )
 from ..validators import validar_email_real, validar_senha_forte, validar_telefone
@@ -56,7 +57,7 @@ class ConfiguracoesView(APIView):
             "escritorio": EscritorioSerializer(usuario.escritorio).data,
             "preferencias": PreferenciasUsuarioSerializer(preferencias).data,
             "configuracao_escritorio": ConfiguracaoEscritorioSerializer(config_escritorio).data,
-            "membros": UsuarioSerializer(membros, many=True, context=contexto).data,
+            "membros": UsuarioResumoSerializer(membros, many=True, context=contexto).data,
         })
 
 

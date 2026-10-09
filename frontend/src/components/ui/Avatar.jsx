@@ -1,19 +1,21 @@
 "use client";
 
 import { useState } from "react";
+import useFotoProtegida from "@/hooks/useFotoProtegida";
 
 export default function Avatar({ src, nome, size = 32 }) {
-  const [falhou, setFalhou] = useState(false);
+  const [falhouUrl, setFalhouUrl] = useState("");
+  const url = useFotoProtegida(src);
   const estilo = { width: size, height: size, fontSize: size * 0.42 };
 
-  if (src && !falhou) {
+  if (url && falhouUrl !== url) {
     return (
       <img
-        src={src}
+        src={url}
         alt=""
         className="avatar-img"
         style={estilo}
-        onError={() => setFalhou(true)}
+        onError={() => setFalhouUrl(url)}
       />
     );
   }

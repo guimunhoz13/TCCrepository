@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRecurso } from "@/hooks/useRecurso";
+import useFotoProtegida from "@/hooks/useFotoProtegida";
 import { useUsuarioLogado } from "@/hooks/useUsuarioLogado";
 import { usePanel, PANELS } from "@/contexts/PanelContext";
 import { useDashboardData } from "@/contexts/DashboardDataContext";
@@ -53,6 +54,7 @@ export default function AdvogadosPanel() {
   const [foto, setFoto] = useState(null);
   const [documentoIdentidade, setDocumentoIdentidade] = useState(null);
   const [advogadoEditando, setAdvogadoEditando] = useState(null);
+  const fotoEdicaoUrl = useFotoProtegida(advogadoEditando?.foto);
   const [mensagem, setMensagem] = useState("");
   const [erro, setErro] = useState("");
   const [salvando, setSalvando] = useState(false);
@@ -303,8 +305,8 @@ export default function AdvogadosPanel() {
           </div>
           <div className="form-field">
             <label>Foto (opcional)</label>
-            {advogadoEditando?.foto && !foto && (
-              <img src={advogadoEditando.foto} alt="" className="avatar-preview" />
+            {fotoEdicaoUrl && !foto && (
+              <img src={fotoEdicaoUrl} alt="" className="avatar-preview" />
             )}
             <input
               type="file"

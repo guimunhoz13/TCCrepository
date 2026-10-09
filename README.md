@@ -57,6 +57,24 @@ npm install
 npm run dev
 ```
 
+## Imagem Docker do frontend
+
+O [`frontend/Dockerfile`](frontend/Dockerfile) compila o Next.js em três etapas
+e executa o servidor standalone com um usuário sem privilégios. Para construir
+a imagem em um ambiente com Docker ativo:
+
+```bash
+cd frontend
+docker build -t lexoffice-frontend .
+docker run --rm -p 3000:3000 lexoffice-frontend
+```
+
+`NEXT_PUBLIC_API_URL` é incorporada ao frontend na compilação. Quando a API
+estiver em outro endereço, informe `--build-arg NEXT_PUBLIC_API_URL=...` no
+`docker build`. O [`frontend/Dockerfile.labex`](frontend/Dockerfile.labex) usa
+uma exportação estática previamente gerada para ambientes de laboratório sem
+acesso ao Docker Hub.
+
 ## Segurança em produção
 
 - Sem `DEBUG=True` o backend sobe em modo produção: exige `SECRET_KEY`
@@ -64,8 +82,14 @@ npm run dev
   cookies como seguros. No `.env` local mantenha `DEBUG=True`.
 - O CI roda `manage.py check --deploy --fail-level WARNING` e falha em
   qualquer aviso de segurança de deploy.
-- O frontend envia CSP, `X-Frame-Options`, `Referrer-Policy` e
-  `Permissions-Policy` em todas as páginas (`frontend/next.config.mjs`).
+- O servidor Next.js envia CSP, `X-Frame-Options`, `Referrer-Policy` e
+  `Permissions-Policy` (`frontend/next.config.mjs`). Na exportação estática,
+  esses cabeçalhos devem ser configurados no servidor web; a configuração
+  usada no LabEx fica em `frontend/nginx.labex.conf`.
+- Fotos de usuários e clientes são servidas por uma rota autenticada da API.
+  Não publique `backend/media/` diretamente no servidor web: documentos e
+  comprovantes são disponibilizados apenas pelas rotas de download com
+  controle de acesso.
 - O refresh token é trocado a cada renovação e o anterior é revogado.
 - O assistente de IA tem limite próprio (20 chamadas/minuto por usuário) e
   aceita mensagens de até 4000 caracteres.

@@ -112,9 +112,10 @@ function EventoForm({
       {formulario.tipo === "prazo" && (
         <div className="form-field full" style={{ background: "var(--bg-input)", padding: 14, borderRadius: 10 }}>
           <label style={{ marginBottom: 8 }}>Calculadora de prazo (opcional)</label>
+          <p className="dica-campo">A data é uma estimativa. Confirme o expediente e as regras do tribunal antes de usar o prazo.</p>
           <div className="form-grid" style={{ padding: 0 }}>
             <div className="form-field">
-              <label>Data de início da contagem</label>
+              <label>Data da intimação ou referência (dia excluído)</label>
               <input
                 type="date"
                 value={calculadora.data_intimacao}
@@ -334,6 +335,7 @@ export default function AgendaPanel() {
         data_inicio: calculadora.data_intimacao,
         dias: Number(calculadora.dias_prazo),
         dias_uteis: calculadora.dias_uteis,
+        processo: (panelTab === "editar" ? formularioEdicao : formulario)?.processo || undefined,
       });
       // Preenche o formulário que está aberto: o de novo evento ou o de edição.
       const preencher = panelTab === "editar" ? setFormularioEdicao : setFormulario;

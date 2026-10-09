@@ -1,0 +1,14 @@
+# LabEx offline: a VM já contém docker/getting-started, com Nginx.
+# Gere os arquivos estáticos antes, com NEXT_OUTPUT=export npm run build,
+# e monte um contexto separado com Dockerfile, nginx.labex.conf e out/.
+# Assim, o build no LabEx não depende do Docker Hub nem instala Node.
+FROM docker/getting-started:latest
+
+# Retira a página de exemplo e usa rotas adequadas ao export do Next.js.
+RUN rm -rf /usr/share/nginx/html/*
+COPY nginx.labex.conf /etc/nginx/conf.d/default.conf
+COPY out/ /usr/share/nginx/html/
+
+EXPOSE 80
+HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
+  CMD wget -q -O /dev/null http://127.0.0.1/ || exit 1

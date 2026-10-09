@@ -366,7 +366,7 @@ describe("calcularPrazo", () => {
   beforeEach(() => {
     global.fetch = jest.fn().mockResolvedValue({
       ok: true,
-      json: async () => ({ data_final: "2026-12-30" }),
+      json: async () => ({ data_final: "2027-01-27" }),
     });
   });
 
@@ -381,7 +381,7 @@ describe("calcularPrazo", () => {
       dias_uteis: true,
     });
 
-    expect(resultado.data_final).toBe("2026-12-30");
+    expect(resultado.data_final).toBe("2027-01-27");
     const [url, opcoes] = global.fetch.mock.calls[0];
     expect(url).toMatch(/\/agenda\/calcular-prazo\/$/);
     expect(JSON.parse(opcoes.body)).toEqual({

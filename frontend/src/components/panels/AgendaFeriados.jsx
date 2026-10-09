@@ -41,7 +41,7 @@ export default function AgendaFeriados() {
       await criarFeriadoLocal(formulario);
       setFormulario(VAZIO);
       feriados.recarregar();
-      avisar("Feriado local cadastrado. Ele já entra no cálculo dos próximos prazos.");
+      avisar("Feriado local cadastrado para os próximos cálculos na abrangência informada.");
     } catch (falha) {
       setErro(falha.message);
     } finally {
@@ -67,8 +67,10 @@ export default function AgendaFeriados() {
     <div className="settings-stack">
       <p style={{ color: "var(--text-secondary)", fontSize: "0.9rem" }}>
         Os feriados nacionais e o recesso de 20/12 a 20/01 já entram no cálculo. Cadastre aqui os
-        feriados da sua comarca e as suspensões de expediente do tribunal: eles passam a contar na
-        calculadora de prazos e nas intimações do DJEN.
+        feriados da sua comarca e as suspensões de expediente do tribunal. Deixe “Onde vale” vazio
+        para aplicar a todo o escritório; informe uma comarca ou sigla do tribunal para limitar o cálculo.
+        Na calculadora, selecione o processo para aplicar os feriados da comarca. No DJEN, a comarca
+        do processo e o tribunal da publicação são considerados automaticamente.
       </p>
 
       {(erro || feriados.erro) && (
@@ -103,7 +105,7 @@ export default function AgendaFeriados() {
             <input
               id="feriado-abrangencia"
               maxLength={120}
-              placeholder="Ex.: Comarca de Araçatuba"
+              placeholder="Ex.: Araçatuba ou TJSP"
               value={formulario.abrangencia}
               onChange={(e) => setFormulario({ ...formulario, abrangencia: e.target.value })}
             />

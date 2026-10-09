@@ -163,6 +163,17 @@ DESTINO_POR_CAMPO = {
 }
 
 
+class UsuarioResumoSerializer(serializers.ModelSerializer):
+    """Campos necessários para selecionar membros, sem documentos pessoais."""
+
+    tipo_usuario_display = serializers.CharField(source="get_tipo_usuario_display", read_only=True)
+
+    class Meta:
+        model = Usuario
+        fields = ["id", "nome", "email", "foto", "tipo_usuario", "tipo_usuario_display", "totp_ativo", "ativo"]
+        read_only_fields = fields
+
+
 class UsuarioSerializer(serializers.ModelSerializer):
     """Serializer da rota genérica de usuários.
 
@@ -393,6 +404,19 @@ class ClienteSerializer(serializers.ModelSerializer):
 
     def get_documento_identidade_enviado(self, obj) -> bool:
         return bool(obj.documento_identidade)
+
+
+class AdvogadoResumoSerializer(serializers.ModelSerializer):
+    """Dados profissionais para seletores e listagens da equipe."""
+
+    nome = serializers.CharField(source="usuario.nome", read_only=True)
+    email = serializers.EmailField(source="usuario.email", read_only=True)
+    foto = serializers.ImageField(source="usuario.foto", read_only=True)
+
+    class Meta:
+        model = Advogado
+        fields = ["id", "usuario", "nome", "email", "foto", "oab", "especialidade", "valor_hora_padrao"]
+        read_only_fields = fields
 
 
 class AdvogadoSerializer(serializers.ModelSerializer):
@@ -1069,11 +1093,13 @@ class FeriadoLocalSerializer(serializers.ModelSerializer):
     def validate(self, dados):
         escritorio = self.context.get("escritorio")
         data = dados.get("data", getattr(self.instance, "data", None))
-        repetido = FeriadoLocal.objects.filter(escritorio=escritorio, data=data)
+        abrangencia = dados.get("abrangencia", getattr(self.instance, "abrangencia", "")).strip()
+        dados["abrangencia"] = abrangencia
+        repetido = FeriadoLocal.objects.filter(escritorio=escritorio, data=data, abrangencia__iexact=abrangencia)
         if self.instance is not None:
             repetido = repetido.exclude(pk=self.instance.pk)
         if escritorio is not None and repetido.exists():
-            raise serializers.ValidationError({"data": "Já existe um feriado local cadastrado nesta data."})
+            raise serializers.ValidationError({"data": "Já existe um feriado nesta data e abrangência."})
         return dados
 
 
