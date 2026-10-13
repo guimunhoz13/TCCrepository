@@ -515,9 +515,8 @@ class Agenda(models.Model):
 
 
 class FeriadoLocal(models.Model):
-    """Dia sem expediente forense que vale só para o escritório: feriado
-    municipal ou estadual, ou suspensão de expediente decretada pelo
-    tribunal. Entra no cálculo de prazos (agenda e intimações do DJEN)."""
+    """Dia sem expediente forense do escritório, opcionalmente restrito
+    a uma comarca ou tribunal. Entra no cálculo de prazos aplicáveis."""
 
     escritorio = models.ForeignKey(
         Escritorio,
@@ -526,7 +525,7 @@ class FeriadoLocal(models.Model):
     )
     data = models.DateField()
     descricao = models.CharField(max_length=120)
-    # Onde vale (comarca, tribunal) — só informativo.
+    # Vazio vale em todo o escritório; comarca ou tribunal limita o cálculo.
     abrangencia = models.CharField(max_length=120, blank=True, default="")
     # Repete todo ano no mesmo dia e mês (aniversário da cidade, feriado
     # estadual de data fixa). Suspensões de expediente não se repetem.
@@ -538,7 +537,7 @@ class FeriadoLocal(models.Model):
         verbose_name = "Feriado local"
         verbose_name_plural = "Feriados locais"
         constraints = [
-            models.UniqueConstraint(fields=["escritorio", "data"], name="feriado_local_unico_por_data"),
+            models.UniqueConstraint(fields=["escritorio", "data", "abrangencia"], name="feriado_local_unico_por_local"),
         ]
 
     def __str__(self):

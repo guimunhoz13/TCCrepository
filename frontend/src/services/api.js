@@ -284,10 +284,10 @@ export async function deleteAgenda(id) {
   return request(`/agenda/${id}/`, { method: "DELETE" });
 }
 
-export async function calcularPrazo({ data_inicio, dias, dias_uteis = true }) {
+export async function calcularPrazo({ data_inicio, dias, dias_uteis = true, processo }) {
   return request("/agenda/calcular-prazo/", {
     method: "POST",
-    body: JSON.stringify({ data_inicio, dias, dias_uteis }),
+    body: JSON.stringify({ data_inicio, dias, dias_uteis, ...(processo ? { processo } : {}) }),
   });
 }
 
@@ -477,6 +477,24 @@ async function buscarArquivoAutenticado(endpoint) {
   }
 
   return response.blob();
+}
+
+export function fotoProtegida(src) {
+  if (!src) return false;
+  try {
+    const caminho = new URL(src, API_URL).pathname;
+    const prefixo = new URL(API_URL).pathname.replace(/\/$/, "");
+    return caminho.startsWith(`${prefixo}/fotos/`);
+  } catch {
+    return false;
+  }
+}
+
+export function buscarFotoAutenticada(src) {
+  if (!fotoProtegida(src)) throw new Error("Endereço de foto inválido.");
+  const caminho = new URL(src, API_URL).pathname;
+  const prefixo = new URL(API_URL).pathname.replace(/\/$/, "");
+  return buscarArquivoAutenticado(caminho.slice(prefixo.length));
 }
 
 async function downloadArquivo(endpoint, nomeArquivo) {

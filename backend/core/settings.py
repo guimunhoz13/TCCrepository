@@ -239,7 +239,9 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
-MEDIA_URL = 'media/'
+# URLs de fotos passam pela API autenticada. Arquivos de documentos ficam
+# apenas no MEDIA_ROOT e são obtidos pelas rotas de download com permissão.
+MEDIA_URL = '/api/fotos/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

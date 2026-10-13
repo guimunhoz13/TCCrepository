@@ -1,11 +1,11 @@
 from django.conf import settings
-from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path, include
 from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
 from rest_framework.permissions import AllowAny
 
 from advocacia.views import LoginSegundoFatorView, LoginView, LogoutView, RenovarTokenView
+from advocacia.views.fotos import FotoProtegidaView
 
 
 urlpatterns = [
@@ -39,6 +39,8 @@ urlpatterns = [
         name="logout"
     ),
 
+    path("api/fotos/<path:arquivo>", FotoProtegidaView.as_view(), name="foto-protegida"),
+
     path(
         "api/",
         include("advocacia.urls")
@@ -53,6 +55,3 @@ if settings.API_DOCS_PUBLICAS:
         path("api/docs/", SpectacularSwaggerView.as_view(url_name="schema", **documentacao), name="swagger"),
         path("api/redoc/", SpectacularRedocView.as_view(url_name="schema", **documentacao), name="redoc"),
     ]
-
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

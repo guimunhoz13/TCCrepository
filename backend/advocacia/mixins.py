@@ -1,3 +1,5 @@
+import logging
+
 from django.db import IntegrityError
 from django.db.models import ProtectedError
 
@@ -6,6 +8,8 @@ from rest_framework.permissions import BasePermission
 
 from .models import RegistroAuditoria, SuperAdmin, Usuario
 from .sigilo import caminho_ate_processo, esconder_sigilosos
+
+logger = logging.getLogger(__name__)
 
 
 def get_usuario_from_request(request):
@@ -103,7 +107,9 @@ def registrar_auditoria(
             endereco_ip=obter_ip_requisicao(request),
         )
     except Exception:
-        pass
+        # A operação principal não falha, mas a ausência do registro precisa
+        # aparecer nos logs para investigação e correção.
+        logger.exception("Falha ao registrar auditoria: acao=%s modelo=%s", acao, modelo or type(instancia).__name__)
 
 
 class EscritorioScopedMixin:

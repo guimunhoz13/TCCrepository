@@ -43,11 +43,11 @@ class CalculoDePrazoTestCase(TestCase):
         self.assertTrue(eh_dia_util(date(2026, 12, 28)))  # segunda, útil
 
     def test_calcular_prazo_em_dias_uteis_pula_feriado_e_fim_de_semana(self):
-        # 22/12/2026 é terça-feira; contando 5 dias úteis, pula o Natal
-        # (25/12, sexta) e o fim de semana seguinte (26 e 27/12).
+        # Em 22/12 os prazos processuais estão suspensos. A contagem de
+        # cinco dias úteis volta em 21/01/2027 e termina em 27/01.
         inicio = date(2026, 12, 22)
         final = calcular_prazo(inicio, 5, dias_uteis=True)
-        self.assertEqual(final, date(2026, 12, 30))
+        self.assertEqual(final, date(2027, 1, 27))
 
     def test_calcular_prazo_em_dias_corridos_conta_todos_os_dias(self):
         inicio = date(2026, 12, 22)
@@ -73,7 +73,7 @@ class CalcularPrazoAPITestCase(APITestCase):
             format="json",
         )
         self.assertEqual(resposta.status_code, status.HTTP_200_OK)
-        self.assertEqual(resposta.data["data_final"], "2026-12-30")
+        self.assertEqual(resposta.data["data_final"], "2027-01-27")
 
     def test_calcula_prazo_em_dias_corridos(self):
         resposta = self.client.post(

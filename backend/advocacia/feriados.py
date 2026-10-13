@@ -1,4 +1,5 @@
 from datetime import date, timedelta
+import unicodedata
 
 
 def _pascoa(ano):
@@ -55,7 +56,7 @@ def feriados_nacionais(ano):
 
 
 class FeriadosLocais:
-    """Feriados que valem só para o escritório: municipais, estaduais e
+    """Feriados locais cadastrados pelo escritório: municipais, estaduais e
     suspensões de expediente do tribunal (portarias, pontos facultativos).
 
     Quem define o calendário forense é cada tribunal, por isso o sistema
@@ -79,15 +80,37 @@ class FeriadosLocais:
         return self.descricoes.get(data) or self.descricoes.get((data.month, data.day), "")
 
     @classmethod
-    def do_escritorio(cls, escritorio):
+    def do_escritorio(cls, escritorio, *, comarca="", tribunal="", incluir_todos=False):
         from .models import FeriadoLocal
 
         datas, anuais, descricoes = set(), set(), {}
         for feriado in FeriadoLocal.objects.filter(escritorio=escritorio):
+            if not incluir_todos and not _vale_na_localidade(feriado.abrangencia, comarca, tribunal):
+                continue
             chave = (feriado.data.month, feriado.data.day) if feriado.anual else feriado.data
             (anuais if feriado.anual else datas).add(chave)
-            descricoes[chave] = feriado.descricao
+            descricao = feriado.descricao
+            if incluir_todos and feriado.abrangencia:
+                descricao = f"{descricao} ({feriado.abrangencia})"
+            if chave in descricoes:
+                descricoes[chave] += f"; {descricao}"
+            else:
+                descricoes[chave] = descricao
         return cls(datas, anuais, descricoes)
+
+
+def _normalizar_localidade(valor):
+    valor = unicodedata.normalize("NFKD", str(valor or "").strip().casefold())
+    valor = "".join(letra for letra in valor if not unicodedata.combining(letra))
+    if valor.startswith("comarca de "):
+        valor = valor[len("comarca de "):]
+    return " ".join(valor.split())
+
+
+def _vale_na_localidade(abrangencia, comarca, tribunal):
+    """Sem abrangência vale em todo o escritório; as demais exigem contexto."""
+    alvo = _normalizar_localidade(abrangencia)
+    return not alvo or alvo in {_normalizar_localidade(comarca), _normalizar_localidade(tribunal)}
 
 
 SEM_FERIADOS_LOCAIS = FeriadosLocais()
@@ -106,19 +129,19 @@ def calcular_prazo(data_inicio, dias, dias_uteis=True, locais=SEM_FERIADOS_LOCAI
 
     Em dias úteis (padrão para prazos processuais cíveis desde o CPC/2015,
     art. 219): conta apenas dias úteis, pulando fins de semana e feriados
-    nacionais e os feriados locais cadastrados pelo escritório. Em dias corridos (ex.: prazos contratuais, alguns prazos de
-    direito material): conta todos os dias do calendário.
+    nacionais, os feriados locais aplicáveis e a suspensão de 20/12 a 20/01.
+    Em dias corridos (ex.: prazos contratuais, alguns prazos de direito
+    material): conta todos os dias do calendário; o recesso não se aplica.
 
-    `data_inicio` é o dia do início da contagem (normalmente já é o
-    primeiro dia útil seguinte à intimação, conforme art. 224 do CPC) — a
-    contagem começa no dia seguinte a ela.
+    `data_inicio` é a data de referência excluída da contagem (por exemplo,
+    a data da intimação). O primeiro dia contado é o próximo dia útil forense.
     """
     data = data_inicio
     dias_contados = 0
 
     while dias_contados < dias:
         data += timedelta(days=1)
-        if not dias_uteis or eh_dia_util(data, locais):
+        if not dias_uteis or eh_dia_util_forense(data, locais):
             dias_contados += 1
 
     return data
@@ -150,7 +173,8 @@ def feriados_locais_no_periodo(inicio, fim, locais):
     achados = []
     data = inicio + timedelta(days=1)
     while data <= fim:
-        if data.weekday() < 5 and data in locais and data not in feriados_nacionais(data.year):
+        if (data.weekday() < 5 and not em_recesso_forense(data)
+                and data in locais and data not in feriados_nacionais(data.year)):
             achados.append({"data": data.isoformat(), "descricao": locais.descricao(data)})
         data += timedelta(days=1)
     return achados
@@ -210,4 +234,3 @@ def calendario_do_ano(ano, locais=SEM_FERIADOS_LOCAIS):
             {"inicio": date(ano, 12, 20).isoformat(), "fim": date(ano, 12, 31).isoformat()},
         ],
     }
-

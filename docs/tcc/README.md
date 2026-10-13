@@ -70,5 +70,5 @@ Incorpora o preenchimento dos dados da empresa pelo CNPJ (BrasilAPI): RF51,
 RNF21 e RN37; resumo e escopo revistos; caso de uso Preencher Dados pelo CNPJ
 (estende Gerenciar Clientes e Cadastrar Escritório); BrasilAPI e ViaCEP no
 diagrama de contexto; seção 6.28 com o cadastro de cliente e a criação de
-escritório preenchidos; conclusão, referências e contagens de testes (466 da
-API e 221 de componentes).
+escritório preenchidos; conclusão, referências e contagens de testes (478 da
+API e 223 de componentes).

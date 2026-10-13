@@ -219,7 +219,10 @@ def registrar_intimacao(escritorio, advogado, dados):
     estimado = prazo is None
     dias, uteis = prazo or (PRAZO_PADRAO_DIAS, True)
     publicacao, final = prazo_de_publicacao(
-        dados["data_disponibilizacao"], dias, uteis, locais=FeriadosLocais.do_escritorio(escritorio)
+        dados["data_disponibilizacao"], dias, uteis,
+        locais=FeriadosLocais.do_escritorio(
+            escritorio, comarca=processo.comarca if processo else "", tribunal=dados["tribunal"]
+        ),
     )
 
     intimacao = Intimacao.objects.create(

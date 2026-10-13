@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useRecurso } from "@/hooks/useRecurso";
 import { useConfirmacao } from "@/contexts/ConfirmacaoContext";
 import {
@@ -767,6 +768,7 @@ function AparenciaTab({ preferencias, setDados, feedback, theme, setTheme, atual
 }
 
 function DadosTab({ dados, setDados, feedback, podeExportar }) {
+  const router = useRouter();
   const confirmar = useConfirmacao();
   const admin = dados.usuario.tipo_usuario === "admin";
   const [retencao, setRetencao] = useState(dados.configuracao_escritorio?.retencao_documentos || "indeterminado");
@@ -785,7 +787,7 @@ function DadosTab({ dados, setDados, feedback, podeExportar }) {
       acao: "Desativar",
     });
     if (!ok) return;
-    try { const res = await desativarEscritorio({ senha, confirmacao }); feedback(res.detail); logout(); window.location.href = "/"; }
+    try { const res = await desativarEscritorio({ senha, confirmacao }); feedback(res.detail); logout(); router.replace("/"); }
     catch (e) { feedback(e.message, true); }
   }
 

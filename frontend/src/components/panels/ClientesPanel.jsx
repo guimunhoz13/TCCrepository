@@ -6,6 +6,7 @@ import { useAvisos } from "@/contexts/AvisosContext";
 import { useState } from "react";
 import { useListaPaginada } from "@/hooks/useRecurso";
 import { useValorAtrasado } from "@/hooks/useValorAtrasado";
+import useFotoProtegida from "@/hooks/useFotoProtegida";
 import RodapeLista from "@/components/ui/RodapeLista";
 import { usePanel } from "@/contexts/PanelContext";
 import { useDashboardData } from "@/contexts/DashboardDataContext";
@@ -70,6 +71,7 @@ export default function ClientesPanel() {
   const [foto, setFoto] = useState(null);
   const [documentoIdentidade, setDocumentoIdentidade] = useState(null);
   const [clienteEditando, setClienteEditando] = useState(null);
+  const fotoEdicaoUrl = useFotoProtegida(clienteEditando?.foto);
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState("");
   const [sucesso, setSucesso] = useState("");
@@ -388,8 +390,8 @@ export default function ClientesPanel() {
           )}
           <div className="form-field">
             <label>Foto (opcional)</label>
-            {clienteEditando?.foto && !foto && (
-              <img src={clienteEditando.foto} alt="" className="avatar-preview" />
+            {fotoEdicaoUrl && !foto && (
+              <img src={fotoEdicaoUrl} alt="" className="avatar-preview" />
             )}
             <input
               type="file"

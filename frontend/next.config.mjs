@@ -41,9 +41,14 @@ const cabecalhosDeSeguranca = [
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   poweredByHeader: false,
-  async headers() {
-    return [{ source: "/(.*)", headers: cabecalhosDeSeguranca }];
-  },
+  ...(process.env.NEXT_OUTPUT === "export" ? { output: "export" } : {}),
+  ...(process.env.NEXT_OUTPUT === "standalone" ? { output: "standalone" } : {}),
+  images: { unoptimized: process.env.NEXT_OUTPUT === "export" },
+  ...(process.env.NEXT_OUTPUT === "export" ? {} : {
+    async headers() {
+      return [{ source: "/(.*)", headers: cabecalhosDeSeguranca }];
+    },
+  }),
 };
 
 export default nextConfig;

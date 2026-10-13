@@ -205,3 +205,30 @@ class AdvogadosAPITestCase(APITestCase):
         )
         self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("oab", resposta.data)
+
+    def test_colega_ve_dados_profissionais_sem_documentos_pessoais(self):
+        self.advogado_b.usuario.cpf = "12345678909"
+        self.advogado_b.usuario.rg = "123456789"
+        self.advogado_b.usuario.save(update_fields=["cpf", "rg"])
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {_gerar_token_de_acesso(self.advogado_a.usuario)}")
+
+        lista = self.client.get("/api/advogados/")
+        self.assertEqual(lista.status_code, status.HTTP_200_OK)
+        membros = lista.data["results"] if "results" in lista.data else lista.data
+        alvo = next(membro for membro in membros if membro["id"] == self.advogado_b.pk)
+        for campo in ("cpf", "rg", "data_nascimento", "documento_identidade_enviado"):
+            self.assertNotIn(campo, alvo)
+
+        detalhe = self.client.get(f"/api/advogados/{self.advogado_b.pk}/")
+        self.assertEqual(detalhe.status_code, status.HTTP_200_OK)
+        self.assertNotIn("cpf", detalhe.data)
+        proprio = self.client.get(f"/api/advogados/{self.advogado_a.pk}/")
+        self.assertIn("cpf", proprio.data)
+
+    def test_advogado_nao_altera_nem_exclui_colega(self):
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {_gerar_token_de_acesso(self.advogado_a.usuario)}")
+        url = f"/api/advogados/{self.advogado_b.pk}/"
+        self.assertEqual(self.client.patch(url, {"nome": "Alterado"}, format="json").status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(self.client.delete(url).status_code, status.HTTP_403_FORBIDDEN)
+        self.advogado_b.usuario.refresh_from_db()
+        self.assertEqual(self.advogado_b.usuario.nome, "Advogado B")
