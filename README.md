@@ -77,6 +77,9 @@ acesso ao Docker Hub.
 
 ## Segurança em produção
 
+Para publicar um piloto com dados fictícios na Vercel (site), Render (API) e
+Supabase (banco e arquivos privados), veja [o guia do piloto](docs/deploy-piloto.md).
+
 - Sem `DEBUG=True` o backend sobe em modo produção: exige `SECRET_KEY`
   (recusa subir sem ela), redireciona para HTTPS, liga HSTS e marca os
   cookies como seguros. No `.env` local mantenha `DEBUG=True`.

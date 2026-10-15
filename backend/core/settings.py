@@ -13,7 +13,7 @@ from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-load_dotenv(BASE_DIR / ".env")
+load_dotenv(os.environ.get('LEXOFFICE_ENV_FILE') or BASE_DIR / '.env')
 
 # `manage.py test` roda dezenas de casos de teste contra os mesmos endpoints
 # sensíveis (login, cadastro) em segundos — bem abaixo da janela de 1 minuto
@@ -46,6 +46,11 @@ ALLOWED_HOSTS = [
 ]
 if DEBUG and not ALLOWED_HOSTS:
     ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+
+# O Render fornece o próprio domínio ao iniciar o serviço. Domínios
+# personalizados continuam sendo adicionados por ALLOWED_HOSTS.
+if os.environ.get('RENDER_EXTERNAL_HOSTNAME'):
+    ALLOWED_HOSTS.append(os.environ['RENDER_EXTERNAL_HOSTNAME'])
 
 # URL do frontend, usada para montar links (ex.: redefinição de senha)
 # enviados por e-mail.
@@ -99,6 +104,7 @@ MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
 
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
 
     'django.contrib.sessions.middleware.SessionMiddleware',
 
@@ -184,6 +190,9 @@ DATABASES = {
 
         'CONN_HEALTH_CHECKS': True,
 
+        'OPTIONS': ({'sslmode': os.environ['DB_SSLMODE']}
+                    if os.environ.get('DB_SSLMODE') else {}),
+
     }
 
 }
@@ -238,11 +247,47 @@ USE_TZ = True
 # STATIC
 
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # URLs de fotos passam pela API autenticada. Arquivos de documentos ficam
 # apenas no MEDIA_ROOT e são obtidos pelas rotas de download com permissão.
 MEDIA_URL = '/api/fotos/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+STORAGES = {
+    'default': {'BACKEND': 'django.core.files.storage.FileSystemStorage'},
+    'staticfiles': {'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage'},
+}
+
+# O disco do servidor web não é persistente. Em produção, configure um bucket
+# privado S3-compatível (ex.: Supabase Storage). A aplicação continua a servir
+# as fotos pela API autenticada; nenhuma URL direta do bucket é exposta.
+if os.environ.get('MEDIA_STORAGE') == 's3':
+    _s3_vars = {
+        name: os.environ.get(name, '')
+        for name in (
+            'MEDIA_S3_BUCKET', 'MEDIA_S3_ENDPOINT_URL', 'MEDIA_S3_REGION_NAME',
+            'MEDIA_S3_ACCESS_KEY_ID', 'MEDIA_S3_SECRET_ACCESS_KEY',
+        )
+    }
+    _faltando = [name for name, value in _s3_vars.items() if not value]
+    if _faltando:
+        raise ImproperlyConfigured(
+            'Configuração de arquivos incompleta: ' + ', '.join(_faltando)
+        )
+    STORAGES['default'] = {
+        'BACKEND': 'core.storage.PrivateMediaStorage',
+        'OPTIONS': {
+            'bucket_name': _s3_vars['MEDIA_S3_BUCKET'],
+            'endpoint_url': _s3_vars['MEDIA_S3_ENDPOINT_URL'],
+            'region_name': _s3_vars['MEDIA_S3_REGION_NAME'],
+            'access_key': _s3_vars['MEDIA_S3_ACCESS_KEY_ID'],
+            'secret_key': _s3_vars['MEDIA_S3_SECRET_ACCESS_KEY'],
+            'addressing_style': 'path',
+            'default_acl': None,
+            'file_overwrite': False,
+        },
+    }
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
