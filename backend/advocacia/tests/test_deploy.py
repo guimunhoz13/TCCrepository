@@ -25,7 +25,7 @@ class ConfiguracaoPilotoTests(SimpleTestCase):
             '/api/fotos/clientes/fotos/retrato.png',
         )
 
-    @override_settings(DEBUG=False)
+    @override_settings(DEBUG=False, TESTING=False)
     @patch.dict('os.environ', {'DEMO_PASSWORD': ''})
     def test_senha_padrao_da_demo_e_recusada_em_producao(self):
         with self.assertRaisesMessage(CommandError, 'DEMO_PASSWORD'):

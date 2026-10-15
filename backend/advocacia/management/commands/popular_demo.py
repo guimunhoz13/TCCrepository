@@ -8,7 +8,7 @@ ponta (Playwright) no CI.
     python manage.py popular_demo --recriar      # apaga e cria de novo
     python manage.py popular_demo --senha Outra@123
 
-Todos os usuários entram com a mesma senha (padrão Demo@1234 apenas em DEBUG):
+Todos os usuários entram com a mesma senha (padrão Demo@1234 apenas em DEBUG ou testes):
     admin@demo.lexoffice.app       Administrador
     advogada@demo.lexoffice.app    Advogado
     estagiario@demo.lexoffice.app  Estagiário
@@ -58,7 +58,7 @@ class Command(BaseCommand):
     def handle(self, *args, **opcoes):
         senha = opcoes["senha"] or os.environ.get("DEMO_PASSWORD")
         if not senha:
-            if not settings.DEBUG:
+            if not (settings.DEBUG or settings.TESTING):
                 raise CommandError("Defina DEMO_PASSWORD antes de criar a demonstração em produção.")
             senha = "Demo@1234"
         existente = Escritorio.objects.filter(cnpj=CNPJ_DEMO).first()
