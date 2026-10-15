@@ -1,5 +1,7 @@
 from django.conf import settings
 from django.contrib import admin
+from django.db import connection, OperationalError
+from django.http import JsonResponse
 from django.urls import path, include
 from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
 from rest_framework.permissions import AllowAny
@@ -8,7 +10,20 @@ from advocacia.views import LoginSegundoFatorView, LoginView, LogoutView, Renova
 from advocacia.views.fotos import FotoProtegidaView
 
 
+def health(request):
+    """Verifica se a API e o banco conseguem atender requisições."""
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute('SELECT 1')
+            cursor.fetchone()
+    except OperationalError:
+        return JsonResponse({'status': 'indisponivel'}, status=503)
+    return JsonResponse({'status': 'ok'})
+
+
 urlpatterns = [
+
+    path('api/health/', health, name='health'),
 
     path(
         "admin/",

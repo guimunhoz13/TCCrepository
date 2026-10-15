@@ -8,7 +8,7 @@ ponta (Playwright) no CI.
     python manage.py popular_demo --recriar      # apaga e cria de novo
     python manage.py popular_demo --senha Outra@123
 
-Todos os usuários entram com a mesma senha (padrão Demo@1234):
+Todos os usuários entram com a mesma senha (padrão Demo@1234 apenas em DEBUG ou testes):
     admin@demo.lexoffice.app       Administrador
     advogada@demo.lexoffice.app    Advogado
     estagiario@demo.lexoffice.app  Estagiário
@@ -18,9 +18,11 @@ Todos os usuários entram com a mesma senha (padrão Demo@1234):
 
 from datetime import date, datetime, time, timedelta
 from decimal import Decimal
+import os
 
+from django.conf import settings
 from django.contrib.auth.hashers import make_password
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 from django.utils import timezone
 
@@ -51,9 +53,14 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument("--recriar", action="store_true", help="Apaga a demonstração existente e cria de novo.")
-        parser.add_argument("--senha", default="Demo@1234", help="Senha de todos os usuários (padrão: Demo@1234).")
+        parser.add_argument("--senha", help="Senha dos usuários; prefira DEMO_PASSWORD em produção.")
 
     def handle(self, *args, **opcoes):
+        senha = opcoes["senha"] or os.environ.get("DEMO_PASSWORD")
+        if not senha:
+            if not (settings.DEBUG or settings.TESTING):
+                raise CommandError("Defina DEMO_PASSWORD antes de criar a demonstração em produção.")
+            senha = "Demo@1234"
         existente = Escritorio.objects.filter(cnpj=CNPJ_DEMO).first()
         if existente and not opcoes["recriar"]:
             self.stdout.write("O escritório de demonstração já existe. Use --recriar para começar do zero.")
@@ -61,7 +68,7 @@ class Command(BaseCommand):
         with transaction.atomic():
             if existente:
                 self._apagar(existente)
-            self._criar(opcoes["senha"])
+            self._criar(senha)
         self.stdout.write(self.style.SUCCESS(
             f"Demonstração pronta. Entre com admin@{DOMINIO} e a senha informada."
         ))

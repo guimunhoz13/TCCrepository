@@ -5,9 +5,12 @@ backend/ambiente/
 backend/__pycache__/
 backend/db.sqlite3
 backend/media/
+backend/staticfiles/
 *.pyc
 
 .env
+.env.*
+!.env.example
 .vscode/
 .DS_Store
 Thumbs.db
