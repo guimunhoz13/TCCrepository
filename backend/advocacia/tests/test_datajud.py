@@ -256,6 +256,14 @@ class ConsultaDataJudAPITestCase(APITestCase):
         self.assertIn("alcançar", resposta.data["detail"])
 
     @override_settings(DATAJUD_API_KEY="chave-de-teste")
+    def test_tempo_esgotado_no_cnj_gera_mensagem_clara(self):
+        with patch("advocacia.datajud._chamar_api", side_effect=TimeoutError("read timed out")):
+            resposta = self.client.post(self.url)
+
+        self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("demorou demais", resposta.data["detail"])
+
+    @override_settings(DATAJUD_API_KEY="chave-de-teste")
     def test_consulta_registra_auditoria(self):
         with patch("advocacia.datajud._chamar_api", return_value=_resposta_datajud()):
             self.client.post(self.url)

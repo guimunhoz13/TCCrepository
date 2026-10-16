@@ -399,7 +399,11 @@ export default function ProcessosPanel() {
                             disabled={consultando === processo.id}
                             onClick={async () => {
                               setConsultando(processo.id);
-                              setAvisoDataJud(null);
+                              setSucesso("");
+                              setAvisoDataJud({
+                                erro: false,
+                                texto: `Consultando o DataJud para ${processo.numero_processo}. A resposta pode levar até um minuto...`,
+                              });
                               try {
                                 const dados = await consultarDataJud(processo.id);
                                 setAvisoDataJud({
@@ -410,7 +414,8 @@ export default function ProcessosPanel() {
                                     (dados.movimentacoes_ignoradas
                                       ? `, ${dados.movimentacoes_ignoradas} já conhecido(s)`
                                       : "") +
-                                    (dados.capa?.orgao_julgador ? ` — ${dados.capa.orgao_julgador}` : ""),
+                                    (dados.capa?.orgao_julgador ? ` — ${dados.capa.orgao_julgador}` : "") +
+                                    ". Abra a ficha do processo para ver os andamentos.",
                                 });
                                 carregarDados();
                               } catch (e) {

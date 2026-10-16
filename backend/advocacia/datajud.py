@@ -27,7 +27,9 @@ logger = logging.getLogger(__name__)
 # Configurável para não amarrar o código a um endereço que o CNJ pode mudar,
 # e para permitir apontar a um servidor de teste durante a verificação.
 URL_PADRAO = "https://api-publica.datajud.cnj.jus.br"
-TEMPO_LIMITE = 20
+# A API pública pode levar dezenas de segundos para responder, especialmente
+# quando o serviço do tribunal está sob carga. O Gunicorn espera até 120 s.
+TEMPO_LIMITE = 60
 
 # Segmento do Judiciário (dígito "J" da numeração unificada do CNJ).
 SEGMENTO_ESTADUAL = "8"
@@ -212,6 +214,11 @@ def consultar_processo(numero):
         logger.warning("Falha de rede ao consultar o DataJud: %s", erro)
         raise ErroDataJud(
             "Não foi possível alcançar o DataJud. Verifique a conexão da rede."
+        ) from erro
+    except TimeoutError as erro:
+        logger.warning("Tempo esgotado ao consultar o DataJud: %s", erro)
+        raise ErroDataJud(
+            "O DataJud demorou demais para responder. Tente consultar novamente em alguns minutos."
         ) from erro
     except json.JSONDecodeError as erro:
         raise ErroDataJud("O DataJud devolveu uma resposta ilegível.") from erro
