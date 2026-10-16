@@ -17,3 +17,4 @@ Thumbs.db
 # arquivos de instruções gerados pelo "next dev" a cada execução
 frontend/AGENTS.md
 frontend/CLAUDE.md
+.vercel
