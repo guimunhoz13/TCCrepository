@@ -145,14 +145,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-          cache: "npm"
-          cache-dependency-path: frontend/package-lock.json
-
-      - name: Preparar a imagem estática da atividade anterior
+      - name: Extrair o contexto original da atividade no LabEx
         run: bash scripts/preparar-compose.sh
 
       - name: Construir e testar pelo Compose
