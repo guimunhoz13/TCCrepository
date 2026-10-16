@@ -6,10 +6,11 @@ services:
       frontend:
         condition: service_healthy
     entrypoint: ["/bin/sh", "-ec"]
-    command: |
-      wget -q -O /dev/null http://frontend/
-      echo 'GET / -> HTTP 200'
-      wget -q -O /dev/null http://frontend/login
-      echo 'GET /login -> HTTP 200'
+    command:
+      - >-
+        wget -q -O /dev/null http://frontend/ &&
+        echo 'GET / -> HTTP 200' &&
+        wget -q -O /dev/null http://frontend/login &&
+        echo 'GET /login -> HTTP 200'
     networks:
       - lexoffice
