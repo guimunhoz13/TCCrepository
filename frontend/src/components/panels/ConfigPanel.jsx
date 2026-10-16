@@ -37,6 +37,8 @@ import {
   configurarDoisFatores,
   registrarMembro,
   definirPerfilDoUsuario,
+  alternarAtivoDoUsuario,
+  excluirUsuario,
   redefinirDoisFatoresDoUsuario,
   getSituacaoPush,
   inscreverPush,
@@ -503,12 +505,13 @@ function PixSection({ dados, setDados, feedback }) {
  * Advogados, com a OAB), troca o perfil de quem já está na equipe e
  * desliga a verificação em duas etapas de quem perdeu o celular.
  */
-function EquipeSection({ dados, setDados, feedback, admin }) {
+export function EquipeSection({ dados, setDados, feedback, admin }) {
   const confirmar = useConfirmacao();
   const novoMembro = { nome: "", email: "", telefone: "", senha: "", tipo_usuario: "estagiario" };
   const [form, setForm] = useState(novoMembro);
   const [incluindo, setIncluindo] = useState(false);
   const [salvando, setSalvando] = useState(false);
+  const [gerenciandoId, setGerenciandoId] = useState(null);
 
   function trocarMembro(atualizado) {
     setDados((d) => ({
@@ -543,6 +546,41 @@ function EquipeSection({ dados, setDados, feedback, admin }) {
       trocarMembro(await redefinirDoisFatoresDoUsuario(membro.id));
       feedback(`Verificação em duas etapas de ${membro.nome} redefinida.`);
     } catch (e) { feedback(e.message, true); }
+  }
+
+  async function alternarAcesso(membro) {
+    const acao = membro.ativo ? "Desativar" : "Reativar";
+    const ok = await confirmar({
+      titulo: `${acao} acesso`,
+      mensagem: membro.ativo
+        ? `${membro.nome} não poderá mais entrar. Os processos, tarefas e demais registros serão preservados.`
+        : `${membro.nome} poderá voltar a entrar com sua conta.`,
+      acao,
+      perigo: membro.ativo,
+    });
+    if (!ok) return;
+    try {
+      setGerenciandoId(membro.id);
+      trocarMembro(await alternarAtivoDoUsuario(membro.id));
+      feedback(`Acesso de ${membro.nome} ${membro.ativo ? "desativado" : "reativado"}.`);
+    } catch (e) { feedback(e.message, true); }
+    finally { setGerenciandoId(null); }
+  }
+
+  async function excluirMembro(membro) {
+    const ok = await confirmar({
+      titulo: "Excluir usuário",
+      mensagem: `Excluir definitivamente a conta de ${membro.nome}? Essa ação não pode ser desfeita. Se houver processos ou tarefas vinculados, o sistema impedirá a exclusão; nesse caso, desative o acesso.`,
+      acao: "Excluir usuário",
+    });
+    if (!ok) return;
+    try {
+      setGerenciandoId(membro.id);
+      await excluirUsuario(membro.id);
+      setDados((d) => ({ ...d, membros: d.membros.filter((item) => item.id !== membro.id) }));
+      feedback(`${membro.nome} foi excluído da equipe.`);
+    } catch (e) { feedback(e.message, true); }
+    finally { setGerenciandoId(null); }
   }
 
   async function incluir(evento) {
@@ -596,6 +634,12 @@ function EquipeSection({ dados, setDados, feedback, admin }) {
                     Redefinir 2 etapas
                   </button>
                 )}
+                <button type="button" className="btn btn-secondary btn-sm" disabled={gerenciandoId !== null} onClick={() => alternarAcesso(m)}>
+                  {m.ativo ? "Desativar acesso" : "Reativar acesso"}
+                </button>
+                <button type="button" className="btn btn-danger btn-sm" disabled={gerenciandoId !== null} onClick={() => excluirMembro(m)}>
+                  Excluir
+                </button>
               </>
             ) : (
               <span className="badge badge-muted">{m.tipo_usuario_display || m.tipo_usuario}</span>

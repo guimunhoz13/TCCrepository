@@ -60,6 +60,40 @@ class IsolamentoEAutorizacaoTestCase(APITestCase):
             HTTP_AUTHORIZATION=f"Bearer {_gerar_token_de_acesso(usuario)}"
         )
 
+    def test_admin_exclui_usuario_sem_vinculos(self):
+        alvo = _criar_usuario(self.a, email="novo@a.com", tipo_usuario="secretaria")
+        self._entrar_como(self.admin_a)
+
+        resposta = self.client.delete(f"/api/usuarios/{alvo.id}/")
+
+        self.assertEqual(resposta.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertFalse(type(alvo).objects.filter(pk=alvo.pk).exists())
+
+    def test_admin_nao_exclui_a_propria_conta(self):
+        self._entrar_como(self.admin_a)
+
+        resposta = self.client.delete(f"/api/usuarios/{self.admin_a.id}/")
+
+        self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertTrue(type(self.admin_a).objects.filter(pk=self.admin_a.pk).exists())
+
+    def test_usuario_com_processo_nao_e_excluido(self):
+        advogado = Advogado.objects.create(
+            escritorio=self.a, usuario=self.advogado_a, oab="123456/SP", especialidade="Cível",
+        )
+        cliente = Cliente.objects.create(escritorio=self.a, nome="Cliente A")
+        Processo.objects.create(
+            escritorio=self.a, numero_processo="PROC-A-1", titulo="Caso A",
+            descricao="Teste", cliente=cliente, advogado=advogado,
+        )
+        self._entrar_como(self.admin_a)
+
+        resposta = self.client.delete(f"/api/usuarios/{self.advogado_a.id}/")
+
+        self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("não pode ser excluído", resposta.data["detail"])
+        self.assertTrue(type(self.advogado_a).objects.filter(pk=self.advogado_a.pk).exists())
+
     # ---------- escalada de privilégio ----------
 
     def test_advogado_nao_se_promove_a_administrador(self):

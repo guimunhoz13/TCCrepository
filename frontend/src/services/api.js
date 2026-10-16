@@ -565,6 +565,14 @@ export async function definirPerfilDoUsuario(usuarioId, tipo_usuario) {
   });
 }
 
+export async function alternarAtivoDoUsuario(usuarioId) {
+  return request(`/usuarios/${usuarioId}/alternar-ativo/`, { method: "POST" });
+}
+
+export async function excluirUsuario(usuarioId) {
+  return request(`/usuarios/${usuarioId}/`, { method: "DELETE" });
+}
+
 export async function redefinirDoisFatoresDoUsuario(usuarioId) {
   return request(`/usuarios/${usuarioId}/redefinir-2fa/`, { method: "POST" });
 }
