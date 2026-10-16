@@ -1,5 +1,5 @@
-# Atividade Docker Compose: reutiliza o Dockerfile da imagem estática
-# lexoffice-frontend:lab, construída na atividade anterior.
+# Atividade Docker Compose: reconstrói a imagem lexoffice-frontend:lab
+# com o contexto de build preservado da atividade anterior no LabEx.
 # Prepare o contexto primeiro: bash scripts/preparar-compose.sh
 services:
   frontend:
