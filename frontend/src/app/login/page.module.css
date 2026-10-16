@@ -100,3 +100,13 @@
     border-bottom: none;
   }
 }
+
+@media (max-width: 720px) {
+  .backBrand {
+    margin-bottom: 0;
+  }
+
+  .preview {
+    display: none;
+  }
+}

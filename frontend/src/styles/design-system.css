@@ -2208,6 +2208,35 @@ body {
   display: inline-block;
 }
 
+@media (max-width: 720px) {
+  .auth-hero {
+    padding: 28px 24px 8px;
+    gap: 14px;
+    justify-content: flex-start;
+  }
+
+  .auth-hero h1 {
+    font-size: 2.25rem;
+  }
+
+  .auth-hero h1::after {
+    margin-top: 14px;
+  }
+
+  .auth-hero p {
+    font-size: 0.95rem;
+    line-height: 1.5;
+  }
+
+  .auth-card-wrap {
+    padding: 16px 24px 32px;
+  }
+
+  .auth-card {
+    padding: 24px;
+  }
+}
+
 /* ==========================================================================
    DASHBOARD & PAINÉIS — acabamento adicional
    ========================================================================== */
