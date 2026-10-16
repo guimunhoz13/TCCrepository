@@ -1,0 +1,15 @@
+# Teste de fumaça da imagem via rede interna do Compose, sem dados reais.
+services:
+  smoke:
+    image: lexoffice-frontend:lab
+    depends_on:
+      frontend:
+        condition: service_healthy
+    entrypoint: ["/bin/sh", "-ec"]
+    command: |
+      wget -q -O /dev/null http://frontend/
+      echo 'GET / -> HTTP 200'
+      wget -q -O /dev/null http://frontend/login
+      echo 'GET /login -> HTTP 200'
+    networks:
+      - lexoffice

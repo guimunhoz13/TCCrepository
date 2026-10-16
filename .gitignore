@@ -18,3 +18,4 @@ Thumbs.db
 frontend/AGENTS.md
 frontend/CLAUDE.md
 .vercel
+.compose-build/

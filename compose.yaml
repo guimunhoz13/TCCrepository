@@ -1,0 +1,24 @@
+# Atividade Docker Compose: reutiliza o Dockerfile da imagem estática
+# lexoffice-frontend:lab, construída na atividade anterior.
+# Prepare o contexto primeiro: bash scripts/preparar-compose.sh
+services:
+  frontend:
+    image: lexoffice-frontend:lab
+    build:
+      context: ./.compose-build
+      dockerfile: Dockerfile
+    ports:
+      - "8088:80"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/"]
+      interval: 10s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
+    networks:
+      - lexoffice
+
+networks:
+  lexoffice:
+    driver: bridge
