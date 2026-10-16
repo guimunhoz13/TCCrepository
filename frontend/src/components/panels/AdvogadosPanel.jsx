@@ -87,7 +87,7 @@ export default function AdvogadosPanel() {
     });
     setFoto(null);
     setDocumentoIdentidade(null);
-    setPanelTab("novo");
+    setPanelTab("editar");
   }
 
   function handleCancelarEdicao() {
@@ -96,6 +96,16 @@ export default function AdvogadosPanel() {
     setFoto(null);
     setDocumentoIdentidade(null);
     setPanelTab("lista");
+  }
+
+  function handleNovoAdvogado() {
+    setErro("");
+    setMensagem("");
+    setAdvogadoEditando(null);
+    setFormAdvogado(FORM_ADVOGADO_INICIAL);
+    setFoto(null);
+    setDocumentoIdentidade(null);
+    setPanelTab("novo");
   }
 
   async function handleAdvogado(event) {
@@ -157,16 +167,14 @@ export default function AdvogadosPanel() {
     <OverlayPanel
       tabs={[
         { id: "lista", label: t("nav_advogados") },
-        {
-          id: "novo",
-          label: advogadoEditando ? t("acao_editar") : t("aba_novo"),
-        },
+        { id: "novo", label: t("acao_cadastrar_advogado"), onClick: handleNovoAdvogado },
+        ...(advogadoEditando ? [{ id: "editar", label: t("acao_editar") }] : []),
       ]}
     >
       {(erro || recurso.erro) && <div className="alert alert-error">{erro || recurso.erro}</div>}
       {mensagem && <div className="alert alert-success">{mensagem}</div>}
 
-      {panelTab === "novo" ? (
+      {panelTab === "novo" || panelTab === "editar" ? (
         <form className="form-grid" onSubmit={handleAdvogado}>
           <div className="form-field full">
             <p style={{ color: "var(--text-secondary)", fontSize: "0.875rem" }}>

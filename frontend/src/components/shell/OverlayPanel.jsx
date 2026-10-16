@@ -108,7 +108,7 @@ export default function OverlayPanel({
                 className={`tab-btn ${
                   panelTab === tab.id ? "active" : ""
                 }`}
-                onClick={() => setPanelTab(tab.id)}
+                onClick={() => tab.onClick ? tab.onClick() : setPanelTab(tab.id)}
               >
                 {tab.label}
               </button>
