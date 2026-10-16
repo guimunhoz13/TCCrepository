@@ -7,12 +7,23 @@ import { login, loginSegundoFator, salvarUsuarioLogado } from "@/services/api";
 
 const assinarNada = () => () => {};
 
+function mensagemErroLogin(error) {
+  if (error?.name === "AbortError") {
+    return "O servidor demorou para responder. Tente novamente.";
+  }
+  if (error instanceof TypeError) {
+    return "Não foi possível conectar ao servidor. Verifique sua conexão e tente novamente.";
+  }
+  return error?.message || "Não foi possível entrar. Tente novamente.";
+}
+
 export default function LoginForm() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [erro, setErro] = useState("");
   const [carregando, setCarregando] = useState(false);
+  const [esperaServidor, setEsperaServidor] = useState(false);
   // Contas com verificação em duas etapas recebem um desafio assinado depois
   // da senha; o formulário passa a pedir o código do aplicativo.
   const [desafio, setDesafio] = useState("");
@@ -32,12 +43,16 @@ export default function LoginForm() {
   async function handleLogin(event) {
     event.preventDefault();
     setErro("");
+    setEsperaServidor(false);
     setRecadoDispensado(true);
     sessionStorage.removeItem("sucessoCadastro");
+    const controlador = new AbortController();
+    const aviso = setTimeout(() => setEsperaServidor(true), 5000);
+    const limite = setTimeout(() => controlador.abort(), 90000);
 
     try {
       setCarregando(true);
-      const data = await login(email.trim(), senha);
+      const data = await login(email.trim(), senha, controlador.signal);
       if (data.requer_2fa) {
         setDesafio(data.desafio);
         setSenha("");
@@ -45,8 +60,11 @@ export default function LoginForm() {
       }
       abrirSessao(data);
     } catch (error) {
-      setErro(error.message);
+      setErro(mensagemErroLogin(error));
     } finally {
+      clearTimeout(aviso);
+      clearTimeout(limite);
+      setEsperaServidor(false);
       setCarregando(false);
     }
   }
@@ -54,13 +72,20 @@ export default function LoginForm() {
   async function handleSegundoFator(event) {
     event.preventDefault();
     setErro("");
+    setEsperaServidor(false);
+    const controlador = new AbortController();
+    const aviso = setTimeout(() => setEsperaServidor(true), 5000);
+    const limite = setTimeout(() => controlador.abort(), 90000);
     try {
       setCarregando(true);
-      abrirSessao(await loginSegundoFator(desafio, codigo.replace(/\D/g, "")));
+      abrirSessao(await loginSegundoFator(desafio, codigo.replace(/\D/g, ""), controlador.signal));
     } catch (error) {
-      setErro(error.message);
+      setErro(mensagemErroLogin(error));
       setCodigo("");
     } finally {
+      clearTimeout(aviso);
+      clearTimeout(limite);
+      setEsperaServidor(false);
       setCarregando(false);
     }
   }
@@ -88,6 +113,11 @@ export default function LoginForm() {
         </p>
 
         {erro && <div className="alert alert-error">{erro}</div>}
+        {carregando && esperaServidor && (
+          <div className="alert alert-warning" role="status">
+            O servidor está iniciando. No primeiro acesso, isso pode levar cerca de um minuto.
+          </div>
+        )}
 
         <div className="form-field" style={{ marginBottom: 22 }}>
           <label htmlFor="codigo-2fa">Código</label>
@@ -130,6 +160,11 @@ export default function LoginForm() {
 
       {mensagem && <div className="alert alert-success">{mensagem}</div>}
       {erro && <div className="alert alert-error">{erro}</div>}
+      {carregando && esperaServidor && (
+        <div className="alert alert-warning" role="status">
+          O servidor está iniciando. No primeiro acesso, isso pode levar cerca de um minuto.
+        </div>
+      )}
 
       <div className="form-field" style={{ marginBottom: 16 }}>
         <label>E-mail</label>

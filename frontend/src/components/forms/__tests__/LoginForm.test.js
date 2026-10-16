@@ -34,7 +34,7 @@ describe("LoginForm", () => {
     render(<LoginForm />);
     await entrarComSenha();
 
-    expect(login).toHaveBeenCalledWith("ana@escritorio.com", "Senha@123");
+    expect(login).toHaveBeenCalledWith("ana@escritorio.com", "Senha@123", expect.any(AbortSignal));
     expect(localStorage.getItem("access")).toBe("a");
     expect(push).toHaveBeenCalledWith("/dashboard");
   });
@@ -51,7 +51,7 @@ describe("LoginForm", () => {
     fireEvent.change(campo, { target: { value: "123 456" } });
     await act(async () => fireEvent.click(screen.getByRole("button", { name: "Confirmar e entrar" })));
 
-    expect(loginSegundoFator).toHaveBeenCalledWith("desafio-assinado", "123456");
+    expect(loginSegundoFator).toHaveBeenCalledWith("desafio-assinado", "123456", expect.any(AbortSignal));
     expect(push).toHaveBeenCalledWith("/dashboard");
   });
 
@@ -76,5 +76,27 @@ describe("LoginForm", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Voltar e entrar com outra conta" }));
     expect(screen.getByRole("button", { name: "Entrar no sistema" })).toBeTruthy();
+  });
+
+  test("avisa quando o servidor demora para responder", async () => {
+    jest.useFakeTimers();
+    let responder;
+    login.mockImplementation(() => new Promise((resolve) => { responder = resolve; }));
+    render(<LoginForm />);
+
+    fireEvent.change(screen.getByPlaceholderText("seu@email.com"), {
+      target: { value: "ana@escritorio.com" },
+    });
+    fireEvent.change(screen.getByPlaceholderText("••••••••"), {
+      target: { value: "Senha@123" },
+    });
+    act(() => fireEvent.click(screen.getByRole("button", { name: "Entrar no sistema" })));
+    act(() => jest.advanceTimersByTime(5000));
+
+    expect(screen.getByRole("status").textContent).toMatch(/servidor está iniciando/i);
+
+    await act(async () => responder(SESSAO));
+    expect(screen.queryByRole("status")).toBeNull();
+    jest.useRealTimers();
   });
 });

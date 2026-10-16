@@ -131,18 +131,20 @@ async function request(endpoint, options = {}, tokenKey = "access") {
   return data;
 }
 
-export async function login(email, senha) {
+export async function login(email, senha, signal) {
   return request("/login/", {
     method: "POST",
     body: JSON.stringify({ email, senha }),
+    signal,
   });
 }
 
 /** Segunda fase do login, quando a conta tem verificação em duas etapas. */
-export async function loginSegundoFator(desafio, codigo) {
+export async function loginSegundoFator(desafio, codigo, signal) {
   return request("/login/2fa/", {
     method: "POST",
     body: JSON.stringify({ desafio, codigo }),
+    signal,
   });
 }
 
