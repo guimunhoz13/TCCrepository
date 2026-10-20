@@ -61,8 +61,11 @@ if os.environ.get('RENDER_EXTERNAL_HOSTNAME'):
 # URL do frontend, usada para montar links (ex.: redefinição de senha)
 # enviados por e-mail.
 FRONTEND_URL = os.environ.get('FRONTEND_URL', 'http://localhost:3000')
-if FRONTEND_URL.rstrip('/') == 'https://lexoffice-piloto.vercel.app':
-    FRONTEND_URL = 'https://lexnexo-piloto.vercel.app'
+if FRONTEND_URL.rstrip('/') in {
+    'https://lexoffice-piloto.vercel.app',
+    'https://lexnexo-piloto.vercel.app',
+}:
+    FRONTEND_URL = 'https://lexnexo.vercel.app'
 
 # Chave pública da API do DataJud (CNJ), divulgada pelo próprio CNJ.
 # Sem ela, a consulta de processo é recusada com uma mensagem explicativa.
@@ -342,9 +345,14 @@ CORS_ALLOWED_ORIGINS = [
     for origin in os.environ.get('CORS_ALLOWED_ORIGINS', 'http://localhost:3000').split(',')
     if origin.strip()
 ]
-_FRONTEND_PRODUCAO = 'https://lexnexo-piloto.vercel.app'
-if _FRONTEND_PRODUCAO not in CORS_ALLOWED_ORIGINS:
-    CORS_ALLOWED_ORIGINS.append(_FRONTEND_PRODUCAO)
+_FRONTENDS_PRODUCAO = {
+    'https://lexnexo.vercel.app',
+    'https://lexnexo-piloto.vercel.app',
+    'https://lexoffice-piloto.vercel.app',
+}
+CORS_ALLOWED_ORIGINS.extend(
+    origin for origin in _FRONTENDS_PRODUCAO if origin not in CORS_ALLOWED_ORIGINS
+)
 
 
 

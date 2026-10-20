@@ -62,7 +62,7 @@ abra o sistema e confira o health check antes de enviar o link.
    incorporada ao JavaScript durante o build; se for alterada, faça novo deploy.
 4. Copie a URL HTTPS final da Vercel para `FRONTEND_URL` e
    `CORS_ALLOWED_ORIGINS` no Render. Cada uma recebe a origem completa, sem
-   barra final, por exemplo `https://lexnexo-piloto.vercel.app`.
+   barra final, por exemplo `https://lexnexo.vercel.app`.
 
 ## 4. Conta e dados de teste
 
