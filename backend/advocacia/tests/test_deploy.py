@@ -36,9 +36,11 @@ class ConfiguracaoPilotoTests(SimpleTestCase):
             banco.cursor.return_value.__enter__.return_value = MagicMock()
             resposta = health(RequestFactory().get('/api/health/'))
         self.assertEqual(resposta.status_code, 200)
+        self.assertJSONEqual(resposta.content, {'status': 'ok', 'service': 'LexNexo'})
 
     def test_health_reporta_banco_indisponivel(self):
         with patch('core.urls.connection') as banco:
             banco.cursor.side_effect = OperationalError
             resposta = health(RequestFactory().get('/api/health/'))
         self.assertEqual(resposta.status_code, 503)
+        self.assertJSONEqual(resposta.content, {'status': 'indisponivel', 'service': 'LexNexo'})

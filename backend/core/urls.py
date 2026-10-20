@@ -17,8 +17,8 @@ def health(request):
             cursor.execute('SELECT 1')
             cursor.fetchone()
     except OperationalError:
-        return JsonResponse({'status': 'indisponivel'}, status=503)
-    return JsonResponse({'status': 'ok'})
+        return JsonResponse({'status': 'indisponivel', 'service': 'LexNexo'}, status=503)
+    return JsonResponse({'status': 'ok', 'service': 'LexNexo'})
 
 
 urlpatterns = [
