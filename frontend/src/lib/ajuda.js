@@ -12,7 +12,7 @@ export const SECOES_AJUDA = [
     id: "visao-geral",
     titulo: "Como o sistema funciona",
     resumo:
-      "O LexOffice organiza a rotina de um escritório de advocacia em um só lugar: clientes, processos, prazos, documentos, honorários e horas trabalhadas.",
+      "O LexNexo organiza a rotina de um escritório de advocacia em um só lugar: clientes, processos, prazos, documentos, honorários e horas trabalhadas.",
     topicos: [
       {
         titulo: "Cada escritório enxerga só os próprios dados",
@@ -37,7 +37,7 @@ export const SECOES_AJUDA = [
       {
         titulo: "Pode ser instalado como aplicativo",
         texto:
-          "No celular ou no computador, o navegador oferece instalar o LexOffice. Instalado, ele abre direto no painel, em janela própria e com ícone na tela inicial.",
+          "No celular ou no computador, o navegador oferece instalar o LexNexo. Instalado, ele abre direto no painel, em janela própria e com ícone na tela inicial.",
       },
       {
         titulo: "Plano do escritório",

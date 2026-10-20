@@ -10,7 +10,7 @@ class DocumentacaoDaAPITestCase(TestCase):
         resposta = self.client.get("/api/schema/", HTTP_ACCEPT="application/vnd.oai.openapi+json")
         self.assertEqual(resposta.status_code, 200)
         esquema = resposta.json()
-        self.assertEqual(esquema["info"]["title"], "LexOffice API")
+        self.assertEqual(esquema["info"]["title"], "LexNexo API")
         for rota in ("/api/login/", "/api/login/2fa/", "/api/processos/{id}/ficha/",
                      "/api/intimacoes/buscar/", "/api/parcelas/{id}/pix/", "/api/dashboard/"):
             self.assertIn(rota, esquema["paths"])

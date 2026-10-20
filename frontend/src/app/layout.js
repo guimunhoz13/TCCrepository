@@ -3,12 +3,12 @@ import RegistrarServiceWorker from "@/components/RegistrarServiceWorker";
 import "./globals.css";
 
 export const metadata = {
-  title: "LexOffice — ERP Jurídico",
-  description: "Sistema ERP multi-escritório para advocacia",
+  title: "LexNexo — ERP Jurídico",
+  description: "O nexo entre gestão e Direito.",
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
-    title: "LexOffice",
+    title: "LexNexo",
     // O iOS não lê theme_color do manifest; a barra de status segue este
     // estilo para acompanhar o topo escuro do sistema.
     statusBarStyle: "black-translucent",

@@ -50,7 +50,7 @@ describe("CartoesDePlanos", () => {
 });
 
 describe("PlanosPanel", () => {
-  async function montar(situacao = SITUACAO, contato = "vendas@lexoffice.app") {
+  async function montar(situacao = SITUACAO, contato = "vendas@lexnexo.app") {
     getPlanos.mockResolvedValue({ planos: PLANOS, contato_comercial: contato });
     getPlanoAtual.mockResolvedValue(situacao);
     await act(async () => {
@@ -72,7 +72,7 @@ describe("PlanosPanel", () => {
   test("os planos acima do atual levam ao contato comercial", async () => {
     await montar();
     const link = screen.getByRole("link", { name: "Quero o plano Profissional" });
-    expect(link.getAttribute("href")).toMatch(/^mailto:vendas@lexoffice\.app\?subject=/);
+    expect(link.getAttribute("href")).toMatch(/^mailto:vendas@lexnexo\.app\?subject=/);
     expect(within(screen.getByRole("article", { name: "Plano Gratuito" })).queryByRole("link")).toBeNull();
   });
 

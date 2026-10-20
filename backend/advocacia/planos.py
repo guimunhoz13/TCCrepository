@@ -1,4 +1,4 @@
-"""Planos do LexOffice: o Gratuito para qualquer escritório, sem pagamento,
+"""Planos do LexNexo: o Gratuito para qualquer escritório, sem pagamento,
 e os pagos com mais vantagens.
 
 O catálogo fica aqui, num lugar só: a API aplica os limites, a tela de

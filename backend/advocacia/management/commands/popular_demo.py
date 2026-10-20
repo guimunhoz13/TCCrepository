@@ -9,11 +9,11 @@ ponta (Playwright) no CI.
     python manage.py popular_demo --senha Outra@123
 
 Todos os usuários entram com a mesma senha (padrão Demo@1234 apenas em DEBUG ou testes):
-    admin@demo.lexoffice.app       Administrador
-    advogada@demo.lexoffice.app    Advogado
-    estagiario@demo.lexoffice.app  Estagiário
-    financeiro@demo.lexoffice.app  Financeiro
-    secretaria@demo.lexoffice.app  Secretária
+    admin@demo.lexnexo.app       Administrador
+    advogada@demo.lexnexo.app    Advogado
+    estagiario@demo.lexnexo.app  Estagiário
+    financeiro@demo.lexnexo.app  Financeiro
+    secretaria@demo.lexnexo.app  Secretária
 """
 
 from datetime import date, datetime, time, timedelta
@@ -45,7 +45,7 @@ from advocacia.models import (
 )
 
 CNPJ_DEMO = "00.000.000/0001-91"
-DOMINIO = "demo.lexoffice.app"
+DOMINIO = "demo.lexnexo.app"
 
 
 class Command(BaseCommand):

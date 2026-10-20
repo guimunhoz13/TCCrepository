@@ -1,7 +1,7 @@
 import Logo from "@/components/ui/Logo";
 
 export const metadata = {
-  title: "Sem conexão — LexOffice",
+  title: "Sem conexão — LexNexo",
 };
 
 export default function OfflinePage() {
@@ -25,7 +25,7 @@ export default function OfflinePage() {
         Sem conexão
       </h1>
       <p style={{ color: "var(--text-muted)", maxWidth: 420, lineHeight: 1.6 }}>
-        O LexOffice precisa de internet para mostrar processos, prazos e
+        O LexNexo precisa de internet para mostrar processos, prazos e
         documentos atualizados. Assim que a conexão voltar, recarregue a
         página.
       </p>

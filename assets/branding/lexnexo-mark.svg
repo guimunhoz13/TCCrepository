@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title desc">
+  <title id="title">Monograma LexNexo</title>
+  <desc id="desc">As letras L e N conectadas em dourado sobre um quadrado azul-tinta.</desc>
+  <rect width="64" height="64" rx="15" fill="#1c2333"/>
+  <g fill="none" stroke="#c99a4b" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M15 12v40h36"/>
+    <path d="M20 45V19l25 26V19"/>
+  </g>
+</svg>

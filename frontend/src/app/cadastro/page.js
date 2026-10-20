@@ -9,7 +9,7 @@ export default function CadastroPage() {
       <section className="auth-hero">
         <Link href="/" className={styles.backBrand}>
           <Logo size={18} />
-          LexOffice
+          LexNexo
         </Link>
 
         <h1>Cada escritório, seu próprio ambiente.</h1>

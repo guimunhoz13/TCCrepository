@@ -60,7 +60,7 @@ export default function MasterLoginPage() {
               <label>E-mail</label>
               <input
                 type="email"
-                placeholder="dev@lexoffice.com"
+                placeholder="dev@lexnexo.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required

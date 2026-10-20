@@ -21,7 +21,7 @@ function carregarServiceWorker(extras = {}) {
     addEventListener: (nome, fn) => {
       handlers[nome] = fn;
     },
-    location: { origin: "https://lexoffice.app" },
+    location: { origin: "https://lexnexo.app" },
     skipWaiting: () => Promise.resolve(),
     clients: { claim: () => Promise.resolve() },
   };
@@ -84,38 +84,38 @@ describe("service worker", () => {
   });
 
   test("nunca intercepta chamadas de API", () => {
-    expect(despachar(handlers, req("https://lexoffice.app/api/clientes/"))).toBe(false);
+    expect(despachar(handlers, req("https://lexnexo.app/api/clientes/"))).toBe(false);
     expect(
-      despachar(handlers, req("https://lexoffice.app/api/dashboard/stats/", { mode: "cors" }))
+      despachar(handlers, req("https://lexnexo.app/api/dashboard/stats/", { mode: "cors" }))
     ).toBe(false);
   });
 
   test("nem mesmo uma navegação para /api/ é servida do cache", () => {
     expect(
-      despachar(handlers, req("https://lexoffice.app/api/relatorio/", { mode: "navigate" }))
+      despachar(handlers, req("https://lexnexo.app/api/relatorio/", { mode: "navigate" }))
     ).toBe(false);
   });
 
   test("deixa passar requisição para outra origem", () => {
-    expect(despachar(handlers, req("https://api.lexoffice.app/clientes/"))).toBe(false);
+    expect(despachar(handlers, req("https://api.lexnexo.app/clientes/"))).toBe(false);
     expect(despachar(handlers, req("https://fonts.googleapis.com/css2"))).toBe(false);
   });
 
   test("ignora tudo que não seja GET", () => {
     expect(
-      despachar(handlers, req("https://lexoffice.app/_next/static/chunks/a.js", { method: "POST" }))
+      despachar(handlers, req("https://lexnexo.app/_next/static/chunks/a.js", { method: "POST" }))
     ).toBe(false);
   });
 
   test("assume os estáticos versionados do build", () => {
-    expect(despachar(handlers, req("https://lexoffice.app/_next/static/chunks/a.js"))).toBe(true);
-    expect(despachar(handlers, req("https://lexoffice.app/icon-192.png"))).toBe(true);
-    expect(despachar(handlers, req("https://lexoffice.app/favicon.ico"))).toBe(true);
+    expect(despachar(handlers, req("https://lexnexo.app/_next/static/chunks/a.js"))).toBe(true);
+    expect(despachar(handlers, req("https://lexnexo.app/icon-192.png"))).toBe(true);
+    expect(despachar(handlers, req("https://lexnexo.app/favicon.ico"))).toBe(true);
   });
 
   test("assume a navegação para poder mostrar a tela de offline", () => {
     expect(
-      despachar(handlers, req("https://lexoffice.app/dashboard", { mode: "navigate" }))
+      despachar(handlers, req("https://lexnexo.app/dashboard", { mode: "navigate" }))
     ).toBe(true);
   });
 
@@ -156,6 +156,6 @@ describe("service worker", () => {
       },
     });
     await espera;
-    expect(abertas).toEqual(["https://lexoffice.app/dashboard"]);
+    expect(abertas).toEqual(["https://lexnexo.app/dashboard"]);
   });
 });

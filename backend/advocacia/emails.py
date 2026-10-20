@@ -53,7 +53,7 @@ def _casca_html(escritorio_nome, titulo, subtitulo, corpo_html):
           <p style="color: #4b5468; font-size: 0.92rem; margin-top: 0;">{subtitulo}</p>
           {corpo_html}
           <p style="color: #80869a; font-size: 0.76rem; margin-top: 28px; border-top: 1px solid #e5decf; padding-top: 14px;">
-            Este e-mail foi enviado automaticamente pelo sistema {escritorio_nome} — LexOffice.
+            Este e-mail foi enviado automaticamente pelo sistema {escritorio_nome} — LexNexo.
           </p>
         </div>
       </div>
@@ -126,7 +126,7 @@ def _tiras_resumo(itens):
 def montar_email_verificacao(nome, link, escritorio_nome):
     corpo_html = f"""
       <p style="font-size:0.9rem; color:#1c2333; line-height:1.7;">
-        Olá, {nome}. Falta só um passo para começar a usar o {escritorio_nome} no LexOffice:
+        Olá, {nome}. Falta só um passo para começar a usar o {escritorio_nome} no LexNexo:
         confirme seu e-mail clicando no botão abaixo. O link expira em 24 horas.
       </p>
       <p style="text-align:center; margin: 24px 0;">

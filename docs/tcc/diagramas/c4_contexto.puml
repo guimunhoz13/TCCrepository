@@ -2,11 +2,15 @@
 !include skinparam.iuml
 title Diagrama de Contexto (C4 — Nível 1)
 
+' Mantém a paleta da versão publicada ao regenerar o diagrama.
+skinparam cloudBackgroundColor #FFF9C4
+skinparam cloudBorderColor #333333
+
 actor "Usuários do escritório\n(administrador, advogado,\nestagiário, financeiro, secretária)" as Equipe
 actor "Administrador do Sistema\n(desenvolvedor)" as Master
 actor "Cliente do escritório\n(sem acesso ao sistema)" as Cliente
 
-rectangle "Sistema Web de Advocacia\n(LexOffice)" as Sistema #FDF6E3
+rectangle "Sistema Web de Advocacia\n(LexNexo)" as Sistema #FDF6E3
 cloud "API da OpenAI\n(assistente e resumo\npara o cliente)" as OpenAI
 cloud "Envio de e-mail\n(SMTP)" as Email
 cloud "DataJud (CNJ)\nandamentos" as DataJud

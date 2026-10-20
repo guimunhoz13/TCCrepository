@@ -13,7 +13,13 @@ from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-load_dotenv(os.environ.get('LEXOFFICE_ENV_FILE') or BASE_DIR / '.env')
+# `LEXOFFICE_ENV_FILE` continua aceito durante a transição para não quebrar
+# ambientes já configurados com o nome anterior da marca.
+load_dotenv(
+    os.environ.get("LEXNEXO_ENV_FILE")
+    or os.environ.get("LEXOFFICE_ENV_FILE")
+    or BASE_DIR / ".env"
+)
 
 # `manage.py test` roda dezenas de casos de teste contra os mesmos endpoints
 # sensíveis (login, cadastro) em segundos — bem abaixo da janela de 1 minuto
@@ -314,7 +320,7 @@ EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
 EMAIL_HOST = os.environ.get("EMAIL_HOST", "smtp.gmail.com")
 EMAIL_PORT = int(os.environ.get("EMAIL_PORT", "587"))
 EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS", "True") == "True"
-DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", EMAIL_HOST_USER or "no-reply@lexoffice.local")
+DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", EMAIL_HOST_USER or "no-reply@lexnexo.local")
 
 # E-mail para quem quer contratar um plano pago (aparece no botão da tela de
 # planos). Em branco, a tela orienta a falar com o administrador da plataforma.
@@ -357,7 +363,7 @@ REST_FRAMEWORK = {
 
     # Documentação OpenAPI gerada a partir das próprias views e serializers
     # (ver SPECTACULAR_SETTINGS e /api/docs/).
-    "DEFAULT_SCHEMA_CLASS": "advocacia.esquema_api.EsquemaLexOffice",
+    "DEFAULT_SCHEMA_CLASS": "advocacia.esquema_api.EsquemaLexNexo",
 
     # LIMITES_DESLIGADOS=True só para os testes de ponta a ponta (E2E), que
     # entram e saem do sistema dezenas de vezes por minuto.
@@ -402,9 +408,9 @@ REST_FRAMEWORK = {
 API_DOCS_PUBLICAS = os.environ.get("API_DOCS_PUBLICAS", "True") == "True"
 
 SPECTACULAR_SETTINGS = {
-    "TITLE": "LexOffice API",
+    "TITLE": "LexNexo API",
     "DESCRIPTION": (
-        "API do ERP jurídico LexOffice: clientes, processos, agenda, documentos, "
+        "API do ERP jurídico LexNexo: clientes, processos, agenda, documentos, "
         "contratos e honorários, tarefas, horas e despesas, intimações do DJEN, "
         "PIX, IA e configurações do escritório.\n\n"
         "**Autenticação:** `POST /api/login/` devolve `access` e `refresh` "

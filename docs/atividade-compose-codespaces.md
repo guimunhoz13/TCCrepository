@@ -1,10 +1,10 @@
 # Atividade: Docker Compose no GitHub Codespaces
 
 Esta entrega usa o **contexto de build preservado da atividade anterior**:
-`docker/lexoffice-labex-context.tar.gz` é uma cópia de
+`docker/lexnexo-labex-context.tar.gz` é uma cópia de
 `entrega-docker-labex/labex-build`, com o Dockerfile, a configuração do Nginx e
 o site compilado em setembro. O script extrai esses arquivos para
-`.compose-build/` e o Compose reconstrói a tag `lexoffice-frontend:lab`.
+`.compose-build/` e o Compose reconstrói a tag `lexnexo-frontend:lab`.
 O arquivo binário da imagem Docker original não foi exportado do LabEx;
 portanto, este é um novo build dos mesmos arquivos, não o mesmo ID de imagem.
 Nenhuma senha, `.env` ou banco de dados entra na imagem.
@@ -17,12 +17,12 @@ Na raiz do repositório:
 bash scripts/preparar-compose.sh
 sha256sum .compose-build/Dockerfile
 docker compose config --quiet && docker compose build
-docker image ls --format '{{.Repository}}:{{.Tag}} {{.Size}}' lexoffice-frontend:lab
+docker image ls --format '{{.Repository}}:{{.Tag}} {{.Size}}' lexnexo-frontend:lab
 docker compose up -d
 docker inspect -f '{{.State.Health.Status}}' tccrepository-frontend-1
 curl -fsS -o /dev/null -w 'GET /: %{http_code}\n' http://127.0.0.1:8088/
 curl -fsS -o /dev/null -w 'GET /login: %{http_code}\n' http://127.0.0.1:8088/login
-docker run --rm --network host --entrypoint /bin/sh lexoffice-frontend:lab -ec \
+docker run --rm --network host --entrypoint /bin/sh lexnexo-frontend:lab -ec \
   'wget -q -O /dev/null http://127.0.0.1:8088/ && \
    wget -q -O /dev/null http://127.0.0.1:8088/login && echo Teste-HTTP-200'
 docker compose down
@@ -52,11 +52,11 @@ o tamanho final sejam iguais aos do LabEx.
 
 ## Escolhas do Compose
 
-- **Imagem:** `lexoffice-frontend:lab` é reconstruída com o Dockerfile e o site
+- **Imagem:** `lexnexo-frontend:lab` é reconstruída com o Dockerfile e o site
   estático **já compilado** na atividade anterior. Não precisa de `npm ci` nem
   de um novo build do Next.js; o contexto preservado torna a atividade
   reproduzível no Codespaces sem publicar a imagem em um registro.
-- **Rede:** `lexoffice` é uma rede bridge privada; o teste `smoke` alcança o
+- **Rede:** `lexnexo` é uma rede bridge privada; o teste `smoke` alcança o
   serviço pelo nome `frontend`.
 - **Porta:** `8088:80` torna as páginas acessíveis no ambiente de laboratório.
 - **Reinício e saúde:** `unless-stopped` reinicia o serviço em caso de falha;

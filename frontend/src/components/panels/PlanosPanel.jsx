@@ -49,7 +49,7 @@ function BarraDeUso({ rotulo, usado, limite }) {
 function botaoDoPlano(plano, ehAtual, { ordem, ordemAtual, contato }) {
   if (ehAtual || ordem < ordemAtual) return null;
   if (contato) {
-    const assunto = encodeURIComponent(`Quero o plano ${plano.nome} do LexOffice`);
+    const assunto = encodeURIComponent(`Quero o plano ${plano.nome} do LexNexo`);
     return (
       <a className="btn btn-primary" style={{ width: "100%" }} href={`mailto:${contato}?subject=${assunto}`}>
         Quero o plano {plano.nome}
@@ -79,7 +79,7 @@ export default function PlanosPanel() {
   return (
     <OverlayPanel>
       <p style={{ color: "var(--text-secondary)", marginBottom: 20, fontSize: "0.925rem" }}>
-        O LexOffice é gratuito para começar, sem cartão de crédito. Os planos pagos ampliam os
+        O LexNexo é gratuito para começar, sem cartão de crédito. Os planos pagos ampliam os
         limites e trazem as automações e a inteligência artificial.
       </p>
 

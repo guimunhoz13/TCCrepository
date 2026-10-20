@@ -1,7 +1,7 @@
 # API do piloto. Os segredos são preenchidos no painel do Render, nunca aqui.
 services:
   - type: web
-    name: lexoffice-api-piloto
+    name: lexnexo-api-piloto
     runtime: python
     plan: free
     region: virginia

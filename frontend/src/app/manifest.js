@@ -2,8 +2,8 @@ export const dynamic = "force-static";
 
 export default function manifest() {
   return {
-    name: "LexOffice — ERP Jurídico",
-    short_name: "LexOffice",
+    name: "LexNexo — ERP Jurídico",
+    short_name: "LexNexo",
     description:
       "Clientes, processos, prazos, documentos e financeiro do escritório em um só lugar.",
     // O sistema vive no painel: instalado, é nele que o app deve abrir.

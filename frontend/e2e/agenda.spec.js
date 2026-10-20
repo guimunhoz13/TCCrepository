@@ -10,7 +10,7 @@ test("baixa a agenda em .ics com o prazo fatal", async ({ page }) => {
   const download = page.waitForEvent("download");
   await page.getByRole("button", { name: /Baixar agenda/ }).click();
   const arquivo = await download;
-  expect(arquivo.suggestedFilename()).toBe("agenda-lexoffice.ics");
+  expect(arquivo.suggestedFilename()).toBe("agenda-lexnexo.ics");
   const conteudo = await readFile(await arquivo.path(), "utf8");
   expect(conteudo).toContain("BEGIN:VCALENDAR");
   expect(conteudo).toContain("PRAZO FATAL");

@@ -1,4 +1,4 @@
-# Piloto LexOffice para teste externo
+# Piloto LexNexo para teste externo
 
 Este roteiro publica o site na Vercel, a API Django no Render e usa um
 **projeto Supabase separado** para o banco e os arquivos. Use apenas dados
@@ -10,7 +10,7 @@ fictícios. A conta de teste é diferente da conta pessoal de desenvolvimento.
 2. Em **Connect → Session pooler**, copie host, usuário, senha, banco e porta.
    A porta costuma ser 5432; confirme no painel. O Render usará
    `DB_SSLMODE=require`.
-3. Em **Storage**, crie um bucket **privado** para arquivos do LexOffice.
+3. Em **Storage**, crie um bucket **privado** para arquivos do LexNexo.
 4. Na configuração S3 do Storage, habilite o protocolo S3 e gere um par de
    **Access Key ID / Secret Access Key**. Copie também o endpoint e a região
    exibidos ali. Estas chaves dão acesso amplo ao Storage: guarde-as somente
@@ -62,7 +62,7 @@ abra o sistema e confira o health check antes de enviar o link.
    incorporada ao JavaScript durante o build; se for alterada, faça novo deploy.
 4. Copie a URL HTTPS final da Vercel para `FRONTEND_URL` e
    `CORS_ALLOWED_ORIGINS` no Render. Cada uma recebe a origem completa, sem
-   barra final, por exemplo `https://lexoffice-piloto.vercel.app`.
+   barra final, por exemplo `https://lexnexo-piloto.vercel.app`.
 
 ## 4. Conta e dados de teste
 
@@ -77,11 +77,14 @@ forte e `DEMO_PASSWORD` aleatória. Execute:
 
 ```bash
 cd backend
-LEXOFFICE_ENV_FILE="$PWD/.env.piloto" ambiente/bin/python manage.py migrate --noinput
-LEXOFFICE_ENV_FILE="$PWD/.env.piloto" ambiente/bin/python manage.py popular_demo
+LEXNEXO_ENV_FILE="$PWD/.env.piloto" ambiente/bin/python manage.py migrate --noinput
+LEXNEXO_ENV_FILE="$PWD/.env.piloto" ambiente/bin/python manage.py popular_demo
 ```
 
-O login de demonstração é `admin@demo.lexoffice.app`, com a senha que você
+Durante a migração de marca, `LEXOFFICE_ENV_FILE` ainda é aceito como nome
+legado. Novas configurações devem usar `LEXNEXO_ENV_FILE`.
+
+O login de demonstração é `admin@demo.lexnexo.app`, com a senha que você
 definiu. Envie **essa** credencial à avaliadora, por um canal privado, e
 troque-a ou desative a conta quando terminar. Não compartilhe sua conta
 pessoal. O comando não apaga dados existentes sem `--recriar`.

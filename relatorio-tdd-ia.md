@@ -1,7 +1,7 @@
 # Relatório — TDD na Prática: IA como Engenheira de Testes
 
 **Atividade:** Desenvolvimento Orientado por Testes (TDD) — IA e TDD
-**Repositório:** LexOffice — ERP Jurídico (`guimunhoz13/TCCrepository`)
+**Repositório:** LexNexo — ERP Jurídico (`guimunhoz13/TCCrepository`)
 **Assistente utilizado:** Claude Code (Anthropic)
 **Data:** 08/09/2026
 

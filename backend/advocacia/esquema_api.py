@@ -28,7 +28,7 @@ class EsquemaJWTContaAtiva(OpenApiAuthenticationExtension):
         }
 
 
-class EsquemaLexOffice(AutoSchema):
+class EsquemaLexNexo(AutoSchema):
 
     def _sem_serializer(self):
         return not isinstance(self.view, GenericAPIView) and not hasattr(self.view, "serializer_class")

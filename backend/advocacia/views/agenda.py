@@ -183,10 +183,10 @@ class AgendaViewSet(
         escritorio = self.get_escritorio()
         conteudo = gerar_ics(
             eventos_para_calendario(self.get_queryset()),
-            f"LexOffice — {escritorio.nome}" if escritorio else "LexOffice",
+            f"LexNexo — {escritorio.nome}" if escritorio else "LexNexo",
         )
         resposta = HttpResponse(conteudo, content_type="text/calendar; charset=utf-8")
-        resposta["Content-Disposition"] = 'attachment; filename="agenda-lexoffice.ics"'
+        resposta["Content-Disposition"] = 'attachment; filename="agenda-lexnexo.ics"'
         return resposta
 
     @action(detail=False, methods=["get", "post", "delete"], url_path="assinatura")
@@ -242,6 +242,6 @@ class AgendaFeedView(APIView):
             Agenda.objects.filter(escritorio=usuario.escritorio), usuario
         )
         conteudo = gerar_ics(
-            eventos_para_calendario(eventos), f"LexOffice — {usuario.escritorio.nome}"
+            eventos_para_calendario(eventos), f"LexNexo — {usuario.escritorio.nome}"
         )
         return HttpResponse(conteudo, content_type="text/calendar; charset=utf-8")

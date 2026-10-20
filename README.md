@@ -1,4 +1,10 @@
-# LexOffice — ERP Jurídico
+# LexNexo — ERP Jurídico
+
+<p align="center">
+  <img src="assets/branding/lexnexo-logo.svg" alt="LexNexo" width="360">
+</p>
+
+> **O nexo entre gestão e Direito.**
 
 [![CI](https://github.com/guimunhoz13/TCCrepository/actions/workflows/ci.yml/badge.svg)](https://github.com/guimunhoz13/TCCrepository/actions/workflows/ci.yml)
 
@@ -10,6 +16,9 @@ tudo isolado por escritório (multi-tenant).
 
 Projeto acadêmico (TCC) desenvolvido em dupla, para a disciplina de
 Tecnologia em Desenvolvimento de Sistemas.
+
+Os arquivos oficiais da marca e as regras de aplicação ficam em
+[`assets/branding`](assets/branding/README.md).
 
 ## Stack
 
@@ -65,8 +74,8 @@ a imagem em um ambiente com Docker ativo:
 
 ```bash
 cd frontend
-docker build -t lexoffice-frontend .
-docker run --rm -p 3000:3000 lexoffice-frontend
+docker build -t lexnexo-frontend .
+docker run --rm -p 3000:3000 lexnexo-frontend
 ```
 
 `NEXT_PUBLIC_API_URL` é incorporada ao frontend na compilação. Quando a API
@@ -195,7 +204,7 @@ cd backend && python manage.py popular_demo   # --recriar para começar do zero
 Cria o escritório "Silva & Sabino Advocacia (demonstração)" com clientes,
 processos (um em segredo de justiça), agenda, tarefas, contrato com parcelas
 e chave PIX. Todos entram com a senha `Demo@1234`: `admin@`, `advogada@`,
-`estagiario@`, `financeiro@` e `secretaria@demo.lexoffice.app` — um de cada
+`estagiario@`, `financeiro@` e `secretaria@demo.lexnexo.app` — um de cada
 perfil de acesso.
 
 ## Testes de ponta a ponta (E2E)

@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-# O frontend do LexOffice usa Node 22, a mesma versão da CI do projeto.
+# O frontend do LexNexo usa Node 22, a mesma versão da CI do projeto.
 FROM node:22-slim AS deps
 WORKDIR /app
 

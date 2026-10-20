@@ -44,7 +44,7 @@ def gerar_chaves():
 def _enviar(inscricao, carga):
     from pywebpush import WebPushException, webpush
 
-    contato = settings.VAPID_EMAIL or "contato@lexoffice.app"
+    contato = settings.VAPID_EMAIL or "contato@lexnexo.app"
     try:
         webpush(
             subscription_info={

@@ -109,7 +109,7 @@ export default function LoginForm() {
         <h2>Verificação em duas etapas</h2>
         <p className="subtitle">
           Abra o aplicativo autenticador (Google Authenticator, Authy, Microsoft
-          Authenticator…) e digite o código de 6 dígitos do LexOffice.
+          Authenticator…) e digite o código de 6 dígitos do LexNexo.
         </p>
 
         {erro && <div className="alert alert-error">{erro}</div>}

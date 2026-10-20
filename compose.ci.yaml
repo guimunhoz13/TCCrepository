@@ -1,7 +1,7 @@
 # Teste de fumaça da imagem via rede interna do Compose, sem dados reais.
 services:
   smoke:
-    image: lexoffice-frontend:lab
+    image: lexnexo-frontend:lab
     depends_on:
       frontend:
         condition: service_healthy
@@ -13,4 +13,4 @@ services:
         wget -q -O /dev/null http://frontend/login &&
         echo 'GET /login -> HTTP 200'
     networks:
-      - lexoffice
+      - lexnexo

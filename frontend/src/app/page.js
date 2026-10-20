@@ -166,7 +166,7 @@ export default function HomePage() {
           <span className={styles.navBrandIcon}>
             <Logo size={18} />
           </span>
-          LexOffice
+          LexNexo
         </div>
 
         <nav className={styles.navLinks}>
@@ -193,17 +193,17 @@ export default function HomePage() {
           </div>
 
           <h1>
-            Gestão jurídica moderna,
+            O nexo entre gestão e Direito,
             <span className={styles.heroAccent}>
               {" "}
-              do primeiro cliente ao último processo.
+              do primeiro cliente ao próximo passo.
             </span>
           </h1>
 
           <p className={styles.heroLead}>
             Clientes, processos, agenda, documentos, relatórios e comunicação
             por e-mail e WhatsApp — tudo isolado por escritório, em um único
-            painel elegante.
+            painel conectado.
           </p>
 
           <div className={styles.heroActions}>
@@ -327,9 +327,9 @@ export default function HomePage() {
       <footer className={styles.footer}>
         <div className={styles.footerBrand}>
           <Logo size={16} />
-          LexOffice
+          LexNexo
         </div>
-        <span>© {new Date().getFullYear()} LexOffice — ERP Jurídico</span>
+        <span>© {new Date().getFullYear()} LexNexo — ERP Jurídico</span>
         <Link href="/login">Entrar</Link>
       </footer>
     </div>

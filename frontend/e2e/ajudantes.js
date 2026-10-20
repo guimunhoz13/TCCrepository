@@ -2,7 +2,7 @@ import AxeBuilder from "@axe-core/playwright";
 import { expect } from "@playwright/test";
 
 export const SENHA = process.env.E2E_SENHA || "Demo@1234";
-export const email = (perfil) => `${perfil}@demo.lexoffice.app`;
+export const email = (perfil) => `${perfil}@demo.lexnexo.app`;
 
 /** Entra pela tela de login, como uma pessoa faria. */
 export async function entrar(page, perfil = "admin") {

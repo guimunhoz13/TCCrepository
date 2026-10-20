@@ -71,7 +71,7 @@ export default function AgendaSincronizar() {
   async function desligar() {
     const ok = await confirmar({
       titulo: "Desligar a assinatura",
-      mensagem: "O aplicativo de agenda deixa de receber os compromissos do LexOffice.",
+      mensagem: "O aplicativo de agenda deixa de receber os compromissos do LexNexo.",
       acao: "Desligar",
     });
     if (!ok) return;

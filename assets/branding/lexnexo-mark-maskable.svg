@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">Monograma LexNexo adaptável</title>
+  <desc id="desc">Versão do ícone com área segura para recortes de aplicativos.</desc>
+  <rect width="512" height="512" fill="#1c2333"/>
+  <g transform="translate(128 128) scale(4)">
+    <g fill="none" stroke="#c99a4b" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M15 12v40h36"/>
+      <path d="M20 45V19l25 26V19"/>
+    </g>
+  </g>
+</svg>

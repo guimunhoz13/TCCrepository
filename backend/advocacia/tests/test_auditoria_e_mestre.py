@@ -29,14 +29,14 @@ class PainelMestreAPITestCase(APITestCase):
         self.admin_a = _criar_usuario(self.escritorio_a)
         self.superadmin = SuperAdmin.objects.create(
             nome="Dev",
-            email="dev@lexoffice.com",
+            email="dev@lexnexo.com",
             senha=make_password("masterpass123"),
         )
 
     def test_login_master_com_credenciais_corretas(self):
         resposta = self.client.post(
             "/api/master/login/",
-            {"email": "dev@lexoffice.com", "senha": "masterpass123"},
+            {"email": "dev@lexnexo.com", "senha": "masterpass123"},
             format="json",
         )
         self.assertEqual(resposta.status_code, status.HTTP_200_OK)
@@ -45,7 +45,7 @@ class PainelMestreAPITestCase(APITestCase):
     def test_login_master_com_senha_incorreta_e_negado(self):
         resposta = self.client.post(
             "/api/master/login/",
-            {"email": "dev@lexoffice.com", "senha": "senha-errada"},
+            {"email": "dev@lexnexo.com", "senha": "senha-errada"},
             format="json",
         )
         self.assertEqual(resposta.status_code, status.HTTP_401_UNAUTHORIZED)
@@ -111,7 +111,7 @@ class AuditoriaLoginAPITestCase(APITestCase):
         self.usuario = _criar_usuario(self.escritorio)
         self.superadmin = SuperAdmin.objects.create(
             nome="Dev Master",
-            email="dev.audit@lexoffice.com",
+            email="dev.audit@lexnexo.com",
             senha=make_password("senha-master-123"),
         )
 
@@ -149,7 +149,7 @@ class AuditoriaLoginAPITestCase(APITestCase):
     def test_login_master_bem_sucedido_gera_registro_de_auditoria(self):
         resposta = self.client.post(
             "/api/master/login/",
-            {"email": "dev.audit@lexoffice.com", "senha": "senha-master-123"},
+            {"email": "dev.audit@lexnexo.com", "senha": "senha-master-123"},
             format="json",
         )
         self.assertEqual(resposta.status_code, status.HTTP_200_OK)
@@ -175,7 +175,7 @@ class AuditoriaVisualizacaoAPITestCase(APITestCase):
 
         self.superadmin = SuperAdmin.objects.create(
             nome="Dev Master",
-            email="dev.view@lexoffice.com",
+            email="dev.view@lexnexo.com",
             senha=make_password("senha-master-123"),
         )
 

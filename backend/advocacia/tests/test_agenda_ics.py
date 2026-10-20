@@ -29,7 +29,7 @@ class FormatoICalendarTestCase(TestCase):
         )
         conteudo = gerar_ics([evento], "Teste")
         self.assertIn("SUMMARY:PRAZO FATAL: Contestação", conteudo)
-        self.assertIn("UID:agenda-7@lexoffice", conteudo)
+        self.assertIn("UID:agenda-7@lexnexo", conteudo)
         # 9h em Brasília = 12h UTC.
         self.assertIn("DTSTART:20300304T120000Z", conteudo)
         self.assertEqual(conteudo.count("BEGIN:VALARM"), 2)

@@ -10,7 +10,7 @@ class PopularDemonstracaoTestCase(APITestCase):
 
     def _entrar(self, quem):
         resposta = self.client.post(
-            "/api/login/", {"email": f"{quem}@demo.lexoffice.app", "senha": "Demo@1234"}, format="json"
+            "/api/login/", {"email": f"{quem}@demo.lexnexo.app", "senha": "Demo@1234"}, format="json"
         )
         self.assertEqual(resposta.status_code, 200, resposta.data)
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {resposta.data['access']}")
@@ -38,6 +38,6 @@ class PopularDemonstracaoTestCase(APITestCase):
         call_command("popular_demo", "--recriar", "--senha", "Outra@2026", stdout=StringIO())
         self.assertEqual(Escritorio.objects.filter(cnpj="00.000.000/0001-91").count(), 1)
         resposta = self.client.post(
-            "/api/login/", {"email": "admin@demo.lexoffice.app", "senha": "Outra@2026"}, format="json"
+            "/api/login/", {"email": "admin@demo.lexnexo.app", "senha": "Outra@2026"}, format="json"
         )
         self.assertEqual(resposta.status_code, 200)

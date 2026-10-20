@@ -184,7 +184,7 @@ export default function AppSidebar() {
           </div>
 
           <div>
-            <h1>LexOffice</h1>
+            <h1>LexNexo</h1>
             <p>{usuario?.escritorio_nome || "ERP Jurídico"}</p>
           </div>
 

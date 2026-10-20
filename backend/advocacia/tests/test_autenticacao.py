@@ -202,7 +202,7 @@ class LogoutAPITestCase(APITestCase):
         self.usuario = _criar_usuario(self.escritorio)
         self.superadmin = SuperAdmin.objects.create(
             nome="Dev Master",
-            email="dev.logout@lexoffice.com",
+            email="dev.logout@lexnexo.com",
             senha=make_password("senha-master-123"),
         )
 
@@ -241,7 +241,7 @@ class LogoutAPITestCase(APITestCase):
     def test_logout_do_painel_mestre_revoga_o_refresh_token(self):
         login = self.client.post(
             "/api/master/login/",
-            {"email": "dev.logout@lexoffice.com", "senha": "senha-master-123"},
+            {"email": "dev.logout@lexnexo.com", "senha": "senha-master-123"},
             format="json",
         )
         refresh_token = login.data["refresh"]

@@ -1,9 +1,9 @@
-# Atividade Docker Compose: reconstrói a imagem lexoffice-frontend:lab
+# Atividade Docker Compose: reconstrói a imagem lexnexo-frontend:lab
 # com o contexto de build preservado da atividade anterior no LabEx.
 # Prepare o contexto primeiro: bash scripts/preparar-compose.sh
 services:
   frontend:
-    image: lexoffice-frontend:lab
+    image: lexnexo-frontend:lab
     build:
       context: ./.compose-build
       dockerfile: Dockerfile
@@ -17,8 +17,8 @@ services:
       start_period: 10s
       retries: 3
     networks:
-      - lexoffice
+      - lexnexo
 
 networks:
-  lexoffice:
+  lexnexo:
     driver: bridge

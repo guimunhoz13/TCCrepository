@@ -15,7 +15,7 @@ export default function LoginPage() {
       <section className="auth-hero">
         <Link href="/" className={styles.backBrand}>
           <Logo size={18} />
-          LexOffice
+          LexNexo
         </Link>
 
         <h1>Bem-vindo de volta.</h1>

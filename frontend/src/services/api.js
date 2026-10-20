@@ -253,7 +253,7 @@ export async function getAgenda(params) {
 
 // Agenda no Google Agenda / Outlook / iPhone (iCalendar).
 export function exportarAgendaICS() {
-  return downloadArquivo("/agenda/exportar-ics/", "agenda-lexoffice.ics");
+  return downloadArquivo("/agenda/exportar-ics/", "agenda-lexnexo.ics");
 }
 
 export async function getAssinaturaAgenda() {
@@ -380,7 +380,7 @@ export function getUsuarioLogado() {
   return raw ? JSON.parse(raw) : null;
 }
 
-export const EVENTO_USUARIO_ALTERADO = "lexoffice:usuario-alterado";
+export const EVENTO_USUARIO_ALTERADO = "lexnexo:usuario-alterado";
 
 /** Grava o usuário logado e avisa os componentes que o exibem
  *  (o evento "storage" do navegador só dispara nas outras abas). */

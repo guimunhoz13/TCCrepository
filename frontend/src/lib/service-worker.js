@@ -1,4 +1,4 @@
-/* Service worker do LexOffice.
+/* Service worker do LexNexo.
  *
  * Existe por dois motivos: deixar o sistema instalável como aplicativo e
  * abrir uma tela explicando a falta de conexão em vez do erro cru do
@@ -13,7 +13,7 @@
  */
 
 // Trocar a versão invalida o cache anterior inteiro no próximo deploy.
-const VERSAO = "lexoffice-v1";
+const VERSAO = "lexnexo-v1";
 const PAGINA_OFFLINE = "/offline";
 
 const ESSENCIAIS = [PAGINA_OFFLINE, "/icon-192.png", "/icon-512.png"];
@@ -107,7 +107,7 @@ self.addEventListener("push", (evento) => {
     dados = { corpo: evento.data ? evento.data.text() : "" };
   }
   evento.waitUntil(
-    self.registration.showNotification(dados.titulo || "LexOffice", {
+    self.registration.showNotification(dados.titulo || "LexNexo", {
       body: dados.corpo || "",
       icon: "/icon-192.png",
       badge: "/icon-192.png",

@@ -10,7 +10,7 @@ export default function RedefinirSenhaPage() {
       <section className="auth-hero">
         <Link href="/" className={styles.backBrand}>
           <Logo size={18} />
-          LexOffice
+          LexNexo
         </Link>
 
         <h1>Escolha uma nova senha.</h1>

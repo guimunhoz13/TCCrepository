@@ -52,7 +52,7 @@ export default function ContatoPanel() {
         <div className="contact-item">
           <strong>Sobre o sistema</strong>
           <span>
-            LexOffice é um ERP jurídico multi-escritório. Cada escritório possui
+            LexNexo é um ERP jurídico multi-escritório. Cada escritório possui
             dados isolados: clientes, advogados, processos e documentos ficam
             visíveis apenas para usuários do mesmo escritório.
           </span>

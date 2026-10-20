@@ -80,7 +80,7 @@ class PushTestarView(APIView):
     def post(self, request):
         usuario = get_usuario_from_request(request)
         enviados = notificar_usuario(
-            usuario, "LexOffice", "Notificações funcionando neste aparelho.", tag="teste"
+            usuario, "LexNexo", "Notificações funcionando neste aparelho.", tag="teste"
         )
         if not enviados:
             return Response(

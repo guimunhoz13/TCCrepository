@@ -15,9 +15,9 @@ import qrcode
 import qrcode.image.svg
 from django.core import signing
 
-EMISSOR = "LexOffice"
+EMISSOR = "LexNexo"
 VALIDADE_DESAFIO_SEGUNDOS = 300
-_SAL_DESAFIO = "lexoffice.login.segundo-fator"
+_SAL_DESAFIO = "lexnexo.login.segundo-fator"
 
 
 def novo_segredo():

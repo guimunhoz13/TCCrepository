@@ -4,7 +4,7 @@ import { createContext, useCallback, useContext, useEffect, useSyncExternalStore
 
 const ThemeContext = createContext(null);
 
-const EVENTO_TEMA = "lexoffice:tema-alterado";
+const EVENTO_TEMA = "lexnexo:tema-alterado";
 const TEMA_PADRAO = "dark";
 
 function lerTema() {

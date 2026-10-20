@@ -5,9 +5,9 @@ export default function AppFooter() {
     <footer className="app-footer">
       <div className="app-footer-brand">
         <Logo size={16} />
-        LexOffice
+        LexNexo
       </div>
-      <span>© {new Date().getFullYear()} LexOffice — ERP Jurídico</span>
+      <span>© {new Date().getFullYear()} LexNexo — ERP Jurídico</span>
     </footer>
   );
 }

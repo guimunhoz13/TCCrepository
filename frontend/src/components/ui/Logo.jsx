@@ -1,7 +1,7 @@
 /**
- * Monograma do LexOffice: um "L" serifado sobre a linha do razão, com o ponto
- * de citação em destaque. Substitui o ícone genérico de balança para dar
- * identidade própria à marca.
+ * Monograma do LexNexo: L e N compartilham a mesma construção geométrica.
+ * O traço contínuo representa a conexão entre processos, pessoas, prazos,
+ * documentos e inteligência — sem recorrer aos clichês visuais do Direito.
  */
 export default function Logo({ size = 24, className }) {
   return (
@@ -11,28 +11,22 @@ export default function Logo({ size = 24, className }) {
       viewBox="0 0 24 24"
       fill="none"
       role="img"
-      aria-label="LexOffice"
+      aria-label="LexNexo"
       className={className}
     >
       <path
-        d="M9 5v11.4h7.4"
+        d="M5.25 4.5v15h13.5"
         stroke="currentColor"
-        strokeWidth="2.2"
-        strokeLinecap="butt"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
       />
       <path
-        d="M6.6 5h4.8"
+        d="M7.25 17V7l9.5 10V7"
         stroke="currentColor"
-        strokeWidth="1.7"
+        strokeWidth="2.5"
         strokeLinecap="round"
-      />
-      <circle cx="19.3" cy="16.4" r="1.3" fill="currentColor" />
-      <path
-        d="M4.8 20.2h14.4"
-        stroke="currentColor"
-        strokeWidth="1.2"
-        strokeLinecap="round"
-        opacity="0.45"
+        strokeLinejoin="round"
       />
     </svg>
   );

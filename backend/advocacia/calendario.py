@@ -14,7 +14,7 @@ from datetime import timedelta, timezone as dt_timezone
 
 from django.utils import timezone
 
-PRODID = "-//LexOffice//Agenda do escritório//PT-BR"
+PRODID = "-//LexNexo//Agenda do escritório//PT-BR"
 DURACAO_COMPROMISSO = timedelta(hours=1)
 DURACAO_PRAZO = timedelta(minutes=30)
 
@@ -71,7 +71,7 @@ def _linhas_do_evento(evento, agora):
 
     linhas = [
         "BEGIN:VEVENT",
-        f"UID:agenda-{evento.pk}@lexoffice",
+        f"UID:agenda-{evento.pk}@lexnexo",
         f"DTSTAMP:{_data_utc(agora)}",
         f"DTSTART:{_data_utc(evento.data_evento)}",
         f"DTEND:{_data_utc(fim)}",

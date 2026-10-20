@@ -352,7 +352,7 @@ function DoisFatoresSection({ usuario, setDados, feedback }) {
       {!ativo && cadastro && (
         <form onSubmit={ativar}>
           <div className="qr-2fa">
-            <img src={cadastro.qr_code} alt="QR code para cadastrar o LexOffice no aplicativo autenticador" />
+            <img src={cadastro.qr_code} alt="QR code para cadastrar o LexNexo no aplicativo autenticador" />
             <div>
               <p>1. Abra o Google Authenticator, Authy ou Microsoft Authenticator e leia o QR code.</p>
               <p>Sem câmera? Digite esta chave no aplicativo:</p>
@@ -760,7 +760,7 @@ function PushSection({ feedback }) {
   } else if (!servidor?.ativo) {
     conteudo = <p className="dica-campo">O servidor ainda não tem as chaves de notificação configuradas (VAPID). Peça ao administrador do sistema.</p>;
   } else if (!pushSuportado()) {
-    conteudo = <p className="dica-campo">Este navegador não aceita notificações. No iPhone, instale o LexOffice na tela de início (Compartilhar › Adicionar à Tela de Início) e abra por lá.</p>;
+    conteudo = <p className="dica-campo">Este navegador não aceita notificações. No iPhone, instale o LexNexo na tela de início (Compartilhar › Adicionar à Tela de Início) e abra por lá.</p>;
   } else {
     conteudo = (
       <>

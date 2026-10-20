@@ -3,7 +3,7 @@
  *
  * O navegador só entrega push a um service worker registrado — por isso
  * funciona no sistema publicado (produção) e, no iPhone, apenas com o
- * LexOffice instalado na tela de início (iOS 16.4+).
+ * LexNexo instalado na tela de início (iOS 16.4+).
  */
 
 /** Chave pública VAPID (base64url) no formato que o PushManager pede. */
@@ -54,7 +54,7 @@ export async function inscricaoAtual() {
 /** Pede permissão e inscreve este aparelho. Devolve a inscrição (JSON). */
 export async function inscreverEsteAparelho(chavePublica) {
   if (!pushSuportado()) {
-    throw new Error("Este navegador não aceita notificações. No iPhone, instale o LexOffice na tela de início.");
+    throw new Error("Este navegador não aceita notificações. No iPhone, instale o LexNexo na tela de início.");
   }
   const permissao = await Notification.requestPermission();
   if (permissao !== "granted") {
