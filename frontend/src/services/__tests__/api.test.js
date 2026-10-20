@@ -20,7 +20,19 @@ import {
   createModeloDocumento,
   consultarDataJud,
   getFichaProcesso,
+  resolverApiUrl,
 } from "../api";
+
+describe("resolverApiUrl", () => {
+  test("usa o proxy de mesma origem nos domínios da Vercel", () => {
+    expect(resolverApiUrl("lexnexo.vercel.app")).toBe("/api");
+    expect(resolverApiUrl("lexnexo-git-main-zeldation.vercel.app")).toBe("/api");
+  });
+
+  test("preserva a API configurada fora da Vercel", () => {
+    expect(resolverApiUrl("localhost")).toBe("http://127.0.0.1:8000/api");
+  });
+});
 
 describe("normalizarLista", () => {
   test("retorna a própria lista quando os dados já são um array", () => {

@@ -1,5 +1,29 @@
-const API_URL =
+const API_URL_CONFIGURADA =
   process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api";
+
+/**
+ * Na Vercel, usa o proxy de mesma origem definido em next.config.mjs. Isso
+ * evita que uma troca de domínio do frontend derrube o login por CORS no
+ * Render. Fora da Vercel (desenvolvimento e builds Docker), preserva a URL
+ * configurada para a API.
+ */
+export function resolverApiUrl(hostname) {
+  const host = hostname ??
+    (typeof window !== "undefined" ? window.location?.hostname || "" : "");
+  return host.endsWith(".vercel.app") ? "/api" : API_URL_CONFIGURADA;
+}
+
+function apiUrl() {
+  return resolverApiUrl();
+}
+
+function apiUrlAbsoluta() {
+  const base =
+    typeof window !== "undefined" && window.location?.origin
+      ? window.location.origin
+      : "http://127.0.0.1:3000";
+  return new URL(apiUrl(), base);
+}
 
 export function buildQuery(params) {
   if (!params) return "";
@@ -36,7 +60,7 @@ function lerRefresh(refreshKey) {
 }
 
 async function pedirNovoAccessToken(tokenKey, refreshKey, refreshToken) {
-  const response = await fetch(`${API_URL}/token/refresh/`, {
+  const response = await fetch(`${apiUrl()}/token/refresh/`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ refresh: refreshToken }),
@@ -90,7 +114,7 @@ async function request(endpoint, options = {}, tokenKey = "access") {
   const isFormData = options.body instanceof FormData;
 
   async function enviar(tokenAtual) {
-    return fetch(`${API_URL}${endpoint}`, {
+    return fetch(`${apiUrl()}${endpoint}`, {
       ...options,
       headers: {
         ...(isFormData ? {} : { "Content-Type": "application/json" }),
@@ -395,7 +419,7 @@ export function logout() {
   // de "sair".
   const refreshToken = localStorage.getItem("refresh");
   if (refreshToken) {
-    fetch(`${API_URL}/logout/`, {
+    fetch(`${apiUrl()}/logout/`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ refresh: refreshToken }),
@@ -455,7 +479,7 @@ async function buscarArquivoAutenticado(endpoint) {
   const token = typeof window !== "undefined" ? localStorage.getItem("access") : null;
 
   async function buscar(tokenAtual) {
-    return fetch(`${API_URL}${endpoint}`, {
+    return fetch(`${apiUrl()}${endpoint}`, {
       headers: { ...(tokenAtual && { Authorization: `Bearer ${tokenAtual}` }) },
     });
   }
@@ -484,8 +508,8 @@ async function buscarArquivoAutenticado(endpoint) {
 export function fotoProtegida(src) {
   if (!src) return false;
   try {
-    const caminho = new URL(src, API_URL).pathname;
-    const prefixo = new URL(API_URL).pathname.replace(/\/$/, "");
+    const caminho = new URL(src, apiUrlAbsoluta()).pathname;
+    const prefixo = apiUrlAbsoluta().pathname.replace(/\/$/, "");
     return caminho.startsWith(`${prefixo}/fotos/`);
   } catch {
     return false;
@@ -494,8 +518,8 @@ export function fotoProtegida(src) {
 
 export function buscarFotoAutenticada(src) {
   if (!fotoProtegida(src)) throw new Error("Endereço de foto inválido.");
-  const caminho = new URL(src, API_URL).pathname;
-  const prefixo = new URL(API_URL).pathname.replace(/\/$/, "");
+  const caminho = new URL(src, apiUrlAbsoluta()).pathname;
+  const prefixo = apiUrlAbsoluta().pathname.replace(/\/$/, "");
   return buscarArquivoAutenticado(caminho.slice(prefixo.length));
 }
 
@@ -665,7 +689,7 @@ export async function masterLogin(email, senha) {
 export function masterLogout() {
   const refreshToken = localStorage.getItem("master_refresh");
   if (refreshToken) {
-    fetch(`${API_URL}/logout/`, {
+    fetch(`${apiUrl()}/logout/`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ refresh: refreshToken }),

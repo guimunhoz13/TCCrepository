@@ -2,6 +2,7 @@ const isDev = process.env.NODE_ENV === "development";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api";
 const API_ORIGIN = new URL(API_URL).origin;
+const API_DESTINO = API_URL.replace(/\/$/, "");
 
 // O access token fica no localStorage, então um XSS conseguiria lê-lo. A CSP
 // não impede o script de rodar (o Next injeta scripts inline sem nonce), mas
@@ -41,12 +42,23 @@ const cabecalhosDeSeguranca = [
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   poweredByHeader: false,
+  // A API Django usa APPEND_SLASH. Remover a barra antes do rewrite faria o
+  // Django redirecionar de volta e criaria um ciclo em /api/*.
+  skipTrailingSlashRedirect: true,
   ...(process.env.NEXT_OUTPUT === "export" ? { output: "export" } : {}),
   ...(process.env.NEXT_OUTPUT === "standalone" ? { output: "standalone" } : {}),
   images: { unoptimized: process.env.NEXT_OUTPUT === "export" },
   ...(process.env.NEXT_OUTPUT === "export" ? {} : {
     async headers() {
       return [{ source: "/(.*)", headers: cabecalhosDeSeguranca }];
+    },
+    async rewrites() {
+      return [
+        {
+          source: "/api/:path*",
+          destination: `${API_DESTINO}/:path*/`,
+        },
+      ];
     },
   }),
 };
