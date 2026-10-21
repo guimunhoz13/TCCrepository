@@ -29,9 +29,14 @@ export async function abrirAba(page, aba) {
 
 /** Campo de formulário pelo rótulo visível. */
 export function campo(page, rotulo) {
+  const rotuloSeguro = rotulo.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   return page
     .locator(".form-field")
-    .filter({ has: page.locator("label", { hasText: new RegExp(`^${rotulo}$`) }) })
+    .filter({
+      has: page.locator("label", {
+        hasText: new RegExp(`^${rotuloSeguro}(?: \\(obrigatório\\))?$`),
+      }),
+    })
     .locator("input, select, textarea")
     .first();
 }
