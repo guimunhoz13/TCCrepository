@@ -1,19 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import AppSidebar from "@/components/shell/AppSidebar";
 import TopBar from "@/components/shell/TopBar";
-import ClientesPanel from "@/components/panels/ClientesPanel";
-import ProcessosPanel from "@/components/panels/ProcessosPanel";
-import AgendaPanel from "@/components/panels/AgendaPanel";
-import DocumentosPanel from "@/components/panels/DocumentosPanel";
-import ContatoPanel from "@/components/panels/ContatoPanel";
-import ConfigPanel from "@/components/panels/ConfigPanel";
-import AdvogadosPanel from "@/components/panels/AdvogadosPanel";
-import PlanosPanel from "@/components/panels/PlanosPanel";
 import { PanelProvider } from "@/contexts/PanelContext";
-import { DashboardDataProvider } from "@/contexts/DashboardDataContext";
 import { PreferencesProvider } from "@/contexts/PreferencesContext";
 import { getAgenda, normalizarLista } from "@/services/api";
 import { MapPin, Briefcase } from "lucide-react";
@@ -34,11 +25,16 @@ function CompromissosContent() {
 
     async function carregar() {
       try {
-        const dados = await getAgenda();
+        // O servidor entrega somente compromissos futuros e pendentes. Antes
+        // esta página trazia a primeira página da agenda inteira (inclusive
+        // prazos e eventos antigos) e filtrava tudo no navegador.
+        const dados = await getAgenda({
+          tipo: "compromisso",
+          cumprido: false,
+          futuro: true,
+        });
         const lista = normalizarLista(dados);
-        const agora = new Date();
         const futuros = lista
-          .filter((e) => new Date(e.data_evento) >= agora)
           .sort(
             (a, b) =>
               new Date(a.data_evento).getTime() -
@@ -59,17 +55,21 @@ function CompromissosContent() {
     carregar();
   }, [router]);
 
-  const eventosPorData = eventos.reduce((acc, evento) => {
-    const chave = new Date(evento.data_evento).toLocaleDateString("pt-BR", {
-      weekday: "long",
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    });
-    if (!acc[chave]) acc[chave] = [];
-    acc[chave].push(evento);
-    return acc;
-  }, {});
+  const eventosPorData = useMemo(
+    () =>
+      eventos.reduce((acc, evento) => {
+        const chave = new Date(evento.data_evento).toLocaleDateString("pt-BR", {
+          weekday: "long",
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+        });
+        if (!acc[chave]) acc[chave] = [];
+        acc[chave].push(evento);
+        return acc;
+      }, {}),
+    [eventos]
+  );
 
   return (
     <div className="app-shell">
@@ -152,14 +152,6 @@ function CompromissosContent() {
           ))}
       </main>
 
-      <ClientesPanel />
-      <ProcessosPanel />
-      <AgendaPanel />
-      <DocumentosPanel />
-      <ContatoPanel />
-      <ConfigPanel />
-      <AdvogadosPanel />
-      <PlanosPanel />
     </div>
   );
 }
@@ -167,11 +159,9 @@ function CompromissosContent() {
 export default function CompromissosPage() {
   return (
     <PreferencesProvider>
-      <DashboardDataProvider>
-        <PanelProvider>
-          <CompromissosContent />
-        </PanelProvider>
-      </DashboardDataProvider>
+      <PanelProvider>
+        <CompromissosContent />
+      </PanelProvider>
     </PreferencesProvider>
   );
 }

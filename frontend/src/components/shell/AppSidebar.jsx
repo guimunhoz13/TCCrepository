@@ -19,6 +19,7 @@ import {
   Menu,
   X,
 } from "lucide-react";
+import { useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { PANELS, usePanel } from "@/contexts/PanelContext";
 import { usePreferences } from "@/contexts/PreferencesContext";
@@ -133,6 +134,14 @@ export default function AppSidebar() {
 
   const usuario = useUsuarioLogado();
 
+  // Os itens que abrem painéis precisam primeiro voltar à rota principal
+  // quando o usuário está numa página independente (como Compromissos).
+  // Pré-carregar a dashboard evita que essa saída pareça travada enquanto o
+  // Next.js baixa o código da rota.
+  useEffect(() => {
+    if (pathname !== "/dashboard") router.prefetch("/dashboard");
+  }, [pathname, router]);
+
   function estaAtivo({ id, href }) {
     const isDashboard = id === "dashboard";
     if (href && pathname === href && !isDashboard) return true;
@@ -152,6 +161,12 @@ export default function AppSidebar() {
     if (item.id === "dashboard") {
       closePanel();
       router.push("/dashboard");
+      return;
+    }
+
+    if (pathname !== "/dashboard") {
+      closePanel();
+      router.push(`/dashboard?painel=${encodeURIComponent(item.id)}`);
       return;
     }
 

@@ -226,6 +226,30 @@ class AgendaPrazoAPITestCase(APITestCase):
         self.assertEqual(len(resposta.data["results"]), 1)
         self.assertEqual(resposta.data["results"][0]["titulo"], "Prazo X")
 
+    def test_filtro_agenda_por_eventos_futuros(self):
+        Agenda.objects.create(
+            processo=self.processo,
+            tipo="compromisso",
+            titulo="Compromisso passado",
+            descricao="Descrição.",
+            data_evento=timezone.now() - timezone.timedelta(days=1),
+        )
+        futuro = Agenda.objects.create(
+            processo=self.processo,
+            tipo="compromisso",
+            titulo="Compromisso futuro",
+            descricao="Descrição.",
+            data_evento=timezone.now() + timezone.timedelta(days=1),
+        )
+
+        resposta = self.client.get("/api/agenda/", {"futuro": "true"})
+
+        self.assertEqual(resposta.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            [item["id"] for item in resposta.data["results"]],
+            [futuro.id],
+        )
+
     def test_criar_compromisso_sem_processo(self):
         resposta = self.client.post(
             "/api/agenda/",

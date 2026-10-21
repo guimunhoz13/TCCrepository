@@ -115,6 +115,17 @@ function DashboardContent() {
     }
   }, [router]);
 
+  // Uma página independente pode enviar o usuário de volta à dashboard já
+  // com o painel escolhido. Isso impede que fechar Clientes/Agenda/etc. o
+  // devolva para a tela anterior e gere a sensação de estar preso nela.
+  useEffect(() => {
+    const parametros = new URLSearchParams(window.location.search);
+    const painel = parametros.get("painel");
+    if (!painel || !Object.values(PANELS).includes(painel)) return;
+    openPanel(painel, "lista");
+    router.replace("/dashboard", { scroll: false });
+  }, [openPanel, router]);
+
   useEffect(() => {
     if (erro && (erro.includes("401") || erro.toLowerCase().includes("token"))) {
       router.replace("/login");

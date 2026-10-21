@@ -5,6 +5,7 @@ from datetime import date
 
 from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework import serializers as campos
@@ -174,6 +175,10 @@ class AgendaViewSet(
         cumprido = self.request.query_params.get("cumprido")
         if cumprido in ("true", "false"):
             queryset = queryset.filter(cumprido=(cumprido == "true"))
+
+        futuro = self.request.query_params.get("futuro")
+        if futuro == "true":
+            queryset = queryset.filter(data_evento__gte=timezone.now())
 
         return queryset
 

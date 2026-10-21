@@ -505,6 +505,17 @@ class Agenda(models.Model):
     cumprido = models.BooleanField(default=False)
     criado_em = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        indexes = [
+            # A tela de Compromissos consulta exatamente este recorte. O
+            # índice evita percorrer todo o histórico do escritório à medida
+            # que a agenda cresce.
+            models.Index(
+                fields=["escritorio", "tipo", "cumprido", "data_evento"],
+                name="agenda_busca_futura_idx",
+            ),
+        ]
+
     def save(self, *args, **kwargs):
         if self.escritorio_id is None and self.processo_id is not None:
             self.escritorio_id = self.processo.escritorio_id
