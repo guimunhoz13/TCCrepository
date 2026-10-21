@@ -5,7 +5,7 @@ import Logo from "@/components/ui/Logo";
 
 export default function EsqueciSenhaPage() {
   return (
-    <main className="auth-page">
+    <main id="conteudo-principal" className="auth-page">
       <section className="auth-hero">
         <Link href="/" className={styles.backBrand}>
           <Logo size={18} />

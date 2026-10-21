@@ -21,6 +21,7 @@ export default function TopBar({
   onSelectSearchResult,
   notificacoes,
   onSelectNotificacao,
+  ajudaAssunto = null,
 }) {
   const { theme, toggleTheme } = useTheme();
   const { abrirAjuda } = useAjuda();
@@ -82,7 +83,7 @@ export default function TopBar({
         <button
           type="button"
           className="icon-btn"
-          onClick={() => abrirAjuda()}
+          onClick={() => abrirAjuda(ajudaAssunto)}
           aria-label="Abrir a central de ajuda"
           title="Como o sistema funciona"
         >
@@ -94,6 +95,7 @@ export default function TopBar({
           className="icon-btn"
           onClick={toggleTheme}
           aria-label={t("acao_alternar_tema")}
+          title={t("acao_alternar_tema")}
         >
           {theme === "dark" ? (
             <Sun size={18} />
@@ -107,6 +109,7 @@ export default function TopBar({
           className="icon-btn"
           onClick={handleLogout}
           aria-label={t("acao_sair")}
+          title={t("acao_sair")}
         >
           <LogOut size={18} />
         </button>

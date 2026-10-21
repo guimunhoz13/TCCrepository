@@ -123,37 +123,44 @@ export default function AssistenteChat() {
           Assistente IA
         </h3>
         <p>Auxiliar jurídico do escritório — powered by OpenAI</p>
+        <p className="chat-aviso-revisao">
+          Use como apoio: confira nomes, valores, prazos e fundamentos antes de usar a resposta.
+        </p>
       </div>
 
       <div className="chat-context-bar">
-        <select
-          aria-label="Cliente em foco na conversa"
-          value={clienteId}
-          onChange={(e) => {
-            setClienteId(e.target.value);
-            setProcessoId("");
-          }}
-        >
-          <option value="">Cliente (opcional)</option>
-          {clientes.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.nome}
-            </option>
-          ))}
-        </select>
+        <label className="chat-context-field">
+          <span>Cliente em foco (opcional)</span>
+          <select
+            value={clienteId}
+            onChange={(e) => {
+              setClienteId(e.target.value);
+              setProcessoId("");
+            }}
+          >
+            <option value="">Todos os clientes</option>
+            {clientes.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.nome}
+              </option>
+            ))}
+          </select>
+        </label>
 
-        <select
-          aria-label="Processo em foco na conversa"
-          value={processoId}
-          onChange={(e) => setProcessoId(e.target.value)}
-        >
-          <option value="">Processo (opcional)</option>
-          {processosFiltrados.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.numero_processo} — {p.titulo}
-            </option>
-          ))}
-        </select>
+        <label className="chat-context-field">
+          <span>Processo em foco (opcional)</span>
+          <select
+            value={processoId}
+            onChange={(e) => setProcessoId(e.target.value)}
+          >
+            <option value="">Todos os processos</option>
+            {processosFiltrados.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.numero_processo} — {p.titulo}
+              </option>
+            ))}
+          </select>
+        </label>
       </div>
 
       {erro && (
@@ -197,17 +204,22 @@ export default function AssistenteChat() {
       </div>
 
       <form className="chat-input-area" onSubmit={handleEnviar}>
-        <textarea
-          ref={inputRef}
-          placeholder="Digite sua pergunta..."
-          aria-label="Pergunta para o assistente"
-          maxLength={4000}
-          value={texto}
-          onChange={(e) => setTexto(e.target.value)}
-          onKeyDown={handleKeyDown}
-          disabled={carregando}
-          rows={1}
-        />
+        <div className="chat-input-campo">
+          <label htmlFor="pergunta-assistente">Pergunta para o assistente</label>
+          <textarea
+            id="pergunta-assistente"
+            ref={inputRef}
+            placeholder="Ex.: Resuma os últimos andamentos deste processo"
+            aria-describedby="pergunta-assistente-ajuda"
+            maxLength={4000}
+            value={texto}
+            onChange={(e) => setTexto(e.target.value)}
+            onKeyDown={handleKeyDown}
+            disabled={carregando}
+            rows={1}
+          />
+          <span id="pergunta-assistente-ajuda">Enter envia; Shift + Enter cria uma nova linha.</span>
+        </div>
         <button
           type="submit"
           className="chat-send-btn"

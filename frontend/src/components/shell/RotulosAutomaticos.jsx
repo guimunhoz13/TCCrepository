@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { DICAS_CAMPOS, normalizarRotulo } from "@/lib/ajudaCampos";
 
 function rotularTabelas(raiz) {
   raiz.querySelectorAll(".table-wrap table").forEach((tabela) => {
@@ -34,9 +35,45 @@ function vincularRotulosDeCampo(raiz) {
   });
 }
 
+function orientarCampos(raiz) {
+  raiz.querySelectorAll(".form-field").forEach((grupo) => {
+    const rotulo = grupo.querySelector(":scope > label");
+    const campo = grupo.querySelector(
+      ":scope > input:not([type=hidden]), :scope > select, :scope > textarea"
+    );
+    if (!rotulo || !campo) return;
+
+    const chave = normalizarRotulo(rotulo.childNodes[0]?.textContent || rotulo.textContent);
+    const dica = DICAS_CAMPOS[chave];
+
+    if (campo.required && !rotulo.querySelector(".campo-obrigatorio")) {
+      const marcador = document.createElement("span");
+      marcador.className = "campo-obrigatorio";
+      marcador.textContent = " (obrigatório)";
+      rotulo.appendChild(marcador);
+    }
+
+    if (!dica || grupo.querySelector(":scope > .field-hint")) return;
+    if (!campo.id) campo.id = `campo-${proximoId++}`;
+
+    const ajuda = document.createElement("p");
+    ajuda.className = "field-hint";
+    ajuda.id = `${campo.id}-ajuda`;
+    ajuda.textContent = dica;
+    rotulo.insertAdjacentElement("afterend", ajuda);
+
+    const descricoes = new Set(
+      (campo.getAttribute("aria-describedby") || "").split(/\s+/).filter(Boolean)
+    );
+    descricoes.add(ajuda.id);
+    campo.setAttribute("aria-describedby", [...descricoes].join(" "));
+  });
+}
+
 function aplicar() {
   rotularTabelas(document.body);
   vincularRotulosDeCampo(document.body);
+  orientarCampos(document.body);
 }
 
 /**
@@ -46,9 +83,9 @@ function aplicar() {
  * - Tabelas: copia o texto do cabeçalho para o data-label de cada célula.
  *   No celular as tabelas viram cartões (ver ".table-wrap" no CSS) e cada
  *   campo do cartão mostra o nome da coluna ao lado.
- * - Formulários: liga cada <label> de um ".form-field" ao campo do mesmo
- *   bloco (for/id). Sem isso, o leitor de tela anunciava só "campo de
- *   texto", sem dizer qual, e clicar no rótulo não focava o campo.
+ * - Formulários: liga o rótulo ao campo, identifica os obrigatórios e inclui
+ *   ajuda visível/programática nos campos que têm formato ou efeito menos
+ *   óbvio.
  *
  * Observa só a entrada e saída de elementos (não atributos), então gravar
  * data-label, id ou for não dispara o observador de novo.

@@ -17,6 +17,7 @@ import { DashboardDataProvider } from "@/contexts/DashboardDataContext";
 import { PreferencesProvider } from "@/contexts/PreferencesContext";
 import { getAgenda, normalizarLista } from "@/services/api";
 import { MapPin, Briefcase } from "lucide-react";
+import GuiaContextual from "@/components/shell/GuiaContextual";
 
 function CompromissosContent() {
   const router = useRouter();
@@ -74,11 +75,14 @@ function CompromissosContent() {
     <div className="app-shell">
       <AppSidebar />
 
-      <main className="app-main">
+      <main id="conteudo-principal" className="app-main">
         <TopBar
           title="Compromissos futuros"
           subtitle="Todos os eventos e audiências agendados"
+          ajudaAssunto="agenda"
         />
+
+        <GuiaContextual assunto="agenda" titulo="Como usar esta página" />
 
         {erro && <div className="alert alert-error">{erro}</div>}
 

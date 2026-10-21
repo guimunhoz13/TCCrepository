@@ -35,7 +35,7 @@ export default function MasterLoginPage() {
   }
 
   return (
-    <main className="auth-page auth-page-single">
+    <main id="conteudo-principal" className="auth-page auth-page-single">
       <button
         type="button"
         className="icon-btn auth-page-theme-toggle"

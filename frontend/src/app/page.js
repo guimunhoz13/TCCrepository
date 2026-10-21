@@ -80,9 +80,9 @@ const STEPS = [
 ];
 
 const STATS = [
-  { label: "Escritórios ativos", valor: 1240 },
-  { label: "Processos geridos", valor: 38900 },
-  { label: "Satisfação dos usuários", valor: 98, sufixo: "%" },
+  { label: "Usuários no plano gratuito", valor: 3 },
+  { label: "Processos ativos no plano gratuito", valor: 30 },
+  { label: "Perfis de acesso", valor: 5 },
 ];
 
 function useReveal() {
@@ -116,6 +116,10 @@ function ContadorAnimado({ valor, sufixo = "" }) {
 
   useEffect(() => {
     if (!visivel) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      const frameSemAnimacao = requestAnimationFrame(() => setExibido(valor));
+      return () => cancelAnimationFrame(frameSemAnimacao);
+    }
     const duracao = 1200;
     const inicio = performance.now();
     let frame;
@@ -185,7 +189,7 @@ export default function HomePage() {
         </div>
       </header>
 
-      <section className={styles.hero}>
+      <section id="conteudo-principal" tabIndex={-1} className={styles.hero}>
         <div className={styles.heroText}>
           <div className={styles.heroBadge}>
             <Sparkles size={13} />

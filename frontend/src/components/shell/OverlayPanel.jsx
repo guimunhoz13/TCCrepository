@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { HelpCircle, X } from "lucide-react";
 import { usePanel } from "@/contexts/PanelContext";
 import { usePreferences } from "@/contexts/PreferencesContext";
 import { useAjuda } from "@/contexts/AjudaContext";
+import GuiaContextual from "@/components/shell/GuiaContextual";
 
 const PANEL_TITLE_KEYS = {
   clientes: "painel_clientes",
@@ -33,22 +34,42 @@ export default function OverlayPanel({
   } = usePanel();
   const { t } = usePreferences();
   const { abrirAjuda } = useAjuda();
+  const painelRef = useRef(null);
+  const focoAnteriorRef = useRef(null);
 
   useEffect(() => {
     function onKeyDown(event) {
       if (event.key === "Escape") {
         closePanel();
+        return;
+      }
+      if (event.key !== "Tab" || !painelRef.current?.contains(event.target)) return;
+      const focaveis = painelRef.current.querySelectorAll(
+        'button:not(:disabled), a[href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])'
+      );
+      if (focaveis.length === 0) return;
+      const primeiro = focaveis[0];
+      const ultimo = focaveis[focaveis.length - 1];
+      if (event.shiftKey && document.activeElement === primeiro) {
+        event.preventDefault();
+        ultimo.focus();
+      } else if (!event.shiftKey && document.activeElement === ultimo) {
+        event.preventDefault();
+        primeiro.focus();
       }
     }
 
     if (activePanel) {
+      focoAnteriorRef.current = document.activeElement;
       document.body.style.overflow = "hidden";
       window.addEventListener("keydown", onKeyDown);
+      requestAnimationFrame(() => painelRef.current?.focus());
     }
 
     return () => {
       document.body.style.overflow = "";
       window.removeEventListener("keydown", onKeyDown);
+      if (focoAnteriorRef.current?.isConnected) focoAnteriorRef.current.focus();
     };
   }, [activePanel, closePanel]);
 
@@ -69,6 +90,8 @@ export default function OverlayPanel({
         role="dialog"
         aria-modal="true"
         aria-labelledby="overlay-panel-title"
+        tabIndex={-1}
+        ref={painelRef}
       >
         <div className="overlay-header">
           <h3 id="overlay-panel-title">
@@ -100,11 +123,12 @@ export default function OverlayPanel({
         </div>
 
         {tabs.length > 0 && (
-          <div className="overlay-tabs">
+          <div className="overlay-tabs" aria-label="Seções desta área">
             {tabs.map((tab) => (
               <button
                 type="button"
                 key={tab.id}
+                aria-current={panelTab === tab.id ? "page" : undefined}
                 className={`tab-btn ${
                   panelTab === tab.id ? "active" : ""
                 }`}
@@ -115,6 +139,8 @@ export default function OverlayPanel({
             ))}
           </div>
         )}
+
+        <GuiaContextual assunto={activePanel} />
 
         {/* Focável para quem rola o conteúdo pelo teclado (setas, PgDn). */}
         <div className="overlay-body" tabIndex={0} role="region" aria-labelledby="overlay-panel-title">

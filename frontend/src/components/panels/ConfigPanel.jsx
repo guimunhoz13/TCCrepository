@@ -7,7 +7,7 @@ import { useConfirmacao } from "@/contexts/ConfirmacaoContext";
 import {
   X, User, Building2, Bell, Palette, Database, CreditCard,
   Eye, EyeOff, Trash2, Download, FileBarChart, Mail, MessageCircle, History,
-  ShieldCheck, UserPlus, BellRing,
+  ShieldCheck, UserPlus, BellRing, HelpCircle,
 } from "lucide-react";
 import { cancelarEsteAparelho, inscreverEsteAparelho, inscricaoAtual, pushSuportado } from "@/utils/push";
 import { usePermissoes } from "@/hooks/usePermissoes";
@@ -53,6 +53,8 @@ import { buscarEnderecoPorCep } from "@/utils/cep";
 import { senhaAtendeRequisitos } from "@/utils/senha";
 import RequisitosSenha from "@/components/ui/RequisitosSenha";
 import Avatar from "@/components/ui/Avatar";
+import GuiaContextual from "@/components/shell/GuiaContextual";
+import { useAjuda } from "@/contexts/AjudaContext";
 
 const TABS = [
   { id: "conta", tKey: "config_conta", icon: User },
@@ -106,6 +108,7 @@ export default function ConfigPanel() {
   const { theme, setTheme } = useTheme();
   const { t, atualizarPreferencias } = usePreferences();
   const pode = usePermissoes();
+  const { abrirAjuda } = useAjuda();
   const [activeTab, setActiveTab] = useState("conta");
   const [erro, setErro] = useState("");
   const [sucesso, setSucesso] = useState("");
@@ -142,10 +145,27 @@ export default function ConfigPanel() {
 
   return (
     <div className="overlay-backdrop" onClick={closePanel}>
-      <div className="overlay-panel" onClick={(e) => e.stopPropagation()}>
+      <div
+        className="overlay-panel"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="config-panel-title"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="overlay-header">
-          <h3>Configurações</h3>
-          <button className="icon-btn" onClick={closePanel} aria-label="Fechar"><X size={18} /></button>
+          <h3 id="config-panel-title">Configurações</h3>
+          <div style={{ display: "flex", gap: 4 }}>
+            <button
+              type="button"
+              className="icon-btn"
+              onClick={() => abrirAjuda(PANELS.CONFIG)}
+              aria-label="Abrir a ajuda das configurações"
+              title="Como funcionam as configurações"
+            >
+              <HelpCircle size={18} />
+            </button>
+            <button type="button" className="icon-btn" onClick={closePanel} aria-label="Fechar"><X size={18} /></button>
+          </div>
         </div>
 
         <div className="overlay-tabs">
@@ -158,6 +178,8 @@ export default function ConfigPanel() {
             );
           })}
         </div>
+
+        <GuiaContextual assunto={PANELS.CONFIG} />
 
         <div className="overlay-body" tabIndex={0} role="region" aria-label="Conteúdo das configurações">
           {(erro || recurso.erro) && <div className="alert alert-error">{erro || recurso.erro}</div>}

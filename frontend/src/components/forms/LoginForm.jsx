@@ -170,6 +170,7 @@ export default function LoginForm() {
         <label>E-mail</label>
         <input
           type="email"
+          autoComplete="username"
           placeholder="seu@email.com"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
@@ -181,6 +182,7 @@ export default function LoginForm() {
         <label>Senha</label>
         <input
           type="password"
+          autoComplete="current-password"
           placeholder="••••••••"
           value={senha}
           onChange={(e) => setSenha(e.target.value)}

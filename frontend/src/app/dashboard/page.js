@@ -47,6 +47,7 @@ import { useAvisos } from "@/contexts/AvisosContext";
 import { usePermissoes } from "@/hooks/usePermissoes";
 import { badgeStatus, rotuloStatus } from "@/lib/statusProcesso";
 import { abrirDocumento } from "@/services/api";
+import GuiaContextual from "@/components/shell/GuiaContextual";
 
 function formatarPrazo(dataISO) {
   const data = new Date(dataISO);
@@ -180,7 +181,7 @@ function DashboardContent() {
     <div className="app-shell">
       <AppSidebar />
 
-      <main className="app-main">
+      <main id="conteudo-principal" className="app-main">
         <TopBar
           showGreeting
           subtitle={
@@ -192,7 +193,10 @@ function DashboardContent() {
           onSelectSearchResult={abrirResultadoBusca}
           notificacoes={prazosVencendo}
           onSelectNotificacao={() => openPanel(PANELS.AGENDA, "lista")}
+          ajudaAssunto="dashboard"
         />
+
+        <GuiaContextual assunto="dashboard" titulo="Comece por aqui" />
 
         {erro && <div className="alert alert-error">{erro}</div>}
 

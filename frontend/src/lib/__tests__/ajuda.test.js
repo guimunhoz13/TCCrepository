@@ -1,4 +1,9 @@
-import { SECOES_AJUDA, buscarNaAjuda, secaoDoPainel } from "../ajuda";
+import {
+  SECOES_AJUDA,
+  buscarNaAjuda,
+  secaoDaAjuda,
+  secaoDoPainel,
+} from "../ajuda";
 import { PANELS } from "@/contexts/PanelContext";
 
 describe("conteúdo da ajuda", () => {
@@ -41,6 +46,8 @@ describe("conteúdo da ajuda", () => {
       PANELS.MODELOS,
       PANELS.ADVOGADOS,
       PANELS.CONFIG,
+      PANELS.PLANOS,
+      PANELS.CONTATO,
     ]) {
       expect(cobertos).toContain(painel);
     }
@@ -54,7 +61,17 @@ describe("secaoDoPainel", () => {
 
   test("sem painel aberto, não força nenhuma seção", () => {
     expect(secaoDoPainel(null)).toBeNull();
-    expect(secaoDoPainel(PANELS.PLANOS)).toBeNull();
+  });
+});
+
+describe("secaoDaAjuda", () => {
+  test("aceita tanto o id da seção quanto o nome do painel", () => {
+    expect(secaoDaAjuda("assistente").titulo).toBe("Assistente IA");
+    expect(secaoDaAjuda(PANELS.CLIENTES).id).toBe("clientes");
+  });
+
+  test("usa a visão geral quando o assunto não existe", () => {
+    expect(secaoDaAjuda("nao-existe").id).toBe("visao-geral");
   });
 });
 

@@ -13,12 +13,12 @@ const AjudaContext = createContext(null);
  */
 export function AjudaProvider({ children }) {
   const [aberta, setAberta] = useState(false);
-  const [painel, setPainel] = useState(null);
+  const [assunto, setAssunto] = useState(null);
 
   // Quem abre informa o assunto. A janela da ajuda fica acima do provider
   // de painéis e não conseguiria descobrir sozinha qual está aberto.
-  const abrirAjuda = useCallback((painelAtual = null) => {
-    setPainel(painelAtual);
+  const abrirAjuda = useCallback((assuntoAtual = null) => {
+    setAssunto(assuntoAtual);
     setAberta(true);
   }, []);
 
@@ -27,7 +27,7 @@ export function AjudaProvider({ children }) {
   return (
     <AjudaContext.Provider value={{ aberta, abrirAjuda, fecharAjuda }}>
       {children}
-      <AjudaPanel aberto={aberta} painel={painel} onFechar={fecharAjuda} />
+      <AjudaPanel aberto={aberta} assunto={assunto} onFechar={fecharAjuda} />
     </AjudaContext.Provider>
   );
 }

@@ -78,7 +78,7 @@ export default function MasterPainelPage() {
   if (!master) return null;
 
   return (
-    <main style={{ maxWidth: 1100, margin: "0 auto", padding: "32px 24px" }}>
+    <main id="conteudo-principal" style={{ maxWidth: 1100, margin: "0 auto", padding: "32px 24px" }}>
       <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <ShieldCheck size={22} />

@@ -16,6 +16,7 @@ import PlanosPanel from "@/components/panels/PlanosPanel";
 import { PanelProvider } from "@/contexts/PanelContext";
 import { DashboardDataProvider } from "@/contexts/DashboardDataContext";
 import { PreferencesProvider } from "@/contexts/PreferencesContext";
+import GuiaContextual from "@/components/shell/GuiaContextual";
 
 function AssistenteContent() {
   const router = useRouter();
@@ -31,11 +32,14 @@ function AssistenteContent() {
     <div className="app-shell">
       <AppSidebar />
 
-      <main className="app-main">
+      <main id="conteudo-principal" className="app-main">
         <TopBar
           title="Assistente IA"
           subtitle="Converse com o auxiliar jurídico do escritório"
+          ajudaAssunto="assistente"
         />
+
+        <GuiaContextual assunto="assistente" />
 
         <AssistenteChat />
       </main>

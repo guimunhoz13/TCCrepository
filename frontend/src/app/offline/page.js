@@ -7,6 +7,7 @@ export const metadata = {
 export default function OfflinePage() {
   return (
     <main
+      id="conteudo-principal"
       style={{
         minHeight: "100vh",
         display: "flex",

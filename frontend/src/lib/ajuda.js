@@ -354,6 +354,54 @@ export const SECOES_AJUDA = [
   },
 
   {
+    id: "planos",
+    painel: "planos",
+    titulo: "Planos e limites",
+    resumo: "Veja o plano atual, os limites de uso e o que muda em cada opção.",
+    topicos: [
+      {
+        titulo: "Plano atual e consumo",
+        texto:
+          "Mostra quantos usuários e processos ativos o escritório já utiliza. Quando um limite é atingido, os dados existentes permanecem intactos; somente novos cadastros ficam bloqueados.",
+      },
+      {
+        titulo: "Comparar planos",
+        texto:
+          "Gratuito cobre a operação essencial. Básico adiciona automações de tribunal e limites maiores. Profissional inclui IA e uso sem limite de usuários ou processos.",
+      },
+      {
+        titulo: "Solicitar mudança",
+        texto:
+          "O botão de contratação abre o canal comercial configurado. Nenhuma cobrança é feita sem confirmação do escritório.",
+      },
+    ],
+  },
+
+  {
+    id: "contato",
+    painel: "contato",
+    titulo: "Contato e suporte",
+    resumo: "Canais para tirar dúvidas, pedir ajuda ou informar um problema.",
+    topicos: [
+      {
+        titulo: "Antes de enviar",
+        texto:
+          "Explique em qual área estava, o que tentou fazer e a mensagem exibida. Evite enviar senhas, códigos do autenticador ou documentos sigilosos.",
+      },
+      {
+        titulo: "Dúvida de uso",
+        texto:
+          "Use a Central de ajuda para instruções imediatas. Se ainda precisar, envie a dúvida pelo canal de contato informado nesta área.",
+      },
+      {
+        titulo: "Problema técnico",
+        texto:
+          "Informe data, horário e passos para reproduzir o problema. Uma captura de tela sem dados sensíveis pode ajudar no atendimento.",
+      },
+    ],
+  },
+
+  {
     id: "assistente",
     titulo: "Assistente IA",
     resumo: "Um assistente que responde sobre os dados do próprio escritório.",
@@ -448,6 +496,16 @@ export const SECOES_AJUDA = [
 export function secaoDoPainel(painel) {
   if (!painel) return null;
   return SECOES_AJUDA.find((secao) => secao.painel === painel) || null;
+}
+
+/** Aceita tanto o nome técnico de um painel quanto o id de uma seção. */
+export function secaoDaAjuda(assunto) {
+  if (!assunto) return SECOES_AJUDA[0];
+  return (
+    SECOES_AJUDA.find(
+      (secao) => secao.id === assunto || secao.painel === assunto
+    ) || SECOES_AJUDA[0]
+  );
 }
 
 /** Filtra seções e tópicos por um termo de busca.

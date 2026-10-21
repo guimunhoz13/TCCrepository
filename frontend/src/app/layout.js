@@ -35,7 +35,7 @@ const themeScript = `
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="pt-br" suppressHydrationWarning>
+    <html lang="pt-BR" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>

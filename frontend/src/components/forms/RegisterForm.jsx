@@ -124,6 +124,7 @@ export default function RegisterForm() {
           <label>Nome do escritório</label>
           <input
             value={form.nome_escritorio}
+            autoComplete="organization"
             onChange={(e) => alterarCampo("nome_escritorio", e.target.value)}
             required
           />
@@ -132,6 +133,7 @@ export default function RegisterForm() {
           <label>CNPJ</label>
           <input
             value={form.cnpj}
+            inputMode="numeric"
             onChange={(e) => alterarCampo("cnpj", formatarCNPJ(e.target.value))}
             onBlur={(e) => handleBuscarCnpj(e.target.value)}
             aria-describedby="aviso-cnpj"
@@ -146,6 +148,8 @@ export default function RegisterForm() {
         <div className="form-field">
           <label>Telefone</label>
           <input
+            type="tel"
+            autoComplete="tel"
             value={form.telefone_escritorio}
             onChange={(e) =>
               alterarCampo("telefone_escritorio", formatarTelefone(e.target.value))
@@ -157,6 +161,7 @@ export default function RegisterForm() {
           <label>E-mail do escritório</label>
           <input
             type="email"
+            autoComplete="email"
             value={form.email_escritorio}
             onChange={(e) => alterarCampo("email_escritorio", e.target.value)}
             required
@@ -166,6 +171,8 @@ export default function RegisterForm() {
           <label>CEP</label>
           <input
             value={cep}
+            inputMode="numeric"
+            autoComplete="postal-code"
             onChange={(e) => setCep(formatarCEP(e.target.value))}
             onBlur={(e) => handleBuscarCep(e.target.value)}
             placeholder="00000-000"
@@ -181,6 +188,7 @@ export default function RegisterForm() {
           <label>Cidade</label>
           <input
             value={form.cidade}
+            autoComplete="address-level2"
             onChange={(e) => alterarCampo("cidade", e.target.value)}
           />
         </div>
@@ -188,6 +196,7 @@ export default function RegisterForm() {
           <label>Endereço</label>
           <input
             value={form.endereco_escritorio}
+            autoComplete="street-address"
             onChange={(e) =>
               alterarCampo("endereco_escritorio", e.target.value)
             }
@@ -198,6 +207,7 @@ export default function RegisterForm() {
           <label>Estado (UF)</label>
           <input
             maxLength={2}
+            autoComplete="address-level1"
             value={form.estado}
             onChange={(e) => alterarCampo("estado", e.target.value.toUpperCase())}
           />
@@ -209,6 +219,7 @@ export default function RegisterForm() {
           <label>Nome do admin</label>
           <input
             value={form.nome_admin}
+            autoComplete="name"
             onChange={(e) => alterarCampo("nome_admin", e.target.value)}
             required
           />
@@ -217,6 +228,7 @@ export default function RegisterForm() {
           <label>E-mail do admin</label>
           <input
             type="email"
+            autoComplete="username"
             value={form.email_admin}
             onChange={(e) => alterarCampo("email_admin", e.target.value)}
             required
@@ -226,6 +238,7 @@ export default function RegisterForm() {
           <label>Senha do admin</label>
           <input
             type="password"
+            autoComplete="new-password"
             value={form.senha_admin}
             onChange={(e) => alterarCampo("senha_admin", e.target.value)}
             required

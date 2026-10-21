@@ -11,7 +11,7 @@ const previewRows = [
 
 export default function LoginPage() {
   return (
-    <main className="auth-page">
+    <main id="conteudo-principal" className="auth-page">
       <section className="auth-hero">
         <Link href="/" className={styles.backBrand}>
           <Logo size={18} />
@@ -27,16 +27,16 @@ export default function LoginPage() {
         <div className={styles.preview} aria-hidden="true">
           <div className={styles.previewStats}>
             <div>
-              <span>Escritórios ativos</span>
-              <strong>1.240</strong>
+              <span>Plano inicial</span>
+              <strong>Gratuito</strong>
             </div>
             <div>
-              <span>Processos geridos</span>
-              <strong>38.900</strong>
+              <span>Usuários incluídos</span>
+              <strong>3</strong>
             </div>
             <div>
-              <span>Uptime</span>
-              <strong>99,9%</strong>
+              <span>Processos ativos</span>
+              <strong>30</strong>
             </div>
           </div>
           <div className={styles.previewList}>

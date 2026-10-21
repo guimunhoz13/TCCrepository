@@ -2,14 +2,14 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { HelpCircle, Search, X } from "lucide-react";
-import { SECOES_AJUDA, buscarNaAjuda, secaoDoPainel } from "@/lib/ajuda";
+import { SECOES_AJUDA, buscarNaAjuda, secaoDaAjuda } from "@/lib/ajuda";
 
 /** Central de ajuda.
  *
  * Não reaproveita o OverlayPanel porque precisa abrir *por cima* de um
  * painel já aberto — a ajuda é contextual ao que a pessoa está vendo.
  */
-export default function AjudaPanel({ aberto, painel = null, onFechar }) {
+export default function AjudaPanel({ aberto, assunto = null, onFechar }) {
   const [termo, setTermo] = useState("");
   const [secaoId, setSecaoId] = useState(SECOES_AJUDA[0].id);
   const caixaRef = useRef(null);
@@ -20,12 +20,12 @@ export default function AjudaPanel({ aberto, painel = null, onFechar }) {
   // visão geral. O ajuste acontece na própria renderização em que a ajuda
   // abre (padrão do React para "estado que depende de uma prop"), em vez de
   // num efeito que renderizaria tudo uma segunda vez.
-  const abertura = aberto ? `aberta:${painel ?? ""}` : "fechada";
+  const abertura = aberto ? `aberta:${assunto ?? ""}` : "fechada";
   const [aberturaAnterior, setAberturaAnterior] = useState("fechada");
   if (abertura !== aberturaAnterior) {
     setAberturaAnterior(abertura);
     if (aberto) {
-      const contextual = secaoDoPainel(painel);
+      const contextual = secaoDaAjuda(assunto);
       setSecaoId(contextual ? contextual.id : SECOES_AJUDA[0].id);
       setTermo("");
     }
@@ -33,7 +33,7 @@ export default function AjudaPanel({ aberto, painel = null, onFechar }) {
 
   useEffect(() => {
     if (aberto) buscaRef.current?.focus();
-  }, [aberto, painel]);
+  }, [aberto, assunto]);
 
   useEffect(() => {
     if (!aberto) return;

@@ -10,15 +10,20 @@ import "../styles/design-system.css";
 
 export default function Providers({ children }) {
   return (
-    <ThemeProvider>
-      <MenuMovelProvider>
-        <AvisosProvider>
-          <ConfirmacaoProvider>
-            <AjudaProvider>{children}</AjudaProvider>
-          </ConfirmacaoProvider>
-        </AvisosProvider>
-        <RotulosAutomaticos />
-      </MenuMovelProvider>
-    </ThemeProvider>
+    <>
+      <a className="skip-link" href="#conteudo-principal">
+        Pular para o conteúdo principal
+      </a>
+      <ThemeProvider>
+        <MenuMovelProvider>
+          <AvisosProvider>
+            <ConfirmacaoProvider>
+              <AjudaProvider>{children}</AjudaProvider>
+            </ConfirmacaoProvider>
+          </AvisosProvider>
+          <RotulosAutomaticos />
+        </MenuMovelProvider>
+      </ThemeProvider>
+    </>
   );
 }
