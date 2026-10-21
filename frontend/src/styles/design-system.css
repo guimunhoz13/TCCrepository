@@ -2382,14 +2382,6 @@ tbody tr:hover {
     grid-template-columns: 1fr;
   }
 
-  .stats-grid,
-  .dashboard-grid,
-  .auth-page,
-  .form-grid,
-  .plans-grid {
-    grid-template-columns: 1fr;
-  }
-
   .overlay-panel {
     top: auto;
     right: 12px;
@@ -4168,20 +4160,45 @@ button.doc-mini-card {
 
   .topbar-actions {
     width: 100%;
-    flex-wrap: wrap;
+    min-width: 0;
+    flex-wrap: nowrap;
   }
 
   .topbar-actions .global-search {
-    flex: 1 1 100%;
-    order: -1;
+    flex: 1 1 auto;
+    width: auto;
+    min-width: 180px;
   }
 
+  .topbar-actions .global-search:focus-within,
   .topbar-actions .global-search input {
     width: 100%;
   }
 
+  .topbar-actions > .icon-btn,
+  .topbar-actions .notif-bell-wrap,
+  .topbar-user {
+    flex: 0 0 auto;
+  }
+
   .topbar-user {
     margin-right: auto;
+  }
+}
+
+/* O menu lateral já vira gaveta em 1100px, liberando toda a largura para o
+   conteúdo. Os cartões só passam a uma coluna quando a área útil realmente
+   fica estreita; isso evita que notebooks de 1366px com escala de 125% sejam
+   tratados como celulares. */
+@media (max-width: 900px) {
+  .stats-grid,
+  .plans-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dashboard-grid,
+  .auth-page {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -4207,6 +4224,28 @@ button.doc-mini-card {
 
   .topbar-user-nome {
     display: none;
+  }
+
+  .topbar-actions {
+    flex-wrap: wrap;
+  }
+
+  .topbar-actions .global-search {
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+
+  /* Quando o sino cai no começo da segunda linha, o menu deve abrir para a
+     direita. Alinhá-lo pela direita faria os 300px do menu saírem da tela. */
+  .notif-dropdown {
+    left: 0;
+    right: auto;
+    width: min(300px, calc(100vw - 32px));
+  }
+
+  .stats-grid,
+  .plans-grid {
+    grid-template-columns: 1fr;
   }
 
   .barra-inferior {
