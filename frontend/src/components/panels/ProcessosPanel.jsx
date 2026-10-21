@@ -81,6 +81,7 @@ export default function ProcessosPanel() {
   const [formularioEdicao, setFormularioEdicao] = useState(null);
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState("");
+  const [errosCampos, setErrosCampos] = useState({});
   const [sucesso, setSucesso] = useState("");
 
   const painelAberto = activePanel === "processos";
@@ -110,9 +111,19 @@ export default function ProcessosPanel() {
     lista.recarregar();
   }
 
+  function limparErroCampo(campo) {
+    setErro("");
+    setErrosCampos((atuais) => {
+      const proximos = { ...atuais };
+      delete proximos[campo];
+      return proximos;
+    });
+  }
+
   async function handleSubmit(event) {
     event.preventDefault();
     setErro("");
+    setErrosCampos({});
     setSucesso("");
 
     try {
@@ -128,12 +139,14 @@ export default function ProcessosPanel() {
           formulario.percentual_honorarios_sucumbencia || null,
       });
       setFormulario(formularioInicial);
+      setErrosCampos({});
       setSucesso("Processo cadastrado com sucesso.");
       setPanelTab("lista");
       carregarDados();
       refreshDashboard().catch(() => {});
     } catch (error) {
       setErro(error.message);
+      setErrosCampos(error.campos || {});
     } finally {
       setSalvando(false);
     }
@@ -161,6 +174,7 @@ export default function ProcessosPanel() {
       sigiloso: Boolean(processo.sigiloso),
     });
     setErro("");
+    setErrosCampos({});
     setSucesso("");
     setPanelTab("editar");
   }
@@ -168,6 +182,7 @@ export default function ProcessosPanel() {
   async function handleSubmitEdicao(event) {
     event.preventDefault();
     setErro("");
+    setErrosCampos({});
     setSucesso("");
 
     const { id, ...campos } = formularioEdicao;
@@ -184,11 +199,13 @@ export default function ProcessosPanel() {
         percentual_honorarios_sucumbencia: campos.percentual_honorarios_sucumbencia || null,
       });
       setSucesso("Processo atualizado com sucesso.");
+      setErrosCampos({});
       setPanelTab("ficha");
       carregarDados();
       refreshDashboard().catch(() => {});
     } catch (error) {
       setErro(error.message);
+      setErrosCampos(error.campos || {});
     } finally {
       setSalvando(false);
     }
@@ -223,6 +240,8 @@ export default function ProcessosPanel() {
           onSubmit={handleSubmit}
           salvando={salvando}
           submitLabel={t("acao_cadastrar_processo")}
+          errosCampos={errosCampos}
+          onLimparErroCampo={limparErroCampo}
         />
       ) : panelTab === "editar" ? (
         formularioEdicao && (
@@ -234,7 +253,12 @@ export default function ProcessosPanel() {
             onSubmit={handleSubmitEdicao}
             salvando={salvando}
             submitLabel="Salvar alterações"
-            onCancelar={() => setPanelTab("ficha")}
+            errosCampos={errosCampos}
+            onLimparErroCampo={limparErroCampo}
+            onCancelar={() => {
+              setErrosCampos({});
+              setPanelTab("ficha");
+            }}
           />
         )
       ) : panelTab === "ficha" ? (

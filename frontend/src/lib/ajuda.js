@@ -128,7 +128,7 @@ export const SECOES_AJUDA = [
       {
         titulo: "Cadastro",
         texto:
-          "Número do processo, título, cliente, advogado responsável, área do direito, vara, comarca, valor da causa, parte contrária, advogado adverso, percentual de honorários de sucumbência e status. O número segue a numeração unificada do CNJ.",
+          "O formulário é dividido em Identificação, Pessoas e Tribunal e valores. A barra mostra quantos dos cinco campos obrigatórios já foram preenchidos; os demais são opcionais e podem ser completados depois. Em cada campo há um exemplo e uma explicação do uso. Se o servidor recusar algum dado, o sistema destaca o campo exato e leva o foco até ele. O número segue a numeração unificada do CNJ.",
       },
       {
         titulo: "Status",

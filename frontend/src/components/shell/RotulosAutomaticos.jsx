@@ -50,10 +50,13 @@ export function mensagemDeErroDoCampo(campo) {
 
 function limparErroDoCampo(campo) {
   const grupo = campo.closest(".form-field");
-  const erro = grupo?.querySelector(":scope > .field-error");
+  const erro = grupo?.querySelector(":scope > .field-error-native");
   if (erro) erro.remove();
-  grupo?.classList.remove("form-field-invalid");
-  campo.removeAttribute("aria-invalid");
+  const temErroDaApi = Boolean(grupo?.querySelector(":scope > .field-error-api"));
+  if (!temErroDaApi) {
+    grupo?.classList.remove("form-field-invalid");
+    campo.removeAttribute("aria-invalid");
+  }
   if (erro?.id) {
     const descricoes = (campo.getAttribute("aria-describedby") || "")
       .split(/\s+/)
@@ -68,10 +71,10 @@ function mostrarErroDoCampo(campo) {
   if (!grupo) return;
   if (!campo.id) campo.id = `campo-${proximoId++}`;
 
-  let erro = grupo.querySelector(":scope > .field-error");
+  let erro = grupo.querySelector(":scope > .field-error-native");
   if (!erro) {
     erro = document.createElement("p");
-    erro.className = "field-error";
+    erro.className = "field-error field-error-native";
     erro.id = `${campo.id}-erro`;
     erro.setAttribute("role", "alert");
     grupo.appendChild(erro);

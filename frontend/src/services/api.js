@@ -25,6 +25,43 @@ function apiUrlAbsoluta() {
   return new URL(apiUrl(), base);
 }
 
+function textoDoErro(valor) {
+  if (Array.isArray(valor)) {
+    return valor.map(textoDoErro).filter(Boolean).join(" ");
+  }
+  if (valor && typeof valor === "object") {
+    return Object.values(valor).map(textoDoErro).filter(Boolean).join(" ");
+  }
+  return typeof valor === "string" ? valor.trim() : "";
+}
+
+/**
+ * Preserva os erros de validação enviados pelo Django REST Framework por
+ * campo. Telas antigas continuam usando `error.message`; formulários mais
+ * completos podem usar `error.campos` para apontar exatamente o que precisa
+ * ser corrigido.
+ */
+export function normalizarErrosDeCampos(data) {
+  if (!data || Array.isArray(data) || typeof data !== "object") return {};
+
+  return Object.fromEntries(
+    Object.entries(data)
+      .filter(([campo]) => !["detail", "non_field_errors"].includes(campo))
+      .map(([campo, valor]) => [campo, textoDoErro(valor)])
+      .filter(([, mensagem]) => mensagem)
+  );
+}
+
+export class ErroApi extends Error {
+  constructor(mensagem, { status, campos, data } = {}) {
+    super(mensagem);
+    this.name = "ErroApi";
+    this.status = status;
+    this.campos = campos || {};
+    this.data = data;
+  }
+}
+
 export function buildQuery(params) {
   if (!params) return "";
   const query = new URLSearchParams();
@@ -143,13 +180,16 @@ async function request(endpoint, options = {}, tokenKey = "access") {
 
   if (!response.ok) {
     const mensagem =
-      data?.detail ||
-      Object.values(data || {})
-        .flat()
-        .join(" ") ||
+      textoDoErro(data?.detail) ||
+      textoDoErro(data?.non_field_errors) ||
+      textoDoErro(data) ||
       "Não foi possível concluir a requisição.";
 
-    throw new Error(mensagem);
+    throw new ErroApi(mensagem, {
+      status: response.status,
+      campos: normalizarErrosDeCampos(data),
+      data,
+    });
   }
 
   return data;

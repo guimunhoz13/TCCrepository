@@ -1,5 +1,33 @@
 import { expect, test } from "@playwright/test";
-import { abrirMenu, entrar, painel } from "./ajudantes";
+import {
+  abrirAba,
+  abrirMenu,
+  campo,
+  entrar,
+  painel,
+  semViolacoesDeAcessibilidade,
+} from "./ajudantes";
+
+test("orienta o cadastro, mostra o progresso e explica campos obrigatórios", async ({ page }) => {
+  await entrar(page);
+  await abrirMenu(page, "Processos");
+  await abrirAba(page, "Novo");
+
+  await expect(page.getByRole("heading", { name: "Cadastre o processo por etapas" })).toBeVisible();
+  await expect(page.getByRole("navigation", { name: "Etapas do cadastro do processo" })).toBeVisible();
+  await expect(page.locator(".processo-form-progresso")).toContainText("0 de 5 obrigatórios");
+
+  await page.getByRole("button", { name: "Cadastrar processo" }).click();
+  await expect(page.getByText(/Preencha o campo “Número do processo”/)).toBeVisible();
+
+  await campo(page, "Número do processo").fill("0009876-54.2026.8.26.0100");
+  await campo(page, "Título").fill("Processo guiado E2E");
+  await campo(page, "Descrição").fill("Validação do cadastro orientado sem gravar dados.");
+  await expect(page.locator(".processo-form-progresso")).toContainText("3 de 5 obrigatórios");
+  await expect(page.getByRole("button", { name: /Identificação/ })).toHaveClass(/concluida/);
+
+  await semViolacoesDeAcessibilidade(page);
+});
 
 test("abre a ficha do processo e gera a atualização para o cliente", async ({ page }) => {
   await entrar(page);

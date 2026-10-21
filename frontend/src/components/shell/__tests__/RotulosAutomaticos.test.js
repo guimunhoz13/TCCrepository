@@ -119,4 +119,24 @@ describe("RotulosAutomaticos — formulários", () => {
     expect(document.querySelector(".field-error")).toBeNull();
     expect(campo.hasAttribute("aria-invalid")).toBe(false);
   });
+
+  test("preserva o erro retornado pela API até o formulário limpar o estado", () => {
+    document.body.innerHTML = `
+      <form>
+        <div class="form-field form-field-invalid">
+          <label for="titulo">Título</label>
+          <input id="titulo" aria-invalid="true" />
+          <p class="field-error field-error-api">Este título já existe.</p>
+        </div>
+      </form>`;
+    render(<RotulosAutomaticos />);
+
+    const campo = document.querySelector("input");
+    fireEvent.input(campo, { target: { value: "Novo título" } });
+
+    expect(document.querySelector(".field-error-api").textContent).toBe(
+      "Este título já existe."
+    );
+    expect(campo.getAttribute("aria-invalid")).toBe("true");
+  });
 });

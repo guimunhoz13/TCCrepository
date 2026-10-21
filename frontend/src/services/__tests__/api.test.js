@@ -21,6 +21,8 @@ import {
   consultarDataJud,
   getFichaProcesso,
   resolverApiUrl,
+  normalizarErrosDeCampos,
+  createProcesso,
 } from "../api";
 
 describe("resolverApiUrl", () => {
@@ -31,6 +33,46 @@ describe("resolverApiUrl", () => {
 
   test("preserva a API configurada fora da Vercel", () => {
     expect(resolverApiUrl("localhost")).toBe("http://127.0.0.1:8000/api");
+  });
+});
+
+describe("erros de validação da API", () => {
+  afterEach(() => {
+    delete global.fetch;
+  });
+
+  test("normaliza mensagens por campo e ignora erros gerais", () => {
+    expect(
+      normalizarErrosDeCampos({
+        numero_processo: ["Este número já existe."],
+        valor_causa: ["Informe um número válido.", "O valor deve ser positivo."],
+        non_field_errors: ["Datas incompatíveis."],
+        detail: "Requisição inválida.",
+      })
+    ).toEqual({
+      numero_processo: "Este número já existe.",
+      valor_causa: "Informe um número válido. O valor deve ser positivo.",
+    });
+  });
+
+  test("mantém mensagem, status e campos no erro lançado", async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: false,
+      status: 400,
+      json: async () => ({
+        numero_processo: ["Este número já está cadastrado."],
+        data_fim: ["A data final não pode ser anterior à inicial."],
+      }),
+    });
+
+    await expect(createProcesso({})).rejects.toMatchObject({
+      name: "ErroApi",
+      status: 400,
+      campos: {
+        numero_processo: "Este número já está cadastrado.",
+        data_fim: "A data final não pode ser anterior à inicial.",
+      },
+    });
   });
 });
 

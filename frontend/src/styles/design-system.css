@@ -803,6 +803,271 @@ tbody tr:hover {
   box-shadow: 0 0 0 3px var(--danger-soft);
 }
 
+/* Cadastro de processos: mantém todos os campos acessíveis na mesma página,
+   mas divide a leitura em etapas curtas e navegáveis. */
+.processo-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.processo-form-guia {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--bg-secondary);
+}
+
+.processo-form-guia-texto {
+  max-width: 62ch;
+}
+
+.processo-form-sobretitulo {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--accent);
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.processo-form-guia h3 {
+  margin: 0 0 6px;
+  font-family: "Fraunces", serif;
+  font-size: 1.25rem;
+}
+
+.processo-form-guia p,
+.processo-form-progresso span,
+.processo-secao-descricao {
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.processo-form-guia p,
+.processo-secao-descricao {
+  margin: 0;
+  font-size: 0.88rem;
+}
+
+.processo-form-progresso {
+  width: min(250px, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  flex-shrink: 0;
+}
+
+.processo-form-progresso strong {
+  font-size: 0.82rem;
+}
+
+.processo-form-progresso span {
+  font-size: 0.75rem;
+}
+
+.processo-form-progresso progress {
+  width: 100%;
+  height: 8px;
+  border: 0;
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--border);
+  accent-color: var(--accent);
+}
+
+.processo-form-progresso progress::-webkit-progress-bar {
+  background: var(--border);
+}
+
+.processo-form-progresso progress::-webkit-progress-value {
+  border-radius: 999px;
+  background: var(--accent);
+}
+
+.processo-form-progresso progress::-moz-progress-bar {
+  border-radius: 999px;
+  background: var(--accent);
+}
+
+.processo-etapas {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.processo-etapa {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  text-align: left;
+  cursor: pointer;
+}
+
+.processo-etapa:hover,
+.processo-etapa:focus-visible {
+  border-color: var(--accent);
+}
+
+.processo-etapa:focus-visible {
+  outline: 3px solid var(--accent-soft);
+  outline-offset: 2px;
+}
+
+.processo-etapa-numero {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--ink-soft);
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.processo-etapa.concluida .processo-etapa-numero {
+  background: var(--success-soft);
+  color: var(--success);
+}
+
+.processo-etapa.concluida .processo-etapa-numero::before {
+  content: "✓";
+}
+
+.processo-etapa.concluida .processo-etapa-numero {
+  font-size: 0;
+}
+
+.processo-etapa.concluida .processo-etapa-numero::before {
+  font-size: 0.82rem;
+}
+
+.processo-etapa > span:last-child {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.processo-etapa strong {
+  font-size: 0.84rem;
+}
+
+.processo-etapa small {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+}
+
+.processo-secao {
+  margin: 0;
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--bg-secondary);
+  scroll-margin-top: 18px;
+}
+
+.processo-secao legend {
+  padding: 0 8px;
+  color: var(--text-primary);
+  font-family: "Fraunces", serif;
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.processo-secao legend span {
+  width: 25px;
+  height: 25px;
+  display: inline-grid;
+  place-items: center;
+  margin-right: 6px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-family: inherit;
+  font-size: 0.76rem;
+}
+
+.processo-secao-descricao {
+  margin: 0 0 18px;
+}
+
+.processo-secao-acoes {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px;
+}
+
+.processo-estimativa {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+}
+
+.form-sticky-footer.processo-form-rodape {
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.processo-form-rodape > p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+}
+
+.processo-form-rodape-acoes {
+  display: flex;
+  gap: 10px;
+}
+
+@media (max-width: 760px) {
+  .processo-form-guia {
+    flex-direction: column;
+  }
+
+  .processo-form-progresso {
+    width: 100%;
+  }
+
+  .processo-etapas {
+    grid-template-columns: 1fr;
+  }
+
+  .processo-secao {
+    padding: 16px;
+  }
+
+  .processo-secao-acoes .btn {
+    width: 100%;
+  }
+
+  .form-sticky-footer.processo-form-rodape {
+    align-items: stretch;
+    flex-direction: column;
+    margin-right: -16px;
+    margin-left: -16px;
+    padding-right: 16px;
+    padding-left: 16px;
+  }
+
+  .processo-form-rodape-acoes,
+  .processo-form-rodape-acoes .btn {
+    width: 100%;
+  }
+}
+
 /* ==========================================================================
    PRIMEIROS PASSOS / ONBOARDING
    ========================================================================== */
