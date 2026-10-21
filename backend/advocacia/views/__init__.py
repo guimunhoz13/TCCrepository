@@ -25,6 +25,7 @@ from .uso import RegistrarAtividadeView, TempoDeUsoView  # noqa: F401
 from .modelos import ModeloDocumentoViewSet  # noqa: F401
 from .planos import PlanosView, PlanoAtualView  # noqa: F401
 from .notificacoes_push import PushView, PushInscreverView, PushCancelarView, PushTestarView  # noqa: F401
+from .rascunhos import RascunhoFormularioViewSet  # noqa: F401
 
 __all__ = [
     "PlanosView",
@@ -85,4 +86,5 @@ __all__ = [
     "PushInscreverView",
     "PushCancelarView",
     "PushTestarView",
+    "RascunhoFormularioViewSet",
 ]

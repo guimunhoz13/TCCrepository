@@ -24,7 +24,11 @@ import {
   listarTudo,
 } from "@/services/api";
 import LinhasCarregando from "@/components/ui/LinhasCarregando";
+import EstadoVazio from "@/components/ui/EstadoVazio";
+import OrientacaoFormulario from "@/components/ui/OrientacaoFormulario";
 import { usePermissoes } from "@/hooks/usePermissoes";
+import { useRascunhoFormulario } from "@/hooks/useRascunhoFormulario";
+import EstadoRascunho from "@/components/ui/EstadoRascunho";
 
 const TIPOS_DESPESA = [
   { value: "custas", label: "Custas processuais" },
@@ -101,6 +105,20 @@ export default function HorasPanel() {
     (listaDespesas.carregando && despesas.length === 0);
   const erroCarga =
     listaHoras.erro || listaDespesas.erro || recursoProcessos.erro || recursoTempo.erro;
+  const rascunhoHora = useRascunhoFormulario({
+    chave: "novo-apontamento-horas",
+    ativo: ativo && panelTab === "nova-hora",
+    valor: formHora,
+    setValor: setFormHora,
+    valorInicial: horaInicial,
+  });
+  const rascunhoDespesa = useRascunhoFormulario({
+    chave: "nova-despesa",
+    ativo: ativo && panelTab === "nova-despesa",
+    valor: formDespesa,
+    setValor: setFormDespesa,
+    valorInicial: despesaInicial,
+  });
 
   function carregar() {
     listaHoras.recarregar();
@@ -128,6 +146,7 @@ export default function HorasPanel() {
         faturavel: formHora.faturavel,
         valor_hora: formHora.valor_hora || null,
       });
+      await rascunhoHora.descartarRascunho();
       setFormHora(horaInicial);
       setPanelTab("horas");
       carregar();
@@ -141,6 +160,7 @@ export default function HorasPanel() {
     setErro("");
     try {
       await createDespesa(formDespesa);
+      await rascunhoDespesa.descartarRascunho();
       setFormDespesa(despesaInicial);
       setPanelTab("despesas");
       carregar();
@@ -198,7 +218,14 @@ export default function HorasPanel() {
               {carregando && <LinhasCarregando colunas={7} />}
               {!carregando && apontamentos.length === 0 && (
                 <tr>
-                  <td colSpan="7">Nenhuma hora apontada ainda.</td>
+                  <td colSpan="7">
+                    <EstadoVazio
+                      titulo="Nenhuma hora apontada"
+                      descricao="Registre o trabalho realizado para medir esforço e calcular valores faturáveis."
+                      acao={pode("horas", "criar") ? "Apontar hora" : null}
+                      onAcao={() => setPanelTab("nova-hora")}
+                    />
+                  </td>
                 </tr>
               )}
               {!carregando &&
@@ -260,10 +287,17 @@ export default function HorasPanel() {
 
       {panelTab === "nova-hora" && (
         <form onSubmit={salvarHora}>
+          <EstadoRascunho mensagem={rascunhoHora.estadoRascunho} />
+          <OrientacaoFormulario
+            titulo="Registre o trabalho realizado"
+            descricao="Informe o tempo efetivo e descreva a atividade. Marque como faturável somente quando ela puder ser cobrada do cliente."
+            etapas={["Processo e data", "Duração", "Descrição e cobrança"]}
+          />
           <div className="form-grid">
             <div className="form-field">
               <label>Processo</label>
               <select
+                name="processo"
                 required
                 value={formHora.processo}
                 onChange={(e) => setFormHora({ ...formHora, processo: e.target.value })}
@@ -279,6 +313,7 @@ export default function HorasPanel() {
             <div className="form-field">
               <label>Data</label>
               <input
+                name="data"
                 type="date"
                 required
                 value={formHora.data}
@@ -288,6 +323,7 @@ export default function HorasPanel() {
             <div className="form-field">
               <label>Horas</label>
               <input
+                name="horas"
                 type="number"
                 min="0"
                 max="24"
@@ -298,6 +334,7 @@ export default function HorasPanel() {
             <div className="form-field">
               <label>Minutos</label>
               <input
+                name="minutos"
                 type="number"
                 min="0"
                 max="59"
@@ -308,6 +345,7 @@ export default function HorasPanel() {
             <div className="form-field">
               <label>Valor por hora (opcional)</label>
               <input
+                name="valor_hora"
                 type="number"
                 step="0.01"
                 min="0"
@@ -318,6 +356,7 @@ export default function HorasPanel() {
             <div className="form-field">
               <label>Faturável</label>
               <select
+                name="faturavel"
                 value={formHora.faturavel ? "sim" : "nao"}
                 onChange={(e) =>
                   setFormHora({ ...formHora, faturavel: e.target.value === "sim" })
@@ -331,6 +370,7 @@ export default function HorasPanel() {
           <div className="form-field">
             <label>O que foi feito</label>
             <input
+              name="descricao"
               required
               maxLength={255}
               value={formHora.descricao}
@@ -371,7 +411,14 @@ export default function HorasPanel() {
               {carregando && <LinhasCarregando colunas={7} />}
               {!carregando && despesas.length === 0 && (
                 <tr>
-                  <td colSpan="7">Nenhuma despesa lançada ainda.</td>
+                  <td colSpan="7">
+                    <EstadoVazio
+                      titulo="Nenhuma despesa lançada"
+                      descricao="Registre custas e gastos para controlar o que deve ser reembolsado pelo cliente."
+                      acao={pode("despesas", "criar") ? "Lançar despesa" : null}
+                      onAcao={() => setPanelTab("nova-despesa")}
+                    />
+                  </td>
                 </tr>
               )}
               {!carregando &&
@@ -451,10 +498,17 @@ export default function HorasPanel() {
 
       {panelTab === "nova-despesa" && (
         <form onSubmit={salvarDespesa}>
+          <EstadoRascunho mensagem={rascunhoDespesa.estadoRascunho} />
+          <OrientacaoFormulario
+            titulo="Registre uma despesa do processo"
+            descricao="Informe o gasto efetivamente realizado e marque se ele deverá ser reembolsado pelo cliente."
+            etapas={["Processo e tipo", "Valor e data", "Reembolso"]}
+          />
           <div className="form-grid">
             <div className="form-field">
               <label>Processo</label>
               <select
+                name="processo"
                 required
                 value={formDespesa.processo}
                 onChange={(e) => setFormDespesa({ ...formDespesa, processo: e.target.value })}
@@ -470,6 +524,7 @@ export default function HorasPanel() {
             <div className="form-field">
               <label>Tipo</label>
               <select
+                name="tipo"
                 value={formDespesa.tipo}
                 onChange={(e) => setFormDespesa({ ...formDespesa, tipo: e.target.value })}
               >
@@ -483,6 +538,7 @@ export default function HorasPanel() {
             <div className="form-field">
               <label>Valor</label>
               <input
+                name="valor"
                 type="number"
                 step="0.01"
                 min="0.01"
@@ -494,6 +550,7 @@ export default function HorasPanel() {
             <div className="form-field">
               <label>Data</label>
               <input
+                name="data"
                 type="date"
                 required
                 value={formDespesa.data}
@@ -503,6 +560,7 @@ export default function HorasPanel() {
             <div className="form-field">
               <label>Reembolsável pelo cliente</label>
               <select
+                name="reembolsavel"
                 value={formDespesa.reembolsavel ? "sim" : "nao"}
                 onChange={(e) =>
                   setFormDespesa({ ...formDespesa, reembolsavel: e.target.value === "sim" })
@@ -516,6 +574,7 @@ export default function HorasPanel() {
           <div className="form-field">
             <label>Descrição</label>
             <input
+              name="descricao"
               required
               maxLength={255}
               value={formDespesa.descricao}

@@ -28,7 +28,11 @@ import {
   anonimizarCliente,
 } from "@/services/api";
 import LinhasCarregando from "@/components/ui/LinhasCarregando";
+import EstadoVazio from "@/components/ui/EstadoVazio";
+import OrientacaoFormulario from "@/components/ui/OrientacaoFormulario";
 import { usePermissoes } from "@/hooks/usePermissoes";
+import { useRascunhoFormulario } from "@/hooks/useRascunhoFormulario";
+import EstadoRascunho from "@/components/ui/EstadoRascunho";
 
 const formularioInicial = {
   tipo_pessoa: "fisica",
@@ -85,6 +89,13 @@ export default function ClientesPanel() {
   const clientes = lista.itens;
   const carregando = lista.carregando && clientes.length === 0;
   const carregarClientes = lista.recarregar;
+  const { estadoRascunho, descartarRascunho } = useRascunhoFormulario({
+    chave: "novo-cliente",
+    ativo: activePanel === "clientes" && panelTab === "novo" && !clienteEditando,
+    valor: formulario,
+    setValor: setFormulario,
+    valorInicial: formularioInicial,
+  });
 
   function handleIniciarEdicao(cliente) {
     setErro("");
@@ -196,6 +207,7 @@ export default function ClientesPanel() {
         setSucesso("Cliente atualizado com sucesso.");
       } else {
         await createCliente(payload);
+        await descartarRascunho();
         setSucesso("Cliente cadastrado com sucesso.");
       }
 
@@ -231,9 +243,16 @@ export default function ClientesPanel() {
 
       {panelTab === "novo" ? (
         <form className="form-grid" onSubmit={handleSubmit}>
+          {!clienteEditando && <EstadoRascunho mensagem={estadoRascunho} />}
+          <OrientacaoFormulario
+            titulo={clienteEditando ? "Revise os dados do cliente" : "Cadastre a pessoa ou empresa"}
+            descricao="Os dados de contato alimentam processos, documentos e comunicações. Registre somente informações necessárias e confira a autorização LGPD."
+            etapas={["Identificação", "Contato e endereço", "Documentos e LGPD"]}
+          />
           <div className="form-field">
             <label>Tipo de pessoa</label>
             <select
+              name="tipo_pessoa"
               value={formulario.tipo_pessoa}
               onChange={(e) =>
                 setFormulario({ ...formulario, tipo_pessoa: e.target.value })
@@ -246,6 +265,7 @@ export default function ClientesPanel() {
           <div className="form-field">
             <label>{formulario.tipo_pessoa === "juridica" ? "Razão social" : "Nome"}</label>
             <input
+              name="nome"
               value={formulario.nome}
               onChange={(e) =>
                 setFormulario({ ...formulario, nome: e.target.value })
@@ -257,6 +277,7 @@ export default function ClientesPanel() {
             <div className="form-field">
               <label>CNPJ</label>
               <input
+                name="cnpj"
                 value={formulario.cnpj}
                 onChange={(e) =>
                   setFormulario({
@@ -278,6 +299,7 @@ export default function ClientesPanel() {
             <div className="form-field">
               <label>CPF</label>
               <input
+                name="cpf"
                 value={formulario.cpf}
                 onChange={(e) =>
                   setFormulario({
@@ -292,6 +314,7 @@ export default function ClientesPanel() {
           <div className="form-field">
             <label>E-mail</label>
             <input
+              name="email"
               type="email"
               value={formulario.email}
               onChange={(e) =>
@@ -303,6 +326,7 @@ export default function ClientesPanel() {
           <div className="form-field">
             <label>Telefone</label>
             <input
+              name="telefone"
               value={formulario.telefone}
               onChange={(e) =>
                 setFormulario({
@@ -316,6 +340,7 @@ export default function ClientesPanel() {
           <div className="form-field">
             <label>CEP</label>
             <input
+              name="cep"
               value={cep}
               onChange={(e) => setCep(formatarCEP(e.target.value))}
               onBlur={(e) => handleBuscarCep(e.target.value)}
@@ -331,6 +356,7 @@ export default function ClientesPanel() {
           <div className="form-field full">
             <label>Endereço</label>
             <input
+              name="endereco"
               value={formulario.endereco}
               onChange={(e) =>
                 setFormulario({ ...formulario, endereco: e.target.value })
@@ -343,6 +369,7 @@ export default function ClientesPanel() {
               <div className="form-field">
                 <label>Data de nascimento</label>
                 <input
+                  name="data_nascimento"
                   type="date"
                   value={formulario.data_nascimento}
                   onChange={(e) =>
@@ -356,6 +383,7 @@ export default function ClientesPanel() {
               <div className="form-field">
                 <label>RG</label>
                 <input
+                  name="rg"
                   value={formulario.rg}
                   onChange={(e) =>
                     setFormulario({ ...formulario, rg: formatarRG(e.target.value) })
@@ -365,6 +393,7 @@ export default function ClientesPanel() {
               <div className="form-field">
                 <label>Estado civil</label>
                 <select
+                  name="estado_civil"
                   value={formulario.estado_civil}
                   onChange={(e) =>
                     setFormulario({ ...formulario, estado_civil: e.target.value })
@@ -380,6 +409,7 @@ export default function ClientesPanel() {
               <div className="form-field">
                 <label>Nacionalidade</label>
                 <input
+                  name="nacionalidade"
                   value={formulario.nacionalidade}
                   onChange={(e) =>
                     setFormulario({ ...formulario, nacionalidade: e.target.value })
@@ -394,6 +424,7 @@ export default function ClientesPanel() {
               <img src={fotoEdicaoUrl} alt="" className="avatar-preview" />
             )}
             <input
+              name="foto"
               type="file"
               accept="image/*"
               onChange={(e) => setFoto(e.target.files?.[0] || null)}
@@ -416,6 +447,7 @@ export default function ClientesPanel() {
               </button>
             )}
             <input
+              name="documento_identidade"
               type="file"
               accept="image/*,.pdf"
               onChange={(e) => setDocumentoIdentidade(e.target.files?.[0] || null)}
@@ -423,6 +455,7 @@ export default function ClientesPanel() {
           </div>
           <label className="campo-marcar full">
             <input
+              name="consentimento_lgpd"
               type="checkbox"
               checked={formulario.consentimento_lgpd}
               onChange={(e) =>
@@ -468,10 +501,22 @@ export default function ClientesPanel() {
           <div className="form-field" style={{ marginBottom: 12 }}>
             <input
               type="search"
+              aria-label="Buscar clientes por nome, CPF, CNPJ ou e-mail"
               placeholder="Buscar por nome, CPF/CNPJ ou e-mail..."
               value={busca}
               onChange={(e) => setBusca(e.target.value)}
             />
+          </div>
+          <div className="resumo-linha" role="status" aria-live="polite">
+            <span>
+              {buscaAtrasada ? "Resultados encontrados" : "Clientes cadastrados"}: {" "}
+              <strong>{lista.total}</strong>
+            </span>
+            {busca && (
+              <button type="button" className="link-botao" onClick={() => setBusca("")}>
+                Limpar busca
+              </button>
+            )}
           </div>
           <table>
             <thead>
@@ -625,6 +670,20 @@ export default function ClientesPanel() {
                     </td>
                   </tr>
                 ))}
+              {!carregando && clientes.length === 0 && (
+                <tr>
+                  <td colSpan="6">
+                    <EstadoVazio
+                      titulo={busca ? "Nenhum cliente corresponde à busca" : "Cadastre o primeiro cliente"}
+                      descricao={busca
+                        ? "Revise o nome, CPF/CNPJ ou e-mail informado."
+                        : "O cliente é necessário para criar processos, contratos e relatórios."}
+                      acao={busca ? "Limpar busca" : pode("clientes", "criar") ? "Cadastrar cliente" : null}
+                      onAcao={busca ? () => setBusca("") : () => setPanelTab("novo")}
+                    />
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
           <RodapeLista

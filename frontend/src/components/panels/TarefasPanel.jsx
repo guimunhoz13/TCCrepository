@@ -22,7 +22,11 @@ import {
 } from "@/services/api";
 import LinhasCarregando from "@/components/ui/LinhasCarregando";
 import TarefasQuadro from "@/components/panels/TarefasQuadro";
+import EstadoVazio from "@/components/ui/EstadoVazio";
+import OrientacaoFormulario from "@/components/ui/OrientacaoFormulario";
 import { usePermissoes } from "@/hooks/usePermissoes";
+import { useRascunhoFormulario } from "@/hooks/useRascunhoFormulario";
+import EstadoRascunho from "@/components/ui/EstadoRascunho";
 
 const STATUS = [
   { value: "aberta", label: "Aberta" },
@@ -104,6 +108,13 @@ export default function TarefasPanel() {
   const usuarios = todosUsuarios.filter((u) => u.ativo);
   const carregando = lista.carregando && tarefas.length === 0;
   const erroCarga = lista.erro || auxiliares.erro;
+  const { estadoRascunho, descartarRascunho } = useRascunhoFormulario({
+    chave: "nova-tarefa",
+    ativo: ativo && panelTab === "nova",
+    valor: form,
+    setValor: setForm,
+    valorInicial: tarefaInicial,
+  });
 
   function carregar() {
     lista.recarregar();
@@ -118,6 +129,7 @@ export default function TarefasPanel() {
         processo: form.processo || null,
         prazo: form.prazo || null,
       });
+      await descartarRascunho();
       setForm({ ...tarefaInicial, responsavel: form.responsavel });
       setPanelTab("minhas");
     } catch (e) {
@@ -185,9 +197,14 @@ export default function TarefasPanel() {
               {!carregando && tarefas.length === 0 && (
                 <tr>
                   <td colSpan="7">
-                    {panelTab === "minhas"
-                      ? "Você não tem tarefas em aberto."
-                      : "Nenhuma tarefa por aqui."}
+                    <EstadoVazio
+                      titulo={panelTab === "historico" ? "Nenhuma tarefa no histórico" : "Nenhuma tarefa em aberto"}
+                      descricao={panelTab === "minhas"
+                        ? "Quando uma tarefa for atribuída a você, ela aparecerá aqui."
+                        : "Crie uma tarefa para organizar o próximo passo e definir um responsável."}
+                      acao={pode("tarefas", "criar") ? "Criar tarefa" : null}
+                      onAcao={() => setPanelTab("nova")}
+                    />
                   </td>
                 </tr>
               )}
@@ -303,9 +320,16 @@ export default function TarefasPanel() {
 
       {panelTab === "nova" && (
         <form onSubmit={salvar}>
+          <EstadoRascunho mensagem={estadoRascunho} />
+          <OrientacaoFormulario
+            titulo="Defina um próximo passo claro"
+            descricao="Descreva uma ação objetiva, escolha quem será responsável e use prazo e prioridade para ordenar o trabalho."
+            etapas={["Ação", "Responsável", "Prazo e contexto"]}
+          />
           <div className="form-field">
             <label>O que precisa ser feito</label>
             <input
+              name="titulo"
               required
               maxLength={200}
               placeholder="Ex.: levantar jurisprudência sobre horas in itinere"
@@ -317,6 +341,7 @@ export default function TarefasPanel() {
             <div className="form-field">
               <label>Responsável</label>
               <select
+                name="responsavel"
                 required
                 value={form.responsavel}
                 onChange={(e) => setForm({ ...form, responsavel: e.target.value })}
@@ -333,6 +358,7 @@ export default function TarefasPanel() {
             <div className="form-field">
               <label>Processo (opcional)</label>
               <select
+                name="processo"
                 value={form.processo}
                 onChange={(e) => setForm({ ...form, processo: e.target.value })}
               >
@@ -347,6 +373,7 @@ export default function TarefasPanel() {
             <div className="form-field">
               <label>Prioridade</label>
               <select
+                name="prioridade"
                 value={form.prioridade}
                 onChange={(e) => setForm({ ...form, prioridade: e.target.value })}
               >
@@ -360,6 +387,7 @@ export default function TarefasPanel() {
             <div className="form-field">
               <label>Prazo (opcional)</label>
               <input
+                name="prazo"
                 type="date"
                 value={form.prazo}
                 onChange={(e) => setForm({ ...form, prazo: e.target.value })}
@@ -369,6 +397,7 @@ export default function TarefasPanel() {
           <div className="form-field">
             <label>Detalhes (opcional)</label>
             <textarea
+              name="descricao"
               rows={3}
               value={form.descricao}
               onChange={(e) => setForm({ ...form, descricao: e.target.value })}

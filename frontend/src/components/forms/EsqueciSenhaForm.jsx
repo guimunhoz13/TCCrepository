@@ -39,6 +39,7 @@ export default function EsqueciSenhaForm() {
       <div className="form-field" style={{ marginBottom: 22 }}>
         <label>E-mail</label>
         <input
+          name="email"
           type="email"
           placeholder="seu@email.com"
           value={email}

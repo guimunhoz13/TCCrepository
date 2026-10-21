@@ -74,6 +74,7 @@ export default function RedefinirSenhaForm() {
       <div className="form-field" style={{ marginBottom: 16 }}>
         <label>Nova senha</label>
         <input
+          name="nova_senha"
           type="password"
           placeholder="••••••••"
           value={novaSenha}
@@ -86,6 +87,7 @@ export default function RedefinirSenhaForm() {
       <div className="form-field" style={{ marginBottom: 22 }}>
         <label>Confirmar nova senha</label>
         <input
+          name="confirmar_senha"
           type="password"
           placeholder="••••••••"
           value={confirmarSenha}

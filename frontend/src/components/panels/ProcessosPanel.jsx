@@ -28,7 +28,9 @@ import {
   listarTudo,
 } from "@/services/api";
 import LinhasCarregando from "@/components/ui/LinhasCarregando";
+import EstadoVazio from "@/components/ui/EstadoVazio";
 import { usePermissoes } from "@/hooks/usePermissoes";
+import { useRascunhoFormulario } from "@/hooks/useRascunhoFormulario";
 
 const formularioInicial = {
   numero_processo: "",
@@ -50,6 +52,18 @@ const formularioInicial = {
   sigiloso: false,
 };
 
+const CHAVE_FILTRO_PROCESSOS = "lexnexo:filtro-processos";
+
+function lerFiltrosSalvos() {
+  if (typeof window === "undefined") return {};
+  try {
+    return JSON.parse(localStorage.getItem(CHAVE_FILTRO_PROCESSOS) || "null") || {};
+  } catch {
+    localStorage.removeItem(CHAVE_FILTRO_PROCESSOS);
+    return {};
+  }
+}
+
 /** O prazo pendente mais próximo, resumido pro selo de urgência da
  * listagem — a mesma leitura de `atrasado`/dias que a dashboard já faz
  * pros "Prazos vencendo", só que a partir do campo já calculado no
@@ -66,17 +80,18 @@ function rotuloUrgencia(prazo) {
 }
 
 export default function ProcessosPanel() {
+  const [filtrosIniciais] = useState(lerFiltrosSalvos);
   const { activePanel, panelTab, panelParams, openPanel, setPanelTab } = usePanel();
   const { refresh: refreshDashboard } = useDashboardData();
   const confirmar = useConfirmacao();
   const avisar = useAvisos();
   const pode = usePermissoes();
   const { t } = usePreferences();
-  const [busca, setBusca] = useState("");
+  const [busca, setBusca] = useState(filtrosIniciais.busca || "");
   const [consultando, setConsultando] = useState(null);
   const [avisoDataJud, setAvisoDataJud] = useState(null);
-  const [filtroStatus, setFiltroStatus] = useState("");
-  const [filtroAdvogado, setFiltroAdvogado] = useState("");
+  const [filtroStatus, setFiltroStatus] = useState(filtrosIniciais.status || "");
+  const [filtroAdvogado, setFiltroAdvogado] = useState(filtrosIniciais.advogado || "");
   const [formulario, setFormulario] = useState(formularioInicial);
   const [formularioEdicao, setFormularioEdicao] = useState(null);
   const [salvando, setSalvando] = useState(false);
@@ -106,6 +121,13 @@ export default function ProcessosPanel() {
   const [clientes, advogados] = auxiliares.dados ?? [[], []];
   const carregando = lista.carregando && processos.length === 0;
   const erroCarga = lista.erro || auxiliares.erro;
+  const { estadoRascunho, descartarRascunho } = useRascunhoFormulario({
+    chave: "novo-processo",
+    ativo: painelAberto && panelTab === "novo",
+    valor: formulario,
+    setValor: setFormulario,
+    valorInicial: formularioInicial,
+  });
 
   function carregarDados() {
     lista.recarregar();
@@ -118,6 +140,20 @@ export default function ProcessosPanel() {
       delete proximos[campo];
       return proximos;
     });
+  }
+
+  function limparFiltros() {
+    setBusca("");
+    setFiltroStatus("");
+    setFiltroAdvogado("");
+  }
+
+  function salvarFiltros() {
+    localStorage.setItem(
+      CHAVE_FILTRO_PROCESSOS,
+      JSON.stringify({ busca, status: filtroStatus, advogado: filtroAdvogado })
+    );
+    setSucesso("Filtro de processos salvo neste aparelho.");
   }
 
   async function handleSubmit(event) {
@@ -138,6 +174,7 @@ export default function ProcessosPanel() {
         percentual_honorarios_sucumbencia:
           formulario.percentual_honorarios_sucumbencia || null,
       });
+      await descartarRascunho();
       setFormulario(formularioInicial);
       setErrosCampos({});
       setSucesso("Processo cadastrado com sucesso.");
@@ -242,6 +279,7 @@ export default function ProcessosPanel() {
           submitLabel={t("acao_cadastrar_processo")}
           errosCampos={errosCampos}
           onLimparErroCampo={limparErroCampo}
+          estadoRascunho={estadoRascunho}
         />
       ) : panelTab === "editar" ? (
         formularioEdicao && (
@@ -276,6 +314,7 @@ export default function ProcessosPanel() {
             <div className="form-field">
               <input
                 type="search"
+                aria-label="Buscar processos por número, título ou cliente"
                 placeholder="Buscar por número, título ou cliente..."
                 value={busca}
                 onChange={(e) => setBusca(e.target.value)}
@@ -308,9 +347,24 @@ export default function ProcessosPanel() {
                 ))}
               </select>
             </div>
+            <div className="processos-filtros-acoes">
+              <button type="button" className="btn btn-secondary btn-sm" onClick={salvarFiltros}>
+                Salvar filtro
+              </button>
+              {(busca || filtroStatus || filtroAdvogado) && (
+                <button type="button" className="btn btn-secondary btn-sm" onClick={limparFiltros}>
+                  Limpar filtros
+                </button>
+              )}
+            </div>
           </div>
           {!carregando && (
-            <p className="celula-secundaria" style={{ marginBottom: 10 }}>
+            <p
+              className="celula-secundaria"
+              style={{ marginBottom: 10 }}
+              role="status"
+              aria-live="polite"
+            >
               {lista.total === 0
                 ? "Nenhum processo encontrado."
                 : `${lista.total} processo${lista.total > 1 ? "s" : ""} encontrado${
@@ -498,6 +552,26 @@ export default function ProcessosPanel() {
                     </td>
                   </tr>
                 ))}
+              {!carregando && processos.length === 0 && (
+                <tr>
+                  <td colSpan="5">
+                    <EstadoVazio
+                      titulo={(busca || filtroStatus || filtroAdvogado)
+                        ? "Nenhum processo corresponde aos filtros"
+                        : "Cadastre o primeiro processo"}
+                      descricao={(busca || filtroStatus || filtroAdvogado)
+                        ? "Limpe os filtros ou tente outro número, título ou cliente."
+                        : "Depois do cadastro, você poderá acompanhar prazos, tarefas, documentos e valores."}
+                      acao={(busca || filtroStatus || filtroAdvogado)
+                        ? "Limpar filtros"
+                        : pode("processos", "criar") ? "Cadastrar processo" : null}
+                      onAcao={(busca || filtroStatus || filtroAdvogado)
+                        ? limparFiltros
+                        : () => setPanelTab("novo")}
+                    />
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
           <RodapeLista

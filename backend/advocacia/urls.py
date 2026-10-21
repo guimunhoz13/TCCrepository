@@ -57,6 +57,7 @@ from .views import (
     MasterLoginView,
     MasterEscritorioViewSet,
     MasterStatsView,
+    RascunhoFormularioViewSet,
 )
 
 
@@ -79,6 +80,7 @@ router.register(r"tarefas", TarefaViewSet, basename="tarefa")
 router.register(r"intimacoes", IntimacaoViewSet, basename="intimacao")
 router.register(r"modelos-documento", ModeloDocumentoViewSet, basename="modelo-documento")
 router.register(r"auditoria", AuditoriaViewSet, basename="auditoria")
+router.register(r"rascunhos", RascunhoFormularioViewSet, basename="rascunho")
 
 master_router = DefaultRouter()
 master_router.register(r"master/escritorios", MasterEscritorioViewSet, basename="master-escritorio")

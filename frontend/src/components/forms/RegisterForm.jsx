@@ -9,6 +9,7 @@ import { buscarEnderecoPorCep } from "@/utils/cep";
 import { avisoDaEmpresa, buscarEmpresaPorCnpj } from "@/utils/cnpj";
 import { senhaAtendeRequisitos } from "@/utils/senha";
 import RequisitosSenha from "@/components/ui/RequisitosSenha";
+import OrientacaoFormulario from "@/components/ui/OrientacaoFormulario";
 
 export default function RegisterForm() {
   const router = useRouter();
@@ -119,10 +120,17 @@ export default function RegisterForm() {
 
       {erro && <div className="alert alert-error">{erro}</div>}
 
+      <OrientacaoFormulario
+        titulo="Configure o escritório e o primeiro acesso"
+        descricao="Primeiro informe os dados institucionais; depois crie o administrador que poderá convidar a equipe e concluir a configuração."
+        etapas={["Dados institucionais", "Localização", "Primeiro administrador"]}
+      />
+
       <div className="form-grid">
         <div className="form-field full">
           <label>Nome do escritório</label>
           <input
+            name="nome_escritorio"
             value={form.nome_escritorio}
             autoComplete="organization"
             onChange={(e) => alterarCampo("nome_escritorio", e.target.value)}
@@ -132,6 +140,7 @@ export default function RegisterForm() {
         <div className="form-field">
           <label>CNPJ</label>
           <input
+            name="cnpj"
             value={form.cnpj}
             inputMode="numeric"
             onChange={(e) => alterarCampo("cnpj", formatarCNPJ(e.target.value))}
@@ -148,6 +157,7 @@ export default function RegisterForm() {
         <div className="form-field">
           <label>Telefone</label>
           <input
+            name="telefone_escritorio"
             type="tel"
             autoComplete="tel"
             value={form.telefone_escritorio}
@@ -160,6 +170,7 @@ export default function RegisterForm() {
         <div className="form-field">
           <label>E-mail do escritório</label>
           <input
+            name="email_escritorio"
             type="email"
             autoComplete="email"
             value={form.email_escritorio}
@@ -170,6 +181,7 @@ export default function RegisterForm() {
         <div className="form-field">
           <label>CEP</label>
           <input
+            name="cep"
             value={cep}
             inputMode="numeric"
             autoComplete="postal-code"
@@ -187,6 +199,7 @@ export default function RegisterForm() {
         <div className="form-field">
           <label>Cidade</label>
           <input
+            name="cidade"
             value={form.cidade}
             autoComplete="address-level2"
             onChange={(e) => alterarCampo("cidade", e.target.value)}
@@ -195,6 +208,7 @@ export default function RegisterForm() {
         <div className="form-field full">
           <label>Endereço</label>
           <input
+            name="endereco_escritorio"
             value={form.endereco_escritorio}
             autoComplete="street-address"
             onChange={(e) =>
@@ -206,6 +220,7 @@ export default function RegisterForm() {
         <div className="form-field">
           <label>Estado (UF)</label>
           <input
+            name="estado"
             maxLength={2}
             autoComplete="address-level1"
             value={form.estado}
@@ -218,6 +233,7 @@ export default function RegisterForm() {
         <div className="form-field">
           <label>Nome do admin</label>
           <input
+            name="nome_admin"
             value={form.nome_admin}
             autoComplete="name"
             onChange={(e) => alterarCampo("nome_admin", e.target.value)}
@@ -227,6 +243,7 @@ export default function RegisterForm() {
         <div className="form-field">
           <label>E-mail do admin</label>
           <input
+            name="email_admin"
             type="email"
             autoComplete="username"
             value={form.email_admin}
@@ -237,6 +254,7 @@ export default function RegisterForm() {
         <div className="form-field full">
           <label>Senha do admin</label>
           <input
+            name="senha_admin"
             type="password"
             autoComplete="new-password"
             value={form.senha_admin}

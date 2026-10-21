@@ -139,4 +139,60 @@ describe("RotulosAutomaticos — formulários", () => {
     );
     expect(campo.getAttribute("aria-invalid")).toBe("true");
   });
+
+  test("associa automaticamente erros da API ao campo com o mesmo name", () => {
+    document.body.innerHTML = `
+      <div class="overlay-panel"><form>
+        <div class="form-field">
+          <label for="email-cliente">E-mail</label>
+          <input id="email-cliente" name="email" />
+        </div>
+      </form></div>`;
+    render(<RotulosAutomaticos />);
+
+    const campo = document.querySelector("input");
+    campo.focus();
+    window.dispatchEvent(
+      new CustomEvent("lexnexo:erros-api", {
+        detail: { campos: { email: "Este e-mail já está cadastrado." } },
+      })
+    );
+
+    expect(document.querySelector(".field-error-api-automatico").textContent).toBe(
+      "Este e-mail já está cadastrado."
+    );
+    expect(campo.getAttribute("aria-invalid")).toBe("true");
+
+    fireEvent.input(campo, { target: { value: "novo@exemplo.com" } });
+    expect(document.querySelector(".field-error-api-automatico")).toBeNull();
+  });
+
+  test("avisa antes de cancelar um formulário com alterações", () => {
+    const aoCancelar = jest.fn();
+    window.confirm = jest.fn(() => false);
+    const { getByRole, getByLabelText } = render(
+      <>
+        <RotulosAutomaticos />
+        <div className="overlay-panel" role="dialog">
+          <form>
+            <div className="form-field">
+              <label htmlFor="nome-protegido">Nome</label>
+              <input id="nome-protegido" name="nome" defaultValue="Ana" />
+            </div>
+            <button type="button" onClick={aoCancelar}>Cancelar</button>
+          </form>
+        </div>
+      </>
+    );
+
+    const campo = getByLabelText("Nome");
+    campo.focus();
+    fireEvent.input(campo, { target: { value: "Ana Maria" } });
+    fireEvent.click(getByRole("button", { name: "Cancelar" }));
+
+    expect(window.confirm).toHaveBeenCalledWith(
+      "Há alterações não salvas. Deseja sair e descartá-las?"
+    );
+    expect(aoCancelar).not.toHaveBeenCalled();
+  });
 });

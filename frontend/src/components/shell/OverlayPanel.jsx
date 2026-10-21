@@ -1,11 +1,24 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { HelpCircle, X } from "lucide-react";
 import { usePanel } from "@/contexts/PanelContext";
 import { usePreferences } from "@/contexts/PreferencesContext";
 import { useAjuda } from "@/contexts/AjudaContext";
 import GuiaContextual from "@/components/shell/GuiaContextual";
+import { usePermissoes } from "@/hooks/usePermissoes";
+
+const AREA_DE_PERMISSAO = {
+  clientes: "clientes",
+  processos: "processos",
+  documentos: "documentos",
+  agenda: "agenda",
+  contratos: "financeiro",
+  horas: "horas",
+  tarefas: "tarefas",
+  modelos: "modelos",
+  advogados: "advogados",
+};
 
 const PANEL_TITLE_KEYS = {
   clientes: "painel_clientes",
@@ -34,13 +47,19 @@ export default function OverlayPanel({
   } = usePanel();
   const { t } = usePreferences();
   const { abrirAjuda } = useAjuda();
+  const pode = usePermissoes();
   const painelRef = useRef(null);
   const focoAnteriorRef = useRef(null);
+
+  const tentarFechar = useCallback(() => {
+    const evento = new CustomEvent("lexnexo:tentar-fechar-painel", { cancelable: true });
+    if (window.dispatchEvent(evento)) closePanel();
+  }, [closePanel]);
 
   useEffect(() => {
     function onKeyDown(event) {
       if (event.key === "Escape") {
-        closePanel();
+        tentarFechar();
         return;
       }
       if (event.key !== "Tab" || !painelRef.current?.contains(event.target)) return;
@@ -71,17 +90,23 @@ export default function OverlayPanel({
       window.removeEventListener("keydown", onKeyDown);
       if (focoAnteriorRef.current?.isConnected) focoAnteriorRef.current.focus();
     };
-  }, [activePanel, closePanel]);
+  }, [activePanel, tentarFechar]);
 
   if (!activePanel) {
     return null;
   }
 
+  const areaPermissao = AREA_DE_PERMISSAO[activePanel];
+  const somenteLeitura = areaPermissao &&
+    pode(areaPermissao, "ver") &&
+    !pode(areaPermissao, "criar") &&
+    !pode(areaPermissao, "editar");
+
   return (
     <>
       <div
         className="overlay-backdrop"
-        onClick={closePanel}
+        onClick={tentarFechar}
         aria-hidden="true"
       />
 
@@ -114,7 +139,7 @@ export default function OverlayPanel({
             <button
               type="button"
               className="icon-btn"
-              onClick={closePanel}
+              onClick={tentarFechar}
               aria-label={t("acao_fechar")}
             >
               <X size={18} />
@@ -141,6 +166,13 @@ export default function OverlayPanel({
         )}
 
         <GuiaContextual assunto={activePanel} />
+
+        {somenteLeitura && (
+          <p className="aviso-somente-leitura" role="status">
+            Seu perfil tem acesso somente para consulta nesta área. Para criar ou alterar
+            registros, solicite a um administrador a revisão do seu perfil de acesso.
+          </p>
+        )}
 
         {/* Focável para quem rola o conteúdo pelo teclado (setas, PgDn). */}
         <div className="overlay-body" tabIndex={0} role="region" aria-labelledby="overlay-panel-title">

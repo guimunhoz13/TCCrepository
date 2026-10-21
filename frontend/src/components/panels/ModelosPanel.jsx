@@ -21,7 +21,11 @@ import {
   listarTudo,
 } from "@/services/api";
 import LinhasCarregando from "@/components/ui/LinhasCarregando";
+import EstadoVazio from "@/components/ui/EstadoVazio";
+import OrientacaoFormulario from "@/components/ui/OrientacaoFormulario";
 import { usePermissoes } from "@/hooks/usePermissoes";
+import { useRascunhoFormulario } from "@/hooks/useRascunhoFormulario";
+import EstadoRascunho from "@/components/ui/EstadoRascunho";
 
 const TIPOS = [
   { value: "procuracao", label: "Procuração" },
@@ -75,6 +79,13 @@ export default function ModelosPanel() {
   const carregando = recursoModelos.carregando && modelos.length === 0;
   const erroCarga = recursoModelos.erro || auxiliares.erro;
   const carregar = recursoModelos.recarregar;
+  const { estadoRascunho, descartarRascunho } = useRascunhoFormulario({
+    chave: "novo-modelo-documento",
+    ativo: ativo && panelTab === "novo" && !editandoId,
+    valor: formulario,
+    setValor: setFormulario,
+    valorInicial: modeloInicial,
+  });
 
   async function salvar(evento) {
     evento.preventDefault();
@@ -84,6 +95,7 @@ export default function ModelosPanel() {
         await updateModeloDocumento(editandoId, formulario);
       } else {
         await createModeloDocumento(formulario);
+        await descartarRascunho();
       }
       setFormulario(modeloInicial);
       setEditandoId(null);
@@ -161,7 +173,12 @@ export default function ModelosPanel() {
             {!carregando && modelos.length === 0 && (
               <tr>
                 <td colSpan="4">
-                  Nenhum modelo cadastrado. Crie o primeiro na aba &quot;Novo modelo&quot;.
+                  <EstadoVazio
+                    titulo="Nenhum modelo cadastrado"
+                    descricao="Crie textos reutilizáveis com variáveis para gerar documentos sem redigitar dados."
+                    acao={pode("modelos", "criar") ? "Criar modelo" : null}
+                    onAcao={() => setPanelTab("novo")}
+                  />
                 </td>
               </tr>
             )}
@@ -218,10 +235,17 @@ export default function ModelosPanel() {
 
       {panelTab === "novo" && (
         <form onSubmit={salvar}>
+          {!editandoId && <EstadoRascunho mensagem={estadoRascunho} />}
+          <OrientacaoFormulario
+            titulo="Crie um texto reutilizável"
+            descricao="Insira variáveis nos pontos que devem receber dados do cliente, processo, advogado ou escritório."
+            etapas={["Nome e tipo", "Texto e variáveis", "Teste ao gerar"]}
+          />
           <div className="form-grid">
             <div className="form-field">
               <label>Nome do modelo</label>
               <input
+                name="nome"
                 required
                 maxLength={120}
                 value={formulario.nome}
@@ -231,6 +255,7 @@ export default function ModelosPanel() {
             <div className="form-field">
               <label>Tipo</label>
               <select
+                name="tipo"
                 value={formulario.tipo}
                 onChange={(e) => setFormulario({ ...formulario, tipo: e.target.value })}
               >
@@ -246,6 +271,7 @@ export default function ModelosPanel() {
           <div className="form-field">
             <label>Conteúdo</label>
             <textarea
+              name="conteudo"
               required
               rows={16}
               value={formulario.conteudo}
@@ -316,10 +342,16 @@ export default function ModelosPanel() {
       {panelTab === "gerar" && (
         <>
           <form onSubmit={handleGerar}>
+            <OrientacaoFormulario
+              titulo="Gere uma cópia preenchida"
+              descricao="Escolha um modelo e a origem dos dados. O sistema avisará se alguma variável não tiver informação cadastrada."
+              etapas={["Modelo", "Origem dos dados", "Revisão do resultado"]}
+            />
             <div className="form-grid">
               <div className="form-field">
                 <label>Modelo</label>
                 <select
+                  name="modelo"
                   required
                   value={gerar.modelo}
                   onChange={(e) => setGerar({ ...gerar, modelo: e.target.value })}
@@ -335,6 +367,7 @@ export default function ModelosPanel() {
               <div className="form-field">
                 <label>Preencher a partir de</label>
                 <select
+                  name="origem"
                   value={gerar.origem}
                   onChange={(e) => setGerar({ ...gerar, origem: e.target.value, alvo: "" })}
                 >
@@ -345,6 +378,7 @@ export default function ModelosPanel() {
               <div className="form-field">
                 <label>{gerar.origem === "processo" ? "Processo" : "Cliente"}</label>
                 <select
+                  name={gerar.origem}
                   required
                   value={gerar.alvo}
                   onChange={(e) => setGerar({ ...gerar, alvo: e.target.value })}

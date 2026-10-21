@@ -22,6 +22,10 @@ import {
 import LinhasCarregando from "@/components/ui/LinhasCarregando";
 import PixDaParcela from "@/components/panels/PixDaParcela";
 import { usePermissoes } from "@/hooks/usePermissoes";
+import EstadoVazio from "@/components/ui/EstadoVazio";
+import OrientacaoFormulario from "@/components/ui/OrientacaoFormulario";
+import { useRascunhoFormulario } from "@/hooks/useRascunhoFormulario";
+import EstadoRascunho from "@/components/ui/EstadoRascunho";
 
 const formularioInicial = {
   processo: "",
@@ -38,7 +42,7 @@ function formatarMoeda(valor) {
 }
 
 export default function ContratosPanel() {
-  const { activePanel, panelTab } = usePanel();
+  const { activePanel, panelTab, setPanelTab } = usePanel();
   const { refresh: refreshDashboard } = useDashboardData();
   const confirmar = useConfirmacao();
   const avisar = useAvisos();
@@ -62,6 +66,13 @@ export default function ContratosPanel() {
   const processos = recursoProcessos.dados ?? [];
   const carregando = lista.carregando && contratos.length === 0;
   const erroCarga = lista.erro || recursoProcessos.erro;
+  const { estadoRascunho, descartarRascunho } = useRascunhoFormulario({
+    chave: "novo-contrato",
+    ativo: painelAberto && panelTab === "novo",
+    valor: formulario,
+    setValor: setFormulario,
+    valorInicial: formularioInicial,
+  });
 
   function carregarDados() {
     lista.recarregar();
@@ -81,6 +92,7 @@ export default function ContratosPanel() {
             ? Number(formulario.numero_parcelas)
             : 1,
       });
+      await descartarRascunho();
       setFormulario(formularioInicial);
       carregarDados();
       refreshDashboard().catch(() => {});
@@ -109,9 +121,16 @@ export default function ContratosPanel() {
 
       {panelTab === "novo" ? (
         <form className="form-grid" onSubmit={handleSubmit}>
+          <EstadoRascunho mensagem={estadoRascunho} />
+          <OrientacaoFormulario
+            titulo="Registre o acordo de honorários"
+            descricao="Cada processo aceita um contrato. A forma de pagamento cria as parcelas usadas no acompanhamento financeiro e na cobrança por PIX."
+            etapas={["Processo e modalidade", "Valor", "Pagamento e parcelas"]}
+          />
           <div className="form-field">
             <label>Processo</label>
             <select
+              name="processo"
               value={formulario.processo}
               onChange={(e) =>
                 setFormulario({ ...formulario, processo: e.target.value })
@@ -129,6 +148,7 @@ export default function ContratosPanel() {
           <div className="form-field">
             <label>Tipo de honorário</label>
             <select
+              name="tipo_honorario"
               value={formulario.tipo_honorario}
               onChange={(e) =>
                 setFormulario({ ...formulario, tipo_honorario: e.target.value })
@@ -142,6 +162,7 @@ export default function ContratosPanel() {
           <div className="form-field">
             <label>Valor total (R$)</label>
             <input
+              name="valor_total"
               type="number"
               step="0.01"
               min="0"
@@ -155,6 +176,7 @@ export default function ContratosPanel() {
           <div className="form-field">
             <label>Forma de pagamento</label>
             <select
+              name="forma_pagamento"
               value={formulario.forma_pagamento}
               onChange={(e) =>
                 setFormulario({ ...formulario, forma_pagamento: e.target.value })
@@ -168,6 +190,7 @@ export default function ContratosPanel() {
             <div className="form-field">
               <label>Número de parcelas</label>
               <input
+                name="numero_parcelas"
                 type="number"
                 min="2"
                 max="60"
@@ -182,6 +205,7 @@ export default function ContratosPanel() {
           <div className="form-field full">
             <label>Observações</label>
             <textarea
+              name="observacoes"
               value={formulario.observacoes}
               onChange={(e) =>
                 setFormulario({ ...formulario, observacoes: e.target.value })
@@ -349,6 +373,18 @@ export default function ContratosPanel() {
                     )}
                   </Fragment>
                 ))}
+              {!carregando && contratos.length === 0 && (
+                <tr>
+                  <td colSpan="7">
+                    <EstadoVazio
+                      titulo="Nenhum contrato de honorários"
+                      descricao="Cadastre o acordo financeiro de um processo para acompanhar parcelas, pagamentos e cobranças."
+                      acao={pode("financeiro", "criar") ? "Cadastrar contrato" : null}
+                      onAcao={() => setPanelTab("novo")}
+                    />
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
           <RodapeLista

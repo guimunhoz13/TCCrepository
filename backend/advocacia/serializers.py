@@ -1,4 +1,5 @@
 from decimal import Decimal
+import re
 
 from django.contrib.auth.hashers import make_password
 from django.db import transaction
@@ -35,8 +36,35 @@ from .models import (
     RegistroAuditoria,
     FeriadoLocal,
     Intimacao,
+    RascunhoFormulario,
     ESTADOS_CIVIS,
 )
+
+
+class RascunhoFormularioSerializer(serializers.ModelSerializer):
+    TAMANHO_MAXIMO_BYTES = 64 * 1024
+
+    class Meta:
+        model = RascunhoFormulario
+        fields = ["chave", "dados", "atualizado_em"]
+        read_only_fields = ["atualizado_em"]
+
+    def validate_dados(self, valor):
+        import json
+
+        if not isinstance(valor, dict):
+            raise serializers.ValidationError("O rascunho deve ser um conjunto de campos.")
+        tamanho = len(json.dumps(valor, ensure_ascii=False).encode("utf-8"))
+        if tamanho > self.TAMANHO_MAXIMO_BYTES:
+            raise serializers.ValidationError("O rascunho excede o limite de 64 KB.")
+        return valor
+
+    def validate_chave(self, valor):
+        if not re.fullmatch(r"[a-z0-9][a-z0-9-]{0,79}", valor or ""):
+            raise serializers.ValidationError(
+                "Use somente letras minúsculas, números e hífens na chave."
+            )
+        return valor
 
 
 class EscopoDoEscritorioMixin:

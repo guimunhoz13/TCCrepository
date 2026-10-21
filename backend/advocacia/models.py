@@ -1227,3 +1227,32 @@ class InscricaoPush(models.Model):
 
     def __str__(self):
         return f"Push de {self.usuario.nome}"
+
+
+class RascunhoFormulario(models.Model):
+    """Rascunho privado de um formulário, salvo no servidor.
+
+    Os dados não ficam no armazenamento do navegador e nunca são
+    compartilhados nem mesmo entre usuários do mesmo escritório.
+    """
+
+    escritorio = models.ForeignKey(
+        Escritorio, on_delete=models.CASCADE, related_name="rascunhos_formulario"
+    )
+    usuario = models.ForeignKey(
+        Usuario, on_delete=models.CASCADE, related_name="rascunhos_formulario"
+    )
+    chave = models.CharField(max_length=80)
+    dados = models.JSONField(default=dict)
+    atualizado_em = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-atualizado_em"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["usuario", "chave"], name="rascunho_formulario_unico_por_usuario"
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.usuario.nome}: {self.chave}"

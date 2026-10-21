@@ -3,6 +3,7 @@
 import { useEffect, useId, useMemo, useRef } from "react";
 import { AREAS_DIREITO } from "@/lib/areaDireito";
 import { formatarMoeda } from "@/utils/formato";
+import EstadoRascunho from "@/components/ui/EstadoRascunho";
 
 const CAMPOS_OBRIGATORIOS = [
   "numero_processo",
@@ -40,6 +41,7 @@ export default function ProcessoForm({
   onCancelar,
   errosCampos = {},
   onLimparErroCampo,
+  estadoRascunho,
 }) {
   const formRef = useRef(null);
   const prefixo = `processo-${useId().replace(/:/g, "")}`;
@@ -104,7 +106,13 @@ export default function ProcessoForm({
   }, [errosCampos]);
 
   return (
-    <form ref={formRef} className="processo-form" onSubmit={onSubmit}>
+    <form
+      ref={formRef}
+      className="processo-form"
+      data-erros-controlados="true"
+      onSubmit={onSubmit}
+    >
+      <EstadoRascunho mensagem={estadoRascunho} />
       <header className="processo-form-guia">
         <div className="processo-form-guia-texto">
           <span className="processo-form-sobretitulo">

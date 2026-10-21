@@ -5,12 +5,21 @@ import { act, fireEvent, render, screen } from "@testing-library/react";
 import AgendaFeriados, { descreverData } from "../AgendaFeriados";
 import { AvisosProvider } from "@/contexts/AvisosContext";
 import { ConfirmacaoProvider } from "@/contexts/ConfirmacaoContext";
-import { criarFeriadoLocal, getFeriadosLocais } from "../../../services/api";
+import {
+  criarFeriadoLocal,
+  excluirRascunho,
+  getFeriadosLocais,
+  getRascunho,
+  salvarRascunho,
+} from "../../../services/api";
 
 jest.mock("../../../services/api", () => ({
   getFeriadosLocais: jest.fn(),
   criarFeriadoLocal: jest.fn(),
   excluirFeriadoLocal: jest.fn(),
+  getRascunho: jest.fn(),
+  salvarRascunho: jest.fn(),
+  excluirRascunho: jest.fn(),
   normalizarLista: (dados) => (Array.isArray(dados) ? dados : dados?.results || []),
 }));
 
@@ -45,6 +54,9 @@ describe("AgendaFeriados", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     permissoes = { criar: true, excluir: true };
+    getRascunho.mockResolvedValue(null);
+    salvarRascunho.mockResolvedValue({});
+    excluirRascunho.mockResolvedValue(null);
   });
 
   test("lista os feriados cadastrados", async () => {

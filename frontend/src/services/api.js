@@ -179,15 +179,30 @@ async function request(endpoint, options = {}, tokenKey = "access") {
   }
 
   if (!response.ok) {
+    const campos = normalizarErrosDeCampos(data);
     const mensagem =
       textoDoErro(data?.detail) ||
       textoDoErro(data?.non_field_errors) ||
       textoDoErro(data) ||
       "Não foi possível concluir a requisição.";
 
+    // Permite que a camada global de formulários associe erros do backend
+    // aos campos pelo atributo `name`, inclusive em telas antigas que ainda
+    // tratam apenas `error.message` no catch.
+    if (
+      Object.keys(campos).length > 0 &&
+      typeof window !== "undefined" &&
+      typeof window.dispatchEvent === "function" &&
+      typeof window.CustomEvent === "function"
+    ) {
+      window.dispatchEvent(
+        new window.CustomEvent("lexnexo:erros-api", { detail: { campos } })
+      );
+    }
+
     throw new ErroApi(mensagem, {
       status: response.status,
-      campos: normalizarErrosDeCampos(data),
+      campos,
       data,
     });
   }
@@ -423,6 +438,33 @@ export function normalizarLista(dados) {
   if (Array.isArray(dados)) return dados;
   if (Array.isArray(dados?.results)) return dados.results;
   return [];
+}
+
+export async function getRascunho(chave) {
+  try {
+    return await request(`/rascunhos/${encodeURIComponent(chave)}/`);
+  } catch (error) {
+    if (error.status === 404) return null;
+    throw error;
+  }
+}
+
+export async function salvarRascunho(chave, dados) {
+  return request("/rascunhos/", {
+    method: "POST",
+    body: JSON.stringify({ chave, dados }),
+  });
+}
+
+export async function excluirRascunho(chave) {
+  try {
+    return await request(`/rascunhos/${encodeURIComponent(chave)}/`, {
+      method: "DELETE",
+    });
+  } catch (error) {
+    if (error.status === 404) return null;
+    throw error;
+  }
 }
 
 /**

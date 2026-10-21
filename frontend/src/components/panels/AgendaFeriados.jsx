@@ -8,6 +8,9 @@ import { useConfirmacao } from "@/contexts/ConfirmacaoContext";
 import { usePermissoes } from "@/hooks/usePermissoes";
 import { criarFeriadoLocal, excluirFeriadoLocal, getFeriadosLocais, normalizarLista } from "@/services/api";
 import { formatarData } from "@/utils/formato";
+import { useRascunhoFormulario } from "@/hooks/useRascunhoFormulario";
+import EstadoRascunho from "@/components/ui/EstadoRascunho";
+import OrientacaoFormulario from "@/components/ui/OrientacaoFormulario";
 
 const VAZIO = { data: "", descricao: "", abrangencia: "", anual: false };
 
@@ -32,6 +35,13 @@ export default function AgendaFeriados() {
   const [erro, setErro] = useState("");
   const [salvando, setSalvando] = useState(false);
   const lista = normalizarLista(feriados.dados);
+  const { estadoRascunho, descartarRascunho } = useRascunhoFormulario({
+    chave: "novo-feriado-local",
+    ativo: pode("agenda", "criar"),
+    valor: formulario,
+    setValor: setFormulario,
+    valorInicial: VAZIO,
+  });
 
   async function salvar(evento) {
     evento.preventDefault();
@@ -39,6 +49,7 @@ export default function AgendaFeriados() {
     try {
       setSalvando(true);
       await criarFeriadoLocal(formulario);
+      await descartarRascunho();
       setFormulario(VAZIO);
       feriados.recarregar();
       avisar("Feriado local cadastrado para os próximos cálculos na abrangência informada.");
@@ -79,10 +90,17 @@ export default function AgendaFeriados() {
 
       {pode("agenda", "criar") && (
         <form className="form-grid" onSubmit={salvar} aria-label="Novo feriado local">
+          <EstadoRascunho mensagem={estadoRascunho} />
+          <OrientacaoFormulario
+            titulo="Cadastre uma exceção do calendário local"
+            descricao="Use esta área para feriados municipais, estaduais ou suspensões do tribunal que não fazem parte do calendário nacional."
+            etapas={["Data e motivo", "Abrangência", "Repetição anual"]}
+          />
           <div className="form-field">
             <label htmlFor="feriado-data">Data</label>
             <input
               id="feriado-data"
+              name="data"
               type="date"
               required
               value={formulario.data}
@@ -93,6 +111,7 @@ export default function AgendaFeriados() {
             <label htmlFor="feriado-descricao">Descrição</label>
             <input
               id="feriado-descricao"
+              name="descricao"
               required
               maxLength={120}
               placeholder="Ex.: Aniversário da cidade"
@@ -104,6 +123,7 @@ export default function AgendaFeriados() {
             <label htmlFor="feriado-abrangencia">Onde vale (opcional)</label>
             <input
               id="feriado-abrangencia"
+              name="abrangencia"
               maxLength={120}
               placeholder="Ex.: Araçatuba ou TJSP"
               value={formulario.abrangencia}
@@ -113,6 +133,7 @@ export default function AgendaFeriados() {
           <div className="form-field" style={{ justifyContent: "flex-end" }}>
             <label style={{ display: "flex", gap: 8, alignItems: "center", fontWeight: 400, marginBottom: 12 }}>
               <input
+                name="anual"
                 type="checkbox"
                 style={{ width: "auto" }}
                 checked={formulario.anual}

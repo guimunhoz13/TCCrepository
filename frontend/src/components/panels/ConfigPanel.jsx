@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useRecurso } from "@/hooks/useRecurso";
 import { useConfirmacao } from "@/contexts/ConfirmacaoContext";
@@ -112,6 +112,10 @@ export default function ConfigPanel() {
   const [activeTab, setActiveTab] = useState("conta");
   const [erro, setErro] = useState("");
   const [sucesso, setSucesso] = useState("");
+  const tentarFechar = useCallback(() => {
+    const evento = new CustomEvent("lexnexo:tentar-fechar-painel", { cancelable: true });
+    if (window.dispatchEvent(evento)) closePanel();
+  }, [closePanel]);
 
   const recurso = useRecurso(getConfiguracoes, [], { ativo: activePanel === PANELS.CONFIG });
   const carregando = recurso.carregando;
@@ -138,13 +142,17 @@ export default function ConfigPanel() {
 
   function feedback(msg, isError = false) {
     if (isError) { setErro(msg); setSucesso(""); }
-    else { setSucesso(msg); setErro(""); }
+    else {
+      setSucesso(msg);
+      setErro("");
+      window.dispatchEvent(new CustomEvent("lexnexo:formulario-salvo"));
+    }
   }
 
   if (activePanel !== PANELS.CONFIG) return null;
 
   return (
-    <div className="overlay-backdrop" onClick={closePanel}>
+    <div className="overlay-backdrop" onClick={tentarFechar}>
       <div
         className="overlay-panel"
         role="dialog"
@@ -164,7 +172,7 @@ export default function ConfigPanel() {
             >
               <HelpCircle size={18} />
             </button>
-            <button type="button" className="icon-btn" onClick={closePanel} aria-label="Fechar"><X size={18} /></button>
+            <button type="button" className="icon-btn" onClick={tentarFechar} aria-label="Fechar"><X size={18} /></button>
           </div>
         </div>
 

@@ -3,7 +3,7 @@
 import { useConfirmacao } from "@/contexts/ConfirmacaoContext";
 import { useAvisos } from "@/contexts/AvisosContext";
 
-import { useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useListaPaginada, useRecurso } from "@/hooks/useRecurso";
 import RodapeLista from "@/components/ui/RodapeLista";
 import { FileDown, Paperclip, Trash2 } from "lucide-react";
@@ -20,7 +20,13 @@ import {
   abrirDocumento,
 } from "@/services/api";
 import LinhasCarregando from "@/components/ui/LinhasCarregando";
+import EstadoVazio from "@/components/ui/EstadoVazio";
+import OrientacaoFormulario from "@/components/ui/OrientacaoFormulario";
 import { usePermissoes } from "@/hooks/usePermissoes";
+import { useRascunhoFormulario } from "@/hooks/useRascunhoFormulario";
+import EstadoRascunho from "@/components/ui/EstadoRascunho";
+
+const documentoInicial = { processo: "", nome_arquivo: "" };
 
 export default function DocumentosPanel() {
   const { activePanel, panelTab, setPanelTab } = usePanel();
@@ -44,6 +50,21 @@ export default function DocumentosPanel() {
   const processos = recursoProcessos.dados ?? [];
   const carregando = lista.carregando && documentos.length === 0;
   const erroCarga = lista.erro || recursoProcessos.erro;
+  const dadosRascunho = useMemo(
+    () => ({ processo: processoId, nome_arquivo: nomeArquivo }),
+    [nomeArquivo, processoId]
+  );
+  const restaurarRascunho = useCallback((dados) => {
+    setProcessoId(dados.processo || "");
+    setNomeArquivo(dados.nome_arquivo || "");
+  }, []);
+  const { estadoRascunho, descartarRascunho } = useRascunhoFormulario({
+    chave: "novo-documento",
+    ativo: painelAberto && panelTab === "novo",
+    valor: dadosRascunho,
+    setValor: restaurarRascunho,
+    valorInicial: documentoInicial,
+  });
 
   function carregarDados() {
     lista.recarregar();
@@ -66,6 +87,7 @@ export default function DocumentosPanel() {
       formData.append("arquivo", arquivo);
 
       await createDocumento(formData);
+      await descartarRascunho();
       setProcessoId("");
       setNomeArquivo("");
       setArquivo(null);
@@ -94,9 +116,19 @@ export default function DocumentosPanel() {
 
       {panelTab === "novo" ? (
         <form className="form-grid" onSubmit={handleSubmit}>
+          <EstadoRascunho mensagem={estadoRascunho} />
+          <OrientacaoFormulario
+            titulo="Anexe um documento ao processo"
+            descricao="Escolha o processo correto e dê um nome fácil de reconhecer. São aceitos PDF, DOC, DOCX, JPG e PNG de até 10 MB."
+            etapas={["Escolha o processo", "Nomeie o arquivo", "Selecione e envie"]}
+          />
+          <p className="field-hint" style={{ gridColumn: "1 / -1" }}>
+            O processo e o nome ficam no rascunho. Por segurança, o arquivo precisa ser selecionado novamente.
+          </p>
           <div className="form-field">
             <label>Processo</label>
             <select
+              name="processo"
               value={processoId}
               onChange={(e) => setProcessoId(e.target.value)}
               required
@@ -112,6 +144,7 @@ export default function DocumentosPanel() {
           <div className="form-field">
             <label>Nome do arquivo</label>
             <input
+              name="nome_arquivo"
               value={nomeArquivo}
               onChange={(e) => setNomeArquivo(e.target.value)}
               placeholder="Opcional"
@@ -120,6 +153,7 @@ export default function DocumentosPanel() {
           <div className="form-field full">
             <label>Arquivo</label>
             <input
+              name="arquivo"
               type="file"
               onChange={(e) => setArquivo(e.target.files?.[0] || null)}
               required
@@ -198,9 +232,12 @@ export default function DocumentosPanel() {
               {!carregando && documentos.length === 0 && (
                 <tr>
                   <td colSpan="4">
-                    <div className="empty-state">
-                      Nenhum documento enviado ainda. Use a aba &quot;Enviar documento&quot; para anexar arquivos a um processo.
-                    </div>
+                    <EstadoVazio
+                      titulo="Nenhum documento enviado"
+                      descricao="Anexe arquivos a um processo para manter peças, provas e documentos organizados."
+                      acao={pode("documentos", "criar") ? "Enviar documento" : null}
+                      onAcao={() => setPanelTab("novo")}
+                    />
                   </td>
                 </tr>
               )}

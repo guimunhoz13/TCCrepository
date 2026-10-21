@@ -7,8 +7,19 @@
  * leitor de tela. Campos evidentes, como Nome, não recebem texto redundante.
  */
 export const DICAS_CAMPOS = {
+  nome: "Informe o nome completo, como deve aparecer nas fichas e documentos.",
+  "razão social": "Informe o nome empresarial registrado no CNPJ.",
+  título: "Use um título curto e fácil de localizar nas buscas e listas.",
+  descrição: "Explique o contexto necessário para que outra pessoa entenda este registro.",
+  detalhes: "Acrescente informações úteis para quem for executar ou consultar este registro.",
+  "detalhes (opcional)": "Acrescente informações úteis para quem receber a tarefa.",
+  status: "Escolha a situação atual; ela controla filtros, indicadores e ações disponíveis.",
   "número do processo":
     "Informe a numeração única do CNJ, no formato 0000000-00.0000.0.00.0000.",
+  processo: "Escolha o processo ao qual este registro ficará vinculado.",
+  cliente: "Escolha a pessoa ou empresa representada pelo escritório.",
+  advogado: "Escolha quem será o principal responsável pelo acompanhamento.",
+  "advogado responsável": "Escolha quem será o principal responsável pelo acompanhamento.",
   "área do direito":
     "Escolha a área principal do caso. Ela ajuda nos filtros e relatórios.",
   vara: "Informe a unidade judicial responsável, por exemplo: 3ª Vara Cível.",
@@ -27,6 +38,16 @@ export const DICAS_CAMPOS = {
   cpf: "Digite os 11 números. Pontos e traço são adicionados automaticamente.",
   cnpj: "Digite os 14 números. Ao sair do campo, o sistema pode preencher os dados públicos da empresa.",
   cep: "Digite os 8 números para buscar rua, bairro, cidade e estado.",
+  "e-mail": "Informe um endereço válido que a pessoa realmente consulte.",
+  telefone: "Informe o número com DDD; ele também pode ser usado para abrir uma conversa no WhatsApp.",
+  endereço: "Informe logradouro, número, complemento, bairro, cidade e estado quando disponíveis.",
+  cidade: "Informe a cidade vinculada ao endereço.",
+  "estado (uf)": "Use a sigla de duas letras, como SP, RJ ou MG.",
+  "data de nascimento": "Use a data registrada no documento da pessoa.",
+  rg: "Informe somente quando necessário para documentos ou identificação.",
+  "estado civil": "Selecione a situação civil atual da pessoa.",
+  nacionalidade: "Informe a nacionalidade que deve aparecer nos documentos gerados.",
+  "foto (opcional)": "Envie uma foto para facilitar a identificação visual no sistema.",
   "e-mail do escritório":
     "Endereço institucional usado nos dados do escritório e nas comunicações.",
   "e-mail do admin":
@@ -41,14 +62,25 @@ export const DICAS_CAMPOS = {
   "quantidade de dias": "Informe o prazo previsto na lei ou na intimação.",
   contagem: "Escolha dias úteis para prazos processuais ou corridos quando a regra exigir.",
   "data e hora": "Momento em que o compromisso acontece ou o prazo vence.",
+  tipo: "Escolha a categoria que melhor representa este registro.",
+  local: "Informe endereço, sala ou link da reunião, se houver.",
+  "data de início": "Data em que o acompanhamento ou a atuação começou.",
+  "data de encerramento": "Preencha somente quando a atuação estiver concluída.",
   responsável: "Pessoa que receberá e acompanhará esta tarefa.",
   "prazo (opcional)": "Data-limite da tarefa. Sem data, ela aparecerá depois das tarefas com prazo.",
   "nome do arquivo": "Nome amigável exibido na lista. Se ficar vazio, será usado o nome do arquivo enviado.",
   arquivo: "Envie PDF, DOC, DOCX, JPG ou PNG, com até 10 MB.",
+  observações: "Registre condições ou informações complementares do acordo.",
+  "valor total (r$)": "Informe o valor total combinado no contrato de honorários.",
   "tipo de honorário": "Indica como o valor foi combinado: fixo, êxito, mensal ou outra modalidade.",
   "forma de pagamento": "Define se o valor será cobrado à vista ou dividido em parcelas.",
   "número de parcelas": "O sistema criará este número de cobranças a partir do valor total.",
   "valor por hora (opcional)": "Se ficar vazio, o lançamento registra o tempo sem calcular cobrança.",
+  horas: "Informe somente as horas inteiras; use o campo Minutos para completar o tempo.",
+  minutos: "Informe de 0 a 59 minutos adicionais.",
+  data: "Data em que o trabalho, gasto ou evento ocorreu.",
+  "o que foi feito": "Descreva a atividade realizada de forma clara para o relatório do cliente.",
+  valor: "Informe o valor efetivamente pago ou lançado.",
   faturável: "Escolha Sim quando essas horas poderão ser cobradas do cliente.",
   "reembolsável pelo cliente": "Escolha Sim quando o escritório adiantou um custo que deverá ser devolvido.",
   "chave pix": "Informe a chave que receberá as cobranças geradas pelo LexNexo.",
@@ -57,7 +89,19 @@ export const DICAS_CAMPOS = {
   "perfil de acesso": "O perfil define quais áreas e ações esta pessoa poderá usar.",
   "fuso horário": "Usado para exibir corretamente audiências, prazos e registros de atividade.",
   oab: "Informe número e UF, por exemplo: 123456/SP. É usada também na busca de intimações.",
+  especialidade: "Informe a principal área de atuação do profissional.",
+  "nome do modelo": "Use um nome que deixe claro quando este modelo deve ser utilizado.",
+  conteúdo: "Escreva o texto do documento e insira variáveis para preencher dados automaticamente.",
+  modelo: "Escolha o texto-base que será preenchido com os dados cadastrados.",
+  "preencher a partir de": "Escolha se os dados virão de um processo ou diretamente de um cliente.",
+  "nome do escritório": "Informe o nome que será exibido no sistema e nos relatórios.",
+  "nome do admin": "Nome da primeira pessoa responsável pela administração do escritório.",
+  "senha do admin": "Crie uma senha exclusiva que cumpra todos os requisitos mostrados abaixo.",
   "documento (rg/cpf/cnh) — opcional": "Arquivo privado de identificação do profissional.",
+  "onde vale (opcional)":
+    "Deixe vazio para todo o escritório ou informe a comarca ou tribunal, como Araçatuba ou TJSP.",
+  "repete todo ano":
+    "Marque para feriados que ocorrem na mesma data todos os anos; não marque para suspensões pontuais.",
 };
 
 export function normalizarRotulo(texto) {

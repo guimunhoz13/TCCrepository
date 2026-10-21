@@ -35,6 +35,21 @@ export const SECOES_AJUDA = [
           "O campo de busca procura ao mesmo tempo em clientes, processos, documentos, tarefas, agenda, contratos, horas e modelos. Clicar em um resultado abre o painel correspondente já na ficha certa.",
       },
       {
+        titulo: "Formulários explicados e erros no lugar certo",
+        texto:
+          "Os cadastros mostram uma sequência recomendada e explicam o que inserir nos campos menos óbvios. Campo obrigatório é identificado para leitores de tela. Se algum valor for recusado, a mensagem aparece junto ao campo e o foco vai direto para o primeiro item que precisa de correção.",
+      },
+      {
+        titulo: "Rascunhos privados e alterações não salvas",
+        texto:
+          "Ao preencher um novo cliente, processo, compromisso, tarefa ou contrato, o LexNexo salva um rascunho protegido no servidor e restaura o trabalho quando você voltar. Ele pertence somente ao seu usuário, não fica gravado no navegador e é apagado após o cadastro definitivo. Se tentar fechar um formulário alterado, o sistema pede confirmação antes de descartar.",
+      },
+      {
+        titulo: "Listas vazias também orientam",
+        texto:
+          "Quando ainda não há registros, a própria área explica qual é o próximo passo e oferece o botão adequado, desde que seu perfil tenha permissão. Se uma busca ou filtro não encontrar nada, você pode limpá-lo sem sair da tela.",
+      },
+      {
         titulo: "Pode ser instalado como aplicativo",
         texto:
           "No celular ou no computador, o navegador oferece instalar o LexNexo. Instalado, ele abre direto no painel, em janela própria e com ícone na tela inicial.",
@@ -129,6 +144,11 @@ export const SECOES_AJUDA = [
         titulo: "Cadastro",
         texto:
           "O formulário é dividido em Identificação, Pessoas e Tribunal e valores. A barra mostra quantos dos cinco campos obrigatórios já foram preenchidos; os demais são opcionais e podem ser completados depois. Em cada campo há um exemplo e uma explicação do uso. Se o servidor recusar algum dado, o sistema destaca o campo exato e leva o foco até ele. O número segue a numeração unificada do CNJ.",
+      },
+      {
+        titulo: "Filtros que você usa sempre",
+        texto:
+          "A busca por número, título ou cliente pode ser combinada com status e advogado. Use “Salvar filtro” para recuperar essa combinação neste aparelho na próxima visita e “Limpar filtros” para voltar à lista completa. Somente as preferências do filtro ficam no navegador; dados jurídicos permanecem no servidor.",
       },
       {
         titulo: "Status",

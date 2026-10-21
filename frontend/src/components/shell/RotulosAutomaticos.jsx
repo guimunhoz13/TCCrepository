@@ -90,6 +90,158 @@ function mostrarErroDoCampo(campo) {
   campo.setAttribute("aria-describedby", [...descricoes].join(" "));
 }
 
+function limparErroApiAutomatico(campo) {
+  const grupo = campo.closest(".form-field");
+  const erro = grupo?.querySelector(":scope > .field-error-api-automatico");
+  if (!erro) return;
+
+  erro.remove();
+  const descricoes = (campo.getAttribute("aria-describedby") || "")
+    .split(/\s+/)
+    .filter((id) => id && id !== erro.id);
+  if (descricoes.length) campo.setAttribute("aria-describedby", descricoes.join(" "));
+  else campo.removeAttribute("aria-describedby");
+
+  if (!grupo.querySelector(":scope > .field-error-native, :scope > .field-error-api")) {
+    grupo.classList.remove("form-field-invalid");
+    campo.removeAttribute("aria-invalid");
+  }
+}
+
+function formularioDaInteracaoAtual() {
+  const ativo = document.activeElement;
+  const formularioAtivo = ativo?.form || ativo?.closest?.("form");
+  if (formularioAtivo) return formularioAtivo;
+
+  const formularios = [...document.querySelectorAll(".overlay-panel form, [role='dialog'] form")];
+  return formularios.at(-1) || null;
+}
+
+function mostrarErrosDaApi(evento) {
+  const campos = evento.detail?.campos || {};
+  const formulario = formularioDaInteracaoAtual();
+  if (!formulario || formulario.dataset.errosControlados === "true") return;
+
+  let primeiro = null;
+  Object.entries(campos).forEach(([nome, mensagem]) => {
+    const campo = formulario.elements.namedItem(nome);
+    if (!campo || !campo.matches?.("input, select, textarea")) return;
+    const grupo = campo.closest(".form-field");
+    if (!grupo) return;
+
+    limparErroApiAutomatico(campo);
+    if (!campo.id) campo.id = `campo-${proximoId++}`;
+    const erro = document.createElement("p");
+    erro.className = "field-error field-error-api field-error-api-automatico";
+    erro.id = `${campo.id}-erro-api`;
+    erro.setAttribute("role", "alert");
+    erro.textContent = mensagem;
+    grupo.appendChild(erro);
+    grupo.classList.add("form-field-invalid");
+    campo.setAttribute("aria-invalid", "true");
+
+    const descricoes = new Set(
+      (campo.getAttribute("aria-describedby") || "").split(/\s+/).filter(Boolean)
+    );
+    descricoes.add(erro.id);
+    campo.setAttribute("aria-describedby", [...descricoes].join(" "));
+    primeiro ||= campo;
+  });
+
+  primeiro?.scrollIntoView?.({ behavior: "smooth", block: "center" });
+  primeiro?.focus?.({ preventScroll: true });
+}
+
+const valoresIniciais = new WeakMap();
+const valoresIniciaisControles = new WeakMap();
+
+function dadosDoFormulario(formulario) {
+  return [...new FormData(formulario).entries()]
+    .map(([chave, valor]) => [
+      chave,
+      typeof valor === "string" ? valor : `${valor.name}:${valor.size}:${valor.type}`,
+    ])
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([chave, valor]) => `${chave}=${valor}`)
+    .join("&");
+}
+
+function formularioFoiAlterado(formulario) {
+  const inicial = valoresIniciais.get(formulario);
+  return inicial !== undefined && inicial !== dadosDoFormulario(formulario);
+}
+
+function valorDoControle(campo) {
+  if (campo.type === "checkbox" || campo.type === "radio") return String(campo.checked);
+  if (campo.type === "file") {
+    return [...(campo.files || [])]
+      .map((arquivo) => `${arquivo.name}:${arquivo.size}:${arquivo.type}`)
+      .join("|");
+  }
+  return campo.value;
+}
+
+function controleSemFormularioFoiAlterado(campo) {
+  const inicial = valoresIniciaisControles.get(campo);
+  return inicial !== undefined && inicial !== valorDoControle(campo);
+}
+
+function guardarEstadoInicial(evento) {
+  const campo = evento.target;
+  const formulario = campo?.form;
+  if (formulario && !valoresIniciais.has(formulario)) {
+    valoresIniciais.set(formulario, dadosDoFormulario(formulario));
+  }
+  if (
+    !formulario &&
+    campo?.matches?.("input, select, textarea") &&
+    !valoresIniciaisControles.has(campo)
+  ) {
+    valoresIniciaisControles.set(campo, valorDoControle(campo));
+  }
+}
+
+function protegerSaidaDoFormulario(evento) {
+  const botao = evento.target?.closest?.("button");
+  if (!botao) return;
+  const nome = [botao.textContent, botao.title, botao.getAttribute("aria-label")]
+    .filter(Boolean)
+    .join(" ");
+  if (!/(fechar|cancelar|voltar)/i.test(nome)) return;
+
+  const escopo = botao.closest(".overlay-panel, [role='dialog']") || document;
+  if (!confirmarDescarte(escopo)) {
+    evento.preventDefault();
+    evento.stopImmediatePropagation();
+  }
+}
+
+function confirmarDescarte(escopo = document) {
+  const alterados = [...escopo.querySelectorAll("form")].filter(formularioFoiAlterado);
+  const controlesAlterados = [...escopo.querySelectorAll("input, select, textarea")]
+    .filter((campo) => !campo.form && controleSemFormularioFoiAlterado(campo));
+  if (alterados.length === 0 && controlesAlterados.length === 0) return true;
+  if (!window.confirm("Há alterações não salvas. Deseja sair e descartá-las?")) return false;
+  alterados.forEach((formulario) => valoresIniciais.set(formulario, dadosDoFormulario(formulario)));
+  controlesAlterados.forEach((campo) =>
+    valoresIniciaisControles.set(campo, valorDoControle(campo))
+  );
+  return true;
+}
+
+function protegerFechamentoSolicitado(evento) {
+  if (!confirmarDescarte(document)) evento.preventDefault();
+}
+
+function marcarFormularioComoSalvo() {
+  document.querySelectorAll("form").forEach((formulario) =>
+    valoresIniciais.set(formulario, dadosDoFormulario(formulario))
+  );
+  document.querySelectorAll("input, select, textarea").forEach((campo) => {
+    if (!campo.form) valoresIniciaisControles.set(campo, valorDoControle(campo));
+  });
+}
+
 function vincularRotulosDeCampo(raiz) {
   raiz.querySelectorAll(".form-field > label:not([for])").forEach((rotulo) => {
     // Rótulo que já envolve o próprio campo está associado.
@@ -184,19 +336,43 @@ export default function RotulosAutomaticos() {
 
     function aoCorrigirCampo(evento) {
       const campo = evento.target;
-      if (!campo?.matches?.("input, select, textarea") || campo.getAttribute("aria-invalid") !== "true") return;
+      if (!campo?.matches?.("input, select, textarea")) return;
+      limparErroApiAutomatico(campo);
+      if (campo.getAttribute("aria-invalid") !== "true") return;
       if (campo.validity.valid) limparErroDoCampo(campo);
       else mostrarErroDoCampo(campo);
+    }
+
+    function aoSairDaPagina(evento) {
+      const alterado =
+        [...document.querySelectorAll("form")].some(formularioFoiAlterado) ||
+        [...document.querySelectorAll("input, select, textarea")]
+          .some((campo) => !campo.form && controleSemFormularioFoiAlterado(campo));
+      if (!alterado) return;
+      evento.preventDefault();
+      evento.returnValue = "";
     }
 
     document.addEventListener("invalid", aoCampoInvalido, true);
     document.addEventListener("input", aoCorrigirCampo, true);
     document.addEventListener("change", aoCorrigirCampo, true);
+    document.addEventListener("focusin", guardarEstadoInicial, true);
+    document.addEventListener("click", protegerSaidaDoFormulario, true);
+    window.addEventListener("lexnexo:erros-api", mostrarErrosDaApi);
+    window.addEventListener("lexnexo:tentar-fechar-painel", protegerFechamentoSolicitado);
+    window.addEventListener("lexnexo:formulario-salvo", marcarFormularioComoSalvo);
+    window.addEventListener("beforeunload", aoSairDaPagina);
     return () => {
       observador.disconnect();
       document.removeEventListener("invalid", aoCampoInvalido, true);
       document.removeEventListener("input", aoCorrigirCampo, true);
       document.removeEventListener("change", aoCorrigirCampo, true);
+      document.removeEventListener("focusin", guardarEstadoInicial, true);
+      document.removeEventListener("click", protegerSaidaDoFormulario, true);
+      window.removeEventListener("lexnexo:erros-api", mostrarErrosDaApi);
+      window.removeEventListener("lexnexo:tentar-fechar-painel", protegerFechamentoSolicitado);
+      window.removeEventListener("lexnexo:formulario-salvo", marcarFormularioComoSalvo);
+      window.removeEventListener("beforeunload", aoSairDaPagina);
     };
   }, []);
 

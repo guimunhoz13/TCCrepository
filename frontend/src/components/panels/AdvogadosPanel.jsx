@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useRecurso } from "@/hooks/useRecurso";
 import useFotoProtegida from "@/hooks/useFotoProtegida";
 import { useUsuarioLogado } from "@/hooks/useUsuarioLogado";
@@ -21,6 +21,10 @@ import {
   abrirDocumentoIdentidadeUsuario,
 } from "@/services/api";
 import LinhasCarregando from "@/components/ui/LinhasCarregando";
+import EstadoVazio from "@/components/ui/EstadoVazio";
+import OrientacaoFormulario from "@/components/ui/OrientacaoFormulario";
+import { useRascunhoFormulario } from "@/hooks/useRascunhoFormulario";
+import EstadoRascunho from "@/components/ui/EstadoRascunho";
 
 const FORM_ADVOGADO_INICIAL = {
   nome: "",
@@ -65,6 +69,20 @@ export default function AdvogadosPanel() {
   const advogados = recurso.dados ?? [];
   const carregando = recurso.carregando && advogados.length === 0;
   const carregarAdvogados = recurso.recarregar;
+  const dadosRascunho = useMemo(
+    () => ({ ...formAdvogado, senha: "" }),
+    [formAdvogado]
+  );
+  const restaurarRascunho = useCallback((dados) => {
+    setFormAdvogado((atual) => ({ ...atual, ...dados, senha: atual.senha }));
+  }, []);
+  const { estadoRascunho, descartarRascunho } = useRascunhoFormulario({
+    chave: "novo-advogado",
+    ativo: activePanel === PANELS.ADVOGADOS && panelTab === "novo" && !advogadoEditando,
+    valor: dadosRascunho,
+    setValor: restaurarRascunho,
+    valorInicial: FORM_ADVOGADO_INICIAL,
+  });
 
   function handleIniciarEdicao(advogado) {
     setErro("");
@@ -134,6 +152,7 @@ export default function AdvogadosPanel() {
         setMensagem("Advogado atualizado com sucesso.");
       } else {
         await registrarAdvogado(payload);
+        await descartarRascunho();
         setMensagem("Advogado cadastrado com sucesso.");
       }
 
@@ -176,6 +195,17 @@ export default function AdvogadosPanel() {
 
       {panelTab === "novo" || panelTab === "editar" ? (
         <form className="form-grid" onSubmit={handleAdvogado}>
+          {!advogadoEditando && <EstadoRascunho mensagem={estadoRascunho} />}
+          <OrientacaoFormulario
+            titulo={advogadoEditando ? "Atualize o perfil profissional" : "Cadastre o acesso do advogado"}
+            descricao="O e-mail será usado para entrar no sistema e a OAB também poderá ser usada para buscar intimações do DJEN."
+            etapas={["Acesso", "Dados profissionais", "Identificação opcional"]}
+          />
+          {!advogadoEditando && (
+            <p className="field-hint" style={{ gridColumn: "1 / -1" }}>
+              A senha e os arquivos nunca entram no rascunho; por segurança, informe-os ao concluir.
+            </p>
+          )}
           <div className="form-field full">
             <p style={{ color: "var(--text-secondary)", fontSize: "0.875rem" }}>
               {advogadoEditando
@@ -186,6 +216,7 @@ export default function AdvogadosPanel() {
           <div className="form-field">
             <label>Nome</label>
             <input
+              name="nome"
               value={formAdvogado.nome}
               onChange={(e) =>
                 setFormAdvogado({ ...formAdvogado, nome: e.target.value })
@@ -196,6 +227,7 @@ export default function AdvogadosPanel() {
           <div className="form-field">
             <label>E-mail</label>
             <input
+              name="email"
               type="email"
               value={formAdvogado.email}
               onChange={(e) =>
@@ -209,6 +241,7 @@ export default function AdvogadosPanel() {
             <div className="form-field">
               <label>Senha</label>
               <input
+                name="senha"
                 type="password"
                 value={formAdvogado.senha}
                 onChange={(e) =>
@@ -222,6 +255,7 @@ export default function AdvogadosPanel() {
           <div className="form-field">
             <label>Telefone</label>
             <input
+              name="telefone"
               value={formAdvogado.telefone}
               onChange={(e) =>
                 setFormAdvogado({
@@ -235,6 +269,7 @@ export default function AdvogadosPanel() {
           <div className="form-field">
             <label>OAB</label>
             <input
+              name="oab"
               value={formAdvogado.oab}
               onChange={(e) =>
                 setFormAdvogado({ ...formAdvogado, oab: formatarOAB(e.target.value) })
@@ -246,6 +281,7 @@ export default function AdvogadosPanel() {
           <div className="form-field">
             <label>Especialidade</label>
             <input
+              name="especialidade"
               value={formAdvogado.especialidade}
               onChange={(e) =>
                 setFormAdvogado({
@@ -259,6 +295,7 @@ export default function AdvogadosPanel() {
           <div className="form-field">
             <label>CPF</label>
             <input
+              name="cpf"
               value={formAdvogado.cpf}
               onChange={(e) =>
                 setFormAdvogado({ ...formAdvogado, cpf: formatarCPF(e.target.value) })
@@ -268,6 +305,7 @@ export default function AdvogadosPanel() {
           <div className="form-field">
             <label>RG</label>
             <input
+              name="rg"
               value={formAdvogado.rg}
               onChange={(e) =>
                 setFormAdvogado({ ...formAdvogado, rg: formatarRG(e.target.value) })
@@ -277,6 +315,7 @@ export default function AdvogadosPanel() {
           <div className="form-field">
             <label>Data de nascimento</label>
             <input
+              name="data_nascimento"
               type="date"
               value={formAdvogado.data_nascimento}
               onChange={(e) =>
@@ -290,6 +329,7 @@ export default function AdvogadosPanel() {
           <div className="form-field">
             <label>Estado civil</label>
             <select
+              name="estado_civil"
               value={formAdvogado.estado_civil}
               onChange={(e) =>
                 setFormAdvogado({ ...formAdvogado, estado_civil: e.target.value })
@@ -305,6 +345,7 @@ export default function AdvogadosPanel() {
           <div className="form-field">
             <label>Nacionalidade</label>
             <input
+              name="nacionalidade"
               value={formAdvogado.nacionalidade}
               onChange={(e) =>
                 setFormAdvogado({ ...formAdvogado, nacionalidade: e.target.value })
@@ -317,6 +358,7 @@ export default function AdvogadosPanel() {
               <img src={fotoEdicaoUrl} alt="" className="avatar-preview" />
             )}
             <input
+              name="foto"
               type="file"
               accept="image/*"
               onChange={(e) => setFoto(e.target.files?.[0] || null)}
@@ -339,6 +381,7 @@ export default function AdvogadosPanel() {
               </button>
             )}
             <input
+              name="documento_identidade"
               type="file"
               accept="image/*,.pdf"
               onChange={(e) => setDocumentoIdentidade(e.target.files?.[0] || null)}
@@ -413,7 +456,14 @@ export default function AdvogadosPanel() {
                 ))}
               {!carregando && advogados.length === 0 && (
                 <tr>
-                  <td colSpan="6">Nenhum advogado cadastrado ainda.</td>
+                  <td colSpan="6">
+                    <EstadoVazio
+                      titulo="Cadastre o primeiro advogado"
+                      descricao="Defina os dados profissionais e o acesso ao sistema."
+                      acao="Cadastrar advogado"
+                      onAcao={handleNovoAdvogado}
+                    />
+                  </td>
                 </tr>
               )}
             </tbody>

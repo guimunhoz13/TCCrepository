@@ -123,6 +123,7 @@ export default function LoginForm() {
           <label htmlFor="codigo-2fa">Código</label>
           <input
             id="codigo-2fa"
+            name="codigo"
             className="campo-codigo"
             inputMode="numeric"
             autoComplete="one-time-code"
@@ -169,6 +170,7 @@ export default function LoginForm() {
       <div className="form-field" style={{ marginBottom: 16 }}>
         <label>E-mail</label>
         <input
+          name="email"
           type="email"
           autoComplete="username"
           placeholder="seu@email.com"
@@ -181,6 +183,7 @@ export default function LoginForm() {
       <div className="form-field" style={{ marginBottom: 22 }}>
         <label>Senha</label>
         <input
+          name="senha"
           type="password"
           autoComplete="current-password"
           placeholder="••••••••"

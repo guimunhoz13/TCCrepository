@@ -25,6 +25,9 @@ import AgendaSincronizar from "@/components/panels/AgendaSincronizar";
 import AgendaFeriados from "@/components/panels/AgendaFeriados";
 import { formatarData } from "@/utils/formato";
 import { usePermissoes } from "@/hooks/usePermissoes";
+import OrientacaoFormulario from "@/components/ui/OrientacaoFormulario";
+import { useRascunhoFormulario } from "@/hooks/useRascunhoFormulario";
+import EstadoRascunho from "@/components/ui/EstadoRascunho";
 
 const formularioInicial = {
   processo: "",
@@ -64,12 +67,20 @@ function EventoForm({
   onSubmit,
   submitLabel,
   onCancelar,
+  estadoRascunho,
 }) {
   return (
     <form className="form-grid" onSubmit={onSubmit}>
+      <EstadoRascunho mensagem={estadoRascunho} />
+      <OrientacaoFormulario
+        titulo="Organize o compromisso ou prazo"
+        descricao="Vincule a um processo quando for possível. Para prazos, use a calculadora como apoio e sempre confirme a regra e o expediente do tribunal."
+        etapas={["Escolha o tipo", "Informe data e contexto", "Revise antes de salvar"]}
+      />
       <div className="form-field">
         <label>Processo (opcional)</label>
         <select
+          name="processo"
           value={formulario.processo}
           onChange={(e) =>
             setFormulario({ ...formulario, processo: e.target.value })
@@ -86,6 +97,7 @@ function EventoForm({
       <div className="form-field">
         <label>Tipo</label>
         <select
+          name="tipo"
           value={formulario.tipo}
           onChange={(e) =>
             setFormulario({ ...formulario, tipo: e.target.value })
@@ -99,6 +111,7 @@ function EventoForm({
         <div className="form-field">
           <label>Prioridade</label>
           <select
+            name="prioridade"
             value={formulario.prioridade}
             onChange={(e) =>
               setFormulario({ ...formulario, prioridade: e.target.value })
@@ -117,6 +130,7 @@ function EventoForm({
             <div className="form-field">
               <label>Data da intimação ou referência (dia excluído)</label>
               <input
+                name="data_inicio"
                 type="date"
                 value={calculadora.data_intimacao}
                 onChange={(e) =>
@@ -127,6 +141,7 @@ function EventoForm({
             <div className="form-field">
               <label>Quantidade de dias</label>
               <input
+                name="dias"
                 type="number"
                 min="1"
                 value={calculadora.dias_prazo}
@@ -138,6 +153,7 @@ function EventoForm({
             <div className="form-field">
               <label>Contagem</label>
               <select
+                name="dias_uteis"
                 value={calculadora.dias_uteis ? "uteis" : "corridos"}
                 onChange={(e) =>
                   setCalculadora({ ...calculadora, dias_uteis: e.target.value === "uteis" })
@@ -172,6 +188,7 @@ function EventoForm({
       <div className="form-field">
         <label>Título</label>
         <input
+          name="titulo"
           value={formulario.titulo}
           onChange={(e) =>
             setFormulario({ ...formulario, titulo: e.target.value })
@@ -182,6 +199,7 @@ function EventoForm({
       <div className="form-field full">
         <label>Descrição</label>
         <textarea
+          name="descricao"
           value={formulario.descricao}
           onChange={(e) =>
             setFormulario({ ...formulario, descricao: e.target.value })
@@ -192,6 +210,7 @@ function EventoForm({
       <div className="form-field">
         <label>Data e hora</label>
         <input
+          name="data_evento"
           type="datetime-local"
           value={formulario.data_evento}
           onChange={(e) =>
@@ -203,6 +222,7 @@ function EventoForm({
       <div className="form-field">
         <label>Local</label>
         <input
+          name="local_evento"
           value={formulario.local_evento}
           onChange={(e) =>
             setFormulario({ ...formulario, local_evento: e.target.value })
@@ -250,6 +270,13 @@ export default function AgendaPanel() {
   const processos = recursoProcessos.dados ?? [];
   const carregando = lista.carregando && eventos.length === 0;
   const erroCarga = lista.erro || recursoProcessos.erro;
+  const { estadoRascunho, descartarRascunho } = useRascunhoFormulario({
+    chave: "novo-evento-agenda",
+    ativo: painelAberto && panelTab === "novo",
+    valor: formulario,
+    setValor: setFormulario,
+    valorInicial: formularioInicial,
+  });
 
   function carregarDados() {
     lista.recarregar();
@@ -265,6 +292,7 @@ export default function AgendaPanel() {
         ...formulario,
         processo: formulario.processo ? Number(formulario.processo) : null,
       });
+      await descartarRascunho();
       setFormulario(formularioInicial);
       setCalculadora(calculadoraInicial);
       setSucesso("Evento agendado com sucesso.");
@@ -381,6 +409,7 @@ export default function AgendaPanel() {
           feriadosConsiderados={feriadosConsiderados}
           onSubmit={handleSubmit}
           submitLabel={t("acao_agendar_evento")}
+          estadoRascunho={estadoRascunho}
         />
       ) : panelTab === "editar" ? (
         formularioEdicao && (
