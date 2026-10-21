@@ -8,6 +8,9 @@ test("dashboard cabe em notebook com escala de 125%", async ({ page }) => {
   await page.setViewportSize({ width: 1093, height: 700 });
   await entrar(page);
 
+  await expect(page.locator(".sidebar-nav")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Abrir o menu" })).toBeHidden();
+
   const busca = await page.locator(".global-search").boundingBox();
   const sino = await page.getByRole("button", { name: "Notificações" }).boundingBox();
 
