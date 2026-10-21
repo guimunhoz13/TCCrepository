@@ -26,6 +26,7 @@ import EstadoVazio from "@/components/ui/EstadoVazio";
 import OrientacaoFormulario from "@/components/ui/OrientacaoFormulario";
 import { useRascunhoFormulario } from "@/hooks/useRascunhoFormulario";
 import EstadoRascunho from "@/components/ui/EstadoRascunho";
+import ProgressoFormulario from "@/components/ui/ProgressoFormulario";
 
 const formularioInicial = {
   processo: "",
@@ -126,6 +127,17 @@ export default function ContratosPanel() {
             titulo="Registre o acordo de honorários"
             descricao="Cada processo aceita um contrato. A forma de pagamento cria as parcelas usadas no acompanhamento financeiro e na cobrança por PIX."
             etapas={["Processo e modalidade", "Valor", "Pagamento e parcelas"]}
+          />
+          <ProgressoFormulario
+            itens={[
+              { rotulo: "Processo", concluido: Boolean(formulario.processo) },
+              { rotulo: "Modalidade", concluido: Boolean(formulario.tipo_honorario) },
+              { rotulo: "Valor", concluido: Number(formulario.valor_total) > 0 },
+              { rotulo: "Pagamento", concluido: Boolean(formulario.forma_pagamento) },
+              ...(formulario.forma_pagamento === "parcelado"
+                ? [{ rotulo: "Parcelas", concluido: Number(formulario.numero_parcelas) >= 2 }]
+                : []),
+            ]}
           />
           <div className="form-field">
             <label>Processo</label>

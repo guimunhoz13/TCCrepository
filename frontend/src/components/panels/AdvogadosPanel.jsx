@@ -25,6 +25,7 @@ import EstadoVazio from "@/components/ui/EstadoVazio";
 import OrientacaoFormulario from "@/components/ui/OrientacaoFormulario";
 import { useRascunhoFormulario } from "@/hooks/useRascunhoFormulario";
 import EstadoRascunho from "@/components/ui/EstadoRascunho";
+import ProgressoFormulario from "@/components/ui/ProgressoFormulario";
 
 const FORM_ADVOGADO_INICIAL = {
   nome: "",
@@ -200,6 +201,16 @@ export default function AdvogadosPanel() {
             titulo={advogadoEditando ? "Atualize o perfil profissional" : "Cadastre o acesso do advogado"}
             descricao="O e-mail será usado para entrar no sistema e a OAB também poderá ser usada para buscar intimações do DJEN."
             etapas={["Acesso", "Dados profissionais", "Identificação opcional"]}
+          />
+          <ProgressoFormulario
+            itens={[
+              { rotulo: "Nome", concluido: Boolean(formAdvogado.nome.trim()) },
+              { rotulo: "E-mail", concluido: Boolean(formAdvogado.email.trim()) },
+              ...(!advogadoEditando
+                ? [{ rotulo: "Senha segura", concluido: senhaAtendeRequisitos(formAdvogado.senha) }]
+                : []),
+              { rotulo: "OAB", concluido: Boolean(formAdvogado.oab.trim()) },
+            ]}
           />
           {!advogadoEditando && (
             <p className="field-hint" style={{ gridColumn: "1 / -1" }}>

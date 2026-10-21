@@ -27,6 +27,7 @@ import OrientacaoFormulario from "@/components/ui/OrientacaoFormulario";
 import { usePermissoes } from "@/hooks/usePermissoes";
 import { useRascunhoFormulario } from "@/hooks/useRascunhoFormulario";
 import EstadoRascunho from "@/components/ui/EstadoRascunho";
+import ProgressoFormulario from "@/components/ui/ProgressoFormulario";
 
 const STATUS = [
   { value: "aberta", label: "Aberta" },
@@ -325,6 +326,13 @@ export default function TarefasPanel() {
             titulo="Defina um próximo passo claro"
             descricao="Descreva uma ação objetiva, escolha quem será responsável e use prazo e prioridade para ordenar o trabalho."
             etapas={["Ação", "Responsável", "Prazo e contexto"]}
+          />
+          <ProgressoFormulario
+            itens={[
+              { rotulo: "Ação", concluido: Boolean(form.titulo.trim()) },
+              { rotulo: "Responsável", concluido: Boolean(form.responsavel) },
+              { rotulo: "Prioridade", concluido: Boolean(form.prioridade) },
+            ]}
           />
           <div className="form-field">
             <label>O que precisa ser feito</label>

@@ -10,7 +10,9 @@ from rest_framework.views import APIView
 
 from ..mixins import (
     EscritorioScopedMixin,
+    capturar_estado_auditoria,
     get_usuario_from_request,
+    montar_alteracoes_auditoria,
     registrar_auditoria,
 )
 from ..models import (
@@ -174,6 +176,7 @@ class UsuarioViewSet(
 
         if not alvo.ativo:
             verificar_limite(admin.escritorio, USUARIOS)
+        estado_anterior = capturar_estado_auditoria(alvo, {"ativo": not alvo.ativo})
         alvo.ativo = not alvo.ativo
         alvo.save(update_fields=["ativo"])
         registrar_auditoria(
@@ -182,6 +185,7 @@ class UsuarioViewSet(
             alvo,
             descricao=f"Usuário {'ativado' if alvo.ativo else 'desativado'}.",
             escritorio=admin.escritorio,
+            alteracoes=montar_alteracoes_auditoria(alvo, estado_anterior),
         )
         return Response(UsuarioSerializer(alvo).data)
 
@@ -192,6 +196,9 @@ class UsuarioViewSet(
         configurar de novo."""
         admin = self._exigir_admin()
         alvo = self.get_object()
+        estado_anterior = capturar_estado_auditoria(
+            alvo, {"totp_ativo": False, "totp_segredo": ""}
+        )
         alvo.totp_ativo = False
         alvo.totp_segredo = ""
         alvo.totp_ultimo_passo = None
@@ -200,6 +207,7 @@ class UsuarioViewSet(
             request, "edicao", alvo,
             descricao="Verificação em duas etapas redefinida pelo administrador.",
             escritorio=admin.escritorio,
+            alteracoes=montar_alteracoes_auditoria(alvo, estado_anterior),
         )
         return Response(UsuarioSerializer(alvo).data)
 
@@ -242,6 +250,9 @@ class UsuarioViewSet(
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
+        estado_anterior = capturar_estado_auditoria(
+            alvo, {"tipo_usuario": novo_perfil}
+        )
         alvo.tipo_usuario = novo_perfil
         alvo.save(update_fields=["tipo_usuario"])
         registrar_auditoria(
@@ -250,6 +261,7 @@ class UsuarioViewSet(
             alvo,
             descricao=f"Perfil de acesso alterado para {novo_perfil}.",
             escritorio=admin.escritorio,
+            alteracoes=montar_alteracoes_auditoria(alvo, estado_anterior),
         )
         return Response(UsuarioSerializer(alvo).data)
 

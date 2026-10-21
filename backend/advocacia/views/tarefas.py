@@ -15,6 +15,8 @@ from ..emails import (
 )
 from ..mixins import (
     EscritorioScopedMixin,
+    capturar_estado_auditoria,
+    montar_alteracoes_auditoria,
     registrar_auditoria,
 )
 from ..models import (
@@ -160,8 +162,19 @@ class TarefaViewSet(
             # Tarefa reaberta: a data de conclusão anterior não vale mais.
             extras["concluida_em"] = None
 
+        estado_anterior = capturar_estado_auditoria(
+            tarefa, serializer.validated_data, extras
+        )
         self._salvar(serializer, **extras)
-        registrar_auditoria(self.request, "edicao", serializer.instance, escritorio=escritorio)
+        registrar_auditoria(
+            self.request,
+            "edicao",
+            serializer.instance,
+            escritorio=escritorio,
+            alteracoes=montar_alteracoes_auditoria(
+                serializer.instance, estado_anterior
+            ),
+        )
 
         if serializer.instance.responsavel_id != responsavel_anterior_id:
             _avisar_responsavel(

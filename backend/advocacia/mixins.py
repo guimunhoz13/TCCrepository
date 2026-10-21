@@ -1,7 +1,10 @@
 import logging
+from datetime import date, datetime
+from decimal import Decimal
 
 from django.db import IntegrityError
 from django.db.models import ProtectedError
+from django.db.models.fields.files import FieldFile
 
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.permissions import BasePermission
@@ -10,6 +13,77 @@ from .models import RegistroAuditoria, SuperAdmin, Usuario
 from .sigilo import caminho_ate_processo, esconder_sigilosos
 
 logger = logging.getLogger(__name__)
+
+_CAMPOS_SENSIVEIS = {
+    "senha",
+    "password",
+    "token",
+    "access",
+    "refresh",
+    "secret",
+    "segredo",
+    "totp_segredo",
+    "codigo",
+    "chave_pix",
+}
+
+
+def _campo_sensivel(nome):
+    nome = str(nome).lower()
+    return any(termo in nome for termo in _CAMPOS_SENSIVEIS)
+
+
+def _valor_auditavel(valor):
+    """Converte valores de modelo em JSON curto e legível.
+
+    A trilha serve para explicar uma alteração, não para criar uma cópia
+    paralela (e potencialmente sensível) do banco.
+    """
+    if valor is None:
+        return None
+    if isinstance(valor, (datetime, date)):
+        return valor.isoformat()
+    if isinstance(valor, Decimal):
+        return str(valor)
+    if isinstance(valor, (str, int, float, bool)):
+        texto = valor if not isinstance(valor, str) else valor.strip()
+        return texto[:250] if isinstance(texto, str) else texto
+    if isinstance(valor, FieldFile):
+        return "Arquivo enviado" if getattr(valor, "name", "") else None
+    if hasattr(valor, "pk"):
+        return {"id": valor.pk, "nome": str(valor)[:180]}
+    return str(valor)[:250]
+
+
+def capturar_estado_auditoria(instancia, dados_validados, extras=None):
+    """Guarda o estado anterior somente dos campos que serão alterados."""
+    nomes = set(dados_validados.keys()) | set((extras or {}).keys())
+    return {
+        nome: getattr(instancia, nome, None)
+        for nome in nomes
+        if not _campo_sensivel(nome) and hasattr(instancia, nome)
+    }
+
+
+def montar_alteracoes_auditoria(instancia, estado_anterior):
+    alteracoes = []
+    for campo, anterior in estado_anterior.items():
+        novo = getattr(instancia, campo, None)
+        anterior_json = _valor_auditavel(anterior)
+        novo_json = _valor_auditavel(novo)
+        if anterior_json == novo_json:
+            continue
+        try:
+            rotulo = str(instancia._meta.get_field(campo).verbose_name)
+        except Exception:
+            rotulo = campo.replace("_", " ")
+        alteracoes.append({
+            "campo": campo,
+            "rotulo": rotulo,
+            "anterior": anterior_json,
+            "novo": novo_json,
+        })
+    return alteracoes
 
 
 def get_usuario_from_request(request):
@@ -82,6 +156,7 @@ def registrar_auditoria(
     objeto_id=None,
     usuario=None,
     superadmin=None,
+    alteracoes=None,
 ):
     """Cria um RegistroAuditoria para ações sensíveis (login, criação, edição,
     exclusão). Nunca deve derrubar a requisição principal caso algo falhe.
@@ -104,6 +179,7 @@ def registrar_auditoria(
             modelo=modelo or (instancia.__class__.__name__ if instancia is not None else ""),
             objeto_id=objeto_id if objeto_id is not None else getattr(instancia, "id", None),
             descricao=descricao,
+            alteracoes=alteracoes or [],
             endereco_ip=obter_ip_requisicao(request),
         )
     except Exception:
@@ -181,9 +257,18 @@ class EscritorioScopedMixin:
 
     def perform_update(self, serializer):
         escritorio = self.get_escritorio()
+        estado_anterior = capturar_estado_auditoria(
+            serializer.instance, serializer.validated_data
+        )
         self._salvar(serializer)
         registrar_auditoria(
-            self.request, "edicao", serializer.instance, escritorio=escritorio
+            self.request,
+            "edicao",
+            serializer.instance,
+            escritorio=escritorio,
+            alteracoes=montar_alteracoes_auditoria(
+                serializer.instance, estado_anterior
+            ),
         )
 
     def perform_destroy(self, instance):

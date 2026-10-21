@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { Fragment, useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useRecurso } from "@/hooks/useRecurso";
 import { useConfirmacao } from "@/contexts/ConfirmacaoContext";
@@ -1080,6 +1080,14 @@ function AuditoriaTab() {
   const recurso = useRecurso(getAuditoria);
   const registros = normalizarLista(recurso.dados);
   const carregando = recurso.carregando;
+  const [detalheAberto, setDetalheAberto] = useState(null);
+
+  function valorAuditoria(valor) {
+    if (valor === null || valor === undefined || valor === "") return "Não informado";
+    if (typeof valor === "boolean") return valor ? "Sim" : "Não";
+    if (typeof valor === "object") return valor.nome || valor.id || JSON.stringify(valor);
+    return String(valor);
+  }
 
   return <div className="settings-stack">
     <Section title="Registro de auditoria" description="Quem entrou no sistema e quem criou, editou ou excluiu registros — os 200 eventos mais recentes deste escritório.">
@@ -1095,17 +1103,52 @@ function AuditoriaTab() {
                 <th>Ação</th>
                 <th>Usuário</th>
                 <th>Descrição</th>
+                <th>Alterações</th>
               </tr>
             </thead>
             <tbody>
-              {registros.map((r) => (
-                <tr key={r.id}>
-                  <td>{new Date(r.criado_em).toLocaleString("pt-BR")}</td>
-                  <td><span className={`badge ${ACOES_BADGE[r.acao] || "badge-muted"}`}>{ACOES_LABEL[r.acao] || r.acao_label}</span></td>
-                  <td>{r.usuario_nome || r.superadmin_nome || "—"}</td>
-                  <td>{r.descricao || (r.modelo ? `${r.modelo} #${r.objeto_id ?? ""}` : "—")}</td>
-                </tr>
-              ))}
+              {registros.map((r) => {
+                const alteracoes = Array.isArray(r.alteracoes) ? r.alteracoes : [];
+                const aberto = detalheAberto === r.id;
+                return (
+                  <Fragment key={r.id}>
+                    <tr>
+                      <td>{new Date(r.criado_em).toLocaleString("pt-BR")}</td>
+                      <td><span className={`badge ${ACOES_BADGE[r.acao] || "badge-muted"}`}>{ACOES_LABEL[r.acao] || r.acao_label}</span></td>
+                      <td>{r.usuario_nome || r.superadmin_nome || "—"}</td>
+                      <td>{r.descricao || (r.modelo ? `${r.modelo} #${r.objeto_id ?? ""}` : "—")}</td>
+                      <td>
+                        {alteracoes.length ? (
+                          <button
+                            type="button"
+                            className="btn btn-secondary btn-sm"
+                            aria-expanded={aberto}
+                            onClick={() => setDetalheAberto(aberto ? null : r.id)}
+                          >
+                            {aberto ? "Ocultar" : `Ver ${alteracoes.length}`}
+                          </button>
+                        ) : "—"}
+                      </td>
+                    </tr>
+                    {aberto && (
+                      <tr className="auditoria-detalhes-linha">
+                        <td colSpan={5}>
+                          <div className="auditoria-detalhes">
+                            {alteracoes.map((alteracao) => (
+                              <div key={alteracao.campo}>
+                                <strong>{alteracao.rotulo || alteracao.campo}</strong>
+                                <span>{valorAuditoria(alteracao.anterior)}</span>
+                                <span aria-hidden="true">→</span>
+                                <span>{valorAuditoria(alteracao.novo)}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </Fragment>
+                );
+              })}
             </tbody>
           </table>
         </div>

@@ -16,7 +16,9 @@ from ..dois_fatores import (
     uri_de_cadastro,
 )
 from ..mixins import (
+    capturar_estado_auditoria,
     get_usuario_from_request,
+    montar_alteracoes_auditoria,
     registrar_auditoria,
 )
 from ..models import (
@@ -193,12 +195,16 @@ class ConfiguracoesDoisFatoresView(APIView):
                     {"codigo": ["Código inválido. Confira se o relógio do celular está certo."]},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
+            estado_anterior = capturar_estado_auditoria(
+                usuario, {"totp_ativo": True}
+            )
             usuario.totp_ativo = True
             usuario.save(update_fields=["totp_ativo"])
             registrar_auditoria(
                 request, "edicao", usuario,
                 descricao="Verificação em duas etapas ativada.",
                 escritorio=usuario.escritorio,
+                alteracoes=montar_alteracoes_auditoria(usuario, estado_anterior),
             )
             return Response({"totp_ativo": True})
 
@@ -209,6 +215,9 @@ class ConfiguracoesDoisFatoresView(APIView):
                 return Response({"senha": ["Senha incorreta."]}, status=status.HTTP_400_BAD_REQUEST)
             if not conferir_codigo(usuario, request.data.get("codigo")):
                 return Response({"codigo": ["Código inválido."]}, status=status.HTTP_400_BAD_REQUEST)
+            estado_anterior = capturar_estado_auditoria(
+                usuario, {"totp_ativo": False, "totp_segredo": ""}
+            )
             usuario.totp_ativo = False
             usuario.totp_segredo = ""
             usuario.totp_ultimo_passo = None
@@ -217,6 +226,7 @@ class ConfiguracoesDoisFatoresView(APIView):
                 request, "edicao", usuario,
                 descricao="Verificação em duas etapas desativada.",
                 escritorio=usuario.escritorio,
+                alteracoes=montar_alteracoes_auditoria(usuario, estado_anterior),
             )
             return Response({"totp_ativo": False})
 
@@ -237,7 +247,20 @@ class ConfiguracoesPreferenciasView(APIView):
         preferencias, _ = PreferenciasUsuario.objects.get_or_create(usuario=usuario)
         serializer = PreferenciasUsuarioSerializer(preferencias, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
+        estado_anterior = capturar_estado_auditoria(
+            preferencias, serializer.validated_data
+        )
         serializer.save()
+        alteracoes = montar_alteracoes_auditoria(preferencias, estado_anterior)
+        if alteracoes:
+            registrar_auditoria(
+                request,
+                "edicao",
+                preferencias,
+                descricao="Preferências pessoais atualizadas.",
+                escritorio=usuario.escritorio,
+                alteracoes=alteracoes,
+            )
         return Response({"detail": "Preferências salvas com sucesso.", "preferencias": serializer.data})
 
 
@@ -264,6 +287,12 @@ class ConfiguracoesEscritorioView(APIView):
                 return Response({"telefone": list(exc.messages)}, status=status.HTTP_400_BAD_REQUEST)
 
         campos = ["nome", "email", "telefone", "endereco", "cidade", "estado"]
+        dados_escritorio = {
+            campo: request.data[campo] for campo in campos if campo in request.data
+        }
+        estado_escritorio = capturar_estado_auditoria(
+            usuario.escritorio, dados_escritorio
+        )
         for campo in campos:
             if campo in request.data:
                 setattr(usuario.escritorio, campo, request.data[campo])
@@ -280,7 +309,34 @@ class ConfiguracoesEscritorioView(APIView):
         }
         config_serializer = ConfiguracaoEscritorioSerializer(config, data=config_data, partial=True)
         config_serializer.is_valid(raise_exception=True)
+        estado_config = capturar_estado_auditoria(
+            config, config_serializer.validated_data
+        )
         config_serializer.save()
+
+        alteracoes_escritorio = montar_alteracoes_auditoria(
+            usuario.escritorio, estado_escritorio
+        )
+        if alteracoes_escritorio:
+            registrar_auditoria(
+                request,
+                "edicao",
+                usuario.escritorio,
+                descricao="Dados do escritório atualizados.",
+                escritorio=usuario.escritorio,
+                alteracoes=alteracoes_escritorio,
+            )
+
+        alteracoes_config = montar_alteracoes_auditoria(config, estado_config)
+        if alteracoes_config:
+            registrar_auditoria(
+                request,
+                "edicao",
+                config,
+                descricao="Configurações do escritório atualizadas.",
+                escritorio=usuario.escritorio,
+                alteracoes=alteracoes_config,
+            )
 
         return Response({
             "detail": "Dados do escritório atualizados com sucesso.",
@@ -307,7 +363,17 @@ class ConfiguracoesDesativarEscritorioView(APIView):
             return Response({"detail": "Senha incorreta."}, status=status.HTTP_400_BAD_REQUEST)
 
         escritorio = usuario.escritorio
+        estado_anterior = capturar_estado_auditoria(escritorio, {"ativo": False})
         escritorio.ativo = False
         escritorio.save(update_fields=["ativo"])
+        registrar_auditoria(
+            request,
+            "edicao",
+            escritorio,
+            descricao="Escritório desativado pelo administrador.",
+            escritorio=escritorio,
+            usuario=usuario,
+            alteracoes=montar_alteracoes_auditoria(escritorio, estado_anterior),
+        )
         Usuario.objects.filter(escritorio=escritorio).update(ativo=False)
         return Response({"detail": "Escritório desativado com sucesso."})

@@ -478,7 +478,7 @@ export const SECOES_AJUDA = [
       {
         titulo: "Auditoria",
         texto:
-          "Só para administradores. Registra login, tentativa de login que falhou, criação, edição e exclusão, com usuário, data e endereço de origem.",
+          "Só para administradores. Registra login, tentativa de login que falhou, criação, edição e exclusão, com usuário, data e endereço de origem. Nas edições, o botão de alterações mostra cada campo modificado e os valores anterior e novo. Senhas, tokens e segredos nunca aparecem nesse histórico.",
       },
       {
         titulo: "Faturamento",

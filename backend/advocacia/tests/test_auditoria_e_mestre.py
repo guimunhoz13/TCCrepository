@@ -10,6 +10,7 @@ from ..models import (
     RegistroAuditoria,
     SuperAdmin,
 )
+from ..mixins import capturar_estado_auditoria
 from .base import (
     _criar_escritorio,
     _criar_usuario,
@@ -226,3 +227,82 @@ class AuditoriaVisualizacaoAPITestCase(APITestCase):
         )
         resposta = self.client.get("/api/master/auditoria/")
         self.assertEqual(resposta.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_edicao_registra_campo_valor_anterior_e_novo(self):
+        cliente = Cliente.objects.create(
+            escritorio=self.escritorio_a,
+            nome="Nome anterior",
+            cpf="55555555555",
+            email="cliente@teste.com",
+            telefone="11955555555",
+            endereco="Rua de teste",
+        )
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Bearer {_gerar_token_de_acesso(self.admin_a)}"
+        )
+
+        resposta = self.client.patch(
+            f"/api/clientes/{cliente.id}/",
+            {"nome": "Nome atualizado"},
+            format="json",
+        )
+
+        self.assertEqual(resposta.status_code, status.HTTP_200_OK)
+        registro = RegistroAuditoria.objects.filter(
+            acao="edicao", modelo="Cliente", objeto_id=cliente.id
+        ).latest("id")
+        self.assertEqual(len(registro.alteracoes), 1)
+        self.assertEqual(registro.alteracoes[0]["campo"], "nome")
+        self.assertEqual(registro.alteracoes[0]["anterior"], "Nome anterior")
+        self.assertEqual(registro.alteracoes[0]["novo"], "Nome atualizado")
+
+        resposta_auditoria = self.client.get("/api/auditoria/")
+        evento = next(
+            item for item in resposta_auditoria.data["results"]
+            if item["id"] == registro.id
+        )
+        self.assertEqual(evento["alteracoes"], registro.alteracoes)
+
+    def test_estado_de_auditoria_ignora_senhas_tokens_e_segredos(self):
+        estado = capturar_estado_auditoria(
+            self.admin_a,
+            {
+                "nome": "Nome permitido",
+                "senha": "nunca registrar",
+                "totp_segredo": "nunca registrar",
+            },
+        )
+        self.assertIn("nome", estado)
+        self.assertNotIn("senha", estado)
+        self.assertNotIn("totp_segredo", estado)
+
+    def test_preferencias_e_dados_do_escritorio_guardam_as_mudancas(self):
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Bearer {_gerar_token_de_acesso(self.admin_a)}"
+        )
+
+        preferencias = self.client.patch(
+            "/api/configuracoes/preferencias/",
+            {"tema": "light"},
+            format="json",
+        )
+        self.assertEqual(preferencias.status_code, status.HTTP_200_OK)
+        evento_preferencias = RegistroAuditoria.objects.filter(
+            descricao="Preferências pessoais atualizadas."
+        ).latest("id")
+        self.assertEqual(evento_preferencias.alteracoes[0]["campo"], "tema")
+        self.assertEqual(evento_preferencias.alteracoes[0]["anterior"], "dark")
+        self.assertEqual(evento_preferencias.alteracoes[0]["novo"], "light")
+
+        escritorio = self.client.patch(
+            "/api/configuracoes/escritorio/",
+            {"nome": "Escritório A atualizado"},
+            format="json",
+        )
+        self.assertEqual(escritorio.status_code, status.HTTP_200_OK)
+        evento_escritorio = RegistroAuditoria.objects.filter(
+            descricao="Dados do escritório atualizados."
+        ).latest("id")
+        self.assertEqual(evento_escritorio.alteracoes[0]["campo"], "nome")
+        self.assertEqual(evento_escritorio.alteracoes[0]["anterior"], "Escritorio A")
+        self.assertEqual(evento_escritorio.alteracoes[0]["novo"], "Escritório A atualizado")

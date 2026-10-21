@@ -894,6 +894,7 @@ class RegistroAuditoriaSerializer(serializers.ModelSerializer):
             "modelo",
             "objeto_id",
             "descricao",
+            "alteracoes",
             "endereco_ip",
             "criado_em",
         ]

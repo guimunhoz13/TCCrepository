@@ -10,6 +10,8 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from ..mixins import (
     IsMasterUser,
+    capturar_estado_auditoria,
+    montar_alteracoes_auditoria,
     registrar_auditoria,
 )
 from ..models import (
@@ -115,9 +117,18 @@ class MasterEscritorioViewSet(viewsets.ModelViewSet):
         )
 
     def perform_update(self, serializer):
+        estado_anterior = capturar_estado_auditoria(
+            serializer.instance, serializer.validated_data
+        )
         serializer.save()
         registrar_auditoria(
-            self.request, "edicao", serializer.instance, escritorio=serializer.instance
+            self.request,
+            "edicao",
+            serializer.instance,
+            escritorio=serializer.instance,
+            alteracoes=montar_alteracoes_auditoria(
+                serializer.instance, estado_anterior
+            ),
         )
 
     def perform_destroy(self, instance):

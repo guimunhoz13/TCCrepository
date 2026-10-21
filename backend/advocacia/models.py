@@ -820,6 +820,11 @@ class RegistroAuditoria(models.Model):
     modelo = models.CharField(max_length=100, blank=True, default="")
     objeto_id = models.PositiveIntegerField(null=True, blank=True)
     descricao = models.CharField(max_length=255, blank=True, default="")
+    # Lista de mudanças no formato
+    # [{"campo": "status", "rotulo": "status", "anterior": "...", "novo": "..."}].
+    # Senhas, tokens e segredos nunca entram aqui; a filtragem é feita no
+    # ponto central que captura as alterações antes de salvar o registro.
+    alteracoes = models.JSONField(default=list, blank=True)
     endereco_ip = models.GenericIPAddressField(null=True, blank=True)
     criado_em = models.DateTimeField(auto_now_add=True)
 

@@ -11,6 +11,7 @@ from rest_framework.response import Response
 
 from ..mixins import (
     EscritorioScopedMixin,
+    registrar_auditoria,
 )
 from ..models import (
     ConfiguracaoEscritorio,
@@ -93,6 +94,9 @@ class ContratoViewSet(
 
         contrato = serializer.save(escritorio=escritorio)
         _gerar_parcelas(contrato)
+        registrar_auditoria(
+            self.request, "criacao", contrato, escritorio=escritorio
+        )
 
 
 class ParcelaViewSet(

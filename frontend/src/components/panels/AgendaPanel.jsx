@@ -28,6 +28,7 @@ import { usePermissoes } from "@/hooks/usePermissoes";
 import OrientacaoFormulario from "@/components/ui/OrientacaoFormulario";
 import { useRascunhoFormulario } from "@/hooks/useRascunhoFormulario";
 import EstadoRascunho from "@/components/ui/EstadoRascunho";
+import ProgressoFormulario from "@/components/ui/ProgressoFormulario";
 
 const formularioInicial = {
   processo: "",
@@ -76,6 +77,14 @@ function EventoForm({
         titulo="Organize o compromisso ou prazo"
         descricao="Vincule a um processo quando for possível. Para prazos, use a calculadora como apoio e sempre confirme a regra e o expediente do tribunal."
         etapas={["Escolha o tipo", "Informe data e contexto", "Revise antes de salvar"]}
+      />
+      <ProgressoFormulario
+        itens={[
+          { rotulo: "Tipo", concluido: Boolean(formulario.tipo) },
+          { rotulo: "Título", concluido: Boolean(formulario.titulo.trim()) },
+          { rotulo: "Descrição", concluido: Boolean(formulario.descricao.trim()) },
+          { rotulo: "Data e hora", concluido: Boolean(formulario.data_evento) },
+        ]}
       />
       <div className="form-field">
         <label>Processo (opcional)</label>

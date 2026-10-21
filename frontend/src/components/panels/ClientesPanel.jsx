@@ -33,6 +33,7 @@ import OrientacaoFormulario from "@/components/ui/OrientacaoFormulario";
 import { usePermissoes } from "@/hooks/usePermissoes";
 import { useRascunhoFormulario } from "@/hooks/useRascunhoFormulario";
 import EstadoRascunho from "@/components/ui/EstadoRascunho";
+import ProgressoFormulario from "@/components/ui/ProgressoFormulario";
 
 const formularioInicial = {
   tipo_pessoa: "fisica",
@@ -248,6 +249,21 @@ export default function ClientesPanel() {
             titulo={clienteEditando ? "Revise os dados do cliente" : "Cadastre a pessoa ou empresa"}
             descricao="Os dados de contato alimentam processos, documentos e comunicações. Registre somente informações necessárias e confira a autorização LGPD."
             etapas={["Identificação", "Contato e endereço", "Documentos e LGPD"]}
+          />
+          <ProgressoFormulario
+            itens={[
+              { rotulo: "Nome", concluido: Boolean(formulario.nome.trim()) },
+              {
+                rotulo: formulario.tipo_pessoa === "juridica" ? "CNPJ" : "CPF",
+                concluido: Boolean(
+                  (formulario.tipo_pessoa === "juridica" ? formulario.cnpj : formulario.cpf)
+                    .replace(/\D/g, "")
+                ),
+              },
+              { rotulo: "E-mail", concluido: Boolean(formulario.email.trim()) },
+              { rotulo: "Telefone", concluido: Boolean(formulario.telefone.trim()) },
+              { rotulo: "Endereço", concluido: Boolean(formulario.endereco.trim()) },
+            ]}
           />
           <div className="form-field">
             <label>Tipo de pessoa</label>

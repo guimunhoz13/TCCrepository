@@ -172,6 +172,7 @@ entity registro_auditoria {
   modelo : VARCHAR(100)
   objeto_id : INT
   descricao : VARCHAR(255)
+  alteracoes : JSONB
   endereco_ip : INET
   criado_em : TIMESTAMP
 }
