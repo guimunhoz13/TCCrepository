@@ -722,20 +722,31 @@ function NotificacoesTab({ preferencias, setDados, feedback }) {
     catch (e) { feedback(e.message, true); }
   }
   return <div className="settings-stack">
-    <PushSection feedback={feedback} />
-    <Section title="E-mail" description="Escolha os avisos que deseja receber.">
-      <ToggleRow label="Novo processo cadastrado" checked={p.notificacao_novo_processo} onChange={(v) => salvar({ notificacao_novo_processo: v })}/>
-      <ToggleRow label="Novo documento anexado" checked={p.notificacao_novo_documento} onChange={(v) => salvar({ notificacao_novo_documento: v })}/>
-      <ToggleRow label="Alteração de status em processo" checked={p.notificacao_status_processo} onChange={(v) => salvar({ notificacao_status_processo: v })}/>
-      <ToggleRow label="Andamento novo encontrado no tribunal" checked={p.notificacao_movimentacao} onChange={(v) => salvar({ notificacao_movimentacao: v })}/>
-      <ToggleRow label="Novo cliente cadastrado" checked={p.notificacao_novo_cliente} onChange={(v) => salvar({ notificacao_novo_cliente: v })}/>
-      <ToggleRow label="Tarefa atribuída a mim" checked={p.notificacao_tarefa_atribuida} onChange={(v) => salvar({ notificacao_tarefa_atribuida: v })}/>
+    <Section
+      title="Dentro do LexNexo"
+      description="O sino no alto da tela reúne prazos vencidos, prazos fatais e os eventos dos próximos sete dias. Ele funciona independentemente do e-mail e das notificações do aparelho."
+    >
+      <p className="dica-campo" style={{ marginTop: 0 }}>
+        Um prazo só deixa de aparecer como pendente depois que você o marca como cumprido na Agenda.
+      </p>
     </Section>
-    <Section title="Prazos e audiências">
-      <ToggleRow label="Lembrete de audiência" checked={p.lembrete_audiencia} onChange={(v) => salvar({ lembrete_audiencia: v })}/>
-      <Field label="Antecedência"><select value={p.antecedencia_audiencia} onChange={(e) => salvar({ antecedencia_audiencia: Number(e.target.value) })}><option value="1">1 dia antes</option><option value="2">2 dias antes</option><option value="5">5 dias antes</option><option value="7">7 dias antes</option></select></Field>
-      <ToggleRow label="Lembrete de prazo processual" checked={p.lembrete_prazo} onChange={(v) => salvar({ lembrete_prazo: v })}/>
-      <ToggleRow label="Resumo semanal por e-mail" checked={p.resumo_semanal} onChange={(v) => salvar({ resumo_semanal: v })}/>
+    <PushSection feedback={feedback} />
+    <Section title="Avisos por e-mail sobre atividades" description="Avisam sobre ações da equipe assim que elas acontecem. Quem realizou a própria ação não recebe uma cópia.">
+      <ToggleRow label="Novo processo cadastrado" description="Avisa quando outra pessoa da equipe cria um processo." checked={p.notificacao_novo_processo} onChange={(v) => salvar({ notificacao_novo_processo: v })}/>
+      <ToggleRow label="Novo documento anexado" description="Avisa quando um arquivo é incluído em um processo." checked={p.notificacao_novo_documento} onChange={(v) => salvar({ notificacao_novo_documento: v })}/>
+      <ToggleRow label="Alteração de status em processo" description="Avisa quando um processo muda, por exemplo, de ativo para concluído." checked={p.notificacao_status_processo} onChange={(v) => salvar({ notificacao_status_processo: v })}/>
+      <ToggleRow label="Andamento novo encontrado no tribunal" description="Avisa quando a sincronização do DataJud encontra uma movimentação ainda não registrada." checked={p.notificacao_movimentacao} onChange={(v) => salvar({ notificacao_movimentacao: v })}/>
+      <ToggleRow label="Novo cliente cadastrado" description="Avisa quando outra pessoa da equipe inclui um cliente." checked={p.notificacao_novo_cliente} onChange={(v) => salvar({ notificacao_novo_cliente: v })}/>
+      <ToggleRow label="Tarefa atribuída a mim" description="Avisa quando alguém coloca você como responsável por uma tarefa." checked={p.notificacao_tarefa_atribuida} onChange={(v) => salvar({ notificacao_tarefa_atribuida: v })}/>
+    </Section>
+    <Section title="Lembretes de prazos e audiências" description="O servidor verifica a agenda todos os dias. O aviso é enviado por e-mail e também por push nos aparelhos em que você o ativou.">
+      <ToggleRow label="Lembrete de audiência" description="Inclui compromissos e audiências ainda não cumpridos." checked={p.lembrete_audiencia} onChange={(v) => salvar({ lembrete_audiencia: v })}/>
+      <Field label="Antecedência">
+        <select aria-describedby="dica-antecedencia-lembrete" value={p.antecedencia_audiencia} onChange={(e) => salvar({ antecedencia_audiencia: Number(e.target.value) })}><option value="1">1 dia antes</option><option value="2">2 dias antes</option><option value="5">5 dias antes</option><option value="7">7 dias antes</option></select>
+        <span id="dica-antecedencia-lembrete" className="dica-campo">Vale para audiências e prazos comuns. Prazos fatais recebem reforços adicionais quando se aproximam.</span>
+      </Field>
+      <ToggleRow label="Lembrete de prazo processual" description="Inclui prazos comuns e fatais que ainda não foram marcados como cumpridos." checked={p.lembrete_prazo} onChange={(v) => salvar({ lembrete_prazo: v })}/>
+      <ToggleRow label="Resumo semanal por e-mail" description="Toda segunda-feira, reúne agenda, processos novos e cobranças próximas permitidas para o seu perfil." checked={p.resumo_semanal} onChange={(v) => salvar({ resumo_semanal: v })}/>
     </Section>
   </div>;
 }
@@ -815,7 +826,7 @@ function PushSection({ feedback }) {
   return (
     <Section
       title="No celular e no navegador"
-      description="Avisos na hora, mesmo com o sistema fechado: intimação nova, tarefa atribuída e lembretes de prazo e audiência."
+      description="Push é o aviso que aparece no sistema operacional, mesmo com o LexNexo fechado. Cada navegador ou celular precisa ser ativado separadamente."
     >
       {conteudo}
     </Section>
@@ -1136,4 +1147,4 @@ function FaturamentoTab() {
 function Section({ title, description, children, danger }) { return <div className={`settings-section ${danger ? "danger" : ""}`}><div className="settings-section-header"><h4>{title}</h4>{description && <p>{description}</p>}</div><div className="settings-section-body">{children}</div></div>; }
 function Field({ label, children, full }) { return <div className={`form-field ${full ? "full" : ""}`}>{label && <label>{label}</label>}{children}</div>; }
 function Actions({ children }) { return <div className="settings-section-actions">{children}</div>; }
-function ToggleRow({ label, checked, onChange }) { return <label className="toggle-row"><span className="toggle-label">{label}</span><span className="switch"><input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)}/><span className="switch-track" /></span></label>; }
+function ToggleRow({ label, description, checked, onChange }) { return <label className="toggle-row"><span className="toggle-label"><strong>{label}</strong>{description && <small>{description}</small>}</span><span className="switch"><input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)}/><span className="switch-track" /></span></label>; }

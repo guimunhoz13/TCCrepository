@@ -913,7 +913,8 @@ class NotificacaoEnviada(models.Model):
 
     tipo = models.CharField(max_length=20, choices=TIPOS)
 
-    # Identifica o que foi avisado — "lembrete_evento:42", "resumo_semanal:2026-W38".
+    # Identifica o que foi avisado — "lembrete_evento:42:email",
+    # "lembrete_evento:42:fatal:1d:push", "resumo_semanal:2026-W38".
     # É o que garante a idempotência junto com o usuário.
     chave = models.CharField(max_length=120)
 

@@ -10,11 +10,13 @@ from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APITestCase
 
+from ..management.commands.enviar_lembretes import Command as EnviarLembretesCommand
 from ..models import (
     Advogado,
     Agenda,
     Cliente,
     Escritorio,
+    InscricaoPush,
     NotificacaoEnviada,
     PreferenciasUsuario,
     Processo,
@@ -69,10 +71,11 @@ class EnvioDeLembretesTestCase(TestCase):
             advogado=advogado,
         )
 
-    def _criar_evento(self, dias_a_frente, tipo="prazo", cumprido=False):
+    def _criar_evento(self, dias_a_frente, tipo="prazo", cumprido=False, prioridade="normal"):
         return Agenda.objects.create(
             processo=self.processo,
             tipo=tipo,
+            prioridade=prioridade,
             titulo=f"Evento em {dias_a_frente} dia(s)",
             descricao="Descrição do evento.",
             data_evento=timezone.now() + timezone.timedelta(days=dias_a_frente, hours=1),
@@ -110,6 +113,69 @@ class EnvioDeLembretesTestCase(TestCase):
 
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(NotificacaoEnviada.objects.filter(tipo="lembrete_evento").count(), 1)
+
+    def test_prazo_fatal_e_identificado_no_assunto(self):
+        self._criar_evento(1, prioridade="fatal")
+
+        call_command("enviar_lembretes")
+
+        self.assertIn("PRAZO FATAL", mail.outbox[0].subject)
+
+    def test_prazo_fatal_recebe_reforco_em_dois_dias_um_dia_e_no_dia(self):
+        evento = self._criar_evento(2, prioridade="fatal")
+        comando = EnviarLembretesCommand()
+        comando.dry_run = False
+        agora = timezone.localtime()
+
+        comando._enviar_lembretes(self.usuario, self.preferencias, agora)
+        comando._enviar_lembretes(self.usuario, self.preferencias, agora + timezone.timedelta(days=1))
+        comando._enviar_lembretes(self.usuario, self.preferencias, agora + timezone.timedelta(days=2))
+
+        self.assertEqual(len(mail.outbox), 3)
+        chaves = set(NotificacaoEnviada.objects.values_list("chave", flat=True))
+        self.assertIn(f"lembrete_evento:{evento.id}:fatal:2d:email", chaves)
+        self.assertIn(f"lembrete_evento:{evento.id}:fatal:1d:email", chaves)
+        self.assertIn(f"lembrete_evento:{evento.id}:fatal:hoje:email", chaves)
+
+    def test_falha_do_email_nao_impede_o_push(self):
+        evento = self._criar_evento(1, prioridade="fatal")
+        InscricaoPush.objects.create(
+            usuario=self.usuario,
+            endpoint="https://push.exemplo.test/lembrete",
+            p256dh="chave",
+            auth="segredo",
+        )
+
+        with (
+            patch("advocacia.management.commands.enviar_lembretes.enviar_email", side_effect=Exception("SMTP fora")),
+            patch("advocacia.management.commands.enviar_lembretes.notificar_usuario", return_value=1) as push,
+        ):
+            call_command("enviar_lembretes")
+
+        push.assert_called_once()
+        chaves = set(NotificacaoEnviada.objects.values_list("chave", flat=True))
+        self.assertNotIn(f"lembrete_evento:{evento.id}:fatal:1d:email", chaves)
+        self.assertIn(f"lembrete_evento:{evento.id}:fatal:1d:push", chaves)
+
+    def test_usuario_sem_email_ainda_recebe_push(self):
+        self.usuario.email = ""
+        self.usuario.save(update_fields=["email"])
+        self._criar_evento(1)
+        InscricaoPush.objects.create(
+            usuario=self.usuario,
+            endpoint="https://push.exemplo.test/sem-email",
+            p256dh="chave",
+            auth="segredo",
+        )
+
+        with patch(
+            "advocacia.management.commands.enviar_lembretes.notificar_usuario",
+            return_value=1,
+        ) as push:
+            call_command("enviar_lembretes")
+
+        self.assertEqual(len(mail.outbox), 0)
+        push.assert_called_once()
 
     def test_preferencia_desligada_nao_gera_email(self):
         self.preferencias.lembrete_prazo = False

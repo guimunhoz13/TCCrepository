@@ -344,7 +344,8 @@ def montar_email_lembrete_evento(nome, evento, escritorio_nome, dias_restantes):
     """Aviso de um compromisso ou prazo que está se aproximando."""
 
     eh_prazo = evento.tipo == "prazo"
-    rotulo = "Prazo" if eh_prazo else "Compromisso"
+    eh_fatal = eh_prazo and evento.prioridade == "fatal"
+    rotulo = "PRAZO FATAL" if eh_fatal else ("Prazo" if eh_prazo else "Compromisso")
     quando = _rotulo_antecedencia(dias_restantes)
 
     linhas = [
@@ -355,7 +356,7 @@ def montar_email_lembrete_evento(nome, evento, escritorio_nome, dias_restantes):
         linhas.append(("Processo", evento.processo.numero_processo))
     if evento.local_evento:
         linhas.append(("Local", evento.local_evento))
-    if eh_prazo and evento.prioridade == "fatal":
+    if eh_fatal:
         linhas.append(("Prioridade", "PRAZO FATAL"))
 
     detalhes = "".join(

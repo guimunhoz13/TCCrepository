@@ -421,7 +421,7 @@ const requisitos = [
   new Paragraph({ spacing: { after: 120 }, children: [new TextRun({ text: "RN15 – Honorários de Sucumbência", bold: true, size: 22 })] }),
   p("O valor estimado de honorários de sucumbência é calculado multiplicando o valor da causa pelo percentual fixado pelo juízo. O sistema não determina esse percentual automaticamente — ele é definido por decisão judicial e apenas informado manualmente pelo usuário."),
   new Paragraph({ spacing: { after: 120 }, children: [new TextRun({ text: "RN16 – Envio de Lembretes", bold: true, size: 22 })] }),
-  p("Um mesmo lembrete nunca deve ser enviado duas vezes ao mesmo usuário, ainda que a rotina de envio seja executada mais de uma vez no mesmo dia. O registro do envio é gravado antes do disparo, para que duas execuções simultâneas não dupliquem o aviso, e é desfeito caso o envio falhe, para que uma indisponibilidade do servidor de e-mail não faça o lembrete ser perdido em silêncio. O resumo semanal é enviado às segundas-feiras, apenas aos usuários que o habilitaram."),
+  p("Um mesmo lembrete nunca deve ser enviado duas vezes ao mesmo usuário, canal e etapa, ainda que a rotina seja executada mais de uma vez no mesmo dia. E-mail e push são reservados e enviados de forma independente: a indisponibilidade do SMTP não impede o aviso no aparelho, e uma falha é retirada do registro para poder ser tentada novamente. Prazos fatais recebem reforços dois dias antes, um dia antes e no próprio dia; no aparelho, o aviso mais recente substitui o anterior do mesmo prazo. O resumo semanal é enviado às segundas-feiras, apenas aos usuários que o habilitaram."),
   new Paragraph({ spacing: { after: 120 }, children: [new TextRun({ text: "RN17 – Horas Faturáveis", bold: true, size: 22 })] }),
   p("Nem toda hora trabalhada é cobrada do cliente: horas de retrabalho, cortesia ou atividade interna são registradas como não faturáveis, entrando no total trabalhado mas ficando fora do valor a cobrar. O apontamento é sempre atribuído ao usuário autenticado, e não a um responsável informado manualmente, para que o registro de tempo seja rastreável a quem o lançou."),
   new Paragraph({ spacing: { after: 120 }, children: [new TextRun({ text: "RN18 – Despesas Reembolsáveis", bold: true, size: 22 })] }),
@@ -736,7 +736,7 @@ const prototipos = [
   ...fig(`${DIAG}/print_ics.png`, 1440, 900, "Exportação e assinatura da agenda", 480),
 
   h2("6.23. Notificações no Celular e no Navegador"),
-  p("Em Configurações › Notificações, cada aparelho pode ser inscrito para receber avisos na hora, mesmo com o sistema fechado: intimação nova, tarefa atribuída e lembretes de prazo e audiência (RF48). As mensagens são cifradas para o aparelho de destino (RNF17); no iPhone, o recurso exige o sistema instalado na tela de início."),
+  p("Em Configurações › Notificações, cada aparelho pode ser inscrito para receber avisos na hora, mesmo com o sistema fechado: intimação nova, tarefa atribuída e lembretes de prazo e audiência (RF48). As mensagens são cifradas para o aparelho de destino (RNF17); no iPhone, o recurso exige o sistema instalado na tela de início. Dentro do sistema, o sino funciona como central de alertas independente desses canais: reúne itens vencidos e os próximos sete dias, identifica prazo fatal, vencimento, horário e processo relacionado e permanece operável por teclado."),
   ...fig(`${DIAG}/print_push.png`, 1440, 900, "Ativação das notificações push", 480),
 
   h2("6.24. Documentação da API"),

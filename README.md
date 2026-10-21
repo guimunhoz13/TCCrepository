@@ -116,8 +116,12 @@ Celery no projeto):
 cd backend && python manage.py enviar_lembretes
 ```
 
-O comando é idempotente — cada aviso fica registrado em `NotificacaoEnviada`,
-então rodar duas vezes no mesmo dia não reenvia nada. Opções:
+O comando é idempotente por canal e etapa — cada aviso fica registrado em
+`NotificacaoEnviada`, então rodar duas vezes no mesmo dia não reenvia nada.
+E-mail e push são tentados de forma independente: a falha de um canal não
+impede o outro. Prazos fatais recebem reforços dois dias antes, um dia antes
+e no próprio dia; os avisos anteriores são substituídos no aparelho para não
+empilhar cartões repetidos. Opções:
 
 - `--dry-run`: mostra o que seria enviado, sem enviar e sem registrar.
 - `--resumo-semanal`: força o resumo fora da segunda-feira (útil para demonstrar).
@@ -125,7 +129,9 @@ então rodar duas vezes no mesmo dia não reenvia nada. Opções:
 O que ele envia depende das preferências de cada usuário (Configurações →
 Notificações): `lembrete_audiencia` e `antecedencia_audiencia` para
 compromissos, `lembrete_prazo` para prazos, e `resumo_semanal` para o
-resumo das segundas.
+resumo das segundas. Dentro do sistema, o sino continua funcionando mesmo
+sem esses canais: ele reúne itens vencidos e os próximos sete dias, com
+destaque textual para prazo fatal, vencimento e processo relacionado.
 
 Há também a consulta automática ao DataJud, que percorre os processos
 ativos, importa os andamentos novos e avisa quem optou por receber:

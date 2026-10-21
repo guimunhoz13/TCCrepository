@@ -49,16 +49,7 @@ import { badgeStatus, rotuloStatus } from "@/lib/statusProcesso";
 import { abrirDocumento } from "@/services/api";
 import GuiaContextual from "@/components/shell/GuiaContextual";
 import PrimeirosPassos from "@/components/dashboard/PrimeirosPassos";
-
-function formatarPrazo(dataISO) {
-  const data = new Date(dataISO);
-  const diffDias = Math.round(
-    (new Date(data).setHours(0, 0, 0, 0) - new Date().setHours(0, 0, 0, 0)) / 86400000
-  );
-  if (diffDias <= 0) return "Vence hoje";
-  if (diffDias === 1) return "Em 1 dia";
-  return `Em ${diffDias} dias`;
-}
+import { resumirAlertasAgenda, selecionarAlertasAgenda } from "@/lib/alertasAgenda";
 
 function formatarPrazoTarefa(prazo) {
   // "2026-09-21" montado com hora zero local: sem isso o fuso de Brasília
@@ -154,21 +145,34 @@ function DashboardContent() {
 
   const proximosCompromissos = useMemo(() => {
     return agenda
-      .filter((e) => new Date(e.data_evento).getTime() >= agora)
+      .filter(
+        (e) =>
+          e.tipo === "compromisso" &&
+          !e.cumprido &&
+          new Date(e.data_evento).getTime() >= agora
+      )
       .sort((a, b) => new Date(a.data_evento) - new Date(b.data_evento))
       .slice(0, 5);
   }, [agenda, agora]);
 
-  const prazosVencendo = useMemo(() => {
-    const limite = agora + 3 * 24 * 60 * 60 * 1000;
-    return agenda
-      .filter((e) => {
-        const t = new Date(e.data_evento).getTime();
-        return t >= agora && t <= limite;
-      })
-      .sort((a, b) => new Date(a.data_evento) - new Date(b.data_evento))
-      .slice(0, 5);
+  const alertasAgenda = useMemo(
+    () => selecionarAlertasAgenda(agenda, agora, { diasFuturos: 7, limite: 8 }),
+    [agenda, agora]
+  );
+
+  const prazosEmAtencao = useMemo(() => {
+    return selecionarAlertasAgenda(agenda, agora, {
+      diasFuturos: 3,
+      limite: 5,
+      somentePrazos: true,
+    });
   }, [agenda, agora]);
+
+  const alertasCriticos = useMemo(
+    () => alertasAgenda.filter((alerta) => alerta.fatal || alerta.vencido),
+    [alertasAgenda]
+  );
+  const resumoCritico = useMemo(() => resumirAlertasAgenda(alertasCriticos), [alertasCriticos]);
 
   // Já vêm do servidor como os cinco mais recentes.
   const ultimosDocumentos = documentos;
@@ -192,7 +196,7 @@ function DashboardContent() {
           }
           comBusca
           onSelectSearchResult={abrirResultadoBusca}
-          notificacoes={prazosVencendo}
+          notificacoes={alertasAgenda}
           onSelectNotificacao={() => openPanel(PANELS.AGENDA, "lista")}
           ajudaAssunto="dashboard"
         />
@@ -202,6 +206,32 @@ function DashboardContent() {
         <PrimeirosPassos stats={stats} carregando={carregando} />
 
         {erro && <div className="alert alert-error">{erro}</div>}
+
+        {alertasCriticos.length > 0 && (
+          <section className="alerta-agenda-critica" aria-labelledby="alerta-agenda-titulo">
+            <span className="alerta-agenda-icone" aria-hidden="true">
+              <AlertTriangle size={20} />
+            </span>
+            <div>
+              <strong id="alerta-agenda-titulo">Revise sua agenda agora</strong>
+              <p>
+                {resumoCritico.fatais > 0 &&
+                  `${resumoCritico.fatais} ${resumoCritico.fatais === 1 ? "prazo fatal" : "prazos fatais"}`}
+                {resumoCritico.fatais > 0 && resumoCritico.vencidos > 0 ? " e " : ""}
+                {resumoCritico.vencidos > 0 &&
+                  `${resumoCritico.vencidos} ${resumoCritico.vencidos === 1 ? "item vencido" : "itens vencidos"}`}
+                {" exigem conferência. Marque o que já foi cumprido para retirar o alerta."}
+              </p>
+            </div>
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              onClick={() => openPanel(PANELS.AGENDA, "lista")}
+            >
+              Revisar agenda
+            </button>
+          </section>
+        )}
 
         <div className="dashboard-toolbar">
           <div className="quick-actions-bar">
@@ -254,18 +284,19 @@ function DashboardContent() {
             dashboard de manhã. */}
         <div className="dashboard-grid dashboard-atencao">
           <div className="panel-card">
-            <h3>Prazos vencendo</h3>
-            {prazosVencendo.length === 0 ? (
-              <div className="empty-state">Nenhum prazo nos próximos 3 dias.</div>
+            <h3>Prazos em atenção</h3>
+            {prazosEmAtencao.length === 0 ? (
+              <div className="empty-state">
+                Nenhum prazo vencido nem previsto para os próximos 3 dias.
+              </div>
             ) : (
               <div className="list-widget">
-                {prazosVencendo.map((evento) => {
-                  const label = formatarPrazo(evento.data_evento);
-                  const hoje = label === "Vence hoje";
+                {prazosEmAtencao.map((evento) => {
+                  const urgente = evento.vencido || evento.fatal || evento.dias === 0;
                   return (
                     <div
                       key={evento.id}
-                      className={`compromisso-card ${hoje ? "urgente" : ""}`}
+                      className={`compromisso-card ${urgente ? "urgente" : ""}`}
                     >
                       <div>
                         <h4 style={{ marginBottom: 4 }}>{evento.titulo}</h4>
@@ -273,8 +304,13 @@ function DashboardContent() {
                           {evento.numero_processo && <span>Proc. {evento.numero_processo}</span>}
                         </div>
                       </div>
-                      <span className={`badge ${hoje ? "badge-danger" : "badge-warning"}`}>
-                        {hoje ? <AlertTriangle size={12} /> : <Clock size={12} />} {label}
+                      <span className="prazo-card-badges">
+                        {evento.fatal && <span className="badge badge-danger">Prazo fatal</span>}
+                        <span
+                          className={`badge ${evento.vencido ? "badge-danger" : "badge-warning"}`}
+                        >
+                          {urgente ? <AlertTriangle size={12} /> : <Clock size={12} />} {evento.quando}
+                        </span>
                       </span>
                     </div>
                   );
