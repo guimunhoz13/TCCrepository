@@ -211,7 +211,7 @@ export default function PrimeirosPassos({ stats, carregando }) {
                 <p>{passo.descricao}</p>
               </div>
               {passo.concluido ? (
-                <span className="badge badge-success">Concluído</span>
+                <span className="primeiro-passo-concluido"><Check size={14} /> Concluído</span>
               ) : (
                 <button
                   type="button"

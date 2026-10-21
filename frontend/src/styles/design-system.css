@@ -898,6 +898,15 @@ tbody tr:hover {
   color: var(--success);
 }
 
+.primeiro-passo-concluido {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--text-primary);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
 .onboarding-backdrop {
   z-index: 220;
 }
@@ -1007,7 +1016,8 @@ tbody tr:hover {
   }
 
   .primeiro-passo > .btn,
-  .primeiro-passo > .badge {
+  .primeiro-passo > .badge,
+  .primeiro-passo > .primeiro-passo-concluido {
     grid-column: 2;
     justify-self: start;
   }
