@@ -1,7 +1,7 @@
 /**
  * @jest-environment jsdom
  */
-import { render, waitFor } from "@testing-library/react";
+import { fireEvent, render, waitFor } from "@testing-library/react";
 import RotulosAutomaticos from "../RotulosAutomaticos";
 
 function montarTabela() {
@@ -91,5 +91,32 @@ describe("RotulosAutomaticos — formulários", () => {
       expect(document.querySelectorAll(".campo-obrigatorio")).toHaveLength(1)
     );
     expect(document.querySelector("label").textContent).toContain("obrigatório");
+  });
+
+  test("explica o erro junto ao campo e move o foco para ele", async () => {
+    document.body.innerHTML = `
+      <form><div class="form-field"><label>E-mail</label><input type="email" required /></div></form>`;
+    render(<RotulosAutomaticos />);
+
+    const campo = document.querySelector("input");
+    fireEvent.invalid(campo);
+
+    expect(document.querySelector(".field-error").textContent).toBe("Preencha o campo “E-mail”.");
+    expect(campo.getAttribute("aria-invalid")).toBe("true");
+    expect(campo.getAttribute("aria-describedby")).toContain("-erro");
+    await waitFor(() => expect(document.activeElement).toBe(campo));
+  });
+
+  test("remove a mensagem quando o valor fica válido", () => {
+    document.body.innerHTML = `
+      <form><div class="form-field"><label>E-mail</label><input type="email" required /></div></form>`;
+    render(<RotulosAutomaticos />);
+
+    const campo = document.querySelector("input");
+    fireEvent.invalid(campo);
+    fireEvent.input(campo, { target: { value: "ana@exemplo.com" } });
+
+    expect(document.querySelector(".field-error")).toBeNull();
+    expect(campo.hasAttribute("aria-invalid")).toBe(false);
   });
 });

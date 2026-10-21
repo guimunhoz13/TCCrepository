@@ -22,6 +22,71 @@ function rotularTabelas(raiz) {
 
 let proximoId = 1;
 
+function nomeDoCampo(campo) {
+  const grupo = campo.closest(".form-field");
+  const rotulo = grupo?.querySelector(":scope > label");
+  return (rotulo?.childNodes[0]?.textContent || rotulo?.textContent || "este campo").trim();
+}
+
+export function mensagemDeErroDoCampo(campo) {
+  const nome = nomeDoCampo(campo);
+  const validade = campo.validity;
+  if (validade.valueMissing) return `Preencha o campo “${nome}”.`;
+  if (validade.typeMismatch && campo.type === "email") {
+    return "Digite um e-mail válido, como nome@exemplo.com.";
+  }
+  if (validade.tooShort) {
+    return `Digite pelo menos ${campo.minLength} caracteres.`;
+  }
+  if (validade.tooLong) {
+    return `Digite no máximo ${campo.maxLength} caracteres.`;
+  }
+  if (validade.rangeUnderflow) return `Informe um valor igual ou maior que ${campo.min}.`;
+  if (validade.rangeOverflow) return `Informe um valor igual ou menor que ${campo.max}.`;
+  if (validade.stepMismatch) return "Informe um valor permitido para este campo.";
+  if (validade.patternMismatch) return campo.title || "Confira o formato informado.";
+  return "Confira o valor informado.";
+}
+
+function limparErroDoCampo(campo) {
+  const grupo = campo.closest(".form-field");
+  const erro = grupo?.querySelector(":scope > .field-error");
+  if (erro) erro.remove();
+  grupo?.classList.remove("form-field-invalid");
+  campo.removeAttribute("aria-invalid");
+  if (erro?.id) {
+    const descricoes = (campo.getAttribute("aria-describedby") || "")
+      .split(/\s+/)
+      .filter((id) => id && id !== erro.id);
+    if (descricoes.length) campo.setAttribute("aria-describedby", descricoes.join(" "));
+    else campo.removeAttribute("aria-describedby");
+  }
+}
+
+function mostrarErroDoCampo(campo) {
+  const grupo = campo.closest(".form-field");
+  if (!grupo) return;
+  if (!campo.id) campo.id = `campo-${proximoId++}`;
+
+  let erro = grupo.querySelector(":scope > .field-error");
+  if (!erro) {
+    erro = document.createElement("p");
+    erro.className = "field-error";
+    erro.id = `${campo.id}-erro`;
+    erro.setAttribute("role", "alert");
+    grupo.appendChild(erro);
+  }
+  erro.textContent = mensagemDeErroDoCampo(campo);
+  grupo.classList.add("form-field-invalid");
+  campo.setAttribute("aria-invalid", "true");
+
+  const descricoes = new Set(
+    (campo.getAttribute("aria-describedby") || "").split(/\s+/).filter(Boolean)
+  );
+  descricoes.add(erro.id);
+  campo.setAttribute("aria-describedby", [...descricoes].join(" "));
+}
+
 function vincularRotulosDeCampo(raiz) {
   raiz.querySelectorAll(".form-field > label:not([for])").forEach((rotulo) => {
     // Rótulo que já envolve o próprio campo está associado.
@@ -95,7 +160,41 @@ export default function RotulosAutomaticos() {
     aplicar();
     const observador = new MutationObserver(aplicar);
     observador.observe(document.body, { childList: true, subtree: true });
-    return () => observador.disconnect();
+
+    function aoCampoInvalido(evento) {
+      const campo = evento.target;
+      if (!(campo instanceof HTMLInputElement || campo instanceof HTMLSelectElement || campo instanceof HTMLTextAreaElement)) return;
+      evento.preventDefault();
+      mostrarErroDoCampo(campo);
+
+      const formulario = campo.form;
+      if (formulario && !formulario.dataset.focoInvalidoAgendado) {
+        formulario.dataset.focoInvalidoAgendado = "true";
+        setTimeout(() => {
+          const primeiro = formulario.querySelector('[aria-invalid="true"]');
+          primeiro?.focus();
+          primeiro?.scrollIntoView?.({ behavior: "smooth", block: "center" });
+          delete formulario.dataset.focoInvalidoAgendado;
+        }, 0);
+      }
+    }
+
+    function aoCorrigirCampo(evento) {
+      const campo = evento.target;
+      if (!campo?.matches?.("input, select, textarea") || campo.getAttribute("aria-invalid") !== "true") return;
+      if (campo.validity.valid) limparErroDoCampo(campo);
+      else mostrarErroDoCampo(campo);
+    }
+
+    document.addEventListener("invalid", aoCampoInvalido, true);
+    document.addEventListener("input", aoCorrigirCampo, true);
+    document.addEventListener("change", aoCorrigirCampo, true);
+    return () => {
+      observador.disconnect();
+      document.removeEventListener("invalid", aoCampoInvalido, true);
+      document.removeEventListener("input", aoCorrigirCampo, true);
+      document.removeEventListener("change", aoCorrigirCampo, true);
+    };
   }, []);
 
   return null;

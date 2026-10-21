@@ -53,6 +53,11 @@ export const SECOES_AJUDA = [
     resumo: "A tela de abertura responde o que exige atenção hoje.",
     topicos: [
       {
+        titulo: "Primeiros passos",
+        texto:
+          "Enquanto a configuração estiver incompleta, um checklist mostra o que falta e abre diretamente o formulário certo. O progresso usa os dados reais do escritório: cadastrar um cliente, processo, compromisso ou documento conclui a etapa automaticamente, inclusive se o cadastro foi feito em outro aparelho.",
+      },
+      {
         titulo: "Cartões de contagem",
         texto:
           "Clientes, processos, audiências e documentos cadastrados, com quantos entraram na última semana. O botão “Ver todos” abre o painel correspondente.",

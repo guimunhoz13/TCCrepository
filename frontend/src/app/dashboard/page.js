@@ -48,6 +48,7 @@ import { usePermissoes } from "@/hooks/usePermissoes";
 import { badgeStatus, rotuloStatus } from "@/lib/statusProcesso";
 import { abrirDocumento } from "@/services/api";
 import GuiaContextual from "@/components/shell/GuiaContextual";
+import PrimeirosPassos from "@/components/dashboard/PrimeirosPassos";
 
 function formatarPrazo(dataISO) {
   const data = new Date(dataISO);
@@ -197,6 +198,8 @@ function DashboardContent() {
         />
 
         <GuiaContextual assunto="dashboard" titulo="Comece por aqui" />
+
+        <PrimeirosPassos stats={stats} carregando={carregando} />
 
         {erro && <div className="alert alert-error">{erro}</div>}
 
