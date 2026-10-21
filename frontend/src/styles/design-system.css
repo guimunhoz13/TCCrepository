@@ -891,7 +891,7 @@ tbody tr:hover {
 }
 
 .primeiro-passo.concluido {
-  opacity: 0.78;
+  background: var(--success-soft);
 }
 
 .primeiro-passo.concluido .primeiro-passo-status {
