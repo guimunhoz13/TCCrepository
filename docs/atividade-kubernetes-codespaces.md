@@ -1,14 +1,18 @@
-# Atividade: Kubernetes com o LexNexo no GitHub Codespaces
+# Atividade: Kubernetes com o LexNexo — execução local sem custo
 
 Esta atividade implanta somente uma cópia estática do frontend do LexNexo em
 um cluster Minikube temporário. Ela não usa o backend Django, o PostgreSQL do
 Supabase, arquivos `.env`, chaves de API ou dados reais. Os recursos ficam no
 namespace `lexnexo-lab` e podem ser apagados integralmente ao final.
 
-## 1. Criar o Codespace sem alterar a branch principal
+> **Opção adotada:** a execução foi feita localmente porque o GitHub informou
+> que o uso do Codespaces seria cobrado do proprietário da conta. Nenhum
+> Codespace foi criado ou iniciado. Docker, Minikube e Kubernetes foram usados
+> somente no computador local, sem serviço de nuvem pago.
 
-No GitHub, abra **Code → Codespaces**, selecione a branch
-`codex/kubernetes-lab` e crie o Codespace. No terminal, confirme a branch:
+## 1. Usar a branch isolada sem alterar a branch principal
+
+Abra um terminal na worktree da branch `codex/kubernetes-lab` e confirme:
 
 ```bash
 git branch --show-current
@@ -18,37 +22,41 @@ git status --short
 O primeiro comando deve mostrar `codex/kubernetes-lab`. Não prossiga se ele
 mostrar `main`.
 
-## 2. Conferir ou instalar `kubectl` e Minikube
+## 2. Conferir Docker, `kubectl` e Minikube
 
-Primeiro confira se as ferramentas já existem:
+Primeiro confira se as ferramentas já existem no computador:
 
 ```bash
 kubectl version --client
 minikube version
+docker version
 ```
 
-Se alguma delas não existir, instale-a no Codespace:
+Se `kubectl` ou Minikube não existirem, use os binários oficiais. Na execução
+validada, eles foram mantidos em `~/.cache/lexnexo-k8s-lab/bin`, sem instalação
+global e sem cobrança:
 
 ```bash
 curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
-rm kubectl
+install -m 0755 kubectl ~/.cache/lexnexo-k8s-lab/bin/kubectl
 
 curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
-sudo install -o root -g root -m 0755 minikube-linux-amd64 /usr/local/bin/minikube
-rm minikube-linux-amd64
+install -m 0755 minikube-linux-amd64 ~/.cache/lexnexo-k8s-lab/bin/minikube
+
+export PATH="$HOME/.cache/lexnexo-k8s-lab/bin:$PATH"
 ```
 
 ## 3. Iniciar e conferir o cluster temporário
 
 ```bash
-minikube start --driver=docker --memory=2048 --cpus=2
+minikube start -p lexnexo-lab-local --driver=docker --memory=2200mb --cpus=2
 kubectl config current-context
 kubectl get nodes -o wide
 kubectl cluster-info
 ```
 
-O contexto mostrado por `kubectl config current-context` deve ser `minikube`.
+O contexto mostrado por `kubectl config current-context` deve ser
+`lexnexo-lab-local`.
 Não prossiga se aparecer outro contexto.
 
 ## 4. Construir e carregar a imagem do LexNexo
@@ -60,8 +68,8 @@ O script apenas extrai o contexto estático preservado em
 ```bash
 bash scripts/preparar-compose.sh
 docker build -t lexnexo-frontend:v1 .compose-build
-minikube image load lexnexo-frontend:v1
-minikube image ls | grep lexnexo-frontend
+minikube -p lexnexo-lab-local image load lexnexo-frontend:v1
+minikube -p lexnexo-lab-local image ls | grep lexnexo-frontend
 ```
 
 ## 5. Criar o Deployment e o Service
@@ -77,7 +85,7 @@ kubectl -n lexnexo-lab describe deployment lexnexo-frontend
 O resultado esperado é um Deployment com `2/2` réplicas disponíveis, dois Pods
 com estado `Running` e o Service com NodePort `30080`.
 
-## 6. Acessar no Codespaces
+## 6. Acessar a aplicação localmente
 
 Mantenha este comando em execução em um terminal:
 
@@ -85,8 +93,8 @@ Mantenha este comando em execução em um terminal:
 kubectl -n lexnexo-lab port-forward service/lexnexo-frontend-service 8080:80
 ```
 
-Na aba **Ports** do Codespaces, abra a porta `8080`. Em outro terminal, registre
-uma verificação objetiva:
+Abra `http://localhost:8080` no navegador. Em outro terminal, registre uma
+verificação objetiva:
 
 ```bash
 curl -fsS -o /dev/null -w 'LexNexo GET /: HTTP %{http_code}\n' http://127.0.0.1:8080/
@@ -116,7 +124,7 @@ printf 'LexNexo Kubernetes v2\n' > .compose-build/k8s-version.txt
 cp .compose-build/Dockerfile .compose-build/Dockerfile.v2
 printf '\nCOPY k8s-version.txt /usr/share/nginx/html/k8s-version.txt\n' >> .compose-build/Dockerfile.v2
 docker build -f .compose-build/Dockerfile.v2 -t lexnexo-frontend:v2 .compose-build
-minikube image load lexnexo-frontend:v2
+minikube -p lexnexo-lab-local image load lexnexo-frontend:v2
 
 kubectl -n lexnexo-lab set image deployment/lexnexo-frontend frontend=lexnexo-frontend:v2
 kubectl -n lexnexo-lab rollout status deployment/lexnexo-frontend
@@ -151,12 +159,14 @@ Interrompa o `port-forward` com `Ctrl+C` e execute:
 kubectl delete -f k8s/service.yaml
 kubectl delete -f k8s/deployment.yaml
 kubectl get namespace lexnexo-lab
-minikube stop
-minikube delete
+minikube -p lexnexo-lab-local stop
+# Opcional, para também remover o cluster e o cache dele:
+minikube -p lexnexo-lab-local delete
 ```
 
-É esperado que a consulta ao namespace retorne `NotFound`. A exclusão do
-Minikube remove os containers e volumes temporários do laboratório.
+É esperado que a consulta ao namespace retorne `NotFound`. O comando `stop`
+desliga o cluster e mantém o cache para uma repetição mais rápida. O comando
+opcional `delete` remove os containers e volumes temporários do laboratório.
 
 ## Prints recomendados para o AVA
 
