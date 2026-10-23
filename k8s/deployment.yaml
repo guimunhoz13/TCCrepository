@@ -1,0 +1,66 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: lexnexo-lab
+  labels:
+    app.kubernetes.io/name: lexnexo
+    app.kubernetes.io/part-of: lexnexo-kubernetes-lab
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lexnexo-frontend
+  namespace: lexnexo-lab
+  labels:
+    app.kubernetes.io/name: lexnexo-frontend
+    app.kubernetes.io/part-of: lexnexo-kubernetes-lab
+spec:
+  replicas: 2
+  revisionHistoryLimit: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app: lexnexo-frontend
+  template:
+    metadata:
+      labels:
+        app: lexnexo-frontend
+        app.kubernetes.io/name: lexnexo-frontend
+        app.kubernetes.io/part-of: lexnexo-kubernetes-lab
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        - name: frontend
+          image: lexnexo-frontend:v1
+          imagePullPolicy: Never
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+          resources:
+            requests:
+              memory: 64Mi
+              cpu: 250m
+            limits:
+              memory: 128Mi
+              cpu: 500m
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 2
+            periodSeconds: 5
+            timeoutSeconds: 2
+            failureThreshold: 6
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 3
