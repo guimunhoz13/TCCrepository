@@ -7,13 +7,16 @@ namespace `lexnexo-lab` e podem ser apagados integralmente ao final.
 
 ## 1. Criar o Codespace sem alterar a branch principal
 
-No GitHub, abra **Code → Codespaces → New with options**, selecione a branch da
-atividade e crie o Codespace. No terminal, confirme a branch:
+No GitHub, abra **Code → Codespaces**, selecione a branch
+`codex/kubernetes-lab` e crie o Codespace. No terminal, confirme a branch:
 
 ```bash
 git branch --show-current
 git status --short
 ```
+
+O primeiro comando deve mostrar `codex/kubernetes-lab`. Não prossiga se ele
+mostrar `main`.
 
 ## 2. Conferir ou instalar `kubectl` e Minikube
 
