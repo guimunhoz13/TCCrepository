@@ -5,16 +5,7 @@ import { useRouter } from "next/navigation";
 import AppSidebar from "@/components/shell/AppSidebar";
 import TopBar from "@/components/shell/TopBar";
 import AssistenteChat from "@/components/assistente/AssistenteChat";
-import ClientesPanel from "@/components/panels/ClientesPanel";
-import ProcessosPanel from "@/components/panels/ProcessosPanel";
-import AgendaPanel from "@/components/panels/AgendaPanel";
-import DocumentosPanel from "@/components/panels/DocumentosPanel";
-import ContatoPanel from "@/components/panels/ContatoPanel";
-import ConfigPanel from "@/components/panels/ConfigPanel";
-import AdvogadosPanel from "@/components/panels/AdvogadosPanel";
-import PlanosPanel from "@/components/panels/PlanosPanel";
 import { PanelProvider } from "@/contexts/PanelContext";
-import { DashboardDataProvider } from "@/contexts/DashboardDataContext";
 import { PreferencesProvider } from "@/contexts/PreferencesContext";
 import GuiaContextual from "@/components/shell/GuiaContextual";
 
@@ -44,14 +35,6 @@ function AssistenteContent() {
         <AssistenteChat />
       </main>
 
-      <ClientesPanel />
-      <ProcessosPanel />
-      <AgendaPanel />
-      <DocumentosPanel />
-      <ContatoPanel />
-      <ConfigPanel />
-      <AdvogadosPanel />
-      <PlanosPanel />
     </div>
   );
 }
@@ -59,11 +42,9 @@ function AssistenteContent() {
 export default function AssistenteIAPage() {
   return (
     <PreferencesProvider>
-      <DashboardDataProvider>
-        <PanelProvider>
-          <AssistenteContent />
-        </PanelProvider>
-      </DashboardDataProvider>
+      <PanelProvider>
+        <AssistenteContent />
+      </PanelProvider>
     </PreferencesProvider>
   );
 }

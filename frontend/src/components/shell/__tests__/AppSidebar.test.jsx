@@ -61,6 +61,7 @@ describe("AppSidebar fora da dashboard", () => {
     render(<AppSidebar />);
 
     expect(mockPrefetch).toHaveBeenCalledWith("/dashboard");
+    expect(mockPrefetch).toHaveBeenCalledWith("/assistente-ia");
     fireEvent.click(screen.getAllByRole("button", { name: "nav_agenda" })[0]);
 
     expect(mockClosePanel).toHaveBeenCalled();

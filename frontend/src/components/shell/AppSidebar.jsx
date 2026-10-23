@@ -140,6 +140,10 @@ export default function AppSidebar() {
   // Next.js baixa o código da rota.
   useEffect(() => {
     if (pathname !== "/dashboard") router.prefetch("/dashboard");
+    if (pathname !== "/dashboard/compromissos") {
+      router.prefetch("/dashboard/compromissos");
+    }
+    if (pathname !== "/assistente-ia") router.prefetch("/assistente-ia");
   }, [pathname, router]);
 
   function estaAtivo({ id, href }) {
