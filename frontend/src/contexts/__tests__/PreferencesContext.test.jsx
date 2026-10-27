@@ -1,8 +1,9 @@
+/** @jest-environment jsdom */
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { PreferencesProvider, usePreferences } from "../PreferencesContext";
-import { getConfiguracoes, updatePreferencias } from "@/services/api";
+import { getConfiguracoes, updatePreferencias } from "../../services/api";
 
-jest.mock("@/services/api", () => ({ getConfiguracoes: jest.fn(), updatePreferencias: jest.fn() }));
+jest.mock("../../services/api", () => ({ getConfiguracoes: jest.fn(), updatePreferencias: jest.fn() }));
 
 function Controle() {
   const { densidade, atualizarPreferencias } = usePreferences();
@@ -15,8 +16,8 @@ test("consulta inicial atrasada não reverte uma preferência escolhida pelo usu
   updatePreferencias.mockResolvedValue({ preferencias: { densidade_tabela: "compact" } });
   render(<PreferencesProvider><Controle /></PreferencesProvider>);
   fireEvent.click(screen.getByRole("button"));
-  await waitFor(() => expect(screen.getByRole("button")).toHaveTextContent("compact"));
+  await waitFor(() => expect(screen.getByRole("button").textContent).toBe("compact"));
   await act(async () => concluir({ preferencias: { densidade_tabela: "comfortable" } }));
-  expect(screen.getByRole("button")).toHaveTextContent("compact");
-  expect(document.documentElement).toHaveAttribute("data-density", "compact");
+  expect(screen.getByRole("button").textContent).toBe("compact");
+  expect(document.documentElement.getAttribute("data-density")).toBe("compact");
 });
