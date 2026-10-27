@@ -276,6 +276,7 @@ entity intimacao {
   # advogado_id : INT <<FK, NULL>>
   # processo_id : INT <<FK, NULL>>
   # evento_agenda_id : INT <<FK, NULL>>
+  # conferido_por_id : INT <<FK, NULL>>
   identificador_externo : VARCHAR(120)
   numero_processo : VARCHAR(30)
   tribunal : VARCHAR(20)
@@ -290,6 +291,8 @@ entity intimacao {
   prazo_estimado : BOOLEAN
   prazo_final : DATE
   lida : BOOLEAN
+  conferido_em : TIMESTAMP
+  observacao_conferencia : TEXT
 }
 
 entity inscricao_push {
@@ -352,6 +355,7 @@ escritorio ||--o{ intimacao
 advogado |o--o{ intimacao
 processo |o--o{ intimacao
 intimacao |o--o| agenda
+usuario |o--o{ intimacao : confere
 usuario ||--o{ inscricao_push
 escritorio ||--|| configuracao_escritorio
 
