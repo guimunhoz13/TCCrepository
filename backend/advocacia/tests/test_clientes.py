@@ -169,6 +169,18 @@ class ClientesAPITestCase(APITestCase):
         self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("cnpj", resposta.data)
 
+    def test_cnpj_alfanumerico_e_normalizado_e_nao_duplica_com_outra_mascara(self, _mock_mx):
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {_gerar_token_de_acesso(self.admin_a)}")
+        dados = {"tipo_pessoa": "juridica", "nome": "Empresa Nova", "cnpj": "12.abc.345/01de-35",
+                 "email": "empresa@teste.com", "telefone": "11977776666", "endereco": "Rua Nova, 10"}
+        resposta = self.client.post("/api/clientes/", dados, format="json")
+        self.assertEqual(resposta.status_code, status.HTTP_201_CREATED, resposta.data)
+        self.assertEqual(resposta.data["cnpj"], "12ABC34501DE35")
+        dados["cnpj"] = "12ABC34501DE35"
+        repetida = self.client.post("/api/clientes/", dados, format="json")
+        self.assertEqual(repetida.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("cnpj", repetida.data)
+
     def test_dois_clientes_pessoa_juridica_sem_cpf_nao_colidem(self, _mock_mx):
         """cpf="" para dois clientes PJ no mesmo escritório não pode ser
         tratado como CPF duplicado — só o unique_together antigo faria isso,
@@ -274,3 +286,23 @@ class LgpdClienteAPITestCase(_EquipeDoEscritorio, APITestCase):
 
         de_novo = self.client.post(f"/api/clientes/{self.cliente.id}/anonimizar/")
         self.assertEqual(de_novo.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_anonimizar_remove_valores_pessoais_da_auditoria_sem_apagar_a_trilha(self):
+        registro = RegistroAuditoria.objects.create(
+            escritorio=self.escritorio, acao="edicao", modelo="Cliente", objeto_id=self.cliente.id,
+            alteracoes=[{"campo": "telefone", "anterior": "11977776666", "novo": "11988887777"},
+                        {"campo": "ativo", "anterior": False, "novo": True}],
+        )
+        referencia = RegistroAuditoria.objects.create(
+            escritorio=self.escritorio, acao="edicao", modelo="Processo", objeto_id=self.processo.id,
+            alteracoes=[{"campo": "cliente", "anterior": None,
+                         "novo": {"id": self.cliente.id, "nome": self.cliente.nome}}],
+        )
+        self._como("advogado")
+        resposta = self.client.post(f"/api/clientes/{self.cliente.id}/anonimizar/")
+        self.assertEqual(resposta.status_code, status.HTTP_200_OK)
+        registro.refresh_from_db()
+        referencia.refresh_from_db()
+        self.assertNotIn("11988887777", json.dumps(registro.alteracoes))
+        self.assertTrue(registro.alteracoes[1]["novo"])
+        self.assertIn("anonimizado", referencia.alteracoes[0]["novo"]["nome"])

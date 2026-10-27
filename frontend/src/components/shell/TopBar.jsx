@@ -57,9 +57,7 @@ export default function TopBar({
       <div className="topbar-title">
         {showGreeting && (
           <div className="greeting-badge">
-            {usuario?.tipo_usuario === "admin"
-              ? t("perfil_admin")
-              : t("perfil_advogado")}
+            {usuario?.tipo_usuario ? t(`perfil_${usuario.tipo_usuario}`) : "Equipe"}
           </div>
         )}
 

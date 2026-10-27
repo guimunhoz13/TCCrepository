@@ -14,19 +14,22 @@ export default function GuiaContextual({ assunto, titulo = "Para que serve esta 
   const destaques = secao.topicos.slice(0, 3).map((topico) => topico.titulo);
 
   return (
-    <aside className="guia-contextual" aria-label={`Orientação sobre ${secao.titulo}`}>
+    <details className="guia-contextual guia-progressivo">
+      <summary>
       <span className="guia-contextual-icone" aria-hidden="true">
         <Sparkles size={17} />
       </span>
-      <div className="guia-contextual-texto">
+      <span className="guia-contextual-texto">
         <strong>{titulo}</strong>
-        <p>{secao.resumo}</p>
+        <span className="guia-contextual-resumo">{secao.resumo}</span>
+      </span>
+      </summary>
+      <div className="guia-contextual-detalhes">
         {destaques.length > 0 && (
           <p className="guia-contextual-destaques">
             Aqui você encontra: {destaques.join(" · ")}.
           </p>
         )}
-      </div>
       <button
         type="button"
         className="btn btn-secondary btn-sm guia-contextual-botao"
@@ -35,6 +38,7 @@ export default function GuiaContextual({ assunto, titulo = "Para que serve esta 
         <CircleHelp size={16} />
         Ver instruções e exemplos
       </button>
-    </aside>
+      </div>
+    </details>
   );
 }

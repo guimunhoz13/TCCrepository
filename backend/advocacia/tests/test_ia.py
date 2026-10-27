@@ -104,7 +104,7 @@ class AssistenteIAAPITestCase(APITestCase):
         self.assertIn("não encontrado", contexto)
 
     @patch("openai.OpenAI")
-    def test_cliente_pessoa_juridica_vai_com_cnpj_no_contexto(self, openai):
+    def test_contexto_do_cliente_nao_envia_documentos_ou_contatos(self, openai):
         criar = openai.return_value.chat.completions.create
         criar.return_value = _resposta_openai("ok")
         empresa = Cliente.objects.create(
@@ -112,13 +112,28 @@ class AssistenteIAAPITestCase(APITestCase):
             nome="Empresa X",
             tipo_pessoa="juridica",
             cnpj="11222333000144",
+            email="privado@empresa.com",
+            telefone="11988887777",
+            endereco="Rua Reservada, 123",
         )
 
         self._perguntar(contexto={"cliente_id": empresa.id})
 
         contexto = criar.call_args.kwargs["messages"][0]["content"]
-        self.assertIn("CNPJ: 11222333000144", contexto)
-        self.assertNotIn("CPF:", contexto)
+        self.assertIn("Primeiro nome: Empresa", contexto)
+        for privado in ("11222333000144", "privado@empresa.com", "11988887777", "Rua Reservada, 123"):
+            self.assertNotIn(privado, contexto)
+
+    @patch("openai.OpenAI")
+    def test_mensagem_e_historico_minimizam_identificadores(self, openai):
+        criar = openai.return_value.chat.completions.create
+        criar.return_value = _resposta_openai("ok")
+        self._perguntar(mensagem="CPF 123.456.789-00 e contato privado@exemplo.com",
+                       historico=[{"role": "user", "content": "Telefone (11) 98888-7777"}])
+        mensagens = str(criar.call_args.kwargs["messages"])
+        for privado in ("123.456.789-00", "privado@exemplo.com", "98888-7777"):
+            self.assertNotIn(privado, mensagens)
+        self.assertIn("omitido", mensagens)
 
     @patch("openai.OpenAI")
     def test_limite_proprio_de_chamadas_por_minuto(self, openai):

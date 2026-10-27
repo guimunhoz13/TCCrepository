@@ -53,6 +53,7 @@ export function DashboardDataProvider({ children }) {
         // Muda a cada resposta nova: a dashboard usa para piscar o
         // indicador de "dados em tempo real".
         versaoDados: dados,
+        atualizadoEm: recurso.atualizadoEm,
         refresh,
       }}
     >

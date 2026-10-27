@@ -11,8 +11,10 @@ jest.mock("../../../services/api", () => ({
   getIntimacoes: jest.fn(),
   buscarIntimacoesNoDjen: jest.fn(),
   marcarIntimacaoComoLida: jest.fn(),
+  conferirPrazoIntimacao: jest.fn(),
   normalizarLista: (dados) => (Array.isArray(dados) ? dados : dados?.results || []),
 }));
+jest.mock("../../../hooks/useUsuarioLogado", () => ({ useUsuarioLogado: () => ({ tipo_usuario: "admin" }) }));
 
 const LONGO = "Vistos. ".repeat(60) + "Manifeste-se no prazo de 15 dias.";
 const INTIMACAO = {

@@ -1212,6 +1212,11 @@ class Intimacao(models.Model):
     )
 
     lida = models.BooleanField(default=False)
+    conferido_em = models.DateTimeField(null=True, blank=True)
+    conferido_por = models.ForeignKey(
+        Usuario, on_delete=models.SET_NULL, null=True, blank=True, related_name="intimacoes_conferidas"
+    )
+    observacao_conferencia = models.TextField(blank=True, default="")
     criado_em = models.DateTimeField(auto_now_add=True)
 
     class Meta:

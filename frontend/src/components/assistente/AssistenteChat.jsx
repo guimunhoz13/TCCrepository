@@ -6,8 +6,8 @@ import {
   enviarMensagemIA,
   getClientes,
   getProcessos,
-  normalizarLista,
 } from "@/services/api";
+import SeletorDeRecurso from "@/components/ui/SeletorDeRecurso";
 
 const MENSAGEM_INICIAL = {
   id: "welcome",
@@ -21,39 +21,18 @@ export default function AssistenteChat() {
   const [texto, setTexto] = useState("");
   const [carregando, setCarregando] = useState(false);
   const [erro, setErro] = useState("");
-  const [clientes, setClientes] = useState([]);
-  const [processos, setProcessos] = useState([]);
-  const [clienteId, setClienteId] = useState("");
-  const [processoId, setProcessoId] = useState("");
+  const [cliente, setCliente] = useState(null);
+  const [processo, setProcesso] = useState(null);
+  const clienteId = cliente?.id || "";
+  const processoId = processo?.id || "";
   const mensagensRef = useRef(null);
   const inputRef = useRef(null);
-
-  useEffect(() => {
-    async function carregarContexto() {
-      try {
-        const [dadosClientes, dadosProcessos] = await Promise.all([
-          getClientes(),
-          getProcessos(),
-        ]);
-        setClientes(normalizarLista(dadosClientes));
-        setProcessos(normalizarLista(dadosProcessos));
-      } catch {
-        /* contexto opcional */
-      }
-    }
-
-    carregarContexto();
-  }, []);
 
   useEffect(() => {
     if (mensagensRef.current) {
       mensagensRef.current.scrollTop = mensagensRef.current.scrollHeight;
     }
   }, [mensagens, carregando]);
-
-  const processosFiltrados = clienteId
-    ? processos.filter((p) => String(p.cliente) === String(clienteId))
-    : processos;
 
   function montarHistorico() {
     return mensagens
@@ -125,42 +104,18 @@ export default function AssistenteChat() {
         <p>Auxiliar jurídico do escritório — powered by OpenAI</p>
         <p className="chat-aviso-revisao">
           Use como apoio: confira nomes, valores, prazos e fundamentos antes de usar a resposta.
+          Evite inserir documentos, endereços ou contatos pessoais na conversa.
         </p>
       </div>
 
       <div className="chat-context-bar">
-        <label className="chat-context-field">
-          <span>Cliente em foco (opcional)</span>
-          <select
-            value={clienteId}
-            onChange={(e) => {
-              setClienteId(e.target.value);
-              setProcessoId("");
-            }}
-          >
-            <option value="">Todos os clientes</option>
-            {clientes.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.nome}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label className="chat-context-field">
-          <span>Processo em foco (opcional)</span>
-          <select
-            value={processoId}
-            onChange={(e) => setProcessoId(e.target.value)}
-          >
-            <option value="">Todos os processos</option>
-            {processosFiltrados.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.numero_processo} — {p.titulo}
-              </option>
-            ))}
-          </select>
-        </label>
+        <SeletorDeRecurso rotulo="Cliente" buscar={getClientes} valor={clienteId}
+          selecionado={cliente} onChange={(item) => { setCliente(item); setProcesso(null); }}
+          descrever={(item) => item.nome} />
+        <SeletorDeRecurso key={clienteId || "todos"} rotulo="Processo"
+          buscar={(params) => getProcessos({ ...params, cliente: clienteId })}
+          chaves={[clienteId]} valor={processoId} selecionado={processo} onChange={setProcesso}
+          descrever={(item) => `${item.numero_processo} — ${item.titulo}`} />
       </div>
 
       {erro && (

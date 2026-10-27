@@ -1,5 +1,5 @@
 import urllib.error
-from datetime import date
+from datetime import date, timedelta
 from io import StringIO
 from unittest.mock import patch
 
@@ -10,7 +10,7 @@ from rest_framework.test import APITestCase
 
 from ..djen import detectar_prazo, interpretar_item, separar_oab
 from ..feriados import prazo_de_publicacao
-from ..models import Advogado, Agenda, Intimacao
+from ..models import Advogado, Agenda, Intimacao, RegistroAuditoria
 from .base import _criar_usuario, _EquipeDoEscritorio
 
 NUMERO = "0001234-56.2026.8.26.0100"
@@ -131,6 +131,61 @@ class IntimacoesAPITestCase(_EquipeDoEscritorio, APITestCase):
         self.assertEqual(resposta.status_code, status.HTTP_200_OK)
         self.assertNotEqual(resposta.data["texto"], "x")
         self.assertEqual(len(self.client.get("/api/intimacoes/", {"lida": "false"}).data["results"]), 1)
+
+    def test_leitura_nao_confirma_e_conferencia_registra_autor_e_ajusta_agenda(self, api):
+        api.return_value = {"items": [_item()]}
+        self._como("advogado")
+        self.client.post("/api/intimacoes/buscar/")
+        intimacao = Intimacao.objects.get()
+        lida = self.client.patch(f"/api/intimacoes/{intimacao.pk}/", {"lida": True}, format="json")
+        self.assertEqual(lida.data["conferencia_status"], "a_conferir")
+        nova_data = intimacao.prazo_final + timedelta(days=1)
+        dados = {"prazo_final": str(nova_data), "prazo_referencia": str(intimacao.prazo_final),
+                 "observacao": "Publicação e suspensão de expediente conferidas.", "confirmacao": True}
+        resposta = self.client.post(f"/api/intimacoes/{intimacao.pk}/conferir/", dados, format="json")
+        self.assertEqual(resposta.status_code, status.HTTP_200_OK, resposta.data)
+        self.assertEqual(resposta.data["conferencia_status"], "confirmado")
+        self.assertIsNotNone(resposta.data["conferido_por"])
+        intimacao.refresh_from_db()
+        self.assertEqual(intimacao.evento_agenda.data_evento.date(), nova_data)
+        self.assertTrue(RegistroAuditoria.objects.filter(modelo="Intimacao", objeto_id=intimacao.pk, acao="edicao").exists())
+
+        evento = intimacao.evento_agenda
+        alteracao = self.client.patch(f"/api/agenda/{evento.pk}/", {"data_evento": "2026-11-10T18:00:00-03:00"}, format="json")
+        self.assertEqual(alteracao.status_code, status.HTTP_200_OK, alteracao.data)
+        intimacao.refresh_from_db()
+        self.assertIsNone(intimacao.conferido_em)
+        self.assertEqual(intimacao.prazo_final, date(2026, 11, 10))
+
+    def test_estagiario_nao_confirma_e_dados_desatualizados_nao_sobrescrevem_prazo(self, api):
+        api.return_value = {"items": [_item()]}
+        self._como("admin")
+        self.client.post("/api/intimacoes/buscar/")
+        intimacao = Intimacao.objects.get()
+        dados = {"prazo_final": str(intimacao.prazo_final), "prazo_referencia": "2000-01-01",
+                 "observacao": "Publicação conferida pelo profissional.", "confirmacao": True}
+        self._como("estagiario")
+        resposta = self.client.post(f"/api/intimacoes/{intimacao.pk}/conferir/", dados, format="json")
+        self.assertEqual(resposta.status_code, status.HTTP_403_FORBIDDEN)
+        self._como("admin")
+        resposta = self.client.post(f"/api/intimacoes/{intimacao.pk}/conferir/", dados, format="json")
+        self.assertEqual(resposta.status_code, 409)
+        intimacao.refresh_from_db()
+        self.assertIsNone(intimacao.conferido_em)
+
+    def test_confere_publicacao_que_ainda_nao_tinha_data_final(self, api):
+        api.return_value = {"items": [_item()]}
+        self._como("admin")
+        self.client.post("/api/intimacoes/buscar/")
+        intimacao = Intimacao.objects.get()
+        intimacao.prazo_final = None
+        intimacao.save(update_fields=["prazo_final"])
+        resposta = self.client.post(f"/api/intimacoes/{intimacao.pk}/conferir/", {
+            "prazo_final": "2026-11-10", "prazo_referencia": None,
+            "observacao": "Data informada após consulta à publicação integral.", "confirmacao": True,
+        }, format="json")
+        self.assertEqual(resposta.status_code, status.HTTP_200_OK, resposta.data)
+        self.assertEqual(resposta.data["conferencia_status"], "confirmado")
 
     def test_secretaria_ve_mas_nao_busca(self, api):
         api.return_value = {"items": []}

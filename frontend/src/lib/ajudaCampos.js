@@ -36,7 +36,7 @@ export const DICAS_CAMPOS = {
   "tipo de pessoa":
     "Escolha pessoa física para CPF ou pessoa jurídica para CNPJ.",
   cpf: "Digite os 11 números. Pontos e traço são adicionados automaticamente.",
-  cnpj: "Digite os 14 números. Ao sair do campo, o sistema pode preencher os dados públicos da empresa.",
+  cnpj: "Informe as 14 posições do CNPJ, com números ou letras e os dois dígitos finais. Confira os dados públicos preenchidos antes de salvar.",
   cep: "Digite os 8 números para buscar rua, bairro, cidade e estado.",
   "e-mail": "Informe um endereço válido que a pessoa realmente consulte.",
   telefone: "Informe o número com DDD; ele também pode ser usado para abrir uma conversa no WhatsApp.",

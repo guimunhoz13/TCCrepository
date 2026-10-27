@@ -204,6 +204,8 @@ function guardarEstadoInicial(evento) {
 function protegerSaidaDoFormulario(evento) {
   const botao = evento.target?.closest?.("button");
   if (!botao) return;
+  // Voltar uma etapa mantém os dados: não é uma saída do cadastro.
+  if (botao.hasAttribute("data-preserva-formulario")) return;
   const nome = [botao.textContent, botao.title, botao.getAttribute("aria-label")]
     .filter(Boolean)
     .join(" ");
@@ -273,7 +275,7 @@ function orientarCampos(raiz) {
       rotulo.appendChild(marcador);
     }
 
-    if (!dica || grupo.querySelector(":scope > .field-hint")) return;
+    if (!dica || grupo.querySelector(":scope > .field-hint, :scope > .dica-campo")) return;
     if (!campo.id) campo.id = `campo-${proximoId++}`;
 
     const ajuda = document.createElement("p");

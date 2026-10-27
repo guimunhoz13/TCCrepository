@@ -77,6 +77,9 @@ const DICIONARIO = {
 
     perfil_admin: "Administrador",
     perfil_advogado: "Advogado",
+    perfil_estagiario: "Estagiário",
+    perfil_financeiro: "Financeiro",
+    perfil_secretaria: "Secretária",
 
     carregando: "Carregando...",
     nenhum_registro: "Nenhum registro encontrado.",
@@ -184,6 +187,9 @@ const DICIONARIO = {
 
     perfil_admin: "Administrator",
     perfil_advogado: "Lawyer",
+    perfil_estagiario: "Intern",
+    perfil_financeiro: "Finance",
+    perfil_secretaria: "Secretary",
 
     carregando: "Loading...",
     nenhum_registro: "No records found.",
@@ -291,6 +297,9 @@ const DICIONARIO = {
 
     perfil_admin: "Administrador",
     perfil_advogado: "Abogado",
+    perfil_estagiario: "Pasante",
+    perfil_financeiro: "Finanzas",
+    perfil_secretaria: "Secretaría",
 
     carregando: "Cargando...",
     nenhum_registro: "No se encontraron registros.",

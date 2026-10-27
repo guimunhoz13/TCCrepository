@@ -173,11 +173,13 @@ export default function LoginForm() {
           name="email"
           type="email"
           autoComplete="username"
+          aria-describedby="login-email-ajuda"
           placeholder="seu@email.com"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
         />
+        <small id="login-email-ajuda" className="dica-campo">Use o e-mail cadastrado no LexNexo.</small>
       </div>
 
       <div className="form-field" style={{ marginBottom: 22 }}>

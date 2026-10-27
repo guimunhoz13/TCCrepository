@@ -30,11 +30,12 @@ export function useRecurso(buscar, chaves = [], { ativo = true } = {}) {
       .then(() => executar())
       .then(
         (dados) => {
-          if (vigente) setEstado({ chave, dados, erro: "" });
+          if (vigente) setEstado({ chave, dados, erro: "", atualizadoEm: Date.now() });
         },
         (erro) => {
           if (vigente) {
             setEstado((anterior) => ({
+              ...anterior,
               chave,
               dados: anterior.dados,
               erro: erro?.message || "Não foi possível carregar os dados.",
@@ -55,6 +56,7 @@ export function useRecurso(buscar, chaves = [], { ativo = true } = {}) {
     erro: estado.erro,
     carregando: chave !== null && estado.chave !== chave,
     recarregar,
+    atualizadoEm: estado.atualizadoEm || null,
   };
 }
 

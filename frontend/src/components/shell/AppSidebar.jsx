@@ -18,6 +18,9 @@ import {
   FileSignature,
   Menu,
   X,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Rows3,
 } from "lucide-react";
 import { useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
@@ -27,6 +30,8 @@ import { useUsuarioLogado } from "@/hooks/useUsuarioLogado";
 import Logo from "@/components/ui/Logo";
 import { useMenuMovel } from "@/contexts/MenuMovelContext";
 import { usePermissoes } from "@/hooks/usePermissoes";
+import { usePreferenciaVisual } from "@/hooks/usePreferenciaVisual";
+import { useAvisos } from "@/contexts/AvisosContext";
 
 const NAV_ITEMS = [
   {
@@ -123,16 +128,23 @@ const NAV_ITEMS = [
 // Atalhos da barra inferior no celular: as quatro telas mais usadas e o
 // botão que abre o menu completo.
 const ATALHOS_CELULAR = ["dashboard", PANELS.CLIENTES, PANELS.PROCESSOS, PANELS.AGENDA];
+const GRUPOS = [
+  { titulo: "Dia a dia", ids: ["dashboard", "agenda", "compromissos", "tarefas"] },
+  { titulo: "Clientes e processos", ids: ["clientes", "processos", "documentos", "modelos", "assistente-ia"] },
+  { titulo: "Gestão do escritório", ids: ["contratos", "horas", "advogados", "planos", "contato", "config"] },
+];
 
 export default function AppSidebar() {
   const { activePanel, openPanel, closePanel } = usePanel();
   const menuMovel = useMenuMovel();
   const pode = usePermissoes();
-  const { t } = usePreferences();
+  const { t, densidade, atualizarPreferencias } = usePreferences();
+  const avisar = useAvisos();
   const router = useRouter();
   const pathname = usePathname();
 
   const usuario = useUsuarioLogado();
+  const [menuCompacto, setMenuCompacto] = usePreferenciaVisual("menu-compacto");
 
   // Os itens que abrem painéis precisam primeiro voltar à rota principal
   // quando o usuário está numa página independente (como Compromissos).
@@ -194,7 +206,7 @@ export default function AppSidebar() {
 
       <aside
         id="menu-principal"
-        className={`sidebar ${menuMovel.aberto ? "aberta" : ""}`}
+        className={`sidebar ${menuMovel.aberto ? "aberta" : ""} ${menuCompacto === "true" ? "compacta" : ""}`}
         aria-label="Menu principal"
       >
         <div className="sidebar-brand">
@@ -218,19 +230,35 @@ export default function AppSidebar() {
         </div>
 
         <nav className="sidebar-nav">
-          {itensVisiveis.map(({ id, tKey, icon: Icon, href }) => (
+          {GRUPOS.map((grupo) => <div className="sidebar-grupo" key={grupo.titulo}>
+            <p className="sidebar-grupo-titulo">{grupo.titulo}</p>
+            {grupo.ids.map((id) => itensVisiveis.find((item) => item.id === id)).filter(Boolean).map(({ id, tKey, icon: Icon, href }) => (
             <button
               key={id}
               type="button"
               className={`nav-item ${estaAtivo({ id, href }) ? "active" : ""}`}
               aria-current={estaAtivo({ id, href }) ? "page" : undefined}
+              aria-label={t(tKey)}
+              title={t(tKey)}
               onClick={() => handleNav({ id, href })}
             >
               <Icon size={18} />
               <span>{t(tKey)}</span>
             </button>
           ))}
+          </div>)}
         </nav>
+        <div className="sidebar-preferencias">
+          <button type="button" className="nav-item" onClick={() => atualizarPreferencias({ densidade_tabela: densidade === "compact" ? "comfortable" : "compact" })
+            .catch(() => avisar("Não foi possível salvar a preferência de densidade. Tente novamente.", "erro"))}
+            aria-pressed={densidade === "compact"} title="Alternar densidade das listas" aria-label="Alternar densidade das listas">
+            <Rows3 size={18} /><span>{densidade === "compact" ? "Modo confortável" : "Modo compacto"}</span>
+          </button>
+          <button type="button" className="nav-item sidebar-recolher" onClick={() => setMenuCompacto(menuCompacto !== "true")}
+            aria-label={menuCompacto === "true" ? "Expandir menu lateral" : "Recolher menu lateral"} title={menuCompacto === "true" ? "Expandir menu lateral" : "Recolher menu lateral"}>
+            {menuCompacto === "true" ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}<span>Recolher menu</span>
+          </button>
+        </div>
       </aside>
 
       <nav className="barra-inferior" aria-label="Atalhos">
