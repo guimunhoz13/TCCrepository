@@ -167,6 +167,23 @@ describe("RotulosAutomaticos — formulários", () => {
     expect(document.querySelector(".field-error-api-automatico")).toBeNull();
   });
 
+  test("permite voltar uma etapa que preserva os dados sem pedir descarte", () => {
+    const aoVoltar = jest.fn();
+    window.confirm = jest.fn(() => false);
+    const { getByRole, getByLabelText } = render(
+      <><RotulosAutomaticos /><form>
+        <label htmlFor="nome-etapa">Nome</label><input id="nome-etapa" name="nome" defaultValue="Ana" />
+        <button type="button" data-preserva-formulario onClick={aoVoltar}>Voltar</button>
+      </form></>
+    );
+    getByLabelText("Nome").focus();
+    fireEvent.input(getByLabelText("Nome"), { target: { value: "Ana Maria" } });
+    fireEvent.click(getByRole("button", { name: "Voltar" }));
+    expect(aoVoltar).toHaveBeenCalled();
+    expect(window.confirm).not.toHaveBeenCalled();
+    expect(getByLabelText("Nome").value).toBe("Ana Maria");
+  });
+
   test("avisa antes de cancelar um formulário com alterações", () => {
     const aoCancelar = jest.fn();
     window.confirm = jest.fn(() => false);

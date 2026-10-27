@@ -87,12 +87,22 @@ def validar_cpf(valor):
     return valor
 
 
+def normalizar_cnpj(valor):
+    return re.sub(r"[.\s/-]", "", valor or "").upper()
+
+
+def padrao_cnpj_equivalente(valor):
+    """Reconhece também documentos antigos armazenados com máscara."""
+    return r"^" + r"[.\s/-]*".join(re.escape(c) for c in normalizar_cnpj(valor)) + r"$"
+
+
 def validar_cnpj(valor):
-    """CNPJ deve ter exatamente 14 dígitos (fora pontuação)."""
+    """Aceita o formato numérico e o alfanumérico (12 posições + 2 dígitos)."""
     if not valor:
         return valor
-    if len(_somente_digitos(valor)) != 14:
-        raise ValidationError("CNPJ deve conter 14 dígitos.")
+    normalizado = normalizar_cnpj(valor)
+    if not re.fullmatch(r"[A-Z0-9]{12}[0-9]{2}", normalizado):
+        raise ValidationError("CNPJ deve conter 14 posições: letras ou números nas 12 primeiras e 2 dígitos finais.")
     return valor
 
 

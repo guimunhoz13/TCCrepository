@@ -23,6 +23,11 @@ describe("formatarCPF", () => {
 });
 
 describe("formatarCNPJ", () => {
+  test("preserva letras em maiúsculas e permite digitação parcial", () => {
+    expect(formatarCNPJ("12abc34501de35")).toBe("12.ABC.345/01DE-35");
+    expect(formatarCNPJ("12.ABC.345/01DE-35")).toBe("12.ABC.345/01DE-35");
+    expect(formatarCNPJ("12a")).toBe("12.A");
+  });
   test("organiza os dígitos em ##.###.###/####-##", () => {
     expect(formatarCNPJ("12345678000199")).toBe("12.345.678/0001-99");
   });

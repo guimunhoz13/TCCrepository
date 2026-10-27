@@ -14,6 +14,7 @@ from ..models import (
 )
 from ..validators import (
     validar_assinatura_arquivo,
+    validar_cnpj,
     validar_email_real,
     validar_tamanho_documento,
     validar_tamanho_imagem,
@@ -103,6 +104,13 @@ class ValidarEmailRealTestCase(TestCase):
     def test_email_com_dominio_valido_e_aceito(self, _mock_mx):
         resultado = validar_email_real("pessoa@gmail.com")
         self.assertEqual(resultado, "pessoa@gmail.com")
+
+    def test_cnpj_aceita_ambos_formatos_e_exige_dois_digitos_finais(self):
+        for valor in ("12.345.678/0001-99", "12.ABC.345/01DE-35", "12abc34501de35"):
+            self.assertEqual(validar_cnpj(valor), valor)
+        for valor in ("12ABC34501DEXX", "123", "12@BC34501DE35"):
+            with self.assertRaises(ValidationError):
+                validar_cnpj(valor)
 
     @patch("advocacia.validators._dominio_tem_mx", return_value=False)
     def test_dominio_sem_registro_mx_levanta_erro(self, _mock_mx):

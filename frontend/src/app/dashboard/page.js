@@ -99,6 +99,7 @@ function DashboardContent() {
     carregando,
     erro,
     versaoDados,
+    atualizadoEm,
     refresh,
   } = useDashboardData();
   const agora = useAgora();
@@ -189,8 +190,12 @@ function DashboardContent() {
   const ultimosDocumentos = documentos;
 
   // Cada grupo de resultado já sabe a que painel pertence.
-  function abrirResultadoBusca(painel) {
-    openPanel(painel, "lista");
+  function abrirResultadoBusca(painel, item) {
+    if (painel === PANELS.PROCESSOS) {
+      openPanel(painel, "ficha", { processoId: item.id });
+    } else {
+      openPanel(painel, "detalhe", { registroId: item.id });
+    }
   }
 
   return (
@@ -285,10 +290,13 @@ function DashboardContent() {
             </a>
           </div>
 
-          <span className={`sync-indicator ${pulsar ? "pulsing" : ""}`}>
+          <button type="button" className={`sync-indicator ${pulsar ? "pulsing" : ""}`}
+            onClick={refresh} disabled={carregando} aria-label="Atualizar dados do painel">
             <RefreshCw size={13} className={pulsar ? "spin" : ""} />
-            {pulsar ? "Atualizado agora" : "Dados em tempo real"}
-          </span>
+            {carregando ? "Atualizando…" : pulsar ? "Atualizado agora" : atualizadoEm
+              ? `Atualizado às ${new Date(atualizadoEm).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`
+              : "Atualizar dados"}
+          </button>
         </div>
 
         {/* O que pede ação hoje vem primeiro: é para isso que se abre a

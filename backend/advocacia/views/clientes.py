@@ -26,6 +26,7 @@ from ..serializers import (
     ClienteSerializer,
 )
 from ..sigilo import esconder_sigilosos
+from ..validators import padrao_cnpj_equivalente
 from .comum import _resposta_download_arquivo
 
 # =========================================================
@@ -90,7 +91,7 @@ class ClienteViewSet(
         if not cnpj:
             return
         escritorio = self.get_escritorio()
-        conflito = Cliente.objects.filter(escritorio=escritorio, cnpj=cnpj)
+        conflito = Cliente.objects.filter(escritorio=escritorio, cnpj__iregex=padrao_cnpj_equivalente(cnpj))
         if serializer.instance:
             conflito = conflito.exclude(pk=serializer.instance.pk)
         if conflito.exists():
@@ -155,11 +156,32 @@ class ClienteViewSet(
         nome_anterior = cliente.nome
         with transaction.atomic():
             cliente.anonimizar()
-            for registro in RegistroAuditoria.objects.filter(
-                escritorio=cliente.escritorio, descricao__icontains=nome_anterior
-            ):
-                registro.descricao = registro.descricao.replace(nome_anterior, cliente.nome)
-                registro.save(update_fields=["descricao"])
+            # O histórico de valores também contém dados pessoais. Preserva
+            # quem/quando/o quê, removendo os valores do cadastro anonimizado.
+            campos_pessoais = {
+                "nome", "cpf", "cnpj", "email", "telefone", "endereco", "rg",
+                "data_nascimento", "estado_civil", "nacionalidade", "foto",
+                "documento_identidade",
+            }
+            for registro in RegistroAuditoria.objects.filter(escritorio=cliente.escritorio).iterator():
+                descricao = registro.descricao.replace(nome_anterior, cliente.nome)
+                alteracoes = []
+                cadastro_alvo = registro.modelo == "Cliente" and registro.objeto_id == cliente.pk
+                for alteracao in registro.alteracoes or []:
+                    alteracao = dict(alteracao)
+                    if cadastro_alvo and alteracao.get("campo") in campos_pessoais:
+                        alteracao["anterior"] = "[dado pessoal removido]"
+                        alteracao["novo"] = "[dado pessoal removido]"
+                    elif alteracao.get("campo") == "cliente":
+                        for lado in ("anterior", "novo"):
+                            valor = alteracao.get(lado)
+                            if isinstance(valor, dict) and valor.get("id") == cliente.pk:
+                                alteracao[lado] = {**valor, "nome": cliente.nome}
+                    alteracoes.append(alteracao)
+                if descricao != registro.descricao or alteracoes != registro.alteracoes:
+                    registro.descricao = descricao
+                    registro.alteracoes = alteracoes
+                    registro.save(update_fields=["descricao", "alteracoes"])
             registrar_auditoria(
                 request, "edicao", cliente,
                 descricao="Dados pessoais anonimizados a pedido do titular (LGPD).",

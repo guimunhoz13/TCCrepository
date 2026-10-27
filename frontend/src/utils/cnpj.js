@@ -52,8 +52,8 @@ export function interpretarEmpresa(dados) {
 }
 
 export async function buscarEmpresaPorCnpj(cnpj) {
-  const digitos = (cnpj || "").replace(/\D/g, "");
-  if (digitos.length !== 14) return null;
+  const digitos = (cnpj || "").toUpperCase().replace(/[.\s/-]/g, "");
+  if (!/^[A-Z0-9]{12}[0-9]{2}$/.test(digitos)) return null;
 
   let resposta;
   try {

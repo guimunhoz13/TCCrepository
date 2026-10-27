@@ -11,6 +11,8 @@ from .validators import (
     validar_email_real,
     validar_cpf,
     validar_cnpj,
+    normalizar_cnpj,
+    padrao_cnpj_equivalente,
     validar_telefone,
     validar_oab,
     validar_rg,
@@ -149,9 +151,9 @@ class EscritorioRegistroSerializer(serializers.Serializer):
 
     def validate_cnpj(self, value):
         validar_cnpj(value)
-        if Escritorio.objects.filter(cnpj=value).exists():
+        if Escritorio.objects.filter(cnpj__iregex=padrao_cnpj_equivalente(value)).exists():
             raise serializers.ValidationError("CNPJ já cadastrado.")
-        return value
+        return normalizar_cnpj(value)
 
     def validate_email_admin(self, value):
         if Usuario.objects.filter(email__iexact=value).exists():
@@ -390,6 +392,9 @@ class ClienteSerializer(serializers.ModelSerializer):
     # avisa a tela se há um documento sem devolver onde ele está; o
     # download passa pela rota autenticada em ClienteViewSet.
     documento_identidade_enviado = serializers.SerializerMethodField()
+
+    def validate_cnpj(self, value):
+        return normalizar_cnpj(value)
 
     class Meta:
         model = Cliente
@@ -1136,6 +1141,13 @@ class IntimacaoSerializer(serializers.ModelSerializer):
     advogado_nome = serializers.CharField(source="advogado.usuario.nome", read_only=True, default=None)
     processo_titulo = serializers.CharField(source="processo.titulo", read_only=True, default=None)
     cliente_nome = serializers.CharField(source="processo.cliente.nome", read_only=True, default=None)
+    conferido_por_nome = serializers.CharField(source="conferido_por.nome", read_only=True, default=None)
+    conferencia_status = serializers.SerializerMethodField()
+
+    def get_conferencia_status(self, obj) -> str:
+        if obj.evento_agenda_id and obj.evento_agenda.cumprido:
+            return "cumprido"
+        return "confirmado" if obj.conferido_em else "a_conferir"
 
     class Meta:
         model = Intimacao
@@ -1160,7 +1172,20 @@ class IntimacaoSerializer(serializers.ModelSerializer):
             "prazo_final",
             "evento_agenda",
             "lida",
+            "conferido_em", "conferido_por", "conferido_por_nome", "observacao_conferencia", "conferencia_status",
             "criado_em",
         ]
         # Só "lida" muda pela API; o resto vem do DJEN.
         read_only_fields = [campo for campo in fields if campo != "lida"]
+
+
+class ConferenciaPrazoSerializer(serializers.Serializer):
+    prazo_final = serializers.DateField()
+    prazo_referencia = serializers.DateField(allow_null=True)
+    observacao = serializers.CharField(min_length=8, max_length=1500)
+    confirmacao = serializers.BooleanField()
+
+    def validate_confirmacao(self, value):
+        if not value:
+            raise serializers.ValidationError("Confirme a revisão da publicação e do calendário do tribunal.")
+        return value

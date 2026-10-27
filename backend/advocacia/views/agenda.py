@@ -2,6 +2,7 @@
 
 import secrets
 from datetime import date
+from django.db import transaction
 
 from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404
@@ -24,6 +25,7 @@ from ..mixins import (
 from ..models import (
     Agenda,
     FeriadoLocal,
+    Intimacao,
     Processo,
     Usuario,
 )
@@ -138,6 +140,19 @@ class AgendaViewSet(
 
     permission_classes = [IsAuthenticated, PermissaoPorPerfil]
     area_permissao = "agenda"
+
+    @transaction.atomic
+    def perform_update(self, serializer):
+        anterior = serializer.instance.data_evento
+        super().perform_update(serializer)
+        evento = serializer.instance
+        if evento.data_evento != anterior:
+            # Uma edição manual não pode conservar o selo de uma conferência
+            # realizada sobre outra data.
+            Intimacao.objects.filter(evento_agenda=evento).update(
+                prazo_final=timezone.localtime(evento.data_evento).date(),
+                conferido_em=None, conferido_por=None, observacao_conferencia="",
+            )
 
     @extend_schema(summary="Feriados e recesso forense de um ano, para o calendário", responses={200: OpenApiTypes.OBJECT})
     @action(detail=False, methods=["get"], url_path="feriados")

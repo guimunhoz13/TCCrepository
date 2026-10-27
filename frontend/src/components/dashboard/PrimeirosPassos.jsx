@@ -145,6 +145,8 @@ export default function PrimeirosPassos({ stats, carregando }) {
   const pode = usePermissoes();
   const [tourAberto, setTourAberto] = useState(false);
   const [etapa, setEtapa] = useState(0);
+  const [mostrarEtapas, setMostrarEtapas] = useState(null);
+  const etapasVisiveis = mostrarEtapas ?? escritorioAindaVazio(stats);
 
   const passos = useMemo(
     () => primeirosPassos({ stats, usuario, pode }),
@@ -184,9 +186,15 @@ export default function PrimeirosPassos({ stats, carregando }) {
             <h3 id="primeiros-passos-titulo">Configure seu LexNexo</h3>
             <p>{progresso.concluidos} de {progresso.total} etapas concluídas</p>
           </div>
-          <button type="button" className="btn btn-secondary btn-sm" onClick={abrirTour}>
+          <div className="primeiros-passos-acoes">
+          <button type="button" className="btn btn-secondary btn-sm" onClick={() => setMostrarEtapas(!etapasVisiveis)}
+            aria-expanded={etapasVisiveis} aria-controls="etapas-configuracao">
+            {etapasVisiveis ? "Recolher etapas" : "Ver etapas"}
+          </button>
+          <button type="button" className="link-botao" onClick={abrirTour}>
             Ver apresentação
           </button>
+          </div>
         </header>
 
         <div
@@ -200,7 +208,7 @@ export default function PrimeirosPassos({ stats, carregando }) {
           <span style={{ width: `${progresso.percentual}%` }} />
         </div>
 
-        <div className="primeiros-passos-lista">
+        <div id="etapas-configuracao" className="primeiros-passos-lista" hidden={!etapasVisiveis}>
           {passos.map((passo) => (
             <article key={passo.id} className={`primeiro-passo ${passo.concluido ? "concluido" : ""}`}>
               <span className="primeiro-passo-status" aria-hidden="true">
@@ -224,6 +232,12 @@ export default function PrimeirosPassos({ stats, carregando }) {
             </article>
           ))}
         </div>
+        {!etapasVisiveis && passos.find((passo) => !passo.concluido) && (() => {
+          const proximo = passos.find((passo) => !passo.concluido);
+          return <button type="button" className="link-botao" onClick={() => openPanel(proximo.painel, proximo.aba)}>
+            Próximo passo: {proximo.titulo}
+          </button>;
+        })()}
       </section>
 
       {tourAberto && <Tour etapa={etapa} setEtapa={setEtapa} onFechar={fecharTour} />}

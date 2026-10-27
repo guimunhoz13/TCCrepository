@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { registrarEscritorio } from "@/services/api";
@@ -9,10 +9,13 @@ import { buscarEnderecoPorCep } from "@/utils/cep";
 import { avisoDaEmpresa, buscarEmpresaPorCnpj } from "@/utils/cnpj";
 import { senhaAtendeRequisitos } from "@/utils/senha";
 import RequisitosSenha from "@/components/ui/RequisitosSenha";
-import OrientacaoFormulario from "@/components/ui/OrientacaoFormulario";
+
+const ETAPAS = ["Escritório", "Localização", "Administrador", "Revisão"];
 
 export default function RegisterForm() {
   const router = useRouter();
+  const formularioRef = useRef(null);
+  const [etapa, setEtapa] = useState(0);
   const [form, setForm] = useState({
     nome_escritorio: "",
     cnpj: "",
@@ -36,9 +39,32 @@ export default function RegisterForm() {
     setForm((atual) => ({ ...atual, [campo]: valor }));
   }
 
+  function irPara(numero) {
+    setEtapa(numero);
+    setErro("");
+    requestAnimationFrame(() => {
+      const campo = formularioRef.current?.querySelector(`[data-etapa="${numero}"] input`);
+      campo?.focus();
+    });
+  }
+
+  function validarEtapa(numero) {
+    const campos = formularioRef.current?.querySelectorAll(`[data-etapa="${numero}"] input`) || [];
+    const invalido = [...campos].find((campo) => !campo.checkValidity());
+    if (invalido) {
+      invalido.reportValidity();
+      return false;
+    }
+    if (numero === 2 && !senhaAtendeRequisitos(form.senha_admin)) {
+      setErro("Confira os requisitos da senha antes de continuar.");
+      return false;
+    }
+    return true;
+  }
+
   // Preenche só o que ainda está vazio: nunca sobrescreve o que foi digitado.
   async function handleBuscarCnpj(valor) {
-    if ((valor || "").replace(/\D/g, "").length !== 14) return;
+    if ((valor || "").replace(/[^A-Za-z0-9]/g, "").length !== 14) return;
     try {
       setBuscandoCnpj(true);
       const empresa = await buscarEmpresaPorCnpj(valor);
@@ -87,6 +113,17 @@ export default function RegisterForm() {
     event.preventDefault();
     setErro("");
 
+    if (etapa < 3) {
+      if (validarEtapa(etapa)) irPara(etapa + 1);
+      return;
+    }
+    for (let numero = 0; numero < 3; numero++) {
+      if (!validarEtapa(numero)) {
+        irPara(numero);
+        return;
+      }
+    }
+
     if (!senhaAtendeRequisitos(form.senha_admin)) {
       setErro("A senha do admin não atende a todos os requisitos obrigatórios.");
       return;
@@ -105,6 +142,9 @@ export default function RegisterForm() {
 
       router.push("/login");
     } catch (error) {
+      const campo = Object.keys(error.campos || {})[0];
+      const grupo = formularioRef.current?.elements.namedItem(campo)?.closest("[data-etapa]");
+      if (grupo) setEtapa(Number(grupo.dataset.etapa));
       setErro(error.message);
     } finally {
       setCarregando(false);
@@ -112,21 +152,22 @@ export default function RegisterForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form ref={formularioRef} onSubmit={handleSubmit} noValidate className="cadastro-etapas">
       <h2>Criar escritório</h2>
       <p className="subtitle">
-        Cadastre seu escritório e crie o usuário administrador
+        Passo {etapa + 1} de {ETAPAS.length}: {ETAPAS[etapa]}
       </p>
 
       {erro && <div className="alert alert-error">{erro}</div>}
 
-      <OrientacaoFormulario
-        titulo="Configure o escritório e o primeiro acesso"
-        descricao="Primeiro informe os dados institucionais; depois crie o administrador que poderá convidar a equipe e concluir a configuração."
-        etapas={["Dados institucionais", "Localização", "Primeiro administrador"]}
-      />
+      <ol className="cadastro-progresso" aria-label="Etapas do cadastro">
+        {ETAPAS.map((titulo, indice) => <li key={titulo} aria-current={indice === etapa ? "step" : undefined}>
+          <span>{indice + 1}</span>{titulo}
+        </li>)}
+      </ol>
 
-      <div className="form-grid">
+      <fieldset data-etapa="0" hidden={etapa !== 0} className="form-grid">
+        <legend>Dados do escritório</legend>
         <div className="form-field full">
           <label>Nome do escritório</label>
           <input
@@ -142,7 +183,8 @@ export default function RegisterForm() {
           <input
             name="cnpj"
             value={form.cnpj}
-            inputMode="numeric"
+            inputMode="text"
+            autoCapitalize="characters"
             onChange={(e) => alterarCampo("cnpj", formatarCNPJ(e.target.value))}
             onBlur={(e) => handleBuscarCnpj(e.target.value)}
             aria-describedby="aviso-cnpj"
@@ -178,6 +220,9 @@ export default function RegisterForm() {
             required
           />
         </div>
+      </fieldset>
+      <fieldset data-etapa="1" hidden={etapa !== 1} className="form-grid">
+        <legend>Onde fica o escritório?</legend>
         <div className="form-field">
           <label>CEP</label>
           <input
@@ -227,9 +272,9 @@ export default function RegisterForm() {
             onChange={(e) => alterarCampo("estado", e.target.value.toUpperCase())}
           />
         </div>
-        <div className="form-field full">
-          <strong style={{ marginTop: 8 }}>Administrador do escritório</strong>
-        </div>
+      </fieldset>
+      <fieldset data-etapa="2" hidden={etapa !== 2} className="form-grid">
+        <legend>Primeiro administrador</legend>
         <div className="form-field">
           <label>Nome do admin</label>
           <input
@@ -263,15 +308,29 @@ export default function RegisterForm() {
           />
           <RequisitosSenha senha={form.senha_admin} />
         </div>
-      </div>
+      </fieldset>
 
+      {etapa === 3 && <section className="cadastro-revisao" aria-label="Revise antes de criar">
+        <h3>Está tudo certo?</h3>
+        <p>Confira os dados. O primeiro acesso será feito com o e-mail do administrador.</p>
+        <dl>
+          <div><dt>Escritório</dt><dd>{form.nome_escritorio}</dd></div>
+          <div><dt>CNPJ</dt><dd>{form.cnpj}</dd></div>
+          <div><dt>Contato</dt><dd>{form.email_escritorio}<br />{form.telefone_escritorio}</dd></div>
+          <div><dt>Endereço</dt><dd>{form.endereco_escritorio}{form.cidade && ` · ${form.cidade}`}{form.estado && `/${form.estado}`}</dd></div>
+          <div><dt>Administrador</dt><dd>{form.nome_admin}<br />{form.email_admin}</dd></div>
+        </dl>
+      </section>}
+
+      <div className="cadastro-acoes">
+      {etapa > 0 && <button type="button" className="btn btn-secondary" data-preserva-formulario disabled={carregando} onClick={() => irPara(etapa - 1)}>Voltar</button>}
       <button
         className="btn btn-primary"
-        style={{ width: "100%", marginTop: 20 }}
-        disabled={carregando || !senhaAtendeRequisitos(form.senha_admin)}
+        disabled={carregando}
       >
-        {carregando ? "Cadastrando..." : "Criar escritório"}
+        {carregando ? "Cadastrando..." : etapa === 3 ? "Criar escritório" : "Continuar"}
       </button>
+      </div>
 
       <div className="auth-footer">
         Já possui conta? <Link href="/login">Voltar ao login</Link>

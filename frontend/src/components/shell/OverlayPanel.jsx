@@ -7,6 +7,7 @@ import { usePreferences } from "@/contexts/PreferencesContext";
 import { useAjuda } from "@/contexts/AjudaContext";
 import GuiaContextual from "@/components/shell/GuiaContextual";
 import { usePermissoes } from "@/hooks/usePermissoes";
+import DetalheResultado from "./DetalheResultado";
 
 const AREA_DE_PERMISSAO = {
   clientes: "clientes",
@@ -42,6 +43,7 @@ export default function OverlayPanel({
   const {
     activePanel,
     panelTab,
+    panelParams = {},
     closePanel,
     setPanelTab,
   } = usePanel();
@@ -149,6 +151,10 @@ export default function OverlayPanel({
 
         {tabs.length > 0 && (
           <div className="overlay-tabs" aria-label="Seções desta área">
+            {panelParams.registroId && <button type="button"
+              aria-current={panelTab === "detalhe" ? "page" : undefined}
+              className={`tab-btn ${panelTab === "detalhe" ? "active" : ""}`}
+              onClick={() => setPanelTab("detalhe")}>Detalhe</button>}
             {tabs.map((tab) => (
               <button
                 type="button"
@@ -176,7 +182,9 @@ export default function OverlayPanel({
 
         {/* Focável para quem rola o conteúdo pelo teclado (setas, PgDn). */}
         <div className="overlay-body" tabIndex={0} role="region" aria-labelledby="overlay-panel-title">
-          {children}
+          {panelTab === "detalhe" && panelParams.registroId
+            ? <DetalheResultado painel={activePanel} registroId={panelParams.registroId} />
+            : children}
         </div>
       </div>
     </>

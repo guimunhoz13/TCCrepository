@@ -60,6 +60,12 @@ describe("interpretarEmpresa", () => {
 describe("buscarEmpresaPorCnpj", () => {
   afterEach(() => jest.restoreAllMocks());
 
+  test("consulta CNPJ alfanumérico sem apagar letras", async () => {
+    global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => RESPOSTA });
+    await buscarEmpresaPorCnpj("12.abc.345/01de-35");
+    expect(global.fetch).toHaveBeenCalledWith("https://brasilapi.com.br/api/cnpj/v1/12ABC34501DE35");
+  });
+
   test("não chama a API com CNPJ incompleto", async () => {
     global.fetch = jest.fn();
     expect(await buscarEmpresaPorCnpj("11.222.333/0001")).toBeNull();

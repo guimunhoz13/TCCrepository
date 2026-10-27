@@ -7,6 +7,7 @@ import RotulosAutomaticos from "@/components/shell/RotulosAutomaticos";
 import { ConfirmacaoProvider } from "@/contexts/ConfirmacaoContext";
 import { AvisosProvider } from "@/contexts/AvisosContext";
 import "../styles/design-system.css";
+import "../styles/refinamento.css";
 
 export default function Providers({ children }) {
   return (

@@ -36,6 +36,7 @@ from advocacia.models import (
     Despesa,
     Escritorio,
     FeriadoLocal,
+    Intimacao,
     Movimentacao,
     Parcela,
     PreferenciasUsuario,
@@ -183,10 +184,20 @@ class Command(BaseCommand):
             data_movimentacao=agora - timedelta(days=5),
         )
 
-        Agenda.objects.create(
+        prazo_replica = Agenda.objects.create(
             escritorio=escritorio, processo=trabalhista, tipo="prazo", prioridade="fatal",
             titulo="Prazo: réplica à contestação", descricao="15 dias úteis da intimação.",
             data_evento=quando(1, 18),
+        )
+        Intimacao.objects.create(
+            escritorio=escritorio, advogado=dono, processo=trabalhista,
+            identificador_externo="demo-replica-001",
+            numero_processo=trabalhista.numero_processo, tribunal="TRT15",
+            orgao="2ª Vara do Trabalho de Araçatuba", tipo_comunicacao="Intimação (demonstração)",
+            texto="EXEMPLO FICTÍCIO: manifeste-se sobre a contestação no prazo de 15 dias úteis. Não é uma publicação real.",
+            data_disponibilizacao=hoje - timedelta(days=2), data_publicacao=hoje - timedelta(days=1),
+            prazo_dias=15, prazo_dias_uteis=True, prazo_final=hoje + timedelta(days=1),
+            evento_agenda=prazo_replica,
         )
         Agenda.objects.create(
             escritorio=escritorio, processo=trabalhista, tipo="compromisso",

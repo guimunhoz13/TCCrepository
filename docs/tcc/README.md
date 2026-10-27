@@ -1,11 +1,26 @@
 # Relatório técnico do TCC (gerado por script)
 
+## Versão 1.5 — revisão de 27/10/2026
+
+Atualiza os identificadores do backlog, separa notificação automática adiada
+(RF52) da conferência de prazo implementada (RF53), inclui cadastro por etapas,
+CNPJ alfanumérico, navegação agrupada/recolhível, aparência ajustável e busca
+direta. Revisa as afirmações de privacidade e acessibilidade e acrescenta um
+protocolo de avaliação com usuários, ainda não executado. A conclusão foi
+reescrita para separar resultados, limites e trabalhos futuros. As novas
+capturas usam apenas a demonstração local com dados fictícios. As verificações
+desta versão compreendem 507 testes de backend, 261 de componentes e 19 fluxos
+de navegador; quantidades referem-se à rodada, não a cobertura universal.
+
+O documento anterior v1.4 é preservado. A versão 1.5 é uma revisão técnica
+para validação pelos autores e orientador, não uma aprovação acadêmica.
+
 O documento `RT-TDS-2026-39` é gerado a partir de `gerar_rt.js` (conteúdo),
 `build_rt.js` (estilos e utilitários) e `main.js` (montagem), com a
 biblioteca `docx`:
 
 ```bash
-cd docs/tcc && npm install docx && node main.js   # gera RT-TDS-2026-39_v1.4.docx
+cd docs/tcc && npm install docx && node main.js   # gera RT-TDS-2026-39_v1.5.docx
 ```
 
 Os diagramas ficam em `diagramas/*.puml` (PlantUML) e são renderizados com
@@ -20,12 +35,12 @@ renderizado (precisa de LibreOffice e poppler-utils):
 
 ```bash
 node main.js
-soffice --headless --convert-to pdf RT-TDS-2026-39_v1.4.docx
-python3 paginar.py RT-TDS-2026-39_v1.4.pdf   # grava paginas.json
+soffice --headless --convert-to pdf RT-TDS-2026-39_v1.5.docx
+python3 paginar.py RT-TDS-2026-39_v1.5.pdf   # grava paginas.json
 node main.js                                 # gera de novo com as páginas certas
 ```
 
-Repita as duas últimas etapas até `paginas.json` parar de mudar (em geral uma
+Repita a conversão, paginação e geração até `paginas.json` parar de mudar (em geral uma
 passada basta). Ao acrescentar uma seção, inclua o título também em
 `TITULOS_SUMARIO`.
 

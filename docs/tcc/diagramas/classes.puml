@@ -237,6 +237,9 @@ class Intimacao {
   - prazoEstimado : boolean
   - prazoFinal : Date
   - lida : boolean
+  - conferidoEm : DateTime
+  - observacaoConferencia : String
+  + conferirPrazo() : void
   + calcularPrazo() : Date
   + lancarNaAgenda() : Agenda
 }
@@ -301,6 +304,7 @@ Escritorio "1" *-- "0..*" Intimacao : recebe
 Advogado "0..1" -- "0..*" Intimacao : é intimado em
 Processo "0..1" -- "0..*" Intimacao : refere-se a
 Intimacao "0..1" --> "0..1" Agenda : lança prazo
+Usuario "0..1" -- "0..*" Intimacao : confere
 Usuario "1" *-- "0..*" InscricaoPush : inscreve
 Escritorio "1" *-- "1" ConfiguracaoEscritorio : configura
 

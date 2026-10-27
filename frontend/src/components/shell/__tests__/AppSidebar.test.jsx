@@ -38,8 +38,9 @@ jest.mock("../../../contexts/PanelContext", () => ({
 }));
 
 jest.mock("../../../contexts/PreferencesContext", () => ({
-  usePreferences: () => ({ t: (chave) => chave }),
+  usePreferences: () => ({ t: (chave) => chave, densidade: "comfortable", atualizarPreferencias: jest.fn().mockResolvedValue({}) }),
 }));
+jest.mock("../../../contexts/AvisosContext", () => ({ useAvisos: () => jest.fn() }));
 jest.mock("../../../contexts/MenuMovelContext", () => ({
   useMenuMovel: () => ({ aberto: false, fechar: jest.fn() }),
 }));

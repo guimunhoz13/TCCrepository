@@ -440,6 +440,17 @@ export function normalizarLista(dados) {
   return [];
 }
 
+const RECURSOS_DA_BUSCA = {
+  clientes: "clientes", tarefas: "tarefas", agenda: "agenda", documentos: "documentos",
+  contratos: "contratos", horas: "apontamentos", modelos: "modelos-documento",
+};
+
+export function getRegistroDaBusca(painel, id) {
+  const recurso = RECURSOS_DA_BUSCA[painel];
+  if (!recurso || !/^\d+$/.test(String(id))) return Promise.reject(new Error("Registro inválido."));
+  return request(`/${recurso}/${id}/`);
+}
+
 export async function getRascunho(chave) {
   try {
     return await request(`/rascunhos/${encodeURIComponent(chave)}/`);
@@ -712,6 +723,10 @@ export async function buscarIntimacoesNoDjen() {
 
 export async function marcarIntimacaoComoLida(id) {
   return request(`/intimacoes/${id}/`, { method: "PATCH", body: JSON.stringify({ lida: true }) });
+}
+
+export function conferirPrazoIntimacao(id, dados) {
+  return request(`/intimacoes/${id}/conferir/`, { method: "POST", body: JSON.stringify(dados) });
 }
 
 // Notificações push.

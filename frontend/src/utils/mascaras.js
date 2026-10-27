@@ -10,12 +10,12 @@ export function formatarCPF(valor) {
 }
 
 export function formatarCNPJ(valor) {
-  const numeros = valor.replace(/\D/g, "").slice(0, 14);
-  return numeros
-    .replace(/^(\d{2})(\d)/, "$1.$2")
-    .replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3")
-    .replace(/\.(\d{3})(\d)/, ".$1/$2")
-    .replace(/(\d{4})(\d)/, "$1-$2");
+  const caracteres = valor.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 14);
+  return caracteres.slice(0, 2)
+    + (caracteres.length > 2 ? `.${caracteres.slice(2, 5)}` : "")
+    + (caracteres.length > 5 ? `.${caracteres.slice(5, 8)}` : "")
+    + (caracteres.length > 8 ? `/${caracteres.slice(8, 12)}` : "")
+    + (caracteres.length > 12 ? `-${caracteres.slice(12, 14)}` : "");
 }
 
 export function formatarTelefone(valor) {

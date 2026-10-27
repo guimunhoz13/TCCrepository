@@ -128,7 +128,7 @@ export default function ClientesPanel() {
 
   // Preenche só o que ainda está vazio: nunca sobrescreve o que foi digitado.
   async function handleBuscarCnpj(valor) {
-    if ((valor || "").replace(/\D/g, "").length !== 14) return;
+    if ((valor || "").replace(/[^A-Za-z0-9]/g, "").length !== 14) return;
     try {
       setBuscandoCnpj(true);
       const empresa = await buscarEmpresaPorCnpj(valor);
