@@ -18,7 +18,10 @@ test("foto é salva separadamente e continua disponível após recarregar", asyn
 
 test("modo compacto reduz visivelmente as linhas e mantém a escolha", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
+  const carregamento = page.waitForResponse((res) => /\/api\/configuracoes\/$/.test(res.url()) && res.ok());
   await entrar(page);
+  const iniciais = await (await carregamento).json();
+  await expect(page.locator("html")).toHaveAttribute("data-density", iniciais.preferencias.densidade_tabela);
   const densidade = page.getByRole("button", { name: "Alternar densidade das listas" });
   async function alternar() {
     const salva = page.waitForResponse((res) => res.url().includes("/configuracoes/preferencias/") && res.request().method() === "PATCH");
@@ -26,12 +29,14 @@ test("modo compacto reduz visivelmente as linhas e mantém a escolha", async ({ 
     expect((await salva).ok()).toBeTruthy();
   }
   if ((await densidade.getAttribute("aria-pressed")) === "true") await alternar();
+  await expect(page.locator("html")).toHaveAttribute("data-density", "comfortable");
   await abrirMenu(page, "Clientes");
   const linha = page.locator(".overlay-body tbody tr").first();
   await expect(linha).toBeVisible();
   const confortavel = (await linha.boundingBox()).height;
   await page.getByRole("button", { name: "Fechar", exact: true }).click();
   await alternar();
+  await expect(page.locator("html")).toHaveAttribute("data-density", "compact");
   await abrirMenu(page, "Clientes");
   await expect(linha).toBeVisible();
   expect((await linha.boundingBox()).height).toBeLessThan(confortavel * 0.85);
