@@ -31,7 +31,8 @@ test("modo compacto reduz visivelmente as linhas e mantém a escolha", async ({ 
   if ((await densidade.getAttribute("aria-pressed")) === "true") await alternar();
   await expect(page.locator("html")).toHaveAttribute("data-density", "comfortable");
   await abrirMenu(page, "Clientes");
-  const linha = page.locator(".overlay-body tbody tr").first();
+  // Aguarda um registro real, não uma linha do esqueleto de carregamento.
+  const linha = page.locator(".overlay-body tbody tr").filter({ has: page.getByRole("button", { name: "Editar", exact: true }) }).first();
   await expect(linha).toBeVisible();
   const confortavel = (await linha.boundingBox()).height;
   await page.getByRole("button", { name: "Fechar", exact: true }).click();

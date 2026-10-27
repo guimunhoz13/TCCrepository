@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { registrarEscritorio } from "@/services/api";
@@ -35,6 +35,12 @@ export default function RegisterForm() {
   const [erro, setErro] = useState("");
   const [carregando, setCarregando] = useState(false);
 
+  useLayoutEffect(() => {
+    // Foca antes de a etapa ficar interativa; um RAF atrasado pode roubar
+    // o foco de quem já começou a digitar em outro campo da nova etapa.
+    formularioRef.current?.querySelector(`[data-etapa="${etapa}"] input`)?.focus();
+  }, [etapa]);
+
   function alterarCampo(campo, valor) {
     setForm((atual) => ({ ...atual, [campo]: valor }));
   }
@@ -42,10 +48,6 @@ export default function RegisterForm() {
   function irPara(numero) {
     setEtapa(numero);
     setErro("");
-    requestAnimationFrame(() => {
-      const campo = formularioRef.current?.querySelector(`[data-etapa="${numero}"] input`);
-      campo?.focus();
-    });
   }
 
   function validarEtapa(numero) {
