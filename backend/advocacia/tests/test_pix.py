@@ -112,6 +112,40 @@ class PixDaParcelaAPITestCase(_EquipeDoEscritorio, APITestCase):
         resposta = self.client.patch("/api/configuracoes/escritorio/", {"chave_pix": "abc"}, format="json")
         self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
 
+    def test_teste_funciona_sem_chave_e_nao_contem_dados_bancarios(self):
+        self._como("financeiro")
+        resposta = self.client.get(f"/api/parcelas/{self.parcela.id}/pix/?modo=teste")
+        self.assertEqual(resposta.status_code, 200, resposta.data)
+        self.assertEqual(resposta.data["modo"], "teste")
+        self.assertTrue(resposta.data["payload"].startswith("LEXNEXO-TESTE-SEM-VALOR:"))
+        self.assertNotIn("br.gov.bcb.pix", resposta.data["payload"])
+        self.assertEqual(resposta.data["cliente_telefone"], "")
+
+    def test_simulacao_repetida_nao_altera_parcela_real(self):
+        self._como("financeiro")
+        codigo = self.client.get(f"/api/parcelas/{self.parcela.id}/pix/?modo=teste").data["payload"]
+        for _ in range(2):
+            resposta = self.client.patch(f"/api/parcelas/{self.parcela.id}/simular-pix/", {"codigo": codigo}, format="json")
+            self.assertEqual(resposta.status_code, 200, resposta.data)
+            self.assertFalse(resposta.data["parcela_alterada"])
+        self.parcela.refresh_from_db()
+        self.assertEqual(self.parcela.status, "pendente")
+        self.assertIsNone(self.parcela.pago_em)
+
+    def test_simulacao_recusa_codigo_real_e_modo_invalido(self):
+        self._configurar_pix()
+        codigo = self.client.get(f"/api/parcelas/{self.parcela.id}/pix/").data["payload"]
+        self.assertEqual(self.client.patch(f"/api/parcelas/{self.parcela.id}/simular-pix/", {"codigo": codigo}, format="json").status_code, 400)
+        self.assertEqual(self.client.get(f"/api/parcelas/{self.parcela.id}/pix/?modo=outro").status_code, 400)
+
+    def test_simulacao_exige_permissao_e_escritorio_correto(self):
+        self._como("secretaria")
+        self.assertEqual(self.client.patch(f"/api/parcelas/{self.parcela.id}/simular-pix/", {}, format="json").status_code, 403)
+        _, outro, _, _ = self._montar(nome="Outro", cnpj="99887766000100", email="outro@teste.com", sufixo="outro")
+        self.membros["outro_admin"] = outro
+        self._como("outro_admin")
+        self.assertEqual(self.client.get(f"/api/parcelas/{self.parcela.id}/pix/?modo=teste").status_code, 404)
+
     def test_parcela_paga_nao_gera_pix(self):
         self._configurar_pix()
         self.parcela.status = "pago"

@@ -1,5 +1,10 @@
 import { montarMensagemPix } from "../PixDaParcela";
 
+test("código de demonstração nunca vira mensagem de cobrança", () => {
+  expect(montarMensagemPix({ modo: "teste", payload: "LEXNEXO-TESTE-SEM-VALOR:1" })).not.toContain("LEXNEXO-TESTE-SEM-VALOR:1");
+  expect(montarMensagemPix({ modo: "teste" })).toContain("não pode ser pago");
+});
+
 test("mensagem do WhatsApp leva valor, vencimento e o copia e cola", () => {
   const mensagem = montarMensagemPix({
     cliente_nome: "Maria Fernanda Costa",

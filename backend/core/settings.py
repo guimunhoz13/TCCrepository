@@ -302,6 +302,17 @@ if os.environ.get('MEDIA_STORAGE') == 's3':
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# Avatares não dependem do filesystem efêmero nem de credenciais de um bucket.
+# Demais arquivos mantêm o backend configurado acima (S3 em produção).
+_storage_arquivos = STORAGES['default']
+STORAGES['default'] = {
+    'BACKEND': 'core.storage.PersistentPhotoStorage',
+    'OPTIONS': {
+        'file_storage_backend': _storage_arquivos['BACKEND'],
+        'file_storage_options': _storage_arquivos.get('OPTIONS', {}),
+    },
+}
+
 
 # OpenAI — chave exclusivamente no backend (variável de ambiente)
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")

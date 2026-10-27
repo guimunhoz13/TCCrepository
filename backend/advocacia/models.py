@@ -21,6 +21,13 @@ ESTADOS_CIVIS = (
 )
 
 
+class FotoPersistente(models.Model):
+    """Avatares pequenos, privados e independentes do disco efêmero do servidor."""
+    nome = models.CharField(max_length=500, primary_key=True)
+    conteudo = models.BinaryField(editable=False)
+    criado_em = models.DateTimeField(auto_now_add=True)
+
+
 class Escritorio(models.Model):
 
     PLANOS = (

@@ -19,7 +19,7 @@ from ..models import (
     Parcela,
 )
 from ..permissoes import PermissaoPorPerfil
-from ..pix import ErroPix, pix_da_parcela
+from ..pix import ErroPix, codigo_pix_teste, pix_da_parcela
 from ..serializers import (
     ContratoSerializer,
     ParcelaSerializer,
@@ -128,6 +128,11 @@ class ParcelaViewSet(
         parcela = self.get_object()
         if parcela.status == "pago":
             return Response({"detail": "Esta parcela já está paga."}, status=status.HTTP_400_BAD_REQUEST)
+        modo = request.query_params.get("modo", "real")
+        if modo not in ("real", "teste"):
+            return Response({"detail": "Escolha o modo real ou teste."}, status=status.HTTP_400_BAD_REQUEST)
+        if modo == "teste":
+            return Response(pix_da_parcela(parcela, teste=True))
         configuracao, _ = ConfiguracaoEscritorio.objects.get_or_create(
             escritorio=parcela.contrato.escritorio
         )
@@ -135,6 +140,19 @@ class ParcelaViewSet(
             return Response(pix_da_parcela(parcela, configuracao))
         except ErroPix as erro:
             return Response({"detail": str(erro)}, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=["patch"], url_path="simular-pix")
+    def simular_pix(self, request, pk=None):
+        """Confirma somente uma demonstração; nunca dá baixa na parcela real."""
+        parcela = self.get_object()
+        if parcela.status == "pago":
+            return Response({"detail": "Esta parcela já está paga."}, status=status.HTTP_400_BAD_REQUEST)
+        if request.data.get("codigo") != codigo_pix_teste(parcela):
+            return Response({"detail": "Use apenas o código de teste desta parcela."}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({
+            "modo": "teste", "status": "confirmado", "parcela_alterada": False,
+            "detail": "Pagamento simulado. Nenhum dinheiro foi movimentado e a parcela real continua pendente.",
+        })
 
     def perform_update(self, serializer):
         parcela = serializer.instance

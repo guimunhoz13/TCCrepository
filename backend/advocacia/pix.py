@@ -102,12 +102,17 @@ def montar_payload(chave, nome, cidade, valor, txid="***", descricao=""):
     return payload + crc16(payload)
 
 
-def pix_da_parcela(parcela, configuracao):
+def codigo_pix_teste(parcela):
+    # Não é BR Code nem contém chave bancária: nenhum banco pode liquidá-lo.
+    return f"LEXNEXO-TESTE-SEM-VALOR:PARCELA:{parcela.pk}"
+
+
+def pix_da_parcela(parcela, configuracao=None, *, teste=False):
     """Payload e QR code do PIX de uma parcela."""
     contrato = parcela.contrato
     processo = contrato.processo
     total = contrato.parcelas.count()
-    payload = montar_payload(
+    payload = codigo_pix_teste(parcela) if teste else montar_payload(
         chave=configuracao.chave_pix,
         nome=configuracao.nome_recebedor_pix or contrato.escritorio.nome,
         cidade=configuracao.cidade_pix or contrato.escritorio.cidade,
@@ -116,14 +121,15 @@ def pix_da_parcela(parcela, configuracao):
         descricao=f"Parcela {parcela.numero}/{total} proc {processo.numero_processo}",
     )
     return {
+        "modo": "teste" if teste else "real",
         "payload": payload,
         "qr_code": qr_code_svg(payload),
         "valor": f"{parcela.valor:.2f}",
         "data_vencimento": parcela.data_vencimento.isoformat(),
         "numero": parcela.numero,
         "total_parcelas": total,
-        "recebedor": configuracao.nome_recebedor_pix or contrato.escritorio.nome,
+        "recebedor": "LexNexo — demonstração sem valor financeiro" if teste else configuracao.nome_recebedor_pix or contrato.escritorio.nome,
         "numero_processo": processo.numero_processo,
         "cliente_nome": processo.cliente.nome,
-        "cliente_telefone": processo.cliente.telefone,
+        "cliente_telefone": "" if teste else processo.cliente.telefone,
     }

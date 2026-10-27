@@ -39,6 +39,35 @@ class PlanosAPITestCase(_EquipeDoEscritorio, APITestCase):
 
     # --- catálogo e situação ---
 
+    def test_pix_teste_de_assinatura_nao_contrata_nem_altera_limites(self):
+        self._como("admin")
+        antes = self.client.get("/api/plano/").data
+        for plano in ("basico", "profissional"):
+            demonstracao = self.client.get(f"/api/plano/pix-teste/?plano={plano}")
+            self.assertEqual(demonstracao.status_code, 200, demonstracao.data)
+            self.assertNotIn("br.gov.bcb.pix", demonstracao.data["payload"])
+            self.assertEqual(demonstracao.data["valor"], f"{PLANOS[plano]['preco_mensal']:.2f}")
+            resposta = self.client.patch("/api/plano/pix-teste/", {"plano": plano, "codigo": demonstracao.data["payload"]}, format="json")
+            self.assertEqual(resposta.status_code, 200, resposta.data)
+            self.assertFalse(resposta.data["plano_ativado"])
+        self.assertEqual(self.client.get("/api/plano/").data, antes)
+
+    def test_pix_teste_recusa_codigo_de_outro_escritorio_ou_plano(self):
+        self._como("admin")
+        codigo = self.client.get("/api/plano/pix-teste/?plano=basico").data["payload"]
+        self.assertEqual(self.client.patch("/api/plano/pix-teste/", {"plano": "profissional", "codigo": codigo}, format="json").status_code, 400)
+        outro = _criar_escritorio(cnpj="99887766000100", email="outro@teste.com")
+        self.membros["outro_admin"] = _criar_usuario(outro, email="admin@outro.com")
+        self._como("outro_admin")
+        self.assertEqual(self.client.patch("/api/plano/pix-teste/", {"plano": "basico", "codigo": codigo}, format="json").status_code, 400)
+
+    def test_pix_teste_exige_login_e_plano_valido(self):
+        self.assertEqual(self.client.get("/api/plano/pix-teste/?plano=basico").status_code, 401)
+        self._como("admin")
+        for plano in ("gratuito", "inexistente", ""):
+            self.assertEqual(self.client.get(f"/api/plano/pix-teste/?plano={plano}").status_code, 400)
+        self.assertEqual(self.client.patch("/api/plano/pix-teste/", {"plano": []}, format="json").status_code, 400)
+
     def test_catalogo_e_publico_e_o_primeiro_plano_e_gratuito(self):
         self.client.credentials()
         resposta = self.client.get("/api/planos/")

@@ -4,6 +4,7 @@
 from django.contrib.auth.hashers import check_password, make_password
 from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework import status
+from rest_framework import serializers
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -79,7 +80,8 @@ class ConfiguracoesContaView(APIView):
             return Response({"detail": "Nome e e-mail são obrigatórios."}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            validar_email_real(email)
+            if email != usuario.email:
+                validar_email_real(email)
         except DjangoValidationError as exc:
             return Response({"email": list(exc.messages)}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -97,14 +99,22 @@ class ConfiguracoesContaView(APIView):
         campos_alterados = ["nome", "email", "telefone"]
 
         if "foto" in request.FILES:
-            usuario.foto = request.FILES["foto"]
+            try:
+                foto = serializers.ImageField().run_validation(request.FILES["foto"])
+                Usuario._meta.get_field("foto").run_validators(foto)
+                usuario.foto = foto
+            except (DjangoValidationError, serializers.ValidationError) as exc:
+                return Response({"foto": getattr(exc, "messages", None) or exc.detail}, status=status.HTTP_400_BAD_REQUEST)
             campos_alterados.append("foto")
 
         if "documento_identidade" in request.FILES:
             usuario.documento_identidade = request.FILES["documento_identidade"]
             campos_alterados.append("documento_identidade")
 
-        usuario.save(update_fields=campos_alterados)
+        try:
+            usuario.save(update_fields=campos_alterados)
+        except DjangoValidationError as exc:
+            return Response({"foto": exc.messages}, status=status.HTTP_400_BAD_REQUEST)
 
         return Response({
             "detail": "Dados pessoais atualizados com sucesso.",

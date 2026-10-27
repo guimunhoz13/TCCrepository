@@ -8,6 +8,7 @@ import { useAjuda } from "@/contexts/AjudaContext";
 import GuiaContextual from "@/components/shell/GuiaContextual";
 import { usePermissoes } from "@/hooks/usePermissoes";
 import DetalheResultado from "./DetalheResultado";
+import { useBloqueioRolagem } from "@/hooks/useBloqueioRolagem";
 
 const AREA_DE_PERMISSAO = {
   clientes: "clientes",
@@ -52,6 +53,7 @@ export default function OverlayPanel({
   const pode = usePermissoes();
   const painelRef = useRef(null);
   const focoAnteriorRef = useRef(null);
+  useBloqueioRolagem(Boolean(activePanel));
 
   const tentarFechar = useCallback(() => {
     const evento = new CustomEvent("lexnexo:tentar-fechar-painel", { cancelable: true });
@@ -82,15 +84,13 @@ export default function OverlayPanel({
 
     if (activePanel) {
       focoAnteriorRef.current = document.activeElement;
-      document.body.style.overflow = "hidden";
       window.addEventListener("keydown", onKeyDown);
-      requestAnimationFrame(() => painelRef.current?.focus());
+      requestAnimationFrame(() => painelRef.current?.focus({ preventScroll: true }));
     }
 
     return () => {
-      document.body.style.overflow = "";
       window.removeEventListener("keydown", onKeyDown);
-      if (focoAnteriorRef.current?.isConnected) focoAnteriorRef.current.focus();
+      if (focoAnteriorRef.current?.isConnected) focoAnteriorRef.current.focus({ preventScroll: true });
     };
   }, [activePanel, tentarFechar]);
 

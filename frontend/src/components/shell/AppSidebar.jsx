@@ -252,7 +252,7 @@ export default function AppSidebar() {
           <button type="button" className="nav-item" onClick={() => atualizarPreferencias({ densidade_tabela: densidade === "compact" ? "comfortable" : "compact" })
             .catch(() => avisar("Não foi possível salvar a preferência de densidade. Tente novamente.", "erro"))}
             aria-pressed={densidade === "compact"} title="Alternar densidade das listas" aria-label="Alternar densidade das listas">
-            <Rows3 size={18} /><span>{densidade === "compact" ? "Modo confortável" : "Modo compacto"}</span>
+            <Rows3 size={18} /><span>Densidade: {densidade === "compact" ? "Compacta" : "Confortável"}</span>
           </button>
           <button type="button" className="nav-item sidebar-recolher" onClick={() => setMenuCompacto(menuCompacto !== "true")}
             aria-label={menuCompacto === "true" ? "Expandir menu lateral" : "Recolher menu lateral"} title={menuCompacto === "true" ? "Expandir menu lateral" : "Recolher menu lateral"}>
