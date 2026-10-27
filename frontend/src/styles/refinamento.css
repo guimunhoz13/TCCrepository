@@ -6,6 +6,10 @@
 }
 
 [hidden] { display: none !important; }
+/* Mantém a largura ao abrir janelas e impede o wheel de escapar para o fundo. */
+html { scrollbar-gutter: stable; }
+.overlay-body { min-height: 0; }
+.overlay-body, .ajuda-conteudo, .ajuda-indice, .sidebar-nav { overscroll-behavior-y: contain; }
 .app-shell { background: var(--bg-primary); }
 .app-main { background-image: none; min-width: 0; }
 .sidebar { background-image: none; box-shadow: none; gap: 16px; padding: 22px 14px; overflow-y: hidden; }
@@ -79,9 +83,26 @@
 .conferencia-prazo > p { line-height: 1.6; color: var(--text-secondary); font-size: .85rem; }
 .conferencia-confirmacao { display: flex; gap: 10px; align-items: flex-start; font-size: .85rem; }
 
-[data-density="compact"] .table-wrap td { padding-top: 8px; padding-bottom: 8px; }
-[data-density="compact"] .panel-card { padding: 18px; }
-[data-density="compact"] .stat-card { padding: 14px 18px; }
+[data-density="compact"] .table-wrap td { padding-top: 6px; padding-bottom: 6px; }
+[data-density="compact"] .panel-card { padding: 14px 16px; }
+[data-density="compact"] .stat-card { padding: 12px 16px; }
+[data-density="compact"] .app-main { padding: 20px 24px 32px; }
+[data-density="compact"] .sidebar { gap: 12px; padding-block: 16px; }
+[data-density="compact"] .sidebar-nav { gap: 10px; }
+[data-density="compact"] .sidebar .nav-item { padding-block: 6px; min-height: 36px; }
+[data-density="compact"] .topbar { margin-bottom: 20px; padding-bottom: 14px; }
+[data-density="compact"] .stats-grid, [data-density="compact"] .dashboard-grid { gap: 12px; }
+[data-density="compact"] .overlay-header { padding: 14px 20px; }
+[data-density="compact"] .overlay-body { padding: 18px 20px; }
+[data-density="compact"] .panel-card-header { margin-bottom: 12px; padding-bottom: 10px; }
+[data-density="compact"] .deadline-item, [data-density="compact"] .task-item { padding: 10px 12px; }
+[data-density="compact"] .table-wrap .avatar-img, [data-density="compact"] .table-wrap .avatar-fallback { max-width: 28px; max-height: 28px; }
+[data-density="compact"] .primeiros-passos { padding: 14px 16px; }
+[data-density="compact"] .form-grid { gap: 12px; }
+@media (max-width: 720px) {
+  [data-density="compact"] .app-main { padding: 16px 14px calc(84px + env(safe-area-inset-bottom)); }
+  [data-density="compact"] .overlay-body { padding: 14px; }
+}
 
 @media (min-width: 1025px) {
   .app-shell { grid-template-columns: 240px minmax(0, 1fr); }

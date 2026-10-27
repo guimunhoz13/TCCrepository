@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import { useBloqueioRolagem } from "@/hooks/useBloqueioRolagem";
 
 const MenuMovelContext = createContext(null);
 
@@ -12,6 +13,7 @@ const MenuMovelContext = createContext(null);
  */
 export function MenuMovelProvider({ children }) {
   const [aberto, setAberto] = useState(false);
+  useBloqueioRolagem(aberto);
 
   const abrir = useCallback(() => setAberto(true), []);
   const fechar = useCallback(() => setAberto(false), []);
@@ -22,12 +24,8 @@ export function MenuMovelProvider({ children }) {
       if (evento.key === "Escape") setAberto(false);
     }
     window.addEventListener("keydown", aoTeclar);
-    // Com a gaveta aberta, a página de trás não rola junto com o dedo.
-    const overflowAnterior = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
     return () => {
       window.removeEventListener("keydown", aoTeclar);
-      document.body.style.overflow = overflowAnterior;
     };
   }, [aberto]);
 

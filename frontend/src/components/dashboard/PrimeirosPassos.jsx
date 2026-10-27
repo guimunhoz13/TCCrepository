@@ -13,6 +13,7 @@ import {
 import { usePanel } from "@/contexts/PanelContext";
 import { useUsuarioLogado } from "@/hooks/useUsuarioLogado";
 import { usePermissoes } from "@/hooks/usePermissoes";
+import { useBloqueioRolagem } from "@/hooks/useBloqueioRolagem";
 import {
   escritorioAindaVazio,
   primeirosPassos,
@@ -48,6 +49,7 @@ const ETAPAS_TOUR = [
 ];
 
 function Tour({ etapa, setEtapa, onFechar }) {
+  useBloqueioRolagem(true);
   const caixaRef = useRef(null);
   const ultima = etapa === ETAPAS_TOUR.length - 1;
   const atual = ETAPAS_TOUR[etapa];
@@ -55,8 +57,6 @@ function Tour({ etapa, setEtapa, onFechar }) {
   useEffect(() => {
     const focoAnterior = document.activeElement;
     const caixa = caixaRef.current;
-    const overflowAnterior = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
     caixa?.focus();
 
     function aoTeclar(evento) {
@@ -81,8 +81,7 @@ function Tour({ etapa, setEtapa, onFechar }) {
     window.addEventListener("keydown", aoTeclar);
     return () => {
       window.removeEventListener("keydown", aoTeclar);
-      document.body.style.overflow = overflowAnterior;
-      if (focoAnterior?.isConnected) focoAnterior.focus();
+      if (focoAnterior?.isConnected) focoAnterior.focus({ preventScroll: true });
     };
   }, [onFechar]);
 

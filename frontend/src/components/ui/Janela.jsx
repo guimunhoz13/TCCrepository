@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useRef } from "react";
 import { X } from "lucide-react";
+import { useBloqueioRolagem } from "@/hooks/useBloqueioRolagem";
 
 /**
  * Janela (diálogo modal) genérica do sistema. Fecha no Esc, no fundo ou no
@@ -11,10 +12,11 @@ import { X } from "lucide-react";
 export default function Janela({ titulo, onFechar, children, largura = 460 }) {
   const idTitulo = useId();
   const janelaRef = useRef(null);
+  useBloqueioRolagem(true);
 
   useEffect(() => {
     const focoAnterior = document.activeElement;
-    janelaRef.current?.focus();
+    janelaRef.current?.focus({ preventScroll: true });
     function aoTeclar(evento) {
       if (evento.key === "Escape") {
         evento.stopPropagation();
@@ -25,7 +27,7 @@ export default function Janela({ titulo, onFechar, children, largura = 460 }) {
     window.addEventListener("keydown", aoTeclar, true);
     return () => {
       window.removeEventListener("keydown", aoTeclar, true);
-      focoAnterior?.focus?.();
+      focoAnterior?.focus?.({ preventScroll: true });
     };
   }, [onFechar]);
 

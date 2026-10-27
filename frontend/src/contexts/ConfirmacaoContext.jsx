@@ -2,6 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { AlertTriangle } from "lucide-react";
+import { useBloqueioRolagem } from "@/hooks/useBloqueioRolagem";
 
 const ConfirmacaoContext = createContext(null);
 
@@ -43,6 +44,7 @@ export function ConfirmacaoProvider({ children }) {
 }
 
 function JanelaConfirmacao({ pedido, onResponder }) {
+  useBloqueioRolagem(true);
   const cancelarRef = useRef(null);
   const confirmarRef = useRef(null);
   const focoAnterior = useRef(null);

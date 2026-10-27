@@ -1,5 +1,7 @@
 "use client";
 
+import { useCallback, useState } from "react";
+import PixTestePlano from "@/components/planos/PixTestePlano";
 import { usePanel, PANELS } from "@/contexts/PanelContext";
 import OverlayPanel from "@/components/shell/OverlayPanel";
 import CartoesDePlanos from "@/components/planos/CartoesDePlanos";
@@ -65,6 +67,8 @@ function botaoDoPlano(plano, ehAtual, { ordem, ordemAtual, contato }) {
 
 export default function PlanosPanel() {
   const { activePanel } = usePanel();
+  const [planoTeste, setPlanoTeste] = useState(null);
+  const fecharTeste = useCallback(() => setPlanoTeste(null), []);
   const aberto = activePanel === PANELS.PLANOS;
   const catalogo = useRecurso(getPlanos, [], { ativo: aberto });
   const atual = useRecurso(getPlanoAtual, [], { ativo: aberto });
@@ -125,14 +129,18 @@ export default function PlanosPanel() {
           planos={planos}
           atual={situacao?.plano}
           acao={(plano, ehAtual) =>
-            botaoDoPlano(plano, ehAtual, {
+            <div style={{ display: "grid", gap: 10 }}>
+            {botaoDoPlano(plano, ehAtual, {
               ordem: planos.indexOf(plano),
               ordemAtual,
               contato: catalogo.dados?.contato_comercial,
-            })
+            })}
+            {plano.preco_mensal > 0 && <button type="button" className="btn btn-secondary" onClick={() => setPlanoTeste(plano)}>Testar Pix do {plano.nome}</button>}
+            </div>
           }
         />
       )}
+      {planoTeste && <PixTestePlano plano={planoTeste} onFechar={fecharTeste} />}
     </OverlayPanel>
   );
 }

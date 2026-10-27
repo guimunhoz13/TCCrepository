@@ -150,9 +150,22 @@ TAMANHO_MAXIMO_DOCUMENTO = 10 * 1024 * 1024  # 10 MB
 
 
 def validar_tamanho_imagem(arquivo):
-    """Limita fotos de perfil a 5 MB para evitar uploads abusivos."""
+    """Limita bytes e resolução, antes de decodificar a imagem completa."""
     if arquivo and arquivo.size > TAMANHO_MAXIMO_IMAGEM:
         raise ValidationError("A imagem não pode ultrapassar 5 MB.")
+    if arquivo and all(hasattr(arquivo, metodo) for metodo in ("read", "tell", "seek")):
+        from PIL import Image, UnidentifiedImageError
+        posicao = arquivo.tell()
+        try:
+            with Image.open(arquivo) as imagem:
+                if imagem.width * imagem.height > 20_000_000:
+                    raise ValidationError("Escolha uma imagem com até 20 megapixels.")
+        except Image.DecompressionBombError as exc:
+            raise ValidationError("Escolha uma imagem com até 20 megapixels.") from exc
+        except (UnidentifiedImageError, OSError):
+            pass  # A validação de conteúdo é feita pelo ImageField/assinatura.
+        finally:
+            arquivo.seek(posicao)
 
 
 def validar_tamanho_documento(arquivo):

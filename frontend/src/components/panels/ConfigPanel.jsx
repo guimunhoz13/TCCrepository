@@ -55,6 +55,7 @@ import RequisitosSenha from "@/components/ui/RequisitosSenha";
 import Avatar from "@/components/ui/Avatar";
 import GuiaContextual from "@/components/shell/GuiaContextual";
 import { useAjuda } from "@/contexts/AjudaContext";
+import { useBloqueioRolagem } from "@/hooks/useBloqueioRolagem";
 
 const TABS = [
   { id: "conta", tKey: "config_conta", icon: User },
@@ -105,6 +106,7 @@ const PREF_DEFAULT = {
 
 export default function ConfigPanel() {
   const { activePanel, closePanel } = usePanel();
+  useBloqueioRolagem(activePanel === PANELS.CONFIG);
   const { theme, setTheme } = useTheme();
   const { t, atualizarPreferencias } = usePreferences();
   const pode = usePermissoes();
@@ -228,6 +230,30 @@ function ContaTab({ usuario, setDados, feedback, t }) {
   const [senha, setSenha] = useState({ senha_atual: "", nova_senha: "", confirmar_senha: "" });
   const [showPassword, setShowPassword] = useState(false);
   const [salvando, setSalvando] = useState(false);
+  const [previaFoto, setPreviaFoto] = useState("");
+  useEffect(() => {
+    return () => { if (previaFoto) URL.revokeObjectURL(previaFoto); };
+  }, [previaFoto]);
+
+  function aplicarConta(res) {
+    setDados((d) => ({ ...d, usuario: res.usuario }));
+    setFoto(null);
+    setPreviaFoto("");
+    const atual = JSON.parse(localStorage.getItem("usuarioLogado") || "{}");
+    salvarUsuarioLogado({ ...atual, nome: res.usuario.nome, email: res.usuario.email, foto: res.usuario.foto });
+    feedback(res.detail);
+  }
+
+  async function salvarFoto() {
+    if (!foto) return;
+    setSalvando(true);
+    try {
+      const payload = new FormData();
+      payload.append("foto", foto);
+      aplicarConta(await updateConta(payload));
+    } catch (e) { feedback(e.message, true); }
+    finally { setSalvando(false); }
+  }
 
   async function salvarConta() {
     try {
@@ -239,11 +265,7 @@ function ContaTab({ usuario, setDados, feedback, t }) {
       if (foto) payload.append("foto", foto);
 
       const res = await updateConta(payload);
-      setDados((d) => ({ ...d, usuario: res.usuario }));
-      setFoto(null);
-      const atual = JSON.parse(localStorage.getItem("usuarioLogado") || "{}");
-      salvarUsuarioLogado({ ...atual, nome: res.usuario.nome, email: res.usuario.email, foto: res.usuario.foto });
-      feedback(res.detail);
+      aplicarConta(res);
     } catch (e) { feedback(e.message, true); }
     finally { setSalvando(false); }
   }
@@ -270,17 +292,27 @@ function ContaTab({ usuario, setDados, feedback, t }) {
   return <div className="settings-stack">
     <Section title={t("perfil_foto")} description={t("perfil_foto_desc")}>
       <div className="avatar-cell">
-        <Avatar src={foto ? URL.createObjectURL(foto) : usuario.foto} nome={usuario.nome} size={56} />
+        <Avatar src={previaFoto || usuario.foto} nome={usuario.nome} size={56} />
         <label className="btn btn-secondary btn-sm" style={{ cursor: "pointer" }}>
           {t("perfil_escolher_foto")}
           <input
             type="file"
-            accept="image/*"
+            aria-label="Escolher foto de perfil"
+            accept="image/jpeg,image/png,image/webp"
             style={{ display: "none" }}
-            onChange={(e) => setFoto(e.target.files?.[0] || null)}
+            onChange={(e) => {
+              const arquivo = e.target.files?.[0] || null;
+              if (arquivo && arquivo.size > 5 * 1024 * 1024) { feedback("Escolha uma foto com até 5 MB.", true); return; }
+              setFoto(arquivo);
+              setPreviaFoto(arquivo ? URL.createObjectURL(arquivo) : "");
+            }}
           />
         </label>
+        {foto && <button type="button" className="btn btn-primary btn-sm" disabled={salvando} onClick={salvarFoto}>
+          {salvando ? "Salvando foto…" : "Salvar foto"}
+        </button>}
       </div>
+      <p className="dica-campo">JPG, PNG ou WebP, até 5 MB. {foto ? "Prévia ainda não salva: clique em Salvar foto para confirmar." : "Sua foto salva permanece disponível nos próximos acessos."}</p>
     </Section>
 
     <Section title="Dados pessoais" description="Atualize seus dados de acesso e contato.">
@@ -846,7 +878,7 @@ function AparenciaTab({ preferencias, setDados, feedback, theme, setTheme, atual
   }
   return <div className="settings-stack">
     <Section title={t("aparencia_tema")}><div className="theme-toggle"><button className={`btn btn-sm ${theme === "light" ? "btn-primary" : "btn-secondary"}`} onClick={() => salvar("tema", "light")}>{t("aparencia_claro")}</button><button className={`btn btn-sm ${theme === "dark" ? "btn-primary" : "btn-secondary"}`} onClick={() => salvar("tema", "dark")}>{t("aparencia_escuro")}</button></div></Section>
-    <Section title={t("aparencia_densidade")}><Field><select aria-label={t("aparencia_densidade")} value={p.densidade_tabela} onChange={(e) => salvar("densidade_tabela", e.target.value)}><option value="comfortable">{t("aparencia_confortavel")}</option><option value="compact">{t("aparencia_compacta")}</option></select></Field></Section>
+    <Section title={t("aparencia_densidade")} description="Confortável oferece mais espaço entre informações. Compacto reduz espaços no menu, cartões e listas para mostrar mais dados na tela, mantendo as mesmas funções."><Field><select aria-label={t("aparencia_densidade")} value={p.densidade_tabela} onChange={(e) => salvar("densidade_tabela", e.target.value)}><option value="comfortable">{t("aparencia_confortavel")}</option><option value="compact">{t("aparencia_compacta")}</option></select></Field></Section>
     <Section title={t("aparencia_idioma")}><Field><select aria-label={t("aparencia_idioma")} value={p.idioma} onChange={(e) => salvar("idioma", e.target.value)}><option value="pt-BR">Português (Brasil)</option><option value="en-US">English (US)</option><option value="es-ES">Español</option></select></Field></Section>
     <Section title={t("aparencia_pagina_inicial")}><Field><select aria-label={t("aparencia_pagina_inicial")} value={p.pagina_inicial} onChange={(e) => salvar("pagina_inicial", e.target.value)}><option value="dashboard">{t("nav_dashboard")}</option><option value="agenda">{t("nav_agenda")}</option><option value="clientes">{t("nav_clientes")}</option><option value="processos">{t("nav_processos")}</option></select></Field></Section>
   </div>;

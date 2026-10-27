@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { getConfiguracoes, updatePreferencias as apiAtualizarPreferencias } from "@/services/api";
 import { traduzir } from "@/lib/i18n";
 
@@ -13,12 +13,14 @@ const PADRAO = {
 
 export function PreferencesProvider({ children }) {
   const [preferencias, setPreferencias] = useState(PADRAO);
+  const revisao = useRef(0);
 
   useEffect(() => {
     let ativo = true;
+    const inicial = revisao.current;
     getConfiguracoes()
       .then((res) => {
-        if (!ativo || !res?.preferencias) return;
+        if (!ativo || revisao.current !== inicial || !res?.preferencias) return;
         setPreferencias((atual) => ({ ...atual, ...res.preferencias }));
       })
       .catch(() => {
@@ -35,9 +37,10 @@ export function PreferencesProvider({ children }) {
   }, [preferencias.densidade_tabela]);
 
   const atualizarPreferencias = useCallback(async (campos) => {
+    const atualizacao = ++revisao.current;
     setPreferencias((atual) => ({ ...atual, ...campos }));
     const res = await apiAtualizarPreferencias(campos);
-    if (res?.preferencias) {
+    if (revisao.current === atualizacao && res?.preferencias) {
       setPreferencias((atual) => ({ ...atual, ...res.preferencias }));
     }
     return res;

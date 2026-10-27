@@ -116,6 +116,36 @@ Em um celular real, abra a URL da Vercel e verifique:
 O teste automatizado no Playwright cobre uma largura de 375 px e o perfil
 Pixel 7. Isso não substitui a verificação no aparelho e navegador da advogada.
 
+## 7. Fotos e demonstração de Pix
+
+Fotos de usuários e clientes são reduzidas a até 512 × 512 px, convertidas
+para WebP e guardadas no PostgreSQL pela migração `0037_fotopersistente`.
+Continuam privadas, servidas pela API autenticada e isoladas por escritório.
+A tabela tem RLS habilitada e não concede acesso aos papéis `anon` e
+`authenticated` do Supabase. Não depende do disco temporário do Render.
+Documentos conservam o armazenamento anterior: configure o bucket privado
+da etapa 1 para persistirem entre deploys.
+
+Em Configurações → Conta, escolher uma imagem mostra apenas a prévia.
+Clique em **Salvar foto**. Fotos antigas ainda são lidas do armazenamento
+anterior quando disponíveis; arquivos já perdidos no disco temporário
+precisam ser reenviados. Nenhuma migração recupera arquivos desaparecidos.
+
+Para testar honorários, abra Contratos → Ver parcelas → Cobrar com PIX.
+A janela começa em **Teste — sem movimentar dinheiro**. Use **Simular
+pagamento aprovado**. Para assinaturas, abra Planos → **Testar Pix do
+Básico/Profissional** → **Simular assinatura aprovada**.
+
+Esses QR codes contêm `LEXNEXO-TESTE-SEM-VALOR`, não um BR Code bancário,
+nem uma chave Pix. Não são pagáveis em bancos. A API valida a simulação,
+mas não dá baixa na parcela, não altera plano/validade/limites e não
+movimenta dinheiro. O resultado visual desaparece ao fechar a janela.
+Não é integração com sandbox de um provedor de pagamentos.
+
+O modo **Pix real** dos honorários permanece separado e exige seleção
+explícita; pode movimentar dinheiro se confirmado no banco. O sistema
+ainda não possui contratação real de planos por Pix nem webhook bancário.
+
 Fontes: [Vercel monorepos](https://vercel.com/docs/monorepos),
 [Render Blueprints](https://render.com/docs/infrastructure-as-code),
 [Render Free](https://render.com/docs/free),

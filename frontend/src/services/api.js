@@ -703,8 +703,15 @@ export async function configurarDoisFatores(acao, dados = {}) {
 }
 
 // PIX (BR Code) de uma parcela de contrato.
-export async function getPixDaParcela(parcelaId) {
-  return request(`/parcelas/${parcelaId}/pix/`);
+export async function getPixDaParcela(parcelaId, modo = "real") {
+  return request(`/parcelas/${parcelaId}/pix/?modo=${encodeURIComponent(modo)}`);
+}
+
+export async function simularPixDaParcela(parcelaId, codigo) {
+  return request(`/parcelas/${parcelaId}/simular-pix/`, {
+    method: "PATCH",
+    body: JSON.stringify({ codigo }),
+  });
 }
 
 // Mensagem em linguagem simples sobre o andamento, para o cliente.
@@ -971,6 +978,16 @@ export async function getPlanos() {
 
 export async function getPlanoAtual() {
   return request("/plano/");
+}
+
+export async function getPixTestePlano(plano) {
+  return request(`/plano/pix-teste/?plano=${encodeURIComponent(plano)}`);
+}
+
+export async function simularPixPlano(plano, codigo) {
+  return request("/plano/pix-teste/", {
+    method: "PATCH", body: JSON.stringify({ plano, codigo }),
+  });
 }
 
 // Feriados locais e suspensões de expediente (entram no cálculo de prazos).

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { HelpCircle, Search, X } from "lucide-react";
 import { SECOES_AJUDA, buscarNaAjuda, secaoDaAjuda } from "@/lib/ajuda";
+import { useBloqueioRolagem } from "@/hooks/useBloqueioRolagem";
 
 /** Central de ajuda.
  *
@@ -15,6 +16,7 @@ export default function AjudaPanel({ aberto, assunto = null, onFechar }) {
   const caixaRef = useRef(null);
   const buscaRef = useRef(null);
   const conteudoRef = useRef(null);
+  useBloqueioRolagem(aberto);
 
   // Ao abrir, começa no assunto do painel que está aberto; sem painel, na
   // visão geral. O ajuste acontece na própria renderização em que a ajuda

@@ -114,7 +114,7 @@
 html {
   min-height: 100%;
   max-width: 100vw;
-  overflow-x: hidden;
+  overflow-x: clip;
   scroll-behavior: smooth;
 }
 
@@ -5344,6 +5344,17 @@ button.doc-mini-card {
 }
 
 /* PIX da parcela */
+.pix-modo {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font: inherit;
+}
+
 .pix {
   display: grid;
   justify-items: center;
