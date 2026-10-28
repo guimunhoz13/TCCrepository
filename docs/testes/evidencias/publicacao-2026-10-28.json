@@ -1,0 +1,153 @@
+{
+  "data_local": "2026-10-28",
+  "fuso": "America/Sao_Paulo",
+  "registrado_em_utc": "2026-10-28T23:20:30.651925+00:00",
+  "commit_aplicacao": "89b675facd02cf8a03d1c249795b20448d3ae230",
+  "autor_commit": {
+    "nome": "guimunhoz13",
+    "email": "guiromurm@gmail.com"
+  },
+  "historico": {
+    "reescrito": false,
+    "novos_commits_em_portugues": true,
+    "regra": "AGENTS.md",
+    "decisao_usuario": "Preservar os commits antigos e escrever apenas os novos em português."
+  },
+  "ci": {
+    "url": "https://github.com/guimunhoz13/TCCrepository/actions/runs/40785092492",
+    "status": "completed",
+    "conclusao": "success",
+    "jobs": [
+      {
+        "nome": "Imagem Docker Compose (HTTP)",
+        "conclusao": "success",
+        "url": "https://github.com/guimunhoz13/TCCrepository/actions/runs/40785092492/job/123156158145"
+      },
+      {
+        "nome": "Frontend (Next.js)",
+        "conclusao": "success",
+        "url": "https://github.com/guimunhoz13/TCCrepository/actions/runs/40785092492/job/123156158526"
+      },
+      {
+        "nome": "Backend (Django)",
+        "conclusao": "success",
+        "url": "https://github.com/guimunhoz13/TCCrepository/actions/runs/40785092492/job/123156158573"
+      },
+      {
+        "nome": "E2E (Playwright)",
+        "conclusao": "success",
+        "url": "https://github.com/guimunhoz13/TCCrepository/actions/runs/40785092492/job/123156158591"
+      }
+    ],
+    "casos": {
+      "django": 532,
+      "jest": 275,
+      "playwright": 36,
+      "total": 843
+    },
+    "observacao": "Contagens confirmadas nos logs dos jobs; Compose é um job adicional e não infla o total de casos."
+  },
+  "vercel": {
+    "deployment_id": "dpl_4pM6MmTQqJfbw4g5LLXAjA5TfJ4H",
+    "url_deployment": "https://lexnexo-62sa8o7yo-zeldation.vercel.app",
+    "url_principal": "https://lexnexo.vercel.app",
+    "status": "READY",
+    "dominio_verificado_no_projeto": true,
+    "project_id": "prj_LKj9Iu1GfR5Juu3sIKvqOfy5yfUx",
+    "alias_anterior": "lexnexo-qoygdlbha-zeldation.vercel.app",
+    "correcao": "Alias apontado ao novo deploy; domínio registrado no projeto para acompanhar produção."
+  },
+  "render": {
+    "workspace_id": "tea-db81kilg1s2s738mfhf0",
+    "service_id": "srv-db90meks728c73bbtvlg",
+    "nome_tecnico_existente": "lexoffice-api-piloto",
+    "repo": "https://github.com/guimunhoz13/TCCrepository",
+    "branch": "main",
+    "deployment_id": "dep-dbh8223bc2fs73frc6i0",
+    "status": "live",
+    "commit": "89b675facd02cf8a03d1c249795b20448d3ae230",
+    "finished_at_utc": "2026-10-28T23:12:23.491792Z",
+    "url": "https://lexoffice-api-piloto.onrender.com",
+    "acao": "Uma publicação manual após ausência de novo deploy/evento automático; sem nova criação de serviço.",
+    "logs_erro": {
+      "desde_utc": "2026-10-28T23:12:23Z",
+      "ate_utc": "2026-10-28T23:19:00.608083135Z",
+      "tipo": "app",
+      "nivel": "error",
+      "quantidade": 0,
+      "hasMore": false
+    }
+  },
+  "health_checks": [
+    {
+      "url": "https://lexnexo.vercel.app/api/health/",
+      "status_http": 200,
+      "resposta": {
+        "status": "ok",
+        "service": "LexNexo"
+      }
+    },
+    {
+      "url": "https://lexoffice-api-piloto.onrender.com/api/health/",
+      "status_http": 200,
+      "resposta": {
+        "status": "ok",
+        "service": "LexNexo"
+      }
+    }
+  ],
+  "smoke_navegador": {
+    "origem": "Sessão administrativa já autenticada no navegador integrado; interação por interface e leitura do DOM.",
+    "etapas": [
+      {
+        "etapa": "Compromissos",
+        "densidade": "compact",
+        "menu_recolhido": false
+      },
+      {
+        "etapa": "Voltar para Dashboard",
+        "densidade": "compact",
+        "menu_recolhido": false
+      },
+      {
+        "etapa": "Avançar para Compromissos",
+        "densidade": "compact",
+        "menu_recolhido": false
+      },
+      {
+        "etapa": "Agenda a partir de Compromissos",
+        "densidade": "compact",
+        "menu_recolhido": false
+      },
+      {
+        "etapa": "Dashboard confortável e menu recolhido",
+        "densidade": "comfortable",
+        "menu_recolhido": true
+      },
+      {
+        "etapa": "Compromissos confortável e menu recolhido",
+        "densidade": "comfortable",
+        "menu_recolhido": true
+      },
+      {
+        "etapa": "Retorno confortável e menu recolhido",
+        "densidade": "comfortable",
+        "menu_recolhido": true
+      },
+      {
+        "etapa": "Preferências originais restauradas",
+        "densidade": "compact",
+        "menu_recolhido": false
+      }
+    ],
+    "limite": "O smoke publicado verifica estados observados. A captura de mutações durante toda a transição pertence aos testes Playwright locais e do CI.",
+    "registros_de_negocio_criados_ou_excluidos_nesta_rodada": 0,
+    "preferencias_originais_restauradas": true
+  },
+  "limites": [
+    "Não equivale a auditoria completa dos provedores nem a estudo com usuários.",
+    "SMTP/push entregues, backup/restauração, ACL de storage e Firefox/WebKit permanecem fora deste reteste.",
+    "Nenhuma vulnerabilidade foi explorada ativamente no ambiente publicado.",
+    "Sem nova migration no código; inicialização padrão do serviço preservada."
+  ]
+}

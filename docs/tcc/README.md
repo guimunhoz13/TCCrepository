@@ -1,5 +1,7 @@
 # Relatório técnico do TCC (gerado por script)
 
+> A publicação de 28/10/2026 e o CI com 843 casos estão no [complemento operacional](../testes/PUBLICACAO-2026-10-28.md). O Word v1.8 conserva os números e limites históricos de 27/10; suas capturas e títulos foram revistos em 28/10.
+
 ## Versão 1.8 — títulos em preto de 28/10/2026
 
 O [relatório técnico atual](RT-TDS-2026-39_v1.8.docx) usa preto nos títulos e

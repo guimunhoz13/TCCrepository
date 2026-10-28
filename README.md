@@ -279,10 +279,12 @@ O [relatório técnico atual, versão 1.8](docs/tcc/RT-TDS-2026-39_v1.8.docx),
 incorpora os resultados e apresenta 34 capturas atualizadas da interface
 LexNexo em 28/10/2026, com sumário revisado e identificação das simulações.
 
-As correções estão na cópia local. A navegação na aplicação publicada não
-equivale à implantação dessas correções. A cobertura de linhas do frontend
-permanece abaixo da meta; e-mail/push entregues, IA paga, configurações remotas,
-backup/restauração e avaliação com usuários têm limitações documentadas.
+As correções foram publicadas em 28/10/2026 no commit 89b675f. O CI remoto
+aprovou 532 testes Django, 275 Jest e 36 Playwright, e o smoke online conferiu
+a navegação Dashboard/Compromissos. O [registro de publicação](docs/testes/PUBLICACAO-2026-10-28.md)
+identifica os deploys e a correção do domínio principal. A cobertura de linhas
+do frontend permanece abaixo da meta; entrega de e-mail/push, IA paga, ACL,
+backup/restauração e avaliação com usuários conservam seus limites.
 
 ## CI
 

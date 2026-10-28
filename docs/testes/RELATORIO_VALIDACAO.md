@@ -1,5 +1,7 @@
 # Relatório de validação do LexNexo
 
+> **Atualização de 28/10/2026:** as correções foram publicadas no GitHub, na Vercel e no Render. O CI remoto aprovou 843 casos. A auditoria original abaixo conserva sua data e seus limites; veja o [registro de publicação](PUBLICACAO-2026-10-28.md) para o estado atual.
+
 **Parecer: APTO COM RESSALVAS, no escopo local validado.** Os fluxos
 automatizados passaram após as correções, e os testes práticos criaram e
 preservaram dados sintéticos na conta autorizada. Permanecem cobertura
@@ -174,3 +176,17 @@ push ou deploy; a versão publicada não foi retestada nesta rodada.
 
 Evidência sanitizada, comandos, catálogo dos 36 casos e hashes dos quatro arquivos:
 [regressao-dashboard-2026-10-28.json](evidencias/regressao-dashboard-2026-10-28.json).
+
+## Publicação autorizada e reteste online
+
+Em 28/10/2026, o proprietário autorizou commit, push e publicação. O código
+validado foi identificado pelo commit 89b675f e confirmado na Vercel e no Render.
+O CI remoto executou 532 testes Django, 275 Jest e 36 Playwright, todos aprovados,
+além do job de Compose. A13 foi conferido na sessão publicada nos dois modos de
+aparência, com histórico do navegador e painel Agenda. A14 corrigiu o vínculo
+do domínio principal da Vercel, que ainda apontava à versão anterior.
+
+Essa rodada passa a comprovar o CI e a revisão publicada (V18); não encerra as
+demais pendências operacionais. Nenhuma alteração do histórico antigo foi enviada.
+Procedimento, identificadores dos deploys e limites:
+[PUBLICACAO-2026-10-28.md](PUBLICACAO-2026-10-28.md).

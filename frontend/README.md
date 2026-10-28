@@ -33,3 +33,7 @@ Os testes de `e2e/preferencias.spec.js` observam toda a transição, incluindo
 voltar/avançar no navegador e abrir a Agenda a partir de Compromissos.
 O reteste de 28/10/2026 está no
 [relatório de validação](../docs/testes/RELATORIO_VALIDACAO.md#reteste-da-dashboard).
+
+Em 28/10/2026, a correção foi publicada e conferida no domínio principal da
+Vercel, com API no Render. O [registro de publicação](../docs/testes/PUBLICACAO-2026-10-28.md)
+separa o smoke online dos testes automatizados locais e do CI.

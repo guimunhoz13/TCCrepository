@@ -1,5 +1,7 @@
 # Piloto LexNexo para teste externo
 
+> Publicação verificada em 28/10/2026: [registro e evidências](testes/PUBLICACAO-2026-10-28.md). O aviso abaixo é histórico, relativo à auditoria anterior.
+
 > Revisão de auditoria em 27/10/2026: os resultados locais e os testes
 > práticos autorizados estão no [relatório](testes/RELATORIO_VALIDACAO.md).
 > As correções desta auditoria ainda precisam ser revisadas e publicadas
@@ -159,3 +161,14 @@ Fontes: [Vercel monorepos](https://vercel.com/docs/monorepos),
 [Render Free](https://render.com/docs/free),
 [Supabase Storage S3](https://supabase.com/docs/guides/storage/s3/authentication),
 [pausa do Supabase Free](https://supabase.com/docs/guides/platform/free-project-pausing).
+
+## 8. Domínio principal e verificação de cada publicação
+
+`lexnexo.vercel.app` está registrado como domínio verificado do projeto
+`lexnexo` na Vercel, sem branch específica. Em 28/10, a URL era apenas um alias
+manual para um deploy antigo; o vínculo foi corrigido. Ao publicar, confira o
+deploy efetivamente servido pelo endereço principal, além do status READY do
+build. No Render, acompanhe um deploy concreto até live e verifique a saúde da
+API. Nesse reteste não houve acionamento automático observado no Render; uma
+publicação manual foi necessária. Evite disparar outra enquanto existir deploy
+em andamento para o mesmo commit. Veja [a execução registrada](testes/PUBLICACAO-2026-10-28.md).

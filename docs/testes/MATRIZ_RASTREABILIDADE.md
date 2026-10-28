@@ -110,3 +110,14 @@ Elas observam densidade e estado do menu durante a transição, o histórico do
 navegador e a abertura da Agenda. A suíte atual tem 36 E2E aprovados.
 Resultados e limites estão no
 [reteste da dashboard](RELATORIO_VALIDACAO.md#reteste-da-dashboard).
+
+## CI e publicação verificados em 28/10/2026
+
+A execução remota 40785092492 do commit 89b675f aprovou os jobs de backend,
+frontend, E2E e Compose. Isso comprova a execução dos três níveis de testes de
+RNF19 na versão publicada; a `main` foi consultada e não tem proteção de branch
+configurada, portanto passagem do CI não deve ser descrita como bloqueio
+obrigatório de merge. O escopo da checagem de acessibilidade continua limitado
+aos casos existentes. RNF02 também recebeu smoke publicado da navegação nos
+dois modos de densidade. Evidências e limites:
+[PUBLICACAO-2026-10-28.md](PUBLICACAO-2026-10-28.md).

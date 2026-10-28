@@ -1,5 +1,7 @@
 # Defeitos e riscos da auditoria
 
+> **Complemento de 28/10/2026:** o código de A01–A13 foi publicado no commit 89b675f. O reteste online concentrou-se na navegação e na saúde; não repete toda a auditoria de segurança em produção. A14 e o [registro de publicação](PUBLICACAO-2026-10-28.md) complementam os resultados históricos abaixo.
+
 Execução de 27/10/2026, America/Sao_Paulo. Base
 `8b41a295e0d7be677600295eb56537bb2c0f871e`, mais o diff local desta auditoria.
 Reproduções ativas de segurança foram feitas somente no PostgreSQL local.
@@ -22,7 +24,8 @@ A13 é um complemento de 28/10/2026; os demais achados pertencem à rodada origi
 | A10 | ALTA | requirements.txt, ambiente Python e package-lock.json | npm audit apontava zod alto em ferramenta; auditoria do ambiente Python instalado apontou 46 entradas em 5 pacotes, apesar de resolução nova do requirements não ter alertas | zod 4.4.3→4.6.7; Pillow 13.0.0, dnspython 2.9.0, certifi 2026.10.23; mínimos seguros no requirements. pip e filelock atualizados só no venv | pip check, pip-audit do ambiente e requirements, backend completo e E2E repetidos | Corrigido no ambiente/código local; versões remotas BLOQUEADO |
 | A11 | BAIXA | views/sessao.py | OpenAPI anunciava 205 no logout, mas a implementação retorna 200 | Documentar resposta 200 | spectacular --validate --fail-on-warn e testes de autenticação | Corrigido localmente; APROVADO |
 | A12 | BAIXA | jest.config.mjs e testes E2E/API | Alias @/ sem mapper no Jest; teste de API fixava porta 8000; densidade lida antes da hidratação; rascunho de rodada anterior afetava teste de estado vazio | Mapper coerente com jsconfig, respeitar URL configurada, esperar preferências e limpar só o rascunho do teste no banco E2E local | 46 suítes Jest e 34 E2E; logout corrigido no teste para página pública, conforme comportamento existente | Corrigido localmente; APROVADO |
-| A13 | BAIXA | frontend/src/app/dashboard/layout.js e páginas Dashboard/Compromissos | Provider remontado na troca de rota aplicava comfortable temporariamente sobre a escolha compact; mudança visível de espaçamento | Manter PreferencesProvider no layout compartilhado das duas rotas | 28/10: antes 1 falha/1 aprovação; depois ambos os novos cenários passam e suíte completa tem 36 E2E aprovados | Corrigido localmente; APROVADO; sem deploy |
+| A13 | BAIXA | frontend/src/app/dashboard/layout.js e páginas Dashboard/Compromissos | Provider remontado na troca de rota aplicava comfortable temporariamente sobre a escolha compact; mudança visível de espaçamento | Manter PreferencesProvider no layout compartilhado das duas rotas | 28/10: antes 1 falha/1 aprovação; depois ambos os novos cenários passam e suíte completa tem 36 E2E aprovados | Publicado em 89b675f; APROVADO nos testes E2E e no smoke online |
+| A14 | MÉDIA | Vercel: domínio lexnexo.vercel.app | Novo deploy READY, mas o domínio principal servia scripts da versão anterior por ser apenas alias manual | Atualizar alias e registrar o domínio verificado no projeto LexNexo | Inspeção administrativa, scripts iguais aos do deploy novo e navegação com densidade estável | Corrigido na configuração publicada em 28/10 |
 
 Os caminhos abreviados são relativos a `backend/advocacia/` ou `frontend/src/`.
 Os nomes dos casos e seus arquivos completos estão em
@@ -51,7 +54,7 @@ falha nem skip nos 841 casos dos três runners.
 | R04 | MÉDIA | Políticas Supabase/bucket, SMTP/push entregues, cron, backup/restauração, observabilidade e versões publicadas não foram inspecionados administrativamente | BLOQUEADO | Validar em staging autorizado, sem dados reais; executar procedimento de recuperação antes de alegar prontidão operacional |
 | R05 | MÉDIA | Só Chromium foi executado; axe não cobre toda a interface, cores simuladas nem usuários reais | BLOQUEADO | Executar Firefox/WebKit, auditoria manual de acessibilidade e protocolo de usabilidade com participantes |
 | R06 | MÉDIA | Abertura do anexo publicado não produziu nova aba observável no navegador integrado; upload e vínculo foram confirmados | BLOQUEADO | Repetir abertura/download em navegador com popups permitidos; distinguir bloqueio do navegador de defeito do produto |
-| R07 | MÉDIA | Correções e mínimos de dependências ainda são locais; código publicado apresentou rascunho antigo e datas UTC | BLOQUEADO | Revisar diff, publicar sob autorização própria e repetir smoke tests. Não houve deploy nesta auditoria |
+| R07 | MÉDIA | Código das correções publicado em 89b675f; CI completo aprovado e smoke online de navegação/saúde concluído em 28/10 | PARCIALMENTE ENCERRADO | Publicação comprovada em PUBLICACAO-2026-10-28.md; ampliar o reteste prático remoto de rascunhos/datas e demais fluxos sem explorar vulnerabilidades em produção |
 | R08 | MÉDIA | Scan heurístico cobre arquivos rastreados atuais até 2 MB; não houve varredura de todo o histórico Git nem análise exaustiva de concorrência/volume em todos os modelos | BLOQUEADO | Executar scanner de histórico com saída redigida e testes de concorrência em staging isolado; não interpretar o scan atual como ausência universal de segredos |
 
 LGPD: isolamento, minimização e anonimização têm testes; texto livre,

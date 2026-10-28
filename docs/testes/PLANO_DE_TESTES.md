@@ -70,3 +70,11 @@ preservaram os registros; nenhuma limpeza foi aplicada à conta publicada.
 
 Marcação significa que a atividade foi tratada e documentada. Não transforma
 as verificações BLOQUEADO ou REPROVADO em aprovações.
+
+## Complemento autorizado em 28/10/2026
+
+O proprietário autorizou publicar as correções no GitHub, na Vercel e no Render.
+A execução do CI remoto e o smoke da navegação publicada estão separados da
+rodada local original em [PUBLICACAO-2026-10-28.md](PUBLICACAO-2026-10-28.md).
+As preferências de aparência foram temporariamente alternadas para conferência
+e restauradas. Não houve criação ou exclusão de registros de negócio nesse smoke.

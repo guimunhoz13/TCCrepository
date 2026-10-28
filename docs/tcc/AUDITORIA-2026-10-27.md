@@ -1,5 +1,7 @@
 # Adendo de validação técnica do TCC
 
+> **Complemento de 28/10/2026:** publicação e CI remoto foram posteriormente autorizados e verificados; veja [o registro atualizado](../testes/PUBLICACAO-2026-10-28.md). As afirmações de ausência de deploy abaixo descrevem a rodada original.
+
 Data: 27/10/2026, America/Sao_Paulo. Projeto LexNexo. Base do repositório:
 `8b41a295e0d7be677600295eb56537bb2c0f871e`, branch main, mais as alterações
 locais de auditoria ainda não commitadas. Este adendo detalha a auditoria incorporada ao

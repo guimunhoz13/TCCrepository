@@ -91,3 +91,12 @@ Os avisos automáticos foram autorizados pelo usuário, mas a entrega efetiva
 por SMTP/push não foi confirmada. Não confundir cadastro bem-sucedido com
 comprovação de recebimento de e-mail. As credenciais da conta não foram
 adicionadas a arquivos, scripts, relatórios ou testes.
+
+## Complemento publicado de 28/10/2026
+
+Após a autorização para publicar, o commit 89b675f foi conferido na Vercel e no
+Render. Foram exercitados os modos compacto/confortável, o menu recolhido,
+Dashboard/Compromissos, voltar/avançar e a Agenda. As preferências originais foram
+restauradas. Não houve inclusão ou exclusão de registros de negócio nessa rodada.
+O bloqueio histórico de download de anexo não foi encerrado por esse smoke.
+Veja [o registro de publicação](PUBLICACAO-2026-10-28.md).

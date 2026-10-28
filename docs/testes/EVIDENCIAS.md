@@ -8,6 +8,7 @@ diff local desta auditoria; não existe commit novo que identifique essas mudan�
 
 | Arquivo | Conteúdo e origem |
 |---|---|
+| [publicacao-2026-10-28.json](evidencias/publicacao-2026-10-28.json) | CI remoto com 843 casos, deploys Vercel/Render, correção do domínio e oito estados do smoke publicado |
 | [ambiente.json](evidencias/ambiente.json) | Versões, banco e limites do scan heurístico de segredos |
 | [execucoes.json](evidencias/execucoes.json) | Exit codes e tempos da rodada integrada; reteste após atualização do ambiente |
 | [casos-executados.json](evidencias/casos-executados.json) | 532 casos Django, 275 Jest e 34 Playwright; cada caso identifica seu arquivo |
