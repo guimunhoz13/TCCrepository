@@ -187,6 +187,8 @@ class ProcessoViewSet(
 
         processo = self.get_object()
         contexto = {"request": request}
+        usuario = self.get_usuario()
+        pode_financeiro = pode(usuario, "financeiro", VER)
 
         movimentacoes = (
             Movimentacao.objects
@@ -219,12 +221,12 @@ class ProcessoViewSet(
             "documentos": DocumentoSerializer(documentos, many=True, context=contexto).data,
             "agenda": AgendaSerializer(agenda, many=True, context=contexto).data,
             "tarefas": TarefaSerializer(tarefas, many=True, context=contexto).data,
-            "apontamentos": ApontamentoHoraSerializer(apontamentos, many=True, context=contexto).data,
-            "despesas": DespesaSerializer(despesas, many=True, context=contexto).data,
-            "contrato": ContratoSerializer(contrato, context=contexto).data if contrato else None,
+            "apontamentos": ApontamentoHoraSerializer(apontamentos, many=True, context=contexto).data if pode(usuario, "horas", VER) else [],
+            "despesas": DespesaSerializer(despesas, many=True, context=contexto).data if pode(usuario, "despesas", VER) else [],
+            "contrato": ContratoSerializer(contrato, context=contexto).data if contrato and pode_financeiro else None,
             "resumo": _resumo_financeiro(
                 [contrato] if contrato else [], apontamentos, despesas
-            ),
+            ) if pode_financeiro else None,
         })
 
     @action(detail=True, methods=["post"], url_path="consultar-datajud")

@@ -1,0 +1,217 @@
+{
+  "data": "2026-10-28",
+  "marca": "LexNexo",
+  "ambiente": "Demonstração local isolada, sem escrita em produção",
+  "capturas": [
+    {
+      "arquivo": "docs/tcc/diagramas/print_2fa.png",
+      "largura": 1440,
+      "altura": 900,
+      "sha256": "8ed73e0204f4b710b9232afa402cd0d1ed6f8fdaf26acf42b50c5fe28775a2a9"
+    },
+    {
+      "arquivo": "docs/tcc/diagramas/print_ajuda.png",
+      "largura": 1440,
+      "altura": 900,
+      "sha256": "deec9a76731efb2f869cb5c6c61f2974dd0bb78e5a1caedea45ba829e1f4904e"
+    },
+    {
+      "arquivo": "docs/tcc/diagramas/print_auditoria.png",
+      "largura": 1440,
+      "altura": 900,
+      "sha256": "eb55545255f1b57c0d140e7740b205ae8d5c708771ddf89afd4f3b70c2fa0b6f"
+    },
+    {
+      "arquivo": "docs/tcc/diagramas/print_busca.png",
+      "largura": 1440,
+      "altura": 900,
+      "sha256": "af02336dd2bd7e9a2d3ce44514bee4b44405040a60135b77a7c35b78327d0b5c"
+    },
+    {
+      "arquivo": "docs/tcc/diagramas/print_cnpj_cadastro.png",
+      "largura": 1440,
+      "altura": 900,
+      "sha256": "9ccc9d85df1752b2874639aa2c6c7ee4a24c2c6a58e8883ad72a4f80d38ebf12"
+    },
+    {
+      "arquivo": "docs/tcc/diagramas/print_cnpj_cliente.png",
+      "largura": 1440,
+      "altura": 900,
+      "sha256": "cccdc04b6cd4e77dfa2cb3983bf33304b56eed5b3cd256222a7206655f39ca88"
+    },
+    {
+      "arquivo": "docs/tcc/diagramas/print_contratos.png",
+      "largura": 1440,
+      "altura": 460,
+      "sha256": "7593fe72a26d786bd36fd3730285bede7bd45dc990f37072b99a3b1c2b4d3082"
+    },
+    {
+      "arquivo": "docs/tcc/diagramas/print_dashboard.png",
+      "largura": 1440,
+      "altura": 900,
+      "sha256": "1b302be6318e47f8223fd3f83504ff42d6c9bccfc8b2fad1b8ec55caff258a37"
+    },
+    {
+      "arquivo": "docs/tcc/diagramas/print_datajud.png",
+      "largura": 1440,
+      "altura": 900,
+      "sha256": "d000940880611879c071bcee18a8d8da41e2e9676e35718f13cc226aa523740f"
+    },
+    {
+      "arquivo": "docs/tcc/diagramas/print_equipe.png",
+      "largura": 1440,
+      "altura": 900,
+      "sha256": "1e6a5a3124dcbbc91f7d862a5d2e3c58728c6621ca1e18ea34f71ad2649a467b"
+    },
+    {
+      "arquivo": "docs/tcc/diagramas/print_evolucao_conferencia.png",
+      "largura": 1440,
+      "altura": 900,
+      "sha256": "501f82d11edbcd5f9acdc53ca737904875d73da2a35a1a4aef55249e74dafaa0"
+    },
+    {
+      "arquivo": "docs/tcc/diagramas/print_evolucao_dashboard.png",
+      "largura": 1440,
+      "altura": 900,
+      "sha256": "c98b3eade6d58700bfa974483416d8c9bd9b44496588d1056bbd7b04e07e060f"
+    },
+    {
+      "arquivo": "docs/tcc/diagramas/print_feriados.png",
+      "largura": 1440,
+      "altura": 900,
+      "sha256": "e02659e0973bab18b17802ce936450c7e0b536679b83af9f2f4b19d7fc12ce39"
+    },
+    {
+      "arquivo": "docs/tcc/diagramas/print_feriados_calculo.png",
+      "largura": 1440,
+      "altura": 1250,
+      "sha256": "bb7c8729671e04e432387443d21475d980674a0124f688c0ebf5d484882bfbbc"
+    },
+    {
+      "arquivo": "docs/tcc/diagramas/print_financeiro.png",
+      "largura": 1440,
+      "altura": 900,
+      "sha256": "d54aaa241013917fcc88dc428eb39e11e98c15fabfeaab2c75666e53db80c670"
+    },
+    {
+      "arquivo": "docs/tcc/diagramas/print_horas.png",
+      "largura": 1440,
+      "altura": 900,
+      "sha256": "94b7f851a28698179b8fc97c3b3d1aa556246d968327bd16e24b7b7f64917f04"
+    },
+    {
+      "arquivo": "docs/tcc/diagramas/print_ics.png",
+      "largura": 1440,
+      "altura": 900,
+      "sha256": "014fc2fb41f4228053fb85c944c5ff63e7bf9eafedf37ef85507d5c9a5da6ac0"
+    },
+    {
+      "arquivo": "docs/tcc/diagramas/print_intimacoes.png",
+      "largura": 1440,
+      "altura": 900,
+      "sha256": "74912e1fda5d7274f1e42f11c3acfe6358f97beb46d3f2bdc531b8eecfa2af60"
+    },
+    {
+      "arquivo": "docs/tcc/diagramas/print_kanban.png",
+      "largura": 1440,
+      "altura": 900,
+      "sha256": "9a87a49c40236855c27cd41041b98a74e9a8b0b794ce45b8ddbff80f517a98d8"
+    },
+    {
+      "arquivo": "docs/tcc/diagramas/print_lgpd.png",
+      "largura": 1440,
+      "altura": 900,
+      "sha256": "200c6a647b2aa64c32cde93a27e4dde131b6e0562f1f0adeca39a2941885a9d2"
+    },
+    {
+      "arquivo": "docs/tcc/diagramas/print_login.png",
+      "largura": 1440,
+      "altura": 900,
+      "sha256": "a761e440499a0c962934e9958a79f830f5529bd958903c73d53984592add0b20"
+    },
+    {
+      "arquivo": "docs/tcc/diagramas/print_login_2fa.png",
+      "largura": 390,
+      "altura": 844,
+      "sha256": "3904ac436c02ba3a4de6c592de86cf63ebb02815431040bead4346a6ae1c12e5"
+    },
+    {
+      "arquivo": "docs/tcc/diagramas/print_master.png",
+      "largura": 1440,
+      "altura": 900,
+      "sha256": "8549e7fbe19cf2d31d5a5533c2fe5a3562efc7e1ba03ec9004eae0b90a4a84e9"
+    },
+    {
+      "arquivo": "docs/tcc/diagramas/print_modelos.png",
+      "largura": 1440,
+      "altura": 900,
+      "sha256": "57d973d075894ee52c6e19ccf668ce3042c244a75ea25eaa89ec93801e52a039"
+    },
+    {
+      "arquivo": "docs/tcc/diagramas/print_perfil_estagiario.png",
+      "largura": 1440,
+      "altura": 900,
+      "sha256": "ce0fe091d9a14329f4c1e54f5f8b9a840b7d2c04013a3ec9ca38383d9b864595"
+    },
+    {
+      "arquivo": "docs/tcc/diagramas/print_pix.png",
+      "largura": 1440,
+      "altura": 900,
+      "sha256": "e480f9d913f4f1089fd25ecebf00eb62dad32f37628a4f34c46c64a2cc458d6d"
+    },
+    {
+      "arquivo": "docs/tcc/diagramas/print_planos.png",
+      "largura": 1440,
+      "altura": 900,
+      "sha256": "fff90e787ab0a8fcd867697d629c9c592fc4b40ea48c7cdf5aaf0564cb9ef3a0"
+    },
+    {
+      "arquivo": "docs/tcc/diagramas/print_planos_site.png",
+      "largura": 1440,
+      "altura": 900,
+      "sha256": "56882b9b67bad1363778c811445107dd1a7b7c6f49c29f3c6c878a38222ccc3b"
+    },
+    {
+      "arquivo": "docs/tcc/diagramas/print_prazo.png",
+      "largura": 1440,
+      "altura": 1250,
+      "sha256": "4a0e5631e4daa222df36358b0f18fa426962f083c65d74559ae1f0504b88f47d"
+    },
+    {
+      "arquivo": "docs/tcc/diagramas/print_push.png",
+      "largura": 1440,
+      "altura": 900,
+      "sha256": "d1cde4dfa4969c3629a1f4d11c2f5abd6f5ac8488aaffd9a80c9e001d05ec782"
+    },
+    {
+      "arquivo": "docs/tcc/diagramas/print_resumo.png",
+      "largura": 1440,
+      "altura": 900,
+      "sha256": "5b8d0523a042ce96826667cd1fb0525924e920ca2f5b7af19a7bdba1b03e7740"
+    },
+    {
+      "arquivo": "docs/tcc/diagramas/print_sigilo.png",
+      "largura": 1440,
+      "altura": 900,
+      "sha256": "d3a0de50348ab77f13bb4fd01262a5b37df6cae832e73b5d9c598fe861e25a95"
+    },
+    {
+      "arquivo": "docs/tcc/diagramas/print_swagger.png",
+      "largura": 1440,
+      "altura": 900,
+      "sha256": "8cff1a981e50d60f2c8059e62f2040c348257417dd92ab1ffb1fcb09d0917150"
+    },
+    {
+      "arquivo": "docs/tcc/diagramas/print_tarefas.png",
+      "largura": 1440,
+      "altura": 900,
+      "sha256": "d0f719281630b784562ac0e93c75403f281c30c4fdfa042dbf0a3d8a7189c16f"
+    }
+  ],
+  "integracoes_simuladas": [
+    "BrasilAPI/CNPJ",
+    "Retorno DataJud"
+  ],
+  "autenticacao": "Sem tokens ou segredos de autenticação nas capturas; segunda etapa exibida sem informar código",
+  "observacao": "Revisão documental; não altera contagens da auditoria de 27/10/2026."
+}

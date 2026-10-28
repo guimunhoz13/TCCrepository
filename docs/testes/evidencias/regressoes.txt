@@ -1,0 +1,39 @@
+Resumos reais dos runners; subtestes não são contados como métodos independentes.
+
+tcc-regressoes-antes
+Ran 8 tests in 1.118s
+FAILED (failures=12, errors=9)
+
+tcc-upload-antes
+Ran 2 tests in 0.162s
+FAILED (failures=4)
+
+tcc-rascunho-antes
+Test Suites: 1 failed, 1 total
+Tests:       2 failed, 3 passed, 5 total
+Time:        0.995 s, estimated 1 s
+Ran all test suites matching useRascunhoFormulario.
+
+tcc-parcela-antes
+Ran 1 test in 0.021s
+FAILED (failures=1)
+
+tcc-formulario-senha-antes
+Test Suites: 1 failed, 1 total
+Tests:       1 failed, 5 passed, 6 total
+Time:        0.687 s, estimated 1 s
+Ran all test suites matching LoginForm.
+
+tcc-regressoes-depois
+Ran 52 tests in 2.420s
+OK
+
+tcc-upload-depois
+Ran 34 tests in 1.608s
+OK
+
+tcc-rascunho-depois
+Test Suites: 1 passed, 1 total
+Tests:       5 passed, 5 total
+Time:        0.697 s, estimated 1 s
+Ran all test suites matching useRascunhoFormulario.

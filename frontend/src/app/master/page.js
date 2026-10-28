@@ -47,7 +47,7 @@ export default function MasterLoginPage() {
 
       <section className="auth-card-wrap">
         <div className="auth-card">
-          <form onSubmit={handleLogin}>
+          <form method="post" onSubmit={handleLogin}>
             <h2>
               <ShieldCheck size={20} style={{ verticalAlign: "-3px", marginRight: 8 }} />
               Painel mestre

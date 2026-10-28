@@ -21,11 +21,20 @@ export function useRascunhoFormulario({
   atraso = 900,
 }) {
   const [estado, setEstado] = useState("");
+  const [carga, setCarga] = useState(0);
   const carregado = useRef(false);
   const ultimaVersao = useRef("");
+  const valorAtual = useRef(valor);
+  const geracao = useRef(0);
+  const timerAtual = useRef(null);
+  const gravacoes = useRef(Promise.resolve());
   const inicialSerializado = serializar(valorInicial);
 
+  useEffect(() => { valorAtual.current = valor; }, [valor]);
+
   useEffect(() => {
+    const versaoDaConsulta = ++geracao.current;
+    const valorAoConsultar = serializar(valorAtual.current);
     carregado.current = false;
     ultimaVersao.current = "";
     if (!ativo || !chave) return undefined;
@@ -33,8 +42,12 @@ export function useRascunhoFormulario({
     let cancelado = false;
     getRascunho(chave)
       .then((rascunho) => {
-        if (cancelado) return;
-        if (rascunho?.dados && Object.keys(rascunho.dados).length > 0) {
+        if (cancelado || geracao.current !== versaoDaConsulta) return;
+        if (serializar(valorAtual.current) !== valorAoConsultar) {
+          // A consulta pode voltar depois que a pessoa começou a digitar.
+          ultimaVersao.current = inicialSerializado;
+          setEstado("Edição atual preservada; o rascunho anterior não foi restaurado.");
+        } else if (rascunho?.dados && Object.keys(rascunho.dados).length > 0) {
           const restaurado = { ...valorInicial, ...rascunho.dados };
           ultimaVersao.current = serializar(restaurado);
           setValor(restaurado);
@@ -43,16 +56,19 @@ export function useRascunhoFormulario({
           ultimaVersao.current = inicialSerializado;
         }
         carregado.current = true;
+        setCarga((anterior) => anterior + 1);
       })
       .catch(() => {
-        if (!cancelado) {
+        if (!cancelado && geracao.current === versaoDaConsulta) {
           carregado.current = true;
+          setCarga((anterior) => anterior + 1);
           setEstado("Não foi possível carregar o rascunho. O formulário continua disponível.");
         }
       });
 
     return () => {
       cancelado = true;
+      geracao.current += 1;
     };
   }, [ativo, chave, inicialSerializado, setValor, valorInicial]);
 
@@ -61,33 +77,47 @@ export function useRascunhoFormulario({
     const versao = serializar(valor);
     if (versao === ultimaVersao.current) return undefined;
 
-    const timer = window.setTimeout(async () => {
-      try {
-        setEstado("Salvando rascunho com segurança...");
-        if (versao === inicialSerializado) {
-          await excluirRascunho(chave);
-          setEstado("");
-        } else {
-          await salvarRascunho(chave, valor);
-          setEstado("Rascunho salvo com segurança.");
+    const versaoDaGravacao = geracao.current;
+    const timer = window.setTimeout(() => {
+      // Serializa as gravações para uma resposta antiga não vencer a nova.
+      gravacoes.current = gravacoes.current.catch(() => {}).then(async () => {
+        if (geracao.current !== versaoDaGravacao) return;
+        try {
+          setEstado("Salvando rascunho com segurança...");
+          if (versao === inicialSerializado) {
+            await excluirRascunho(chave);
+          } else {
+            await salvarRascunho(chave, valor);
+          }
+          if (geracao.current !== versaoDaGravacao) return;
+          ultimaVersao.current = versao;
+          setEstado(versao === inicialSerializado ? "" : "Rascunho salvo com segurança.");
+        } catch {
+          if (geracao.current === versaoDaGravacao) setEstado("Não foi possível salvar o rascunho agora.");
         }
-        ultimaVersao.current = versao;
-      } catch {
-        setEstado("Não foi possível salvar o rascunho agora.");
-      }
+      });
     }, atraso);
+    timerAtual.current = timer;
 
     return () => window.clearTimeout(timer);
-  }, [ativo, atraso, chave, inicialSerializado, valor]);
+  }, [ativo, atraso, carga, chave, inicialSerializado, valor]);
 
   const descartar = useCallback(async () => {
     if (!chave) return;
+    const versaoDoDescarte = ++geracao.current;
+    carregado.current = false;
+    window.clearTimeout(timerAtual.current);
     try {
+      // Uma gravação iniciada antes do cadastro não pode recriar o rascunho
+      // depois da exclusão. Primeiro espera a gravação; depois descarta.
+      await gravacoes.current.catch(() => {});
       await excluirRascunho(chave);
     } catch {
       // O cadastro definitivo já pode ter sido salvo. Uma falha secundária
       // ao apagar o rascunho não deve induzir a pessoa a enviar tudo de novo.
-      window.setTimeout(() => excluirRascunho(chave).catch(() => {}), 2000);
+      window.setTimeout(() => {
+        if (geracao.current === versaoDoDescarte) excluirRascunho(chave).catch(() => {});
+      }, 2000);
     } finally {
       ultimaVersao.current = inicialSerializado;
       setEstado("");

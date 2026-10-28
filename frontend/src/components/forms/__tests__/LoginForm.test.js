@@ -100,3 +100,7 @@ describe("LoginForm", () => {
     jest.useRealTimers();
   });
 });
+test("login não envia senha na URL se o JavaScript falhar", () => {
+  const { container } = render(<LoginForm />);
+  expect(container.querySelector("form").getAttribute("method")).toBe("post");
+});

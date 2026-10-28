@@ -154,7 +154,7 @@ export default function RegisterForm() {
   }
 
   return (
-    <form ref={formularioRef} onSubmit={handleSubmit} noValidate className="cadastro-etapas">
+    <form method="post" ref={formularioRef} onSubmit={handleSubmit} noValidate className="cadastro-etapas">
       <h2>Criar escritório</h2>
       <p className="subtitle">
         Passo {etapa + 1} de {ETAPAS.length}: {ETAPAS[etapa]}

@@ -26,6 +26,7 @@ function figura(path, widthPx, heightPx, legenda, maxWidthPx) {
     new Paragraph({
       alignment: AlignmentType.CENTER,
       spacing: { before: 200, after: 80 },
+      keepNext: true,
       children: [img(path, widthPx, heightPx, maxWidthPx)],
     }),
     new Paragraph({
@@ -40,7 +41,7 @@ function h1(texto) {
   return new Paragraph({
     heading: HeadingLevel.HEADING_1,
     spacing: { before: 420, after: 200 },
-    children: [new TextRun({ text: texto, bold: true, size: 30, color: AZUL })],
+    children: [new TextRun({ text: texto, bold: true, size: 30, color: "000000" })],
   });
 }
 
@@ -48,7 +49,7 @@ function h2(texto) {
   return new Paragraph({
     heading: HeadingLevel.HEADING_2,
     spacing: { before: 300, after: 160 },
-    children: [new TextRun({ text: texto, bold: true, size: 25, color: AZUL })],
+    children: [new TextRun({ text: texto, bold: true, size: 25, color: "000000" })],
   });
 }
 
@@ -56,7 +57,7 @@ function h3(texto) {
   return new Paragraph({
     heading: HeadingLevel.HEADING_3,
     spacing: { before: 220, after: 120 },
-    children: [new TextRun({ text: texto, bold: true, size: 22 })],
+    children: [new TextRun({ text: texto, bold: true, size: 22, color: "000000" })],
   });
 }
 

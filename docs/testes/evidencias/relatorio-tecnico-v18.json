@@ -1,0 +1,16 @@
+{
+  "data_revisao": "2026-10-28",
+  "arquivo": "docs/tcc/RT-TDS-2026-39_v1.8.docx",
+  "sha256": "2bd78cbc6444b150d6000dfd3bd6367ce1123a85ae01a12ceb3b687413ccdb6a",
+  "alteracao": "Cor preta nos 70 títulos/subtítulos do relatório e nos estilos Heading1 a Heading6 do Word.",
+  "titulos_subtitulos_verificados": 70,
+  "cor": "000000",
+  "texto_identico_a_v17": true,
+  "imagens_identicas_a_v17": true,
+  "paginas_renderizadas": 59,
+  "titulos_sumario": 61,
+  "sumario_estavel": true,
+  "revisao_visual": "Revisão das 59 páginas em imagens, com ampliação da página de títulos e subtítulos.",
+  "historico": "v1.7 preservada; versão atual é v1.8.",
+  "escopo": "Alteração de formatação documental, sem nova execução da suíte do produto e sem alterações remotas."
+}

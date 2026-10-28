@@ -3,6 +3,7 @@
 
 from django.contrib.auth.hashers import check_password, make_password
 from django.core.exceptions import ValidationError as DjangoValidationError
+from django.db import transaction
 from rest_framework import status
 from rest_framework import serializers
 from rest_framework.permissions import IsAuthenticated
@@ -108,7 +109,12 @@ class ConfiguracoesContaView(APIView):
             campos_alterados.append("foto")
 
         if "documento_identidade" in request.FILES:
-            usuario.documento_identidade = request.FILES["documento_identidade"]
+            try:
+                usuario.documento_identidade = serializers.FileField(
+                    validators=Usuario._meta.get_field("documento_identidade").validators
+                ).run_validation(request.FILES["documento_identidade"])
+            except serializers.ValidationError as exc:
+                return Response({"documento_identidade": exc.detail}, status=status.HTTP_400_BAD_REQUEST)
             campos_alterados.append("documento_identidade")
 
         try:
@@ -277,6 +283,7 @@ class ConfiguracoesPreferenciasView(APIView):
 class ConfiguracoesEscritorioView(APIView):
     permission_classes = [IsAuthenticated]
 
+    @transaction.atomic
     def patch(self, request):
         usuario = get_usuario_from_request(request)
         if not usuario:

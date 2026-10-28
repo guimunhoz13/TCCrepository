@@ -1,5 +1,13 @@
 # Piloto LexNexo para teste externo
 
+> Revisão de auditoria em 27/10/2026: os resultados locais e os testes
+> práticos autorizados estão no [relatório](testes/RELATORIO_VALIDACAO.md).
+> As correções desta auditoria ainda precisam ser revisadas e publicadas
+> pelos responsáveis. Não houve deploy automático. Procedimentos de backup,
+> migração e rollback estão no [guia operacional](testes/ARQUITETURA_API_E_MANUAL.md).
+> Fotos atuais são persistidas no PostgreSQL por `PersistentPhotoStorage`;
+> documentos continuam dependendo do storage privado configurado.
+
 Este roteiro publica o site na Vercel, a API Django no Render e usa um
 **projeto Supabase separado** para o banco e os arquivos. Use apenas dados
 fictícios. A conta de teste é diferente da conta pessoal de desenvolvimento.

@@ -70,4 +70,32 @@ describe("useRascunhoFormulario", () => {
     expect(excluirRascunho).toHaveBeenCalledWith("novo-cliente");
     expect(result.current.estadoRascunho).toBe("");
   });
+
+  test("rascunho atrasado não sobrescreve o que a pessoa já digitou", async () => {
+    let resolver;
+    getRascunho.mockReturnValue(new Promise((resolve) => { resolver = resolve; }));
+    const { result } = renderHook(useFormularioTeste);
+    act(() => result.current.setValor({ nome: "Novo cadastro", email: "novo@example.com" }));
+    await act(async () => resolver({ dados: { nome: "Cadastro antigo" } }));
+    expect(result.current.valor.nome).toBe("Novo cadastro");
+    await waitFor(() => expect(salvarRascunho).toHaveBeenCalledWith("novo-cliente", {
+      nome: "Novo cadastro", email: "novo@example.com",
+    }));
+  });
+
+  test("aguarda gravação em andamento antes de descartar o rascunho", async () => {
+    getRascunho.mockResolvedValue(null);
+    let terminarGravacao;
+    salvarRascunho.mockReturnValue(new Promise((resolve) => { terminarGravacao = resolve; }));
+    const { result } = renderHook(useFormularioTeste);
+    await act(async () => {});
+    act(() => result.current.setValor({ nome: "Cadastro concluído", email: "" }));
+    await waitFor(() => expect(salvarRascunho).toHaveBeenCalled());
+    let descarte;
+    act(() => { descarte = result.current.descartarRascunho(); });
+    expect(excluirRascunho).not.toHaveBeenCalled();
+    await act(async () => { terminarGravacao({}); await descarte; });
+    expect(excluirRascunho).toHaveBeenCalledTimes(1);
+    expect(result.current.estadoRascunho).toBe("");
+  });
 });

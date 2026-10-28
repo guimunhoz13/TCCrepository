@@ -266,7 +266,7 @@ export default function FichaProcesso({ processoId, onVoltar, onEditar }) {
           )}
         </div>
 
-        <div className="panel-card">
+        {pode("financeiro") && resumo && <div className="panel-card">
           <TituloSecao icon={Wallet}>Resumo financeiro</TituloSecao>
           <div className="financeiro-grid">
             <IndicadorFicha
@@ -303,9 +303,9 @@ export default function FichaProcesso({ processoId, onVoltar, onEditar }) {
               detalhe={`Total de despesas: ${formatarMoeda(resumo.total_despesas)}`}
             />
           </div>
-        </div>
+        </div>}
 
-        <div className="panel-card">
+        {pode("financeiro") && <div className="panel-card">
           <TituloSecao icon={FileSignature}>Contrato</TituloSecao>
           {!contrato ? (
             <div className="empty-state">Nenhum contrato cadastrado para este processo.</div>
@@ -364,7 +364,7 @@ export default function FichaProcesso({ processoId, onVoltar, onEditar }) {
               )}
             </>
           )}
-        </div>
+        </div>}
 
         <div className="panel-card">
           <TituloSecao icon={History}>Movimentações</TituloSecao>
@@ -540,7 +540,7 @@ export default function FichaProcesso({ processoId, onVoltar, onEditar }) {
           )}
         </div>
 
-        <div className="panel-card">
+        {pode("horas") && <div className="panel-card">
           <TituloSecao icon={Clock}>Apontamentos de horas</TituloSecao>
           {apontamentos.length === 0 ? (
             <div className="empty-state">Nenhuma hora apontada.</div>
@@ -583,9 +583,9 @@ export default function FichaProcesso({ processoId, onVoltar, onEditar }) {
               </table>
             </div>
           )}
-        </div>
+        </div>}
 
-        <div className="panel-card">
+        {pode("despesas") && <div className="panel-card">
           <TituloSecao icon={Receipt}>Despesas</TituloSecao>
           {despesas.length === 0 ? (
             <div className="empty-state">Nenhuma despesa registrada.</div>
@@ -627,7 +627,7 @@ export default function FichaProcesso({ processoId, onVoltar, onEditar }) {
               </table>
             </div>
           )}
-        </div>
+        </div>}
       </div>
     </div>
   );

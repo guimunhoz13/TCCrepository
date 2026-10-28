@@ -1,0 +1,75 @@
+ .github/workflows/ci.yml                           |  23 ++---
+ .gitignore                                         |   6 ++
+ README.md                                          |  59 ++++++++++---
+ backend/advocacia/push.py                          |  38 ++++++++
+ backend/advocacia/serializers.py                   |   8 +-
+ backend/advocacia/tests/test_push.py               |   2 +
+ backend/advocacia/views/configuracoes.py           |   9 +-
+ backend/advocacia/views/financeiro.py              |   2 +-
+ backend/advocacia/views/horas_e_despesas.py        |  11 +--
+ backend/advocacia/views/notificacoes_push.py       |  26 ++++--
+ backend/advocacia/views/processos.py               |  10 ++-
+ backend/advocacia/views/sessao.py                  |   2 +-
+ backend/requirements.txt                           |   5 +-
+ docs/TESTE-DE-USABILIDADE.md                       |   6 ++
+ docs/deploy-piloto.md                              |   8 ++
+ docs/tcc/README.md                                 |  44 +++++++++-
+ docs/tcc/build_rt.js                               |   7 +-
+ docs/tcc/diagramas/print_2fa.png                   | Bin 138720 -> 130587 bytes
+ docs/tcc/diagramas/print_ajuda.png                 | Bin 94363 -> 201993 bytes
+ docs/tcc/diagramas/print_auditoria.png             | Bin 178395 -> 128406 bytes
+ docs/tcc/diagramas/print_busca.png                 | Bin 94143 -> 198847 bytes
+ docs/tcc/diagramas/print_cnpj_cadastro.png         | Bin 48444 -> 255697 bytes
+ docs/tcc/diagramas/print_cnpj_cliente.png          | Bin 126750 -> 170527 bytes
+ docs/tcc/diagramas/print_contratos.png             | Bin 45471 -> 69237 bytes
+ docs/tcc/diagramas/print_dashboard.png             | Bin 145524 -> 155840 bytes
+ docs/tcc/diagramas/print_datajud.png               | Bin 70676 -> 178442 bytes
+ docs/tcc/diagramas/print_equipe.png                | Bin 136780 -> 165139 bytes
+ docs/tcc/diagramas/print_evolucao_conferencia.png  | Bin 192314 -> 158205 bytes
+ docs/tcc/diagramas/print_evolucao_dashboard.png    | Bin 154719 -> 155869 bytes
+ docs/tcc/diagramas/print_feriados.png              | Bin 121509 -> 181554 bytes
+ docs/tcc/diagramas/print_feriados_calculo.png      | Bin 105186 -> 188738 bytes
+ docs/tcc/diagramas/print_financeiro.png            | Bin 36123 -> 140255 bytes
+ docs/tcc/diagramas/print_horas.png                 | Bin 73686 -> 114407 bytes
+ docs/tcc/diagramas/print_ics.png                   | Bin 141221 -> 148117 bytes
+ docs/tcc/diagramas/print_intimacoes.png            | Bin 186216 -> 150038 bytes
+ docs/tcc/diagramas/print_kanban.png                | Bin 118219 -> 141131 bytes
+ docs/tcc/diagramas/print_lgpd.png                  | Bin 107974 -> 133983 bytes
+ docs/tcc/diagramas/print_login.png                 | Bin 224406 -> 229948 bytes
+ docs/tcc/diagramas/print_login_2fa.png             | Bin 71616 -> 110488 bytes
+ docs/tcc/diagramas/print_master.png                | Bin 77404 -> 132183 bytes
+ docs/tcc/diagramas/print_modelos.png               | Bin 125025 -> 164024 bytes
+ docs/tcc/diagramas/print_perfil_estagiario.png     | Bin 119453 -> 149802 bytes
+ docs/tcc/diagramas/print_pix.png                   | Bin 144842 -> 153813 bytes
+ docs/tcc/diagramas/print_planos.png                | Bin 225064 -> 229823 bytes
+ docs/tcc/diagramas/print_planos_site.png           | Bin 270019 -> 256999 bytes
+ docs/tcc/diagramas/print_prazo.png                 | Bin 92986 -> 186489 bytes
+ docs/tcc/diagramas/print_push.png                  | Bin 115024 -> 160333 bytes
+ docs/tcc/diagramas/print_resumo.png                | Bin 190682 -> 182478 bytes
+ docs/tcc/diagramas/print_sigilo.png                | Bin 129559 -> 161117 bytes
+ docs/tcc/diagramas/print_swagger.png               | Bin 109571 -> 106268 bytes
+ docs/tcc/diagramas/print_tarefas.png               | Bin 157912 -> 128395 bytes
+ docs/tcc/gerar_rt.js                               |  97 +++++++++++++++------
+ docs/tcc/main.js                                   |  12 ++-
+ docs/tcc/paginar.py                                |   4 +-
+ docs/tcc/paginas.json                              |  66 +++++++-------
+ frontend/README.md                                 |   9 +-
+ frontend/e2e/evolucao.spec.js                      |   4 +
+ frontend/e2e/processos.spec.js                     |   9 ++
+ frontend/jest.config.mjs                           |   1 +
+ frontend/package-lock.json                         |   6 +-
+ frontend/src/app/master/page.js                    |   2 +-
+ frontend/src/components/forms/EsqueciSenhaForm.jsx |   2 +-
+ frontend/src/components/forms/LoginForm.jsx        |   4 +-
+ .../src/components/forms/RedefinirSenhaForm.jsx    |   2 +-
+ frontend/src/components/forms/RegisterForm.jsx     |   2 +-
+ .../components/forms/__tests__/LoginForm.test.js   |   4 +
+ frontend/src/components/panels/ConfigPanel.jsx     |   6 +-
+ frontend/src/components/panels/FichaProcesso.jsx   |  16 ++--
+ frontend/src/components/panels/HorasPanel.jsx      |   6 +-
+ .../hooks/__tests__/useRascunhoFormulario.test.js  |  28 ++++++
+ frontend/src/hooks/useRascunhoFormulario.js        |  66 ++++++++++----
+ frontend/src/services/__tests__/api.test.js        |   2 +-
+ frontend/src/utils/__tests__/formato.test.js       |   6 ++
+ frontend/src/utils/formato.js                      |   4 +
+ 74 files changed, 466 insertions(+), 158 deletions(-)

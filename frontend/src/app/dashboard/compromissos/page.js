@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import AppSidebar from "@/components/shell/AppSidebar";
 import TopBar from "@/components/shell/TopBar";
 import { PanelProvider } from "@/contexts/PanelContext";
-import { PreferencesProvider } from "@/contexts/PreferencesContext";
 import { getAgenda, normalizarLista } from "@/services/api";
 import { MapPin, Briefcase } from "lucide-react";
 import GuiaContextual from "@/components/shell/GuiaContextual";
@@ -158,10 +157,8 @@ function CompromissosContent() {
 
 export default function CompromissosPage() {
   return (
-    <PreferencesProvider>
-      <PanelProvider>
-        <CompromissosContent />
-      </PanelProvider>
-    </PreferencesProvider>
+    <PanelProvider>
+      <CompromissosContent />
+    </PanelProvider>
   );
 }

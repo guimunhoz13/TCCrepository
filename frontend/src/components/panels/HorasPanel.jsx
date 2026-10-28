@@ -1,5 +1,7 @@
 "use client";
 
+import { dataLocalISO } from "@/utils/formato";
+
 import { useConfirmacao } from "@/contexts/ConfirmacaoContext";
 import { useAvisos } from "@/contexts/AvisosContext";
 
@@ -57,7 +59,7 @@ function mesAtual() {
 
 const horaInicial = {
   processo: "",
-  data: new Date().toISOString().slice(0, 10),
+  data: dataLocalISO(),
   horas: "",
   minutos: "",
   descricao: "",
@@ -70,7 +72,7 @@ const despesaInicial = {
   tipo: "custas",
   descricao: "",
   valor: "",
-  data: new Date().toISOString().slice(0, 10),
+  data: dataLocalISO(),
   reembolsavel: true,
 };
 

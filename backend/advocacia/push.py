@@ -13,12 +13,45 @@ para o log. Inscrição expirada (404/410) é apagada.
 import base64
 import json
 import logging
+from urllib.parse import urlsplit
+
+import requests
 
 from django.conf import settings
 
 logger = logging.getLogger(__name__)
 
 TEMPO_DE_VIDA = 60 * 60 * 24  # o serviço guarda a mensagem por até um dia
+
+
+def endpoint_push_permitido(endpoint):
+    """Aceita apenas serviços de push conhecidos, sem credenciais/porta livre.
+
+    A URL vem do navegador e será acessada pelo servidor. Não basta exigir
+    HTTPS: isso permitiria atingir endereços internos (SSRF).
+    """
+    if not isinstance(endpoint, str) or not endpoint or len(endpoint) > 1000:
+        return False
+    try:
+        url = urlsplit(endpoint)
+        host = url.hostname or ""
+        if (url.scheme != "https" or url.port not in (None, 443)
+                or url.username is not None or url.password is not None or url.fragment
+                or any(c.isspace() or ord(c) < 32 for c in endpoint)):
+            return False
+        return host in {"fcm.googleapis.com", "web.push.apple.com"} or any(
+            host == dominio or host.endswith("." + dominio)
+            for dominio in ("push.services.mozilla.com", "notify.windows.com")
+        )
+    except ValueError:
+        return False
+
+
+class _TransportePush:
+    @staticmethod
+    def post(endpoint, **kwargs):
+        # Um redirecionamento do provedor também não pode alcançar outra URL.
+        return requests.post(endpoint, allow_redirects=False, **kwargs)
 
 
 def push_ativo():
@@ -44,6 +77,9 @@ def gerar_chaves():
 def _enviar(inscricao, carga):
     from pywebpush import WebPushException, webpush
 
+    if not endpoint_push_permitido(inscricao.endpoint):
+        logger.warning("Destino push recusado para usuario=%s", inscricao.usuario_id)
+        return False
     contato = settings.VAPID_EMAIL or "contato@lexnexo.app"
     try:
         webpush(
@@ -55,6 +91,8 @@ def _enviar(inscricao, carga):
             vapid_private_key=settings.VAPID_PRIVATE_KEY,
             vapid_claims={"sub": f"mailto:{contato}"},
             ttl=TEMPO_DE_VIDA,
+            timeout=10,
+            requests_session=_TransportePush(),
         )
         return True
     except WebPushException as erro:

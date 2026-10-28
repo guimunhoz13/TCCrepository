@@ -27,7 +27,7 @@ export default function EsqueciSenhaForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form method="post" onSubmit={handleSubmit}>
       <h2>Esqueci minha senha</h2>
       <p className="subtitle">
         Enviaremos um link de redefinição para o e-mail informado.

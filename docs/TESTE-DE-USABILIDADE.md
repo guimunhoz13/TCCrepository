@@ -1,5 +1,11 @@
 # Roteiro de teste de usabilidade do LexNexo
 
+Revisão em 27/10/2026: a [auditoria técnica](testes/RELATORIO_VALIDACAO.md)
+incluiu automação, axe e testes práticos por agente na conta autorizada.
+Esses testes não constituem a aplicação deste protocolo com profissionais.
+Participantes, tempos de tarefa e pontuação SUS continuam sem coleta nesta
+rodada; não há resultado de usabilidade com usuários a declarar.
+
 Este roteiro prepara a validação com **3 a 5 pessoas de escritórios reais**. O teste só deve ser marcado como executado depois que os participantes concluírem as tarefas e os resultados forem registrados. Não use dados reais de clientes ou processos.
 
 ## Participantes

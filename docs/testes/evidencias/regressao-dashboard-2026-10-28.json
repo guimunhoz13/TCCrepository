@@ -1,0 +1,307 @@
+{
+  "data_local": "2026-10-28",
+  "fuso": "America/Sao_Paulo",
+  "escopo": "Regressão local da navegação dashboard/Compromissos; build de produção, API real e PostgreSQL de demonstração isolado. Nenhum deploy ou acesso à conta publicada nesta rodada.",
+  "antes": {
+    "comando": "npx playwright test e2e/preferencias.spec.js --grep \"Compromissos mantém\" --project=computador",
+    "aprovados": 1,
+    "reprovados": 1,
+    "duracao_s": 15.8,
+    "falha": "Escolha compact registrou comfortable temporariamente durante a navegação; menu expandido.",
+    "controle_aprovado": "comfortable com menu recolhido"
+  },
+  "depois": {
+    "build": {
+      "comando": "NEXT_PUBLIC_API_URL=http://127.0.0.1:18002/api npm run build",
+      "exit_code": 0
+    },
+    "lint": {
+      "comando": "npm run lint -- --max-warnings=0",
+      "exit_code": 0
+    },
+    "jest": {
+      "comando": "npm test -- --runInBand --json --outputFile=/tmp/lexnexo-compromissos-jest.json",
+      "aprovados": 275,
+      "reprovados": 0,
+      "ignorados": 0,
+      "suites": 46
+    },
+    "playwright": {
+      "comando": "E2E_BASE_URL=http://localhost:13002 NEXT_PUBLIC_API_URL=http://127.0.0.1:18002/api npx playwright test --reporter=json",
+      "estatisticas": {
+        "startTime": "2026-10-28T22:53:33.673Z",
+        "duration": 78288.697,
+        "expected": 36,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      },
+      "casos": [
+        {
+          "arquivo": "agenda.spec.js",
+          "cenario": "baixa a agenda em .ics com o prazo fatal",
+          "projeto": "computador",
+          "status": "expected",
+          "duracao_ms": 2096
+        },
+        {
+          "arquivo": "auditoria.spec.js",
+          "cenario": "sem sessão, dashboard redireciona para login",
+          "projeto": "computador",
+          "status": "expected",
+          "duracao_ms": 466
+        },
+        {
+          "arquivo": "auditoria.spec.js",
+          "cenario": "logout encerra a navegação autenticada",
+          "projeto": "computador",
+          "status": "expected",
+          "duracao_ms": 1265
+        },
+        {
+          "arquivo": "auditoria.spec.js",
+          "cenario": "ficha respeita o acesso financeiro de estagiario",
+          "projeto": "computador",
+          "status": "expected",
+          "duracao_ms": 1497
+        },
+        {
+          "arquivo": "auditoria.spec.js",
+          "cenario": "ficha respeita o acesso financeiro de secretaria",
+          "projeto": "computador",
+          "status": "expected",
+          "duracao_ms": 1613
+        },
+        {
+          "arquivo": "auditoria.spec.js",
+          "cenario": "falha simulada de clientes aparece e recupera ao reabrir",
+          "projeto": "computador",
+          "status": "expected",
+          "duracao_ms": 1680
+        },
+        {
+          "arquivo": "auditoria.spec.js",
+          "cenario": "rascunho atrasado preserva a digitação de um evento novo",
+          "projeto": "computador",
+          "status": "expected",
+          "duracao_ms": 1438
+        },
+        {
+          "arquivo": "auditoria.spec.js",
+          "cenario": "horas e despesas iniciam com o dia de São Paulo na virada UTC",
+          "projeto": "computador",
+          "status": "expected",
+          "duracao_ms": 1480
+        },
+        {
+          "arquivo": "auditoria.spec.js",
+          "cenario": "sem JavaScript, senha de login não é enviada na URL",
+          "projeto": "computador",
+          "status": "expected",
+          "duracao_ms": 376
+        },
+        {
+          "arquivo": "clientes.spec.js",
+          "cenario": "cadastra um cliente e encontra na busca",
+          "projeto": "computador",
+          "status": "expected",
+          "duracao_ms": 2468
+        },
+        {
+          "arquivo": "evolucao.spec.js",
+          "cenario": "cadastro avança por etapas, conserva os dados e aceita CNPJ com letras",
+          "projeto": "computador",
+          "status": "expected",
+          "duracao_ms": 1413
+        },
+        {
+          "arquivo": "evolucao.spec.js",
+          "cenario": "busca abre diretamente o cliente escolhido",
+          "projeto": "computador",
+          "status": "expected",
+          "duracao_ms": 2215
+        },
+        {
+          "arquivo": "evolucao.spec.js",
+          "cenario": "menu recolhido e densidade sobrevivem ao recarregamento sem cortar controles",
+          "projeto": "computador",
+          "status": "expected",
+          "duracao_ms": 1684
+        },
+        {
+          "arquivo": "evolucao.spec.js",
+          "cenario": "advogado confere uma intimação e a revisão fica identificada",
+          "projeto": "computador",
+          "status": "expected",
+          "duracao_ms": 3041
+        },
+        {
+          "arquivo": "financeiro.spec.js",
+          "cenario": "gera o PIX copia e cola de uma parcela pendente",
+          "projeto": "computador",
+          "status": "expected",
+          "duracao_ms": 1714
+        },
+        {
+          "arquivo": "financeiro.spec.js",
+          "cenario": "Pix de teste confirma honorários sem dar baixa na parcela",
+          "projeto": "computador",
+          "status": "expected",
+          "duracao_ms": 3346
+        },
+        {
+          "arquivo": "financeiro.spec.js",
+          "cenario": "Pix de teste dos planos confirma sem ativar assinatura",
+          "projeto": "computador",
+          "status": "expected",
+          "duracao_ms": 3677
+        },
+        {
+          "arquivo": "login.spec.js",
+          "cenario": "senha errada mostra o erro e não entra",
+          "projeto": "computador",
+          "status": "expected",
+          "duracao_ms": 1307
+        },
+        {
+          "arquivo": "login.spec.js",
+          "cenario": "entra e chega na dashboard sem violações de acessibilidade",
+          "projeto": "computador",
+          "status": "expected",
+          "duracao_ms": 2610
+        },
+        {
+          "arquivo": "login.spec.js",
+          "cenario": "a tela de login também passa na checagem de acessibilidade",
+          "projeto": "computador",
+          "status": "expected",
+          "duracao_ms": 776
+        },
+        {
+          "arquivo": "navegacao.spec.js",
+          "cenario": "navega de Compromissos para o Assistente IA sem ficar preso",
+          "projeto": "computador",
+          "status": "expected",
+          "duracao_ms": 1245
+        },
+        {
+          "arquivo": "perfis.spec.js",
+          "cenario": "estagiário não vê o financeiro nem o processo sigiloso",
+          "projeto": "computador",
+          "status": "expected",
+          "duracao_ms": 1400
+        },
+        {
+          "arquivo": "perfis.spec.js",
+          "cenario": "administrador vê o sigiloso com o selo de segredo de justiça",
+          "projeto": "computador",
+          "status": "expected",
+          "duracao_ms": 1424
+        },
+        {
+          "arquivo": "preferencias.spec.js",
+          "cenario": "foto é salva separadamente e continua disponível após recarregar",
+          "projeto": "computador",
+          "status": "expected",
+          "duracao_ms": 2168
+        },
+        {
+          "arquivo": "preferencias.spec.js",
+          "cenario": "modo compacto reduz visivelmente as linhas e mantém a escolha",
+          "projeto": "computador",
+          "status": "expected",
+          "duracao_ms": 2622
+        },
+        {
+          "arquivo": "preferencias.spec.js",
+          "cenario": "Compromissos mantém densidade compact e menu expandido durante a navegação",
+          "projeto": "computador",
+          "status": "expected",
+          "duracao_ms": 2648
+        },
+        {
+          "arquivo": "preferencias.spec.js",
+          "cenario": "Compromissos mantém densidade comfortable e menu recolhido durante a navegação",
+          "projeto": "computador",
+          "status": "expected",
+          "duracao_ms": 2860
+        },
+        {
+          "arquivo": "processos.spec.js",
+          "cenario": "orienta o cadastro, mostra o progresso e explica campos obrigatórios",
+          "projeto": "computador",
+          "status": "expected",
+          "duracao_ms": 3222
+        },
+        {
+          "arquivo": "processos.spec.js",
+          "cenario": "abre a ficha do processo e gera a atualização para o cliente",
+          "projeto": "computador",
+          "status": "expected",
+          "duracao_ms": 1904
+        },
+        {
+          "arquivo": "responsividade.spec.js",
+          "cenario": "dashboard cabe em notebook com escala de 125%",
+          "projeto": "computador",
+          "status": "expected",
+          "duracao_ms": 1212
+        },
+        {
+          "arquivo": "rolagem.spec.js",
+          "cenario": "painel bloqueia a dashboard ao fundo e devolve sua posição ao fechar",
+          "projeto": "computador",
+          "status": "expected",
+          "duracao_ms": 3729
+        },
+        {
+          "arquivo": "rolagem.spec.js",
+          "cenario": "só o conteúdo do painel rola e fechar a ajuda não libera a página de trás",
+          "projeto": "computador",
+          "status": "expected",
+          "duracao_ms": 3508
+        },
+        {
+          "arquivo": "tarefas.spec.js",
+          "cenario": "move um cartão no quadro Kanban e volta",
+          "projeto": "computador",
+          "status": "expected",
+          "duracao_ms": 2077
+        },
+        {
+          "arquivo": "celular.spec.js",
+          "cenario": "no celular, o menu abre em gaveta e a lista cabe na tela",
+          "projeto": "celular",
+          "status": "expected",
+          "duracao_ms": 1665
+        },
+        {
+          "arquivo": "celular.spec.js",
+          "cenario": "telas principais cabem no celular e mantêm os controles acessíveis",
+          "projeto": "celular",
+          "status": "expected",
+          "duracao_ms": 5466
+        },
+        {
+          "arquivo": "celular.spec.js",
+          "cenario": "gaveta e painel mantêm a dashboard parada no celular",
+          "projeto": "celular",
+          "status": "expected",
+          "duracao_ms": 2325
+        }
+      ]
+    }
+  },
+  "sha256_fontes": {
+    "frontend/src/app/dashboard/layout.js": "6ff1f531305058f447bbbc9d4913be5158a1c66b5e9564e87e302e594689bf7b",
+    "frontend/src/app/dashboard/page.js": "dfa492800bd0060d4f439577e8821907f999c367536c3c698998a9156eba3827",
+    "frontend/src/app/dashboard/compromissos/page.js": "6ab401f3aac832ad5c42649ce3f17ccee5a2691e1f2c5485f00bda342f97f268",
+    "frontend/e2e/preferencias.spec.js": "aed2cc753cc549d0cbf9c3c90ccab62339c896dccf05155f0e33dd4e4265dd01"
+  },
+  "limites": [
+    "Backend não alterado nem novamente contabilizado nesta rodada.",
+    "Cobertura de linhas não recalculada; métricas da auditoria de 27/10 continuam históricas.",
+    "Chromium desktop e emulação Pixel 7; sem Firefox/WebKit.",
+    "A versão publicada ainda exige publicação e reteste."
+  ]
+}

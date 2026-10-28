@@ -31,8 +31,9 @@ Os arquivos oficiais da marca e as regras de aplicação ficam em
 ## Estrutura
 
 ```
-backend/    API Django (advocacia/, api/, core/)
+backend/    API Django (advocacia/, core/; o app api antigo foi removido)
 frontend/   Aplicação Next.js (src/app, src/components, src/services)
+docs/testes/ Plano, inventário, matriz, resultados e evidências da auditoria
 ```
 
 ## Rodando localmente
@@ -42,15 +43,24 @@ frontend/   Aplicação Next.js (src/app, src/components, src/services)
 ```bash
 cd backend
 python -m venv venv && source venv/bin/activate
-pip install -r requirements.txt
-cp .env.example .env   # preencha com os dados do projeto Supabase (só na 1ª vez)
-python manage.py migrate
-python manage.py runserver
+pip install -r requirements.txt coverage
+# Primeiro prepare um PostgreSQL LOCAL exclusivo na porta 55439,
+# com banco lexnexo_auditoria e usuário igual ao usuário do sistema.
+python manage.py migrate --settings=core.settings_auditoria
+python manage.py runserver --settings=core.settings_auditoria
 ```
 
-O banco (Postgres) é o mesmo projeto Supabase para toda a dupla — as
+Para executar toda a auditoria em um cluster PostgreSQL novo, use
+[`scripts/auditoria-local.sh`](scripts/auditoria-local.sh); as instruções e
+variáveis estão no [guia de reprodução](docs/testes/EVIDENCIAS.md).
+`core.settings_auditoria` ignora o `.env`, força banco em loopback, usa mídia
+temporária, e-mail em memória e desativa chaves de IA, DataJud e push.
+Nunca use esse módulo para publicar a aplicação.
+
+O ambiente compartilhado de desenvolvimento pode usar Supabase. Suas
 credenciais ficam em `backend/.env` (não versionado; veja
-`backend/.env.example`). Peça a string de conexão pra quem já tiver
+`backend/.env.example`). Antes de usar os settings padrão e executar qualquer
+escrita ou migração, confirme o destino do banco e a autorização. Peça a string de conexão pra quem já tiver
 criado o projeto no Supabase, ou crie um novo em
 [supabase.com](https://supabase.com) → New Project → região
 **"South America (São Paulo)"** (uma região distante adiciona latência
@@ -62,7 +72,7 @@ perceptível em toda consulta) → Connect → "Session pooler" (não o
 
 ```bash
 cd frontend
-npm install
+npm ci
 npm run dev
 ```
 
@@ -204,8 +214,12 @@ abre um e-mail para `CONTATO_COMERCIAL` (variável de ambiente do backend).
 ## Dados de demonstração
 
 ```bash
-cd backend && python manage.py popular_demo   # --recriar para começar do zero
+cd backend && python manage.py popular_demo --settings=core.settings_auditoria
 ```
+
+Use `--recriar` somente no banco descartável e quando desejar remover os dados
+anteriores da demonstração. Não use essa opção na conta dos testes práticos
+preservados nem em banco compartilhado.
 
 Cria o escritório "Silva & Sabino Advocacia (demonstração)" com clientes,
 processos (um em segredo de justiça), agenda, tarefas, contrato com parcelas
@@ -215,8 +229,8 @@ perfil de acesso.
 
 ## Testes de ponta a ponta (E2E)
 
-Com o back-end (porta 8000, `LIMITES_DESLIGADOS=True`) e o front (porta
-3000) rodando sobre os dados de `popular_demo`:
+Com a API isolada (`core.settings_auditoria`, porta 8000) e o front (porta
+3000) rodando sobre dados sintéticos de `popular_demo` no banco exclusivo:
 
 ```bash
 cd frontend && npm run e2e
@@ -243,11 +257,32 @@ Para esconder a documentação em produção, defina `API_DOCS_PUBLICAS=False`.
 
 ```bash
 # Backend (Django)
-cd backend && python manage.py test
+cd backend && python manage.py test --settings=core.settings_auditoria
 
 # Frontend (Jest)
 cd frontend && npm test
 ```
+
+## Auditoria completa de 27/10/2026
+
+O parecer e os limites da execução estão no
+[relatório de validação](docs/testes/RELATORIO_VALIDACAO.md). Consulte também
+o [plano](docs/testes/PLANO_DE_TESTES.md), a
+[matriz de requisitos](docs/testes/MATRIZ_RASTREABILIDADE.md), o
+[inventário de endpoints e casos](docs/testes/INVENTARIO_E_CASOS.md), o
+[catálogo de defeitos e riscos](docs/testes/DEFEITOS_E_RISCOS.md), as
+[evidências e comandos](docs/testes/EVIDENCIAS.md), o
+[guia de arquitetura, API e uso](docs/testes/ARQUITETURA_API_E_MANUAL.md) e os
+[testes práticos preservados na conta autorizada](docs/testes/TESTES_PRATICOS.md).
+
+O [relatório técnico atual, versão 1.8](docs/tcc/RT-TDS-2026-39_v1.8.docx),
+incorpora os resultados e apresenta 34 capturas atualizadas da interface
+LexNexo em 28/10/2026, com sumário revisado e identificação das simulações.
+
+As correções estão na cópia local. A navegação na aplicação publicada não
+equivale à implantação dessas correções. A cobertura de linhas do frontend
+permanece abaixo da meta; e-mail/push entregues, IA paga, configurações remotas,
+backup/restauração e avaliação com usuários têm limitações documentadas.
 
 ## CI
 

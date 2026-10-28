@@ -1,0 +1,51 @@
+{
+  "ambiente": "PostgreSQL local; APIClient em processo; 20 processos sintéticos adicionais",
+  "limites": "12 amostras, com instrumentação SQL; não mede rede, TLS, navegador ou produção",
+  "resultados": [
+    {
+      "rota": "/api/clientes/",
+      "amostras": 12,
+      "status": 200,
+      "mediana_ms": 9.75,
+      "p95_ms": 10.88,
+      "consultas_min": 3,
+      "consultas_max": 3
+    },
+    {
+      "rota": "/api/processos/?page_size=5",
+      "amostras": 12,
+      "status": 200,
+      "mediana_ms": 16.46,
+      "p95_ms": 22.58,
+      "consultas_min": 4,
+      "consultas_max": 4
+    },
+    {
+      "rota": "/api/processos/?page_size=25",
+      "amostras": 12,
+      "status": 200,
+      "mediana_ms": 18.1,
+      "p95_ms": 19.7,
+      "consultas_min": 4,
+      "consultas_max": 4
+    },
+    {
+      "rota": "/api/dashboard/",
+      "amostras": 12,
+      "status": 200,
+      "mediana_ms": 47.49,
+      "p95_ms": 63.59,
+      "consultas_min": 24,
+      "consultas_max": 24
+    },
+    {
+      "rota": "/api/agenda/",
+      "amostras": 12,
+      "status": 200,
+      "mediana_ms": 12.07,
+      "p95_ms": 13.9,
+      "consultas_min": 3,
+      "consultas_max": 3
+    }
+  ]
+}

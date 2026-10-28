@@ -8,8 +8,9 @@ PyJWT==2.15.1
 python-dotenv==1.2.4
 sqlparse==0.6.0
 openai>=1.0.0
-dnspython>=2.6.0
-Pillow>=10.0.0
+dnspython>=2.9.0,<3
+Pillow>=13.0.0,<14
+certifi>=2026.10.19
 pyotp==2.10.0
 qrcode==8.2
 pywebpush==2.5.0

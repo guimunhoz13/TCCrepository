@@ -1,0 +1,2604 @@
+{
+  "meta": {
+    "format": 3,
+    "version": "7.17.0",
+    "timestamp": "2026-10-27T22:02:45.141168",
+    "branch_coverage": true,
+    "show_contexts": false
+  },
+  "files": {
+    "advocacia/__init__.py": {
+      "summary": {
+        "covered_lines": 0,
+        "num_statements": 0,
+        "percent_covered": 100.0,
+        "percent_covered_display": "100",
+        "missing_lines": 0,
+        "excluded_lines": 0,
+        "percent_statements_covered": 100.0,
+        "percent_statements_covered_display": "100",
+        "num_branches": 0,
+        "num_partial_branches": 0,
+        "covered_branches": 0,
+        "missing_branches": 0,
+        "percent_branches_covered": 100.0,
+        "percent_branches_covered_display": "100"
+      },
+      "missing_lines": [],
+      "missing_branches": []
+    },
+    "advocacia/admin.py": {
+      "summary": {
+        "covered_lines": 122,
+        "num_statements": 135,
+        "percent_covered": 89.05109489051095,
+        "percent_covered_display": "89",
+        "missing_lines": 13,
+        "excluded_lines": 0,
+        "percent_statements_covered": 90.37037037037037,
+        "percent_statements_covered_display": "90",
+        "num_branches": 2,
+        "num_partial_branches": 0,
+        "covered_branches": 0,
+        "missing_branches": 2,
+        "percent_branches_covered": 0.0,
+        "percent_branches_covered_display": "0"
+      },
+      "missing_lines": [
+        108,
+        112,
+        184,
+        185,
+        187,
+        256,
+        355,
+        358,
+        361,
+        389,
+        392,
+        505,
+        508
+      ],
+      "missing_branches": [
+        [
+          184,
+          185
+        ],
+        [
+          184,
+          187
+        ]
+      ]
+    },
+    "advocacia/apps.py": {
+      "summary": {
+        "covered_lines": 6,
+        "num_statements": 6,
+        "percent_covered": 100.0,
+        "percent_covered_display": "100",
+        "missing_lines": 0,
+        "excluded_lines": 0,
+        "percent_statements_covered": 100.0,
+        "percent_statements_covered_display": "100",
+        "num_branches": 0,
+        "num_partial_branches": 0,
+        "covered_branches": 0,
+        "missing_branches": 0,
+        "percent_branches_covered": 100.0,
+        "percent_branches_covered_display": "100"
+      },
+      "missing_lines": [],
+      "missing_branches": []
+    },
+    "advocacia/autenticacao.py": {
+      "summary": {
+        "covered_lines": 25,
+        "num_statements": 29,
+        "percent_covered": 82.05128205128206,
+        "percent_covered_display": "82",
+        "missing_lines": 4,
+        "excluded_lines": 0,
+        "percent_statements_covered": 86.20689655172414,
+        "percent_statements_covered_display": "86",
+        "num_branches": 10,
+        "num_partial_branches": 3,
+        "covered_branches": 7,
+        "missing_branches": 3,
+        "percent_branches_covered": 70.0,
+        "percent_branches_covered_display": "70"
+      },
+      "missing_lines": [
+        31,
+        34,
+        35,
+        39
+      ],
+      "missing_branches": [
+        [
+          30,
+          31
+        ],
+        [
+          38,
+          39
+        ],
+        [
+          78,
+          81
+        ]
+      ]
+    },
+    "advocacia/calendario.py": {
+      "summary": {
+        "covered_lines": 51,
+        "num_statements": 52,
+        "percent_covered": 97.14285714285714,
+        "percent_covered_display": "97",
+        "missing_lines": 1,
+        "excluded_lines": 0,
+        "percent_statements_covered": 98.07692307692308,
+        "percent_statements_covered_display": "98",
+        "num_branches": 18,
+        "num_partial_branches": 1,
+        "covered_branches": 17,
+        "missing_branches": 1,
+        "percent_branches_covered": 94.44444444444444,
+        "percent_branches_covered_display": "94"
+      },
+      "missing_lines": [
+        85
+      ],
+      "missing_branches": [
+        [
+          84,
+          85
+        ]
+      ]
+    },
+    "advocacia/datajud.py": {
+      "summary": {
+        "covered_lines": 97,
+        "num_statements": 106,
+        "percent_covered": 90.57971014492753,
+        "percent_covered_display": "91",
+        "missing_lines": 9,
+        "excluded_lines": 0,
+        "percent_statements_covered": 91.50943396226415,
+        "percent_statements_covered_display": "92",
+        "num_branches": 32,
+        "num_partial_branches": 4,
+        "covered_branches": 28,
+        "missing_branches": 4,
+        "percent_branches_covered": 87.5,
+        "percent_branches_covered_display": "88"
+      },
+      "missing_lines": [
+        118,
+        128,
+        129,
+        163,
+        210,
+        223,
+        224,
+        235,
+        240
+      ],
+      "missing_branches": [
+        [
+          162,
+          163
+        ],
+        [
+          205,
+          210
+        ],
+        [
+          234,
+          235
+        ],
+        [
+          239,
+          240
+        ]
+      ]
+    },
+    "advocacia/djen.py": {
+      "summary": {
+        "covered_lines": 120,
+        "num_statements": 132,
+        "percent_covered": 89.75903614457832,
+        "percent_covered_display": "90",
+        "missing_lines": 12,
+        "excluded_lines": 0,
+        "percent_statements_covered": 90.9090909090909,
+        "percent_statements_covered_display": "91",
+        "num_branches": 34,
+        "num_partial_branches": 5,
+        "covered_branches": 29,
+        "missing_branches": 5,
+        "percent_branches_covered": 85.29411764705883,
+        "percent_branches_covered_display": "85"
+      },
+      "missing_lines": [
+        93,
+        101,
+        102,
+        103,
+        104,
+        120,
+        121,
+        122,
+        123,
+        124,
+        161,
+        162
+      ],
+      "missing_branches": [
+        [
+          92,
+          93
+        ],
+        [
+          150,
+          171
+        ],
+        [
+          169,
+          150
+        ],
+        [
+          209,
+          218
+        ],
+        [
+          244,
+          252
+        ]
+      ]
+    },
+    "advocacia/dois_fatores.py": {
+      "summary": {
+        "covered_lines": 41,
+        "num_statements": 42,
+        "percent_covered": 96.0,
+        "percent_covered_display": "96",
+        "missing_lines": 1,
+        "excluded_lines": 0,
+        "percent_statements_covered": 97.61904761904762,
+        "percent_statements_covered_display": "98",
+        "num_branches": 8,
+        "num_partial_branches": 1,
+        "covered_branches": 7,
+        "missing_branches": 1,
+        "percent_branches_covered": 87.5,
+        "percent_branches_covered_display": "88"
+      },
+      "missing_lines": [
+        49
+      ],
+      "missing_branches": [
+        [
+          48,
+          49
+        ]
+      ]
+    },
+    "advocacia/emails.py": {
+      "summary": {
+        "covered_lines": 126,
+        "num_statements": 133,
+        "percent_covered": 91.82389937106919,
+        "percent_covered_display": "92",
+        "missing_lines": 7,
+        "excluded_lines": 0,
+        "percent_statements_covered": 94.73684210526316,
+        "percent_statements_covered_display": "95",
+        "num_branches": 26,
+        "num_partial_branches": 6,
+        "covered_branches": 20,
+        "missing_branches": 6,
+        "percent_branches_covered": 76.92307692307692,
+        "percent_branches_covered_display": "77"
+      },
+      "missing_lines": [
+        30,
+        36,
+        37,
+        94,
+        112,
+        335,
+        358
+      ],
+      "missing_branches": [
+        [
+          29,
+          30
+        ],
+        [
+          93,
+          94
+        ],
+        [
+          111,
+          112
+        ],
+        [
+          334,
+          335
+        ],
+        [
+          355,
+          357
+        ],
+        [
+          357,
+          358
+        ]
+      ]
+    },
+    "advocacia/esquema_api.py": {
+      "summary": {
+        "covered_lines": 20,
+        "num_statements": 20,
+        "percent_covered": 100.0,
+        "percent_covered_display": "100",
+        "missing_lines": 0,
+        "excluded_lines": 0,
+        "percent_statements_covered": 100.0,
+        "percent_statements_covered_display": "100",
+        "num_branches": 4,
+        "num_partial_branches": 0,
+        "covered_branches": 4,
+        "missing_branches": 0,
+        "percent_branches_covered": 100.0,
+        "percent_branches_covered_display": "100"
+      },
+      "missing_lines": [],
+      "missing_branches": []
+    },
+    "advocacia/feriados.py": {
+      "summary": {
+        "covered_lines": 114,
+        "num_statements": 117,
+        "percent_covered": 95.48387096774194,
+        "percent_covered_display": "95",
+        "missing_lines": 3,
+        "excluded_lines": 0,
+        "percent_statements_covered": 97.43589743589743,
+        "percent_statements_covered_display": "97",
+        "num_branches": 38,
+        "num_partial_branches": 2,
+        "covered_branches": 34,
+        "missing_branches": 4,
+        "percent_branches_covered": 89.47368421052632,
+        "percent_branches_covered_display": "89"
+      },
+      "missing_lines": [
+        204,
+        205,
+        209
+      ],
+      "missing_branches": [
+        [
+          201,
+          204
+        ],
+        [
+          204,
+          199
+        ],
+        [
+          204,
+          205
+        ],
+        [
+          208,
+          209
+        ]
+      ]
+    },
+    "advocacia/ia_service.py": {
+      "summary": {
+        "covered_lines": 69,
+        "num_statements": 88,
+        "percent_covered": 76.61290322580645,
+        "percent_covered_display": "77",
+        "missing_lines": 19,
+        "excluded_lines": 0,
+        "percent_statements_covered": 78.4090909090909,
+        "percent_statements_covered_display": "78",
+        "num_branches": 36,
+        "num_partial_branches": 6,
+        "covered_branches": 26,
+        "missing_branches": 10,
+        "percent_branches_covered": 72.22222222222223,
+        "percent_branches_covered_display": "72"
+      },
+      "missing_lines": [
+        85,
+        86,
+        99,
+        101,
+        106,
+        107,
+        112,
+        114,
+        122,
+        123,
+        125,
+        134,
+        135,
+        137,
+        151,
+        152,
+        189,
+        230,
+        279
+      ],
+      "missing_branches": [
+        [
+          25,
+          19
+        ],
+        [
+          84,
+          85
+        ],
+        [
+          122,
+          123
+        ],
+        [
+          122,
+          125
+        ],
+        [
+          134,
+          135
+        ],
+        [
+          134,
+          137
+        ],
+        [
+          188,
+          189
+        ],
+        [
+          229,
+          230
+        ],
+        [
+          245,
+          252
+        ],
+        [
+          278,
+          279
+        ]
+      ]
+    },
+    "advocacia/management/__init__.py": {
+      "summary": {
+        "covered_lines": 0,
+        "num_statements": 0,
+        "percent_covered": 100.0,
+        "percent_covered_display": "100",
+        "missing_lines": 0,
+        "excluded_lines": 0,
+        "percent_statements_covered": 100.0,
+        "percent_statements_covered_display": "100",
+        "num_branches": 0,
+        "num_partial_branches": 0,
+        "covered_branches": 0,
+        "missing_branches": 0,
+        "percent_branches_covered": 100.0,
+        "percent_branches_covered_display": "100"
+      },
+      "missing_lines": [],
+      "missing_branches": []
+    },
+    "advocacia/management/commands/__init__.py": {
+      "summary": {
+        "covered_lines": 0,
+        "num_statements": 0,
+        "percent_covered": 100.0,
+        "percent_covered_display": "100",
+        "missing_lines": 0,
+        "excluded_lines": 0,
+        "percent_statements_covered": 100.0,
+        "percent_statements_covered_display": "100",
+        "num_branches": 0,
+        "num_partial_branches": 0,
+        "covered_branches": 0,
+        "missing_branches": 0,
+        "percent_branches_covered": 100.0,
+        "percent_branches_covered_display": "100"
+      },
+      "missing_lines": [],
+      "missing_branches": []
+    },
+    "advocacia/management/commands/buscar_intimacoes.py": {
+      "summary": {
+        "covered_lines": 16,
+        "num_statements": 16,
+        "percent_covered": 100.0,
+        "percent_covered_display": "100",
+        "missing_lines": 0,
+        "excluded_lines": 0,
+        "percent_statements_covered": 100.0,
+        "percent_statements_covered_display": "100",
+        "num_branches": 2,
+        "num_partial_branches": 0,
+        "covered_branches": 2,
+        "missing_branches": 0,
+        "percent_branches_covered": 100.0,
+        "percent_branches_covered_display": "100"
+      },
+      "missing_lines": [],
+      "missing_branches": []
+    },
+    "advocacia/management/commands/criar_superadmin.py": {
+      "summary": {
+        "covered_lines": 0,
+        "num_statements": 18,
+        "percent_covered": 0.0,
+        "percent_covered_display": "0",
+        "missing_lines": 18,
+        "excluded_lines": 0,
+        "percent_statements_covered": 0.0,
+        "percent_statements_covered_display": "0",
+        "num_branches": 2,
+        "num_partial_branches": 0,
+        "covered_branches": 0,
+        "missing_branches": 2,
+        "percent_branches_covered": 0.0,
+        "percent_branches_covered_display": "0"
+      },
+      "missing_lines": [
+        1,
+        2,
+        4,
+        7,
+        8,
+        10,
+        11,
+        12,
+        13,
+        15,
+        16,
+        17,
+        18,
+        20,
+        21,
+        23,
+        28,
+        29
+      ],
+      "missing_branches": [
+        [
+          20,
+          21
+        ],
+        [
+          20,
+          23
+        ]
+      ]
+    },
+    "advocacia/management/commands/enviar_lembretes.py": {
+      "summary": {
+        "covered_lines": 121,
+        "num_statements": 133,
+        "percent_covered": 88.8268156424581,
+        "percent_covered_display": "89",
+        "missing_lines": 12,
+        "excluded_lines": 0,
+        "percent_statements_covered": 90.97744360902256,
+        "percent_statements_covered_display": "91",
+        "num_branches": 46,
+        "num_partial_branches": 8,
+        "covered_branches": 38,
+        "missing_branches": 8,
+        "percent_branches_covered": 82.6086956521739,
+        "percent_branches_covered_display": "83"
+      },
+      "missing_lines": [
+        128,
+        138,
+        185,
+        257,
+        265,
+        266,
+        276,
+        277,
+        289,
+        290,
+        305,
+        306
+      ],
+      "missing_branches": [
+        [
+          127,
+          128
+        ],
+        [
+          137,
+          138
+        ],
+        [
+          158,
+          178
+        ],
+        [
+          184,
+          185
+        ],
+        [
+          219,
+          235
+        ],
+        [
+          255,
+          257
+        ],
+        [
+          264,
+          265
+        ],
+        [
+          288,
+          289
+        ]
+      ]
+    },
+    "advocacia/management/commands/gerar_chaves_vapid.py": {
+      "summary": {
+        "covered_lines": 8,
+        "num_statements": 8,
+        "percent_covered": 100.0,
+        "percent_covered_display": "100",
+        "missing_lines": 0,
+        "excluded_lines": 0,
+        "percent_statements_covered": 100.0,
+        "percent_statements_covered_display": "100",
+        "num_branches": 0,
+        "num_partial_branches": 0,
+        "covered_branches": 0,
+        "missing_branches": 0,
+        "percent_branches_covered": 100.0,
+        "percent_branches_covered_display": "100"
+      },
+      "missing_lines": [],
+      "missing_branches": []
+    },
+    "advocacia/management/commands/popular_demo.py": {
+      "summary": {
+        "covered_lines": 79,
+        "num_statements": 79,
+        "percent_covered": 100.0,
+        "percent_covered_display": "100",
+        "missing_lines": 0,
+        "excluded_lines": 0,
+        "percent_statements_covered": 100.0,
+        "percent_statements_covered_display": "100",
+        "num_branches": 16,
+        "num_partial_branches": 0,
+        "covered_branches": 16,
+        "missing_branches": 0,
+        "percent_branches_covered": 100.0,
+        "percent_branches_covered_display": "100"
+      },
+      "missing_lines": [],
+      "missing_branches": []
+    },
+    "advocacia/management/commands/sincronizar_datajud.py": {
+      "summary": {
+        "covered_lines": 55,
+        "num_statements": 62,
+        "percent_covered": 88.88888888888889,
+        "percent_covered_display": "89",
+        "missing_lines": 7,
+        "excluded_lines": 0,
+        "percent_statements_covered": 88.70967741935483,
+        "percent_statements_covered_display": "89",
+        "num_branches": 10,
+        "num_partial_branches": 1,
+        "covered_branches": 9,
+        "missing_branches": 1,
+        "percent_branches_covered": 90.0,
+        "percent_branches_covered_display": "90"
+      },
+      "missing_lines": [
+        97,
+        98,
+        99,
+        100,
+        107,
+        148,
+        149
+      ],
+      "missing_branches": [
+        [
+          106,
+          107
+        ]
+      ]
+    },
+    "advocacia/mixins.py": {
+      "summary": {
+        "covered_lines": 123,
+        "num_statements": 145,
+        "percent_covered": 81.67539267015707,
+        "percent_covered_display": "82",
+        "missing_lines": 22,
+        "excluded_lines": 0,
+        "percent_statements_covered": 84.82758620689656,
+        "percent_statements_covered_display": "85",
+        "num_branches": 46,
+        "num_partial_branches": 11,
+        "covered_branches": 33,
+        "missing_branches": 13,
+        "percent_branches_covered": 71.73913043478261,
+        "percent_branches_covered_display": "72"
+      },
+      "missing_lines": [
+        47,
+        52,
+        55,
+        75,
+        78,
+        79,
+        103,
+        105,
+        106,
+        108,
+        111,
+        116,
+        117,
+        128,
+        132,
+        133,
+        145,
+        185,
+        188,
+        225,
+        239,
+        245
+      ],
+      "missing_branches": [
+        [
+          46,
+          47
+        ],
+        [
+          51,
+          52
+        ],
+        [
+          53,
+          55
+        ],
+        [
+          74,
+          75
+        ],
+        [
+          100,
+          103
+        ],
+        [
+          105,
+          106
+        ],
+        [
+          105,
+          108
+        ],
+        [
+          127,
+          128
+        ],
+        [
+          144,
+          145
+        ],
+        [
+          224,
+          225
+        ],
+        [
+          236,
+          239
+        ],
+        [
+          244,
+          245
+        ],
+        [
+          248,
+          253
+        ]
+      ]
+    },
+    "advocacia/modelos_documento.py": {
+      "summary": {
+        "covered_lines": 67,
+        "num_statements": 69,
+        "percent_covered": 94.38202247191012,
+        "percent_covered_display": "94",
+        "missing_lines": 2,
+        "excluded_lines": 0,
+        "percent_statements_covered": 97.10144927536231,
+        "percent_statements_covered_display": "97",
+        "num_branches": 20,
+        "num_partial_branches": 3,
+        "covered_branches": 17,
+        "missing_branches": 3,
+        "percent_branches_covered": 85.0,
+        "percent_branches_covered_display": "85"
+      },
+      "missing_lines": [
+        61,
+        92
+      ],
+      "missing_branches": [
+        [
+          60,
+          61
+        ],
+        [
+          80,
+          92
+        ],
+        [
+          145,
+          147
+        ]
+      ]
+    },
+    "advocacia/models.py": {
+      "summary": {
+        "covered_lines": 459,
+        "num_statements": 480,
+        "percent_covered": 95.36290322580645,
+        "percent_covered_display": "95",
+        "missing_lines": 21,
+        "excluded_lines": 0,
+        "percent_statements_covered": 95.625,
+        "percent_statements_covered_display": "96",
+        "num_branches": 16,
+        "num_partial_branches": 2,
+        "covered_branches": 14,
+        "missing_branches": 2,
+        "percent_branches_covered": 87.5,
+        "percent_branches_covered_display": "88"
+      },
+      "missing_lines": [
+        71,
+        242,
+        295,
+        470,
+        532,
+        612,
+        643,
+        735,
+        797,
+        855,
+        872,
+        889,
+        916,
+        966,
+        1030,
+        1097,
+        1140,
+        1178,
+        1240,
+        1258,
+        1287
+      ],
+      "missing_branches": [
+        [
+          229,
+          231
+        ],
+        [
+          241,
+          242
+        ]
+      ]
+    },
+    "advocacia/noticias.py": {
+      "summary": {
+        "covered_lines": 19,
+        "num_statements": 55,
+        "percent_covered": 28.35820895522388,
+        "percent_covered_display": "28",
+        "missing_lines": 36,
+        "excluded_lines": 0,
+        "percent_statements_covered": 34.54545454545455,
+        "percent_statements_covered_display": "35",
+        "num_branches": 12,
+        "num_partial_branches": 0,
+        "covered_branches": 0,
+        "missing_branches": 12,
+        "percent_branches_covered": 0.0,
+        "percent_branches_covered_display": "0"
+      },
+      "missing_lines": [
+        36,
+        39,
+        40,
+        41,
+        43,
+        44,
+        45,
+        46,
+        47,
+        48,
+        49,
+        50,
+        51,
+        52,
+        61,
+        65,
+        66,
+        67,
+        68,
+        69,
+        70,
+        71,
+        72,
+        73,
+        74,
+        75,
+        76,
+        77,
+        84,
+        85,
+        86,
+        88,
+        89,
+        90,
+        92,
+        97
+      ],
+      "missing_branches": [
+        [
+          45,
+          46
+        ],
+        [
+          45,
+          61
+        ],
+        [
+          48,
+          49
+        ],
+        [
+          48,
+          50
+        ],
+        [
+          67,
+          68
+        ],
+        [
+          67,
+          77
+        ],
+        [
+          73,
+          67
+        ],
+        [
+          73,
+          74
+        ],
+        [
+          85,
+          86
+        ],
+        [
+          85,
+          88
+        ],
+        [
+          89,
+          90
+        ],
+        [
+          89,
+          92
+        ]
+      ]
+    },
+    "advocacia/notificacoes.py": {
+      "summary": {
+        "covered_lines": 14,
+        "num_statements": 14,
+        "percent_covered": 94.44444444444444,
+        "percent_covered_display": "94",
+        "missing_lines": 0,
+        "excluded_lines": 0,
+        "percent_statements_covered": 100.0,
+        "percent_statements_covered_display": "100",
+        "num_branches": 4,
+        "num_partial_branches": 1,
+        "covered_branches": 3,
+        "missing_branches": 1,
+        "percent_branches_covered": 75.0,
+        "percent_branches_covered_display": "75"
+      },
+      "missing_lines": [],
+      "missing_branches": [
+        [
+          32,
+          35
+        ]
+      ]
+    },
+    "advocacia/pagination.py": {
+      "summary": {
+        "covered_lines": 5,
+        "num_statements": 5,
+        "percent_covered": 100.0,
+        "percent_covered_display": "100",
+        "missing_lines": 0,
+        "excluded_lines": 0,
+        "percent_statements_covered": 100.0,
+        "percent_statements_covered_display": "100",
+        "num_branches": 0,
+        "num_partial_branches": 0,
+        "covered_branches": 0,
+        "missing_branches": 0,
+        "percent_branches_covered": 100.0,
+        "percent_branches_covered_display": "100"
+      },
+      "missing_lines": [],
+      "missing_branches": []
+    },
+    "advocacia/permissoes.py": {
+      "summary": {
+        "covered_lines": 26,
+        "num_statements": 27,
+        "percent_covered": 93.54838709677419,
+        "percent_covered_display": "94",
+        "missing_lines": 1,
+        "excluded_lines": 0,
+        "percent_statements_covered": 96.29629629629629,
+        "percent_statements_covered_display": "96",
+        "num_branches": 4,
+        "num_partial_branches": 1,
+        "covered_branches": 3,
+        "missing_branches": 1,
+        "percent_branches_covered": 75.0,
+        "percent_branches_covered_display": "75"
+      },
+      "missing_lines": [
+        122
+      ],
+      "missing_branches": [
+        [
+          121,
+          122
+        ]
+      ]
+    },
+    "advocacia/pix.py": {
+      "summary": {
+        "covered_lines": 57,
+        "num_statements": 61,
+        "percent_covered": 89.41176470588235,
+        "percent_covered_display": "89",
+        "missing_lines": 4,
+        "excluded_lines": 0,
+        "percent_statements_covered": 93.44262295081967,
+        "percent_statements_covered_display": "93",
+        "num_branches": 24,
+        "num_partial_branches": 5,
+        "covered_branches": 19,
+        "missing_branches": 5,
+        "percent_branches_covered": 79.16666666666667,
+        "percent_branches_covered_display": "79"
+      },
+      "missing_lines": [
+        54,
+        64,
+        77,
+        86
+      ],
+      "missing_branches": [
+        [
+          53,
+          54
+        ],
+        [
+          62,
+          64
+        ],
+        [
+          76,
+          77
+        ],
+        [
+          83,
+          85
+        ],
+        [
+          85,
+          86
+        ]
+      ]
+    },
+    "advocacia/planos.py": {
+      "summary": {
+        "covered_lines": 51,
+        "num_statements": 51,
+        "percent_covered": 100.0,
+        "percent_covered_display": "100",
+        "missing_lines": 0,
+        "excluded_lines": 0,
+        "percent_statements_covered": 100.0,
+        "percent_statements_covered_display": "100",
+        "num_branches": 8,
+        "num_partial_branches": 0,
+        "covered_branches": 8,
+        "missing_branches": 0,
+        "percent_branches_covered": 100.0,
+        "percent_branches_covered_display": "100"
+      },
+      "missing_lines": [],
+      "missing_branches": []
+    },
+    "advocacia/push.py": {
+      "summary": {
+        "covered_lines": 52,
+        "num_statements": 58,
+        "percent_covered": 88.57142857142857,
+        "percent_covered_display": "89",
+        "missing_lines": 6,
+        "excluded_lines": 0,
+        "percent_statements_covered": 89.65517241379311,
+        "percent_statements_covered_display": "90",
+        "num_branches": 12,
+        "num_partial_branches": 2,
+        "covered_branches": 10,
+        "missing_branches": 2,
+        "percent_branches_covered": 83.33333333333333,
+        "percent_branches_covered_display": "83"
+      },
+      "missing_lines": [
+        34,
+        46,
+        47,
+        103,
+        104,
+        105
+      ],
+      "missing_branches": [
+        [
+          33,
+          34
+        ],
+        [
+          100,
+          103
+        ]
+      ]
+    },
+    "advocacia/resumo_cliente.py": {
+      "summary": {
+        "covered_lines": 57,
+        "num_statements": 58,
+        "percent_covered": 97.29729729729729,
+        "percent_covered_display": "97",
+        "missing_lines": 1,
+        "excluded_lines": 0,
+        "percent_statements_covered": 98.27586206896552,
+        "percent_statements_covered_display": "98",
+        "num_branches": 16,
+        "num_partial_branches": 1,
+        "covered_branches": 15,
+        "missing_branches": 1,
+        "percent_branches_covered": 93.75,
+        "percent_branches_covered_display": "94"
+      },
+      "missing_lines": [
+        92
+      ],
+      "missing_branches": [
+        [
+          91,
+          92
+        ]
+      ]
+    },
+    "advocacia/serializers.py": {
+      "summary": {
+        "covered_lines": 409,
+        "num_statements": 425,
+        "percent_covered": 93.86503067484662,
+        "percent_covered_display": "94",
+        "missing_lines": 16,
+        "excluded_lines": 0,
+        "percent_statements_covered": 96.23529411764706,
+        "percent_statements_covered_display": "96",
+        "num_branches": 64,
+        "num_partial_branches": 10,
+        "covered_branches": 50,
+        "missing_branches": 14,
+        "percent_branches_covered": 78.125,
+        "percent_branches_covered_display": "78"
+      },
+      "missing_lines": [
+        96,
+        107,
+        160,
+        318,
+        356,
+        516,
+        517,
+        518,
+        519,
+        520,
+        521,
+        993,
+        1011,
+        1138,
+        1153,
+        1194
+      ],
+      "missing_branches": [
+        [
+          95,
+          96
+        ],
+        [
+          106,
+          107
+        ],
+        [
+          159,
+          160
+        ],
+        [
+          317,
+          318
+        ],
+        [
+          355,
+          356
+        ],
+        [
+          517,
+          518
+        ],
+        [
+          517,
+          521
+        ],
+        [
+          518,
+          519
+        ],
+        [
+          518,
+          520
+        ],
+        [
+          992,
+          993
+        ],
+        [
+          1010,
+          1011
+        ],
+        [
+          1137,
+          1138
+        ],
+        [
+          1152,
+          1153
+        ],
+        [
+          1193,
+          1194
+        ]
+      ]
+    },
+    "advocacia/sigilo.py": {
+      "summary": {
+        "covered_lines": 20,
+        "num_statements": 21,
+        "percent_covered": 93.93939393939394,
+        "percent_covered_display": "94",
+        "missing_lines": 1,
+        "excluded_lines": 0,
+        "percent_statements_covered": 95.23809523809524,
+        "percent_statements_covered_display": "95",
+        "num_branches": 12,
+        "num_partial_branches": 1,
+        "covered_branches": 11,
+        "missing_branches": 1,
+        "percent_branches_covered": 91.66666666666667,
+        "percent_branches_covered_display": "92"
+      },
+      "missing_lines": [
+        19
+      ],
+      "missing_branches": [
+        [
+          18,
+          19
+        ]
+      ]
+    },
+    "advocacia/urls.py": {
+      "summary": {
+        "covered_lines": 27,
+        "num_statements": 27,
+        "percent_covered": 100.0,
+        "percent_covered_display": "100",
+        "missing_lines": 0,
+        "excluded_lines": 0,
+        "percent_statements_covered": 100.0,
+        "percent_statements_covered_display": "100",
+        "num_branches": 0,
+        "num_partial_branches": 0,
+        "covered_branches": 0,
+        "missing_branches": 0,
+        "percent_branches_covered": 100.0,
+        "percent_branches_covered_display": "100"
+      },
+      "missing_lines": [],
+      "missing_branches": []
+    },
+    "advocacia/validators.py": {
+      "summary": {
+        "covered_lines": 110,
+        "num_statements": 128,
+        "percent_covered": 85.71428571428571,
+        "percent_covered_display": "86",
+        "missing_lines": 18,
+        "excluded_lines": 0,
+        "percent_statements_covered": 85.9375,
+        "percent_statements_covered_display": "86",
+        "num_branches": 54,
+        "num_partial_branches": 8,
+        "covered_branches": 46,
+        "missing_branches": 8,
+        "percent_branches_covered": 85.18518518518519,
+        "percent_branches_covered_display": "85"
+      },
+      "missing_lines": [
+        9,
+        10,
+        37,
+        45,
+        46,
+        47,
+        48,
+        84,
+        102,
+        124,
+        134,
+        140,
+        162,
+        163,
+        164,
+        165,
+        166,
+        198
+      ],
+      "missing_branches": [
+        [
+          36,
+          37
+        ],
+        [
+          83,
+          84
+        ],
+        [
+          101,
+          102
+        ],
+        [
+          123,
+          124
+        ],
+        [
+          133,
+          134
+        ],
+        [
+          138,
+          140
+        ],
+        [
+          161,
+          162
+        ],
+        [
+          197,
+          198
+        ]
+      ]
+    },
+    "advocacia/views/__init__.py": {
+      "summary": {
+        "covered_lines": 23,
+        "num_statements": 23,
+        "percent_covered": 100.0,
+        "percent_covered_display": "100",
+        "missing_lines": 0,
+        "excluded_lines": 0,
+        "percent_statements_covered": 100.0,
+        "percent_statements_covered_display": "100",
+        "num_branches": 0,
+        "num_partial_branches": 0,
+        "covered_branches": 0,
+        "missing_branches": 0,
+        "percent_branches_covered": 100.0,
+        "percent_branches_covered_display": "100"
+      },
+      "missing_lines": [],
+      "missing_branches": []
+    },
+    "advocacia/views/agenda.py": {
+      "summary": {
+        "covered_lines": 120,
+        "num_statements": 126,
+        "percent_covered": 94.15584415584415,
+        "percent_covered_display": "94",
+        "missing_lines": 6,
+        "excluded_lines": 0,
+        "percent_statements_covered": 95.23809523809524,
+        "percent_statements_covered_display": "95",
+        "num_branches": 28,
+        "num_partial_branches": 3,
+        "covered_branches": 25,
+        "missing_branches": 3,
+        "percent_branches_covered": 89.28571428571429,
+        "percent_branches_covered_display": "89"
+      },
+      "missing_lines": [
+        80,
+        81,
+        101,
+        102,
+        103,
+        192
+      ],
+      "missing_branches": [
+        [
+          100,
+          101
+        ],
+        [
+          191,
+          192
+        ],
+        [
+          223,
+          227
+        ]
+      ]
+    },
+    "advocacia/views/auditoria.py": {
+      "summary": {
+        "covered_lines": 14,
+        "num_statements": 14,
+        "percent_covered": 100.0,
+        "percent_covered_display": "100",
+        "missing_lines": 0,
+        "excluded_lines": 0,
+        "percent_statements_covered": 100.0,
+        "percent_statements_covered_display": "100",
+        "num_branches": 2,
+        "num_partial_branches": 0,
+        "covered_branches": 2,
+        "missing_branches": 0,
+        "percent_branches_covered": 100.0,
+        "percent_branches_covered_display": "100"
+      },
+      "missing_lines": [],
+      "missing_branches": []
+    },
+    "advocacia/views/busca.py": {
+      "summary": {
+        "covered_lines": 48,
+        "num_statements": 49,
+        "percent_covered": 96.72131147540983,
+        "percent_covered_display": "97",
+        "missing_lines": 1,
+        "excluded_lines": 0,
+        "percent_statements_covered": 97.95918367346938,
+        "percent_statements_covered_display": "98",
+        "num_branches": 12,
+        "num_partial_branches": 1,
+        "covered_branches": 11,
+        "missing_branches": 1,
+        "percent_branches_covered": 91.66666666666667,
+        "percent_branches_covered_display": "92"
+      },
+      "missing_lines": [
+        83
+      ],
+      "missing_branches": [
+        [
+          82,
+          83
+        ]
+      ]
+    },
+    "advocacia/views/cadastro.py": {
+      "summary": {
+        "covered_lines": 55,
+        "num_statements": 58,
+        "percent_covered": 93.93939393939394,
+        "percent_covered_display": "94",
+        "missing_lines": 3,
+        "excluded_lines": 0,
+        "percent_statements_covered": 94.82758620689656,
+        "percent_statements_covered_display": "95",
+        "num_branches": 8,
+        "num_partial_branches": 1,
+        "covered_branches": 7,
+        "missing_branches": 1,
+        "percent_branches_covered": 87.5,
+        "percent_branches_covered_display": "88"
+      },
+      "missing_lines": [
+        74,
+        75,
+        104
+      ],
+      "missing_branches": [
+        [
+          103,
+          104
+        ]
+      ]
+    },
+    "advocacia/views/clientes.py": {
+      "summary": {
+        "covered_lines": 111,
+        "num_statements": 113,
+        "percent_covered": 96.55172413793103,
+        "percent_covered_display": "97",
+        "missing_lines": 2,
+        "excluded_lines": 0,
+        "percent_statements_covered": 98.23008849557522,
+        "percent_statements_covered_display": "98",
+        "num_branches": 32,
+        "num_partial_branches": 3,
+        "covered_branches": 29,
+        "missing_branches": 3,
+        "percent_branches_covered": 90.625,
+        "percent_branches_covered_display": "91"
+      },
+      "missing_lines": [
+        74,
+        96
+      ],
+      "missing_branches": [
+        [
+          73,
+          74
+        ],
+        [
+          95,
+          96
+        ],
+        [
+          181,
+          166
+        ]
+      ]
+    },
+    "advocacia/views/comum.py": {
+      "summary": {
+        "covered_lines": 23,
+        "num_statements": 24,
+        "percent_covered": 93.33333333333333,
+        "percent_covered_display": "93",
+        "missing_lines": 1,
+        "excluded_lines": 0,
+        "percent_statements_covered": 95.83333333333333,
+        "percent_statements_covered_display": "96",
+        "num_branches": 6,
+        "num_partial_branches": 1,
+        "covered_branches": 5,
+        "missing_branches": 1,
+        "percent_branches_covered": 83.33333333333333,
+        "percent_branches_covered_display": "83"
+      },
+      "missing_lines": [
+        49
+      ],
+      "missing_branches": [
+        [
+          48,
+          49
+        ]
+      ]
+    },
+    "advocacia/views/configuracoes.py": {
+      "summary": {
+        "covered_lines": 164,
+        "num_statements": 215,
+        "percent_covered": 71.73144876325088,
+        "percent_covered_display": "72",
+        "missing_lines": 51,
+        "excluded_lines": 0,
+        "percent_statements_covered": 76.27906976744185,
+        "percent_statements_covered_display": "76",
+        "num_branches": 68,
+        "num_partial_branches": 21,
+        "covered_branches": 39,
+        "missing_branches": 29,
+        "percent_branches_covered": 57.35294117647059,
+        "percent_branches_covered_display": "57"
+      },
+      "missing_lines": [
+        50,
+        74,
+        81,
+        85,
+        86,
+        87,
+        90,
+        94,
+        95,
+        118,
+        122,
+        123,
+        137,
+        144,
+        150,
+        190,
+        196,
+        208,
+        210,
+        229,
+        233,
+        249,
+        261,
+        290,
+        292,
+        295,
+        296,
+        297,
+        298,
+        301,
+        302,
+        303,
+        304,
+        369,
+        370,
+        371,
+        372,
+        373,
+        375,
+        376,
+        377,
+        378,
+        379,
+        380,
+        382,
+        383,
+        384,
+        385,
+        386,
+        395,
+        396
+      ],
+      "missing_branches": [
+        [
+          49,
+          50
+        ],
+        [
+          73,
+          74
+        ],
+        [
+          80,
+          81
+        ],
+        [
+          84,
+          85
+        ],
+        [
+          89,
+          90
+        ],
+        [
+          136,
+          137
+        ],
+        [
+          143,
+          144
+        ],
+        [
+          149,
+          150
+        ],
+        [
+          189,
+          190
+        ],
+        [
+          195,
+          196
+        ],
+        [
+          207,
+          208
+        ],
+        [
+          209,
+          210
+        ],
+        [
+          227,
+          249
+        ],
+        [
+          228,
+          229
+        ],
+        [
+          232,
+          233
+        ],
+        [
+          260,
+          261
+        ],
+        [
+          271,
+          280
+        ],
+        [
+          289,
+          290
+        ],
+        [
+          291,
+          292
+        ],
+        [
+          294,
+          295
+        ],
+        [
+          300,
+          301
+        ],
+        [
+          370,
+          371
+        ],
+        [
+          370,
+          372
+        ],
+        [
+          372,
+          373
+        ],
+        [
+          372,
+          375
+        ],
+        [
+          377,
+          378
+        ],
+        [
+          377,
+          379
+        ],
+        [
+          379,
+          380
+        ],
+        [
+          379,
+          382
+        ]
+      ]
+    },
+    "advocacia/views/dashboard.py": {
+      "summary": {
+        "covered_lines": 69,
+        "num_statements": 71,
+        "percent_covered": 94.9367088607595,
+        "percent_covered_display": "95",
+        "missing_lines": 2,
+        "excluded_lines": 0,
+        "percent_statements_covered": 97.1830985915493,
+        "percent_statements_covered_display": "97",
+        "num_branches": 8,
+        "num_partial_branches": 2,
+        "covered_branches": 6,
+        "missing_branches": 2,
+        "percent_branches_covered": 75.0,
+        "percent_branches_covered_display": "75"
+      },
+      "missing_lines": [
+        148,
+        215
+      ],
+      "missing_branches": [
+        [
+          147,
+          148
+        ],
+        [
+          214,
+          215
+        ]
+      ]
+    },
+    "advocacia/views/equipe.py": {
+      "summary": {
+        "covered_lines": 152,
+        "num_statements": 166,
+        "percent_covered": 88.0952380952381,
+        "percent_covered_display": "88",
+        "missing_lines": 14,
+        "excluded_lines": 0,
+        "percent_statements_covered": 91.56626506024097,
+        "percent_statements_covered_display": "92",
+        "num_branches": 44,
+        "num_partial_branches": 9,
+        "covered_branches": 33,
+        "missing_branches": 11,
+        "percent_branches_covered": 75.0,
+        "percent_branches_covered_display": "75"
+      },
+      "missing_lines": [
+        53,
+        55,
+        56,
+        58,
+        122,
+        172,
+        235,
+        248,
+        312,
+        320,
+        343,
+        408,
+        422,
+        427
+      ],
+      "missing_branches": [
+        [
+          55,
+          56
+        ],
+        [
+          55,
+          58
+        ],
+        [
+          171,
+          172
+        ],
+        [
+          234,
+          235
+        ],
+        [
+          247,
+          248
+        ],
+        [
+          311,
+          312
+        ],
+        [
+          319,
+          320
+        ],
+        [
+          338,
+          343
+        ],
+        [
+          415,
+          422
+        ],
+        [
+          420,
+          422
+        ],
+        [
+          425,
+          427
+        ]
+      ]
+    },
+    "advocacia/views/financeiro.py": {
+      "summary": {
+        "covered_lines": 79,
+        "num_statements": 82,
+        "percent_covered": 94.0,
+        "percent_covered_display": "94",
+        "missing_lines": 3,
+        "excluded_lines": 0,
+        "percent_statements_covered": 96.34146341463415,
+        "percent_statements_covered_display": "96",
+        "num_branches": 18,
+        "num_partial_branches": 3,
+        "covered_branches": 15,
+        "missing_branches": 3,
+        "percent_branches_covered": 83.33333333333333,
+        "percent_branches_covered_display": "83"
+      },
+      "missing_lines": [
+        93,
+        149,
+        164
+      ],
+      "missing_branches": [
+        [
+          92,
+          93
+        ],
+        [
+          148,
+          149
+        ],
+        [
+          161,
+          164
+        ]
+      ]
+    },
+    "advocacia/views/fotos.py": {
+      "summary": {
+        "covered_lines": 26,
+        "num_statements": 30,
+        "percent_covered": 85.0,
+        "percent_covered_display": "85",
+        "missing_lines": 4,
+        "excluded_lines": 0,
+        "percent_statements_covered": 86.66666666666667,
+        "percent_statements_covered_display": "87",
+        "num_branches": 10,
+        "num_partial_branches": 2,
+        "covered_branches": 8,
+        "missing_branches": 2,
+        "percent_branches_covered": 80.0,
+        "percent_branches_covered_display": "80"
+      },
+      "missing_lines": [
+        20,
+        34,
+        37,
+        38
+      ],
+      "missing_branches": [
+        [
+          19,
+          20
+        ],
+        [
+          33,
+          34
+        ]
+      ]
+    },
+    "advocacia/views/horas_e_despesas.py": {
+      "summary": {
+        "covered_lines": 50,
+        "num_statements": 57,
+        "percent_covered": 80.0,
+        "percent_covered_display": "80",
+        "missing_lines": 7,
+        "excluded_lines": 0,
+        "percent_statements_covered": 87.71929824561404,
+        "percent_statements_covered_display": "88",
+        "num_branches": 18,
+        "num_partial_branches": 8,
+        "covered_branches": 10,
+        "missing_branches": 8,
+        "percent_branches_covered": 55.55555555555556,
+        "percent_branches_covered_display": "56"
+      },
+      "missing_lines": [
+        48,
+        52,
+        56,
+        64,
+        93,
+        101,
+        109
+      ],
+      "missing_branches": [
+        [
+          47,
+          48
+        ],
+        [
+          51,
+          52
+        ],
+        [
+          55,
+          56
+        ],
+        [
+          63,
+          64
+        ],
+        [
+          92,
+          93
+        ],
+        [
+          96,
+          99
+        ],
+        [
+          100,
+          101
+        ],
+        [
+          108,
+          109
+        ]
+      ]
+    },
+    "advocacia/views/ia.py": {
+      "summary": {
+        "covered_lines": 42,
+        "num_statements": 49,
+        "percent_covered": 84.7457627118644,
+        "percent_covered_display": "85",
+        "missing_lines": 7,
+        "excluded_lines": 0,
+        "percent_statements_covered": 85.71428571428571,
+        "percent_statements_covered_display": "86",
+        "num_branches": 10,
+        "num_partial_branches": 2,
+        "covered_branches": 8,
+        "missing_branches": 2,
+        "percent_branches_covered": 80.0,
+        "percent_branches_covered_display": "80"
+      },
+      "missing_lines": [
+        55,
+        90,
+        91,
+        97,
+        98,
+        99,
+        100
+      ],
+      "missing_branches": [
+        [
+          54,
+          55
+        ],
+        [
+          96,
+          97
+        ]
+      ]
+    },
+    "advocacia/views/intimacoes.py": {
+      "summary": {
+        "covered_lines": 71,
+        "num_statements": 74,
+        "percent_covered": 93.33333333333333,
+        "percent_covered_display": "93",
+        "missing_lines": 3,
+        "excluded_lines": 0,
+        "percent_statements_covered": 95.94594594594595,
+        "percent_statements_covered_display": "96",
+        "num_branches": 16,
+        "num_partial_branches": 3,
+        "covered_branches": 13,
+        "missing_branches": 3,
+        "percent_branches_covered": 81.25,
+        "percent_branches_covered_display": "81"
+      },
+      "missing_lines": [
+        59,
+        61,
+        96
+      ],
+      "missing_branches": [
+        [
+          58,
+          59
+        ],
+        [
+          60,
+          61
+        ],
+        [
+          84,
+          89
+        ]
+      ]
+    },
+    "advocacia/views/mestre.py": {
+      "summary": {
+        "covered_lines": 48,
+        "num_statements": 59,
+        "percent_covered": 80.0,
+        "percent_covered_display": "80",
+        "missing_lines": 11,
+        "excluded_lines": 0,
+        "percent_statements_covered": 81.35593220338983,
+        "percent_statements_covered_display": "81",
+        "num_branches": 6,
+        "num_partial_branches": 2,
+        "covered_branches": 4,
+        "missing_branches": 2,
+        "percent_branches_covered": 66.66666666666667,
+        "percent_branches_covered_display": "67"
+      },
+      "missing_lines": [
+        46,
+        53,
+        54,
+        60,
+        114,
+        115,
+        135,
+        136,
+        137,
+        138,
+        165
+      ],
+      "missing_branches": [
+        [
+          45,
+          46
+        ],
+        [
+          59,
+          60
+        ]
+      ]
+    },
+    "advocacia/views/modelos.py": {
+      "summary": {
+        "covered_lines": 37,
+        "num_statements": 40,
+        "percent_covered": 86.0,
+        "percent_covered_display": "86",
+        "missing_lines": 3,
+        "excluded_lines": 0,
+        "percent_statements_covered": 92.5,
+        "percent_statements_covered_display": "92",
+        "num_branches": 10,
+        "num_partial_branches": 2,
+        "covered_branches": 6,
+        "missing_branches": 4,
+        "percent_branches_covered": 60.0,
+        "percent_branches_covered_display": "60"
+      },
+      "missing_lines": [
+        69,
+        77,
+        78
+      ],
+      "missing_branches": [
+        [
+          68,
+          69
+        ],
+        [
+          77,
+          78
+        ],
+        [
+          77,
+          83
+        ],
+        [
+          83,
+          91
+        ]
+      ]
+    },
+    "advocacia/views/notificacoes_push.py": {
+      "summary": {
+        "covered_lines": 45,
+        "num_statements": 46,
+        "percent_covered": 96.29629629629629,
+        "percent_covered_display": "96",
+        "missing_lines": 1,
+        "excluded_lines": 0,
+        "percent_statements_covered": 97.82608695652173,
+        "percent_statements_covered_display": "98",
+        "num_branches": 8,
+        "num_partial_branches": 1,
+        "covered_branches": 7,
+        "missing_branches": 1,
+        "percent_branches_covered": 87.5,
+        "percent_branches_covered_display": "88"
+      },
+      "missing_lines": [
+        100
+      ],
+      "missing_branches": [
+        [
+          95,
+          100
+        ]
+      ]
+    },
+    "advocacia/views/planos.py": {
+      "summary": {
+        "covered_lines": 45,
+        "num_statements": 47,
+        "percent_covered": 93.22033898305085,
+        "percent_covered_display": "93",
+        "missing_lines": 2,
+        "excluded_lines": 0,
+        "percent_statements_covered": 95.74468085106383,
+        "percent_statements_covered_display": "96",
+        "num_branches": 12,
+        "num_partial_branches": 2,
+        "covered_branches": 10,
+        "missing_branches": 2,
+        "percent_branches_covered": 83.33333333333333,
+        "percent_branches_covered_display": "83"
+      },
+      "missing_lines": [
+        39,
+        50
+      ],
+      "missing_branches": [
+        [
+          38,
+          39
+        ],
+        [
+          49,
+          50
+        ]
+      ]
+    },
+    "advocacia/views/processos.py": {
+      "summary": {
+        "covered_lines": 140,
+        "num_statements": 146,
+        "percent_covered": 94.9438202247191,
+        "percent_covered_display": "95",
+        "missing_lines": 6,
+        "excluded_lines": 0,
+        "percent_statements_covered": 95.89041095890411,
+        "percent_statements_covered_display": "96",
+        "num_branches": 32,
+        "num_partial_branches": 3,
+        "covered_branches": 29,
+        "missing_branches": 3,
+        "percent_branches_covered": 90.625,
+        "percent_branches_covered_display": "91"
+      },
+      "missing_lines": [
+        129,
+        137,
+        333,
+        377,
+        379,
+        380
+      ],
+      "missing_branches": [
+        [
+          128,
+          129
+        ],
+        [
+          136,
+          137
+        ],
+        [
+          332,
+          333
+        ]
+      ]
+    },
+    "advocacia/views/rascunhos.py": {
+      "summary": {
+        "covered_lines": 27,
+        "num_statements": 28,
+        "percent_covered": 93.75,
+        "percent_covered_display": "94",
+        "missing_lines": 1,
+        "excluded_lines": 0,
+        "percent_statements_covered": 96.42857142857143,
+        "percent_statements_covered_display": "96",
+        "num_branches": 4,
+        "num_partial_branches": 1,
+        "covered_branches": 3,
+        "missing_branches": 1,
+        "percent_branches_covered": 75.0,
+        "percent_branches_covered_display": "75"
+      },
+      "missing_lines": [
+        37
+      ],
+      "missing_branches": [
+        [
+          36,
+          37
+        ]
+      ]
+    },
+    "advocacia/views/relatorios.py": {
+      "summary": {
+        "covered_lines": 142,
+        "num_statements": 164,
+        "percent_covered": 84.61538461538461,
+        "percent_covered_display": "85",
+        "missing_lines": 22,
+        "excluded_lines": 0,
+        "percent_statements_covered": 86.58536585365853,
+        "percent_statements_covered_display": "87",
+        "num_branches": 18,
+        "num_partial_branches": 6,
+        "covered_branches": 12,
+        "missing_branches": 6,
+        "percent_branches_covered": 66.66666666666667,
+        "percent_branches_covered_display": "67"
+      },
+      "missing_lines": [
+        215,
+        219,
+        220,
+        233,
+        237,
+        238,
+        252,
+        257,
+        258,
+        262,
+        263,
+        268,
+        269,
+        286,
+        291,
+        292,
+        296,
+        297,
+        302,
+        303,
+        338,
+        362
+      ],
+      "missing_branches": [
+        [
+          214,
+          215
+        ],
+        [
+          232,
+          233
+        ],
+        [
+          251,
+          252
+        ],
+        [
+          285,
+          286
+        ],
+        [
+          337,
+          338
+        ],
+        [
+          361,
+          362
+        ]
+      ]
+    },
+    "advocacia/views/sessao.py": {
+      "summary": {
+        "covered_lines": 196,
+        "num_statements": 212,
+        "percent_covered": 90.234375,
+        "percent_covered_display": "90",
+        "missing_lines": 16,
+        "excluded_lines": 0,
+        "percent_statements_covered": 92.45283018867924,
+        "percent_statements_covered_display": "92",
+        "num_branches": 44,
+        "num_partial_branches": 9,
+        "covered_branches": 35,
+        "missing_branches": 9,
+        "percent_branches_covered": 79.54545454545455,
+        "percent_branches_covered_display": "80"
+      },
+      "missing_lines": [
+        80,
+        253,
+        284,
+        425,
+        431,
+        440,
+        441,
+        442,
+        457,
+        458,
+        482,
+        502,
+        508,
+        525,
+        529,
+        530
+      ],
+      "missing_branches": [
+        [
+          79,
+          80
+        ],
+        [
+          252,
+          253
+        ],
+        [
+          283,
+          284
+        ],
+        [
+          424,
+          425
+        ],
+        [
+          430,
+          431
+        ],
+        [
+          439,
+          440
+        ],
+        [
+          456,
+          457
+        ],
+        [
+          481,
+          482
+        ],
+        [
+          524,
+          525
+        ]
+      ]
+    },
+    "advocacia/views/tarefas.py": {
+      "summary": {
+        "covered_lines": 80,
+        "num_statements": 89,
+        "percent_covered": 86.4,
+        "percent_covered_display": "86",
+        "missing_lines": 9,
+        "excluded_lines": 0,
+        "percent_statements_covered": 89.88764044943821,
+        "percent_statements_covered_display": "90",
+        "num_branches": 36,
+        "num_partial_branches": 8,
+        "covered_branches": 28,
+        "missing_branches": 8,
+        "percent_branches_covered": 77.77777777777777,
+        "percent_branches_covered_display": "78"
+      },
+      "missing_lines": [
+        51,
+        64,
+        84,
+        87,
+        114,
+        118,
+        131,
+        135,
+        143
+      ],
+      "missing_branches": [
+        [
+          50,
+          51
+        ],
+        [
+          63,
+          64
+        ],
+        [
+          71,
+          74
+        ],
+        [
+          113,
+          114
+        ],
+        [
+          117,
+          118
+        ],
+        [
+          130,
+          131
+        ],
+        [
+          134,
+          135
+        ],
+        [
+          142,
+          143
+        ]
+      ]
+    },
+    "advocacia/views/uso.py": {
+      "summary": {
+        "covered_lines": 47,
+        "num_statements": 50,
+        "percent_covered": 90.625,
+        "percent_covered_display": "91",
+        "missing_lines": 3,
+        "excluded_lines": 0,
+        "percent_statements_covered": 94.0,
+        "percent_statements_covered_display": "94",
+        "num_branches": 14,
+        "num_partial_branches": 3,
+        "covered_branches": 11,
+        "missing_branches": 3,
+        "percent_branches_covered": 78.57142857142857,
+        "percent_branches_covered_display": "79"
+      },
+      "missing_lines": [
+        39,
+        73,
+        87
+      ],
+      "missing_branches": [
+        [
+          38,
+          39
+        ],
+        [
+          72,
+          73
+        ],
+        [
+          86,
+          87
+        ]
+      ]
+    }
+  },
+  "totals": {
+    "covered_lines": 4420,
+    "num_statements": 4832,
+    "percent_covered": 89.27111716621253,
+    "percent_covered_display": "89",
+    "missing_lines": 412,
+    "excluded_lines": 0,
+    "percent_statements_covered": 91.47350993377484,
+    "percent_statements_covered_display": "91",
+    "num_branches": 1040,
+    "num_partial_branches": 178,
+    "covered_branches": 822,
+    "missing_branches": 218,
+    "percent_branches_covered": 79.03846153846153,
+    "percent_branches_covered_display": "79"
+  }
+}

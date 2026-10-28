@@ -18,6 +18,7 @@ from ..serializers import (
     ApontamentoHoraSerializer,
     DespesaSerializer,
 )
+from .comum import _data_do_filtro, _id_do_filtro
 
 # =========================================================
 # APONTAMENTO DE HORAS (TIMESHEET)
@@ -38,19 +39,19 @@ class ApontamentoHoraViewSet(
     def get_queryset(self):
         queryset = super().get_queryset().select_related("processo", "usuario")
 
-        processo = self.request.query_params.get("processo")
+        processo = _id_do_filtro(self.request.query_params, "processo")
         if processo:
             queryset = queryset.filter(processo_id=processo)
 
-        usuario = self.request.query_params.get("usuario")
+        usuario = _id_do_filtro(self.request.query_params, "usuario")
         if usuario:
             queryset = queryset.filter(usuario_id=usuario)
 
-        inicio = self.request.query_params.get("inicio")
+        inicio = _data_do_filtro(self.request.query_params, "inicio")
         if inicio:
             queryset = queryset.filter(data__gte=inicio)
 
-        fim = self.request.query_params.get("fim")
+        fim = _data_do_filtro(self.request.query_params, "fim")
         if fim:
             queryset = queryset.filter(data__lte=fim)
 
@@ -87,7 +88,7 @@ class DespesaViewSet(
     def get_queryset(self):
         queryset = super().get_queryset().select_related("processo", "processo__cliente")
 
-        processo = self.request.query_params.get("processo")
+        processo = _id_do_filtro(self.request.query_params, "processo")
         if processo:
             queryset = queryset.filter(processo_id=processo)
 

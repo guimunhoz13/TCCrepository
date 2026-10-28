@@ -49,7 +49,7 @@ const capa = [
 // ============================================================
 const resumo = [
   h1("RESUMO"),
-  p("O presente trabalho apresenta o desenvolvimento de uma aplicação web para o gerenciamento de escritórios de advocacia, com isolamento completo de dados entre escritórios (arquitetura multi-tenant). O sistema centraliza clientes, processos, prazos e compromissos, tarefas, contratos e honorários, horas e despesas, relatórios e a comunicação com o cliente por e-mail e WhatsApp, além de um assistente de inteligência artificial que responde com base apenas nos dados do próprio escritório. Na etapa mais recente, o acesso passou a ser controlado por perfis (administrador, advogado, estagiário, financeiro e secretária), processos em segredo de justiça ficaram restritos ao administrador e ao advogado responsável, o login ganhou verificação em duas etapas e foram implementados os direitos do titular previstos na Lei Geral de Proteção de Dados (consentimento, portabilidade e anonimização). O sistema passou a importar as intimações publicadas no Diário de Justiça Eletrônico Nacional (DJEN), calculando o prazo em dias úteis forenses — inclusive com os feriados locais e as suspensões de expediente cadastrados pelo escritório — e lançando-o na agenda; a gerar cobranças por PIX para cada parcela de honorários; a redigir, com apoio da IA, atualizações do andamento em linguagem simples para o cliente; a enviar notificações push ao celular; a exportar a agenda para aplicativos de calendário; e a preencher os dados de uma empresa a partir do CNPJ, consultando o cadastro público da Receita Federal. O funcionamento é verificado por testes automatizados em três níveis — API, componentes de interface e ponta a ponta, este último com checagem de acessibilidade —, executados a cada alteração em integração contínua, e a API é documentada no padrão OpenAPI. O uso é gratuito para começar: todo escritório novo entra no plano Gratuito, sem pagamento, e os planos pagos (Básico e Profissional) ampliam os limites de usuários e processos e incluem as automações e a inteligência artificial. Ao longo do desenvolvimento, o backend foi migrado de Node.js para Python com Django e o banco de dados de MySQL para PostgreSQL (Supabase); a automação de notificações via n8n, prevista originalmente, foi adiada."),
+  p("O presente trabalho apresenta o desenvolvimento de uma aplicação web para o gerenciamento de escritórios de advocacia, com isolamento completo de dados entre escritórios (arquitetura multi-tenant). O sistema centraliza clientes, processos, prazos e compromissos, tarefas, contratos e honorários, horas e despesas, relatórios e a comunicação com o cliente por e-mail e WhatsApp, além de um assistente de inteligência artificial que responde com base apenas nos dados do próprio escritório. Na etapa mais recente, o acesso passou a ser controlado por perfis (administrador, advogado, estagiário, financeiro e secretária), processos em segredo de justiça ficaram restritos ao administrador e ao advogado responsável, o login ganhou verificação em duas etapas e foram implementados os direitos do titular previstos na Lei Geral de Proteção de Dados (consentimento, portabilidade e anonimização). O sistema passou a importar as intimações publicadas no Diário de Justiça Eletrônico Nacional (DJEN), calculando o prazo em dias úteis forenses — inclusive com os feriados locais e as suspensões de expediente cadastrados pelo escritório — e lançando-o na agenda; a gerar cobranças por PIX para cada parcela de honorários; a redigir, com apoio da IA, atualizações do andamento em linguagem simples para o cliente; a enviar notificações push ao celular; a exportar a agenda para aplicativos de calendário; e a preencher os dados de uma empresa a partir do CNPJ, consultando o cadastro público da Receita Federal. O funcionamento é verificado por testes automatizados em três níveis — API, componentes de interface e ponta a ponta, este último com checagem de acessibilidade —, previstos no fluxo de integração contínua e também executados localmente, e a API é documentada no padrão OpenAPI. A auditoria final aprovou 841 casos automatizados e classificou o escopo local como apto com ressalvas, incluindo a cobertura insuficiente de testes de componentes do frontend e verificações operacionais ainda pendentes. O uso é gratuito para começar: todo escritório novo entra no plano Gratuito, sem pagamento, e os planos pagos (Básico e Profissional) ampliam os limites de usuários e processos e incluem as automações e a inteligência artificial. Ao longo do desenvolvimento, o backend foi migrado de Node.js para Python com Django e o banco de dados de MySQL para PostgreSQL (Supabase); a automação de notificações via n8n, prevista originalmente, foi adiada."),
   new Paragraph({
     spacing: { after: 100 },
     children: [
@@ -134,7 +134,9 @@ const TITULOS_SUMARIO = [
   ["7.2. Diagrama de Containers (C4 — Nível 2)", 2],
   ["7.3. Diagrama de Componentes", 2],
   ["7.4. Integração Contínua e Qualidade", 2],
-  ["7.5. Avaliação e Limitações", 2],
+  ["7.5. Resultados da Auditoria Técnica", 2],
+  ["7.6. Testes Práticos na Aplicação Publicada", 2],
+  ["7.7. Avaliação e Limitações", 2],
   ["8. Trabalhos Futuros", 1],
   ["9. Conclusão", 1],
   ["10. Referências Bibliográficas", 1],
@@ -192,7 +194,7 @@ const introducao = [
 
   h2("1.6. Metodologia de Desenvolvimento"),
   p("O projeto foi desenvolvido de forma incremental, com uma adaptação do método Scrum, organizando as tarefas em pequenas entregas ao longo do semestre. Parte da validação de regras de negócio (como a exigência de senha forte) foi conduzida seguindo o ciclo de Test-Driven Development (TDD): primeiro a escrita de um teste que falha (red), em seguida a implementação mínima que o faz passar (green), documentado em relatório específico do projeto."),
-  p("Na etapa final, a verificação passou a ser contínua: a cada alteração enviada ao repositório, um fluxo de integração contínua (GitHub Actions) executa os testes da API (507 testes em Django, sobre um banco PostgreSQL efêmero), os testes de componentes da interface (261 testes em Jest e Testing Library), a análise estática do código, o build de produção, a validação da documentação OpenAPI e os testes de ponta a ponta (19 cenários em Playwright, com um navegador de verdade usando o sistema sobre um escritório de demonstração e checagem automática de acessibilidade WCAG 2 AA). Os resultados identificam o commit verificado e devem ser considerados junto às regras de proteção do repositório."),
+  p("A verificação combina testes da API em Django sobre PostgreSQL exclusivo, testes de componentes em Jest e Testing Library, análise estática, build de produção, validação OpenAPI e fluxos de ponta a ponta em Playwright, incluindo regras automáticas de acessibilidade. O GitHub Actions está configurado para essas etapas. A auditoria de 27/10/2026 executou localmente 532 testes Django, 275 Jest e 34 Playwright, após correções e retestes. A execução remota do CI não foi comprovada nesta rodada; os resultados locais identificam a base de código e as alterações ainda não commitadas, conforme a seção 7."),
 ];
 
 // ============================================================
@@ -606,7 +608,7 @@ const modelagemSistemas = [
   p("Com a introdução dos planos de assinatura, entraram o ator Visitante, que cria o escritório pelo cadastro público já no plano Gratuito, o caso de uso Consultar Plano e Uso dos Limites e o caso de uso Verificar Limite do Plano, incluído pelos casos que dependem do plano: Gerenciar Processos e Gerenciar Equipe e Perfis de Acesso (limites de processos e de usuários), Consultar Assistente de IA e Tratar Intimações do DJEN (recursos dos planos pagos)."),
   p("Por fim, o caso de uso Cadastrar Feriados Locais, dos perfis que gerenciam a agenda, estende Gerenciar Agenda: os dias cadastrados passam a valer no cálculo dos prazos (RF50)."),
   p("O caso de uso Preencher Dados pelo CNPJ estende Gerenciar Clientes e Cadastrar Escritório: ao informar o CNPJ, os dados da empresa vêm do cadastro público da Receita Federal, mas o cadastro continua possível sem ele (RF51/RN37)."),
-  ...fig(`${DIAG}/casos_de_uso.png`, 1015, 2399, "Figura 1 – Diagrama de Casos de Uso", 400),
+  ...fig(`${DIAG}/casos_de_uso.png`, 1015, 2399, "Figura 1 – Diagrama de Casos de Uso", 360),
 
   h2("4.2. Especificação dos Casos de Uso"),
   p("Esta seção detalha os cinco casos de uso mais representativos do sistema, cobrindo autenticação (incluindo a verificação em duas etapas), o núcleo de gestão de processos, o módulo de contratos e honorários, o painel administrativo da plataforma e o tratamento das intimações eletrônicas."),
@@ -652,7 +654,7 @@ const modelagemDados = [
 const prototipos = [
   h1("6. Protótipos das Funcionalidades Principais"),
   p("Diferentemente da versão anterior deste relatório — que apresentava mockups de uma \"Área do Cliente\" hoje fora do escopo do projeto, já que o cliente não possui acesso próprio ao sistema —, esta seção apresenta capturas de tela reais da aplicação em funcionamento, com dados de demonstração."),
-  p("As capturas foram refeitas após uma revisão de identidade visual da interface, na qual o sistema recebeu uma marca própria (em substituição a um ícone de biblioteca), a cor de destaque passou a sinalizar exclusivamente as ações primárias — e não mais elementos informativos —, os selos de situação passaram a diferenciar cada estado por cor, e as ações repetidas nas listagens foram convertidas em botões de ícone, reduzindo o peso visual da coluna de ações diante dos dados de cada registro."),
+  p("As 34 capturas da interface foram refeitas em 28/10/2026 para apresentar a marca LexNexo e os controles atuais, incluindo navegação agrupada, ajuda progressiva, cadastro por etapas e configuração de notificações. Foram usados apenas serviços locais e dados fictícios. As respostas de CNPJ e DataJud foram simuladas, e a intimação foi criada pela massa de demonstração. As imagens ilustram a interface desta revisão; os resultados quantitativos da auditoria de 27/10/2026 permanecem identificados separadamente na seção 7.5."),
   p("As telas de login e do painel inicial, assim como as das seções 6.14 a 6.25, foram capturadas sobre o escritório de demonstração criado pelo comando popular_demo, que monta um escritório completo — um usuário de cada perfil, clientes, processos (um deles em segredo de justiça), andamentos, agenda, tarefas, contrato com parcelas e chave PIX — e é o mesmo usado pelos testes de ponta a ponta."),
 
   h2("6.1. Tela de Login"),
@@ -665,11 +667,11 @@ const prototipos = [
 
   h2("6.3. Contratos e Honorários"),
   p("Listagem de contratos vinculados a processos, com valores totais, pago e pendente calculados automaticamente a partir das parcelas geradas."),
-  ...fig(`${DIAG}/print_contratos.png`, 1440, 300, "Figura 7 – Painel de Contratos e Honorários", 480),
+  ...fig(`${DIAG}/print_contratos.png`, 1440, 460, "Figura 7 – Painel de Contratos e Honorários", 480),
 
   h2("6.4. Painel Mestre (Administrador do Sistema)"),
   p("Painel restrito ao desenvolvedor da plataforma, com autenticação própria, permitindo consultar e gerenciar todos os escritórios cadastrados sem acesso aos dados de clientes ou processos de nenhum deles."),
-  ...fig(`${DIAG}/print_master.png`, 1440, 400, "Figura 8 – Painel Mestre", 480),
+  ...fig(`${DIAG}/print_master.png`, 1440, 900, "Figura 8 – Painel Mestre", 480),
 
   h2("6.5. Registro de Auditoria"),
   p("Nova aba nas Configurações do escritório, visível apenas ao administrador (RF18/RN10), listando os eventos de login e de criação, edição e exclusão de registros, com data/hora, usuário responsável e descrição. O painel mestre possui uma seção equivalente, com visão consolidada de todos os escritórios da plataforma."),
@@ -677,23 +679,23 @@ const prototipos = [
 
   h2("6.6. Cálculo de Prazo em Dias Úteis"),
   p("Ao cadastrar um evento do tipo prazo na agenda, uma calculadora opcional permite informar a data de início da contagem e a quantidade de dias, e preenche automaticamente a data final (RF22), contando em dias úteis — pulando fins de semana e feriados nacionais, inclusive os móveis, calculados a partir da Páscoa — ou em dias corridos, conforme a natureza do prazo."),
-  ...fig(`${DIAG}/print_prazo.png`, 1440, 900, "Figura 10 – Calculadora de Prazo em Dias Úteis", 480),
+  ...fig(`${DIAG}/print_prazo.png`, 1440, 1250, "Figura 10 – Calculadora de Prazo em Dias Úteis", 480),
 
   h2("6.7. Horas Trabalhadas e Despesas Processuais"),
   p("O contrato já previa o honorário por hora trabalhada, mas não havia onde registrar as horas. O painel de Horas e Custos passou a concentrar três controles: o apontamento das horas por processo (RF26), com distinção entre o que é faturável e o que não é (RN17); o lançamento das custas e despesas processuais, separando o que é reembolsável pelo cliente do que já foi reembolsado (RF27/RN18); e o tempo de uso do sistema por usuário (RF28). Os totais de horas lançadas, de valor faturável e de despesas a reembolsar são apresentados acima de cada listagem."),
-  ...fig(`${DIAG}/print_horas.png`, 1440, 500, "Figura 11 – Apontamento de horas trabalhadas", 480),
+  ...fig(`${DIAG}/print_horas.png`, 1440, 900, "Figura 11 – Apontamento de horas trabalhadas", 480),
 
   h2("6.8. Consulta Processual no DataJud"),
   p("A partir do número unificado do processo, o sistema identifica o tribunal competente pelos dígitos de segmento e tribunal previstos na Resolução CNJ 65/2008 e consulta a API pública do DataJud (Resolução CNJ 331/2020), importando as movimentações ainda não registradas (RF29). Consultas repetidas trazem apenas o que é novo, porque cada movimentação é identificada pelo código em conjunto com a data e hora informadas pelo tribunal (RN19). Cabe registrar o limite da fonte: o DataJud disponibiliza a capa e as movimentações do processo, e não o texto das publicações do Diário da Justiça — lacuna tratada pela importação de intimações do DJEN, descrita na seção 6.18."),
-  ...fig(`${DIAG}/print_datajud.png`, 1440, 400, "Figura 12 – Retorno da consulta ao DataJud", 480),
+  ...fig(`${DIAG}/print_datajud.png`, 1440, 900, "Figura 12 – Retorno da consulta ao DataJud", 480),
 
   h2("6.9. Modelos de Documento"),
   p("O escritório cadastra uma vez o texto de uma procuração, contrato ou declaração, marcando com variáveis os pontos em que os dados devem entrar, e o sistema os preenche a partir do cadastro do cliente, do processo e do próprio escritório (RF30). As variáveis são resolvidas a partir de um catálogo fechado (RN20/RNF10), e o sistema distingue, ao gerar, a variável inexistente daquela cujo cadastro está em branco. O recurso aproveita campos do cliente que já eram coletados e pouco utilizados — RG, estado civil e nacionalidade —, exatamente os exigidos em uma procuração."),
-  ...fig(`${DIAG}/print_modelos.png`, 1440, 640, "Figura 13 – Procuração gerada a partir de um modelo", 480),
+  ...fig(`${DIAG}/print_modelos.png`, 1440, 900, "Figura 13 – Procuração gerada a partir de um modelo", 480),
 
   h2("6.10. Indicadores Financeiros do Escritório"),
   p("O painel inicial apresentava apenas contagens — clientes, processos, audiências e documentos — sem nenhum valor monetário, embora contratos, parcelas, horas e despesas já estivessem registrados no banco. Para saber quanto havia a receber era preciso abrir contrato por contrato. A faixa de indicadores (RF33) responde essa pergunta na abertura do sistema: valor a receber, recebido no mês corrente, valor vencido com a quantidade de parcelas em atraso, horas faturáveis apontadas no mês e despesas adiantadas pelo escritório ainda não cobradas. O cartão de valor vencido é destacado quando há parcela em atraso, apurada pela comparação entre o vencimento e a data da consulta (RN23)."),
-  ...fig(`${DIAG}/print_financeiro.png`, 1092, 263, "Figura 14 – Indicadores financeiros do escritório", 480),
+  ...fig(`${DIAG}/print_financeiro.png`, 1440, 900, "Figura 14 – Indicadores financeiros do escritório", 480),
 
   h2("6.11. Tarefas do Escritório"),
   p("A agenda registra o que tem hora marcada — audiência, prazo, reunião. O trabalho interno do escritório não tinha onde ser registrado nem a quem ser atribuído. O painel de Tarefas (RF34) trata dessa unidade de trabalho: cada tarefa tem um responsável, que é avisado por e-mail ao recebê-la, além de prioridade, prazo opcional e vínculo opcional a um processo. As abas separam o que está em aberto para o usuário, o que está em aberto para o escritório e o histórico completo. A ordenação segue situação, prioridade e proximidade do prazo (RN24)."),
@@ -701,11 +703,11 @@ const prototipos = [
 
   h2("6.12. Busca Global"),
   p("A busca do topo alcançava três das oito áreas do sistema. Ampliada (RF37), ela passou a consultar também tarefas, eventos de agenda, contratos, horas apontadas e modelos de documento, agrupando os resultados por área. Digitar o número de um processo reúne, em uma única lista, o processo e tudo o que está vinculado a ele."),
-  ...fig(`${DIAG}/print_busca.png`, 640, 520, "Figura 16 – Busca global agrupada por área", 330),
+  ...fig(`${DIAG}/print_busca.png`, 1440, 900, "Figura 16 – Busca global agrupada por área", 480),
 
   h2("6.13. Central de Ajuda"),
   p("O sistema reúne catorze áreas e não trazia nenhuma explicação sobre o próprio funcionamento. A central de ajuda (RF36) é acessível de qualquer tela e abre no assunto correspondente à área em uso: quem a aciona de dentro do painel de tarefas encontra a explicação de tarefas, e não uma visão geral. A busca interna distingue duas intenções — procurar pelo nome de um assunto devolve o assunto inteiro, procurar por um detalhe devolve apenas os tópicos que tratam dele."),
-  ...fig(`${DIAG}/print_ajuda.png`, 960, 680, "Figura 17 – Central de ajuda aberta no assunto em uso", 400),
+  ...fig(`${DIAG}/print_ajuda.png`, 1440, 900, "Figura 17 – Central de ajuda aberta no assunto em uso", 480),
 
   h2("6.14. Perfis de Acesso e Equipe"),
   p("Em Configurações › Escritório, o administrador vê a equipe com o perfil de cada pessoa, troca o perfil pela própria lista e inclui membros que não são advogados — estagiário, financeiro, secretária ou outro administrador —, com a descrição do que cada perfil pode fazer (RF38/RF39). As permissões são aplicadas pela API e a interface apenas deixa de mostrar o que seria recusado (RNF15): o menu, os atalhos, os botões de cada lista e os blocos do painel acompanham o perfil. Na segunda figura, o mesmo painel de processos visto por um estagiário: sem o processo sigiloso, sem o botão de exclusão e sem o item Contratos no menu."),
@@ -718,7 +720,7 @@ const prototipos = [
 
   h2("6.16. Verificação em Duas Etapas"),
   p("Em Configurações › Conta, cada pessoa pode ativar a verificação em duas etapas lendo o QR code com um aplicativo autenticador (Google Authenticator, Microsoft Authenticator, Authy) ou digitando a chave exibida, e confirmando com o primeiro código gerado (RF41). A partir daí, o login pede o código de 6 dígitos depois da senha (RN28). Quem perde o celular tem a verificação redefinida pelo administrador."),
-  ...fig(`${DIAG}/print_2fa.png`, 1440, 900, "Ativação da verificação em duas etapas", 480),
+  ...fig(`${DIAG}/print_2fa.png`, 1440, 900, "Configuração da verificação em duas etapas, sem exibição de segredo", 480),
   ...fig(`${DIAG}/print_login_2fa.png`, 390, 844, "Segunda etapa do login, no celular", 200),
 
   h2("6.17. Direitos do Titular (LGPD)"),
@@ -726,12 +728,12 @@ const prototipos = [
   ...fig(`${DIAG}/print_lgpd.png`, 1440, 900, "Clientes, com as ações de exportação e anonimização", 480),
 
   h2("6.18. Intimações do DJEN"),
-  p("A aba Intimações do painel de processos reúne as comunicações publicadas no Diário de Justiça Eletrônico Nacional em nome dos advogados do escritório (RF47). Cada intimação mostra o tribunal, o órgão, o processo — com atalho para a ficha, quando cadastrado —, a data de publicação e o prazo calculado, destacado como estimado quando o texto não traz o número de dias (RN30). O texto pode ser lido por inteiro e a intimação, marcada como lida; o prazo já está na agenda. A captura foi feita contra um servidor que reproduz o formato de resposta da consulta pública do DJEN, já que o ambiente de desenvolvimento não alcança o serviço do CNJ."),
+  p("A aba Intimações do painel de processos reúne as comunicações publicadas no Diário de Justiça Eletrônico Nacional em nome dos advogados do escritório (RF47). Cada intimação mostra o tribunal, o órgão, o processo — com atalho para a ficha, quando cadastrado —, a data de publicação e o prazo calculado, destacado como estimado quando o texto não traz o número de dias (RN30). O texto pode ser lido por inteiro e a intimação, marcada como lida; o prazo já está na agenda. A captura usa a intimação fictícia do escritório de demonstração, identificada como exemplo na própria tela. Não representa uma publicação real nem comprova consulta ao serviço do CNJ."),
   ...fig(`${DIAG}/print_intimacoes.png`, 1440, 900, "Intimações importadas do DJEN com o prazo calculado", 480),
 
   h2("6.19. Cobrança por PIX"),
-  p("Com a chave PIX do escritório cadastrada, cada parcela pendente ganha o botão Cobrar com PIX, que abre o QR code e o código copia e cola com o valor exato da parcela, além do envio pronto pelo WhatsApp com valor, vencimento e código (RF45/RN31). O código segue o padrão BR Code do Banco Central e foi conferido contra o exemplo do manual oficial nos testes automatizados."),
-  ...fig(`${DIAG}/print_pix.png`, 1440, 900, "PIX de uma parcela de honorários", 480),
+  p("Com a chave PIX do escritório cadastrada, cada parcela pendente ganha o botão Cobrar com PIX, que abre o QR code e o código copia e cola com o valor exato da parcela, além do envio pronto pelo WhatsApp com valor, vencimento e código (RF45/RN31). O código de uma cobrança real segue o padrão BR Code do Banco Central e foi conferido contra o exemplo do manual oficial nos testes automatizados. A captura apresenta o modo de teste atual do LexNexo, identificado como sem movimentação de dinheiro, e não uma cobrança bancária real."),
+  ...fig(`${DIAG}/print_pix.png`, 1440, 900, "Modo de teste do PIX de honorários, sem movimentação de dinheiro", 480),
 
   h2("6.20. Atualização do Cliente"),
   p("Na ficha do processo, Atualizar o cliente gera uma mensagem em linguagem simples com os últimos andamentos e os próximos compromissos (RF46). Os termos do tribunal são traduzidos — \"conclusos para decisão\" vira \"o processo foi para o juiz analisar\" —, o texto pode ser editado e é aberto no WhatsApp do cliente apenas depois da revisão do advogado (RN33). Quando a IA está disponível, é ela quem redige, recebendo somente o primeiro nome do cliente e os andamentos (RNF16)."),
@@ -747,33 +749,41 @@ const prototipos = [
 
   h2("6.23. Notificações no Celular e no Navegador"),
   p("Em Configurações › Notificações, cada aparelho pode ser inscrito para receber avisos na hora, mesmo com o sistema fechado: intimação nova, tarefa atribuída e lembretes de prazo e audiência (RF48). As mensagens são cifradas para o aparelho de destino (RNF17); no iPhone, o recurso exige o sistema instalado na tela de início. Dentro do sistema, o sino funciona como central de alertas independente desses canais: reúne itens vencidos e os próximos sete dias, identifica prazo fatal, vencimento, horário e processo relacionado e permanece operável por teclado."),
-  ...fig(`${DIAG}/print_push.png`, 1440, 900, "Ativação das notificações push", 480),
+  ...fig(`${DIAG}/print_push.png`, 1440, 900, "Configuração de notificações no ambiente local sem chaves VAPID", 480),
 
   h2("6.24. Documentação da API"),
   p("A API passou a ter documentação interativa no padrão OpenAPI 3, gerada a partir das próprias views e serializers e publicada em /api/docs (RNF18). As rotas são agrupadas por assunto, com a explicação da autenticação, do escopo por escritório e dos perfis de acesso, e podem ser chamadas pela própria página após informar o token de acesso. A integração contínua valida o esquema a cada alteração e falha se alguma rota ficar sem documentação."),
   ...fig(`${DIAG}/print_swagger.png`, 1440, 900, "Documentação interativa da API (Swagger UI)", 480),
 
   h2("6.25. Testes de Ponta a Ponta"),
-  p("Os testes de ponta a ponta usam o sistema como uma pessoa usaria, em um navegador de verdade, sobre o escritório de demonstração: login com senha errada e certa, cadastro de cliente, ficha do processo e mensagem ao cliente, perfis de acesso e sigilo, quadro de tarefas, PIX, exportação da agenda e uso no celular, além da checagem automática de acessibilidade WCAG 2 AA no login e no painel. Eles rodam na integração contínua a cada alteração, junto com os 507 testes da API e os 261 testes de componentes (RNF19)."),
-  ...fig(`${DIAG}/print_e2e.png`, 1000, 820, "Relatório dos testes de ponta a ponta (Playwright)", 420),
+  p("Os testes de ponta a ponta usam o sistema como uma pessoa usaria, em um navegador de verdade, sobre o escritório de demonstração: login com senha errada e certa, cadastro de cliente, ficha do processo e mensagem ao cliente, perfis de acesso e sigilo, quadro de tarefas, PIX, exportação da agenda e uso no celular, além da checagem automática de acessibilidade WCAG 2 AA no login e no painel. O workflow prevê sua execução junto aos testes da API e de componentes (RNF19). Na auditoria final local, passaram 34 cenários Playwright, 532 testes Django e 275 Jest; esses resultados não comprovam uma execução remota do workflow."),
+  new Table({
+    width: { size: LARGURA_UTIL, type: WidthType.DXA },
+    columnWidths: [5600, 3471],
+    rows: [
+      new TableRow({ tableHeader: true, children: [celula("Playwright na auditoria de 27/10/2026", { width: 5600, bold: true, shading: AZUL, color: "FFFFFF" }), celula("Resultado local", { width: 3471, bold: true, shading: AZUL, color: "FFFFFF" })] }),
+      ...[["Cenários aprovados", "34"], ["Falhas / ignorados / instáveis", "0 / 0 / 0"], ["Duração do reteste após dependências", "74,821 s"]].map((r) => new TableRow({ cantSplit: true, children: [celula(r[0], { width: 5600 }), celula(r[1], { width: 3471, center: true })] })),
+    ],
+  }),
+  p("Fonte: docs/testes/evidencias/execucoes.json. A revisão visual de 28/10 não constitui nova execução integral dessa suíte.", { italics: true }),
 
   h2("6.26. Planos de Assinatura"),
   p("A página inicial apresenta os três planos antes do cadastro, com o Gratuito em primeiro lugar e o convite para começar sem pagar (RF49). Os valores e as vantagens exibidos vêm da própria API, a mesma que aplica os limites, de modo que a página e o sistema nunca divergem."),
   ...fig(`${DIAG}/print_planos_site.png`, 1440, 900, "Planos na página inicial", 480),
-  p("Dentro do sistema, a tela de planos mostra o plano do escritório e quanto ele usa de cada limite, com a barra em vermelho quando o limite foi atingido, e os planos superiores com o botão de contratação, que abre um e-mail para a equipe comercial. A captura foi feita em um escritório no plano Gratuito com 3 usuários e 27 processos ativos. Quando um recurso pago é usado no Gratuito — por exemplo, o assistente de IA —, a API recusa a operação e a tela exibe a mensagem indicando o plano que o inclui (RN35)."),
+  p("Dentro do sistema, a tela de planos mostra o plano do escritório e quanto ele usa de cada limite, com a barra em vermelho quando o limite foi atingido, e os planos superiores com o botão de contratação, que abre um e-mail para a equipe comercial. A captura atual usa o escritório de demonstração no plano Profissional, com cinco usuários e quatro processos. A interface também oferece uma simulação de PIX dos planos, identificada como teste e sem alteração da assinatura real. Quando um recurso pago é usado no Gratuito — por exemplo, o assistente de IA —, a API recusa a operação e a tela exibe a mensagem indicando o plano que o inclui (RN35)."),
   ...fig(`${DIAG}/print_planos.png`, 1440, 900, "Plano atual, uso dos limites e planos pagos", 480),
 
   h2("6.27. Feriados Locais no Cálculo de Prazos"),
   p("A aba Feriados locais da agenda reúne os feriados da comarca e as suspensões de expediente do tribunal, com a indicação dos que se repetem todo ano (RF50). O texto da própria tela lembra que os feriados nacionais e o recesso forense já entram no cálculo."),
   ...fig(`${DIAG}/print_feriados.png`, 1440, 900, "Feriados locais do escritório", 480),
   p("Na calculadora de prazos, o feriado local passa a contar: um prazo de um dia útil iniciado em 01/12/2026 vence em 03/12, e não em 02/12, aniversário de Araçatuba. A tela informa qual feriado local mudou o resultado, para que o advogado confira a data antes de lançá-la (RN36)."),
-  ...fig(`${DIAG}/print_feriados_calculo.png`, 1440, 900, "Calculadora de prazos considerando um feriado local", 480),
+  ...fig(`${DIAG}/print_feriados_calculo.png`, 1440, 1250, "Calculadora de prazos considerando um feriado local", 480),
 
   h2("6.28. Preenchimento pelo CNPJ"),
   p("No cadastro de cliente pessoa jurídica, ao sair do campo de CNPJ o sistema consulta o cadastro da empresa e preenche razão social, e-mail, telefone, CEP e endereço; o aviso abaixo do campo lembra de conferir os dados antes de salvar (RF51). Os nomes chegam da Receita Federal em maiúsculas e são ajustados para a forma usual, preservando siglas como LTDA e numerais romanos, como em \"Rua XV de Novembro\"."),
   ...fig(`${DIAG}/print_cnpj_cliente.png`, 1440, 900, "Cadastro de cliente preenchido a partir do CNPJ", 480),
-  p("O mesmo acontece na criação de um escritório pela página pública, que preenche nome, telefone, e-mail, CEP, cidade, endereço e UF. Só os campos vazios são preenchidos, e um CNPJ não encontrado apenas gera um aviso, sem impedir o cadastro (RN37). Como o serviço externo não é acessível no ambiente de testes automatizados, os testes simulam a sua resposta — inclusive a de CNPJ não encontrado."),
-  ...fig(`${DIAG}/print_cnpj_cadastro.png`, 472, 692, "Criação de escritório preenchida a partir do CNPJ", 260),
+  p("O mesmo acontece na criação de um escritório pela página pública, que preenche nome, telefone, e-mail, CEP, cidade, endereço e UF. Só os campos vazios são preenchidos, e um CNPJ não encontrado apenas gera um aviso, sem impedir o cadastro (RN37). Nas capturas desta revisão, a resposta do BrasilAPI foi simulada com dados fictícios; isso ilustra o preenchimento e não comprova disponibilidade ou situação cadastral de uma empresa real."),
+  ...fig(`${DIAG}/print_cnpj_cadastro.png`, 1440, 900, "Criação de escritório preenchida a partir do CNPJ", 480),
 
   h2("6.29. Cadastro por Etapas e Conferência de Prazos"),
   p("A revisão de 27/10/2026 adotou divulgação progressiva: o cadastro público foi dividido em escritório, localização, administrador e revisão; voltar conserva os dados e a conta só é enviada após a confirmação final. A máscara e a API passaram a aceitar os 12 primeiros caracteres alfanuméricos e os dois últimos dígitos numéricos do CNPJ, sem descartar letras. Os registros numéricos anteriores continuam aceitos. Essa validação verifica a estrutura, não comprova inscrição ou situação cadastral na Receita Federal."),
@@ -803,8 +813,39 @@ const arquitetura = [
   ...fig(`${DIAG}/componentes.png`, 1521, 712, "Diagrama de Componentes – Backend (Django)", 480),
 
   h2("7.4. Integração Contínua e Qualidade"),
-  p("O GitHub Actions executa quatro trabalhos: backend, frontend, imagem Docker/HTTP da atividade de laboratório e ponta a ponta. O backend verifica testes sobre PostgreSQL efêmero, integridade, OpenAPI e segurança de configuração. O frontend verifica lint, componentes e build. O Playwright sobe banco, API e frontend com dados fictícios. Na rodada local de 27/10/2026 foram verificados 507 testes de backend, 261 testes de componentes e 19 cenários de navegador. A revisão local do workflow acrescenta detecção de migrações pendentes e torna obrigatórias as auditorias de dependências de execução; o envio dessa alteração está pendente porque a credencial do GitHub não possui a permissão workflow. No workflow publicado, essas auditorias ainda são alertas não bloqueantes. Sucesso de CI não comprova conformidade integral de segurança ou acessibilidade nem substitui proteção de branch."),
-  h2("7.5. Avaliação e Limitações"),
+  p("O workflow inspecionado do GitHub Actions define trabalhos de backend, frontend, imagem Docker/HTTP da atividade de laboratório e ponta a ponta. Prevê banco efêmero, verificações Django, OpenAPI, lint, build e navegador com dados fictícios. O arquivo de CI já continha alterações locais antes desta auditoria; não se atribui a esta rodada sua autoria nem uma execução remota. As verificações relatadas a seguir foram executadas localmente. Não houve commit, push ou deploy das correções, e sucesso local não comprova proteção de branch ou saúde da versão publicada."),
+  h2("7.5. Resultados da Auditoria Técnica"),
+  p("A auditoria de 27/10/2026 examinou o repositório LexNexo na branch main, com base no commit 8b41a295e0d7be677600295eb56537bb2c0f871e e nas alterações locais de correção. Foram inventariados 27 modelos, 37 migrações, 13 páginas e 166 operações em 102 caminhos canônicos da API. A descoberta, a execução inicial, a reprodução dos defeitos, as correções e os retestes foram registrados em docs/testes. Os resultados se referem a esse estado local e não a uma versão comprovadamente implantada."),
+  p("Na linha de base, passaram 519 testes Django, 268 Jest e 26 Playwright. Após as correções, a rodada final aprovou os 841 casos automatizados da tabela a seguir, sem falhas ou casos ignorados. A proteção de 155 operações contra acesso sem autenticação foi exercitada como subtestes de um método Django; esses subtestes não foram somados como casos adicionais."),
+  new Table({
+    width: { size: LARGURA_UTIL, type: WidthType.DXA },
+    columnWidths: [3400, 1600, 1900, 2171],
+    rows: [
+      new TableRow({ tableHeader: true, children: ["Camada", "Casos", "Linhas", "Ramos"].map((t, i) => celula(t, { bold: true, shading: AZUL, color: "FFFFFF", width: [3400,1600,1900,2171][i] })) }),
+      ...[
+        ["Backend Django", "532", "91,47%", "79,04%"],
+        ["Componentes Jest", "275", "35,55%", "31,85%"],
+        ["Fluxos Playwright", "34", "Não medida", "Não medida"],
+        ["Total de casos", "841", "Não se soma", "Não se soma"],
+      ].map((r, n) => new TableRow({ cantSplit: true, children: r.map((t, i) => celula(t, { width: [3400,1600,1900,2171][i], center: i > 0, shading: n % 2 ? "F2F5FA" : "FFFFFF" })) })),
+    ],
+  }),
+  p("Casos aprovados e cobertura da rodada final local. Fonte: evidências da auditoria, 2026.", { italics: true }),
+  p("A cobertura do backend corresponde a 4.420 de 4.832 linhas do pacote advocacia, excluindo testes e migrações; core, configurações e armazenamento ficam fora desse denominador. A do frontend corresponde a 1.621 de 4.559 linhas JS/JSX de src, sem CSS e arquivos públicos. A cobertura do Playwright não foi adicionada à do Jest. O backend superou a referência de 80% de linhas; o frontend não atingiu a meta de 70%, devendo ampliar os cenários de componentes e estados da interface."),
+  p("Passaram também lint sem avisos, build de produção, verificações Django, detecção de migrações pendentes e validação OpenAPI sem avisos. A checagem de configuração de produção simulada passou com o aviso de HSTS preload deliberadamente silenciado pela configuração existente. O ambiente local usou Python 3.14.7, Django 6.0.8, PostgreSQL 18.6, Node.js 22.23.2 e Next.js 16.4.2; o CI declara Python 3.12 e PostgreSQL 16, combinação cuja execução remota não foi verificada nesta rodada."),
+  p("As correções abrangeram permissões de acesso a contratos e horas na ficha de processo; restrição dos destinos de notificações push a provedores permitidos, com revalidação, limite de espera e bloqueio de redirecionamentos; tratamento de chaves push e token mestre malformados; atomicidade ao alterar o escritório; filtros de identificadores e datas; validação de extensão, assinatura e tamanho de uploads em fluxos antes descobertos; e ajuste do código HTTP de logout no OpenAPI."),
+  p("Na interface e nas regras de data, foram corrigidas disputas entre gravações de rascunho, preservando a digitação e aguardando gravações pendentes antes do descarte, além do uso indevido do dia UTC em datas locais. Formulários de credenciais passaram a declarar método POST, inclusive para a condição de JavaScript indisponível. A infraestrutura de testes recebeu ajustes de aliases, porta da API, carregamento de preferências e isolamento de rascunhos. Os defeitos e suas regressões estão identificados em docs/testes/DEFEITOS_E_RISCOS.md."),
+  p("A análise de dependências distinguiu a resolução nova dos requisitos do ambiente Python instalado, que ainda continha versões antigas com alertas. Depois das atualizações e da revisão dos mínimos, pip-audit não apontou alertas nesse ambiente. No npm, a atualização do zod eliminou o alerta alto; a auditoria de produção ficou sem alertas e a auditoria completa manteve cinco pacotes de baixa gravidade na cadeia Jest/deepmerge, ligados a um alerta raiz. São resultados da data da execução e exigem monitoramento posterior."),
+  p("Uma medição exploratória local, com 12 amostras por operação, encontrou medianas de 9,75 ms para clientes, 16,46 ms para processos com página de cinco itens, 18,10 ms para página de 25 itens, 47,49 ms para o painel e 12,07 ms para agenda. Foram observadas, respectivamente, 3, 4, 4, 24 e 3 consultas ao banco. Esses valores descrevem a massa sintética local; não constituem ensaio de carga nem medição da produção."),
+
+  h2("7.6. Testes Práticos na Aplicação Publicada"),
+  p("Com autorização do responsável pela conta e pelos avisos automáticos decorrentes das operações, foram executadas ações pela interface publicada com dados fictícios identificados como AUDITORIA TCC. Dos 22 casos práticos, 21 foram aprovados e um ficou bloqueado: o anexo foi cadastrado, mas a abertura ou o download não apresentou resultado observável no navegador integrado. A entrega das notificações aos destinatários não foi comprovada."),
+  p("Foram mantidos 19 registros de negócio, conforme solicitado: dois clientes, dois processos, quatro eventos de agenda, duas tarefas, um contrato, três parcelas automáticas, um anexo, um apontamento de horas, uma despesa, uma movimentação e um modelo de documento. Os processos foram identificados como AUDITORIA-TCC-20261027-01 e AUDITORIA-TCC-20261027-02, o segundo em segredo de justiça. Nenhum registro criado foi excluído."),
+  p("Os eventos compreenderam dois prazos, para 04/11/2026 às 18h e 12/11/2026 às 16h, e duas audiências, para 10/11/2026 às 14h30 e 18/11/2026 às 9h. O cálculo de cinco dias úteis a partir de 27/10 resultou em 04/11, considerando o feriado de 02/11. Os quatro eventos foram reencontrados após encerrar a sessão e entrar novamente. Um evento duplicado durante a disputa de rascunho foi editado para o segundo prazo planejado, preservando o registro."),
+  p("O contrato fictício de R$ 120,00 gerou três parcelas de R$ 40,00; o apontamento de 90 minutos a R$ 200,00 por hora totalizou R$ 300,00; a despesa reembolsável foi de R$ 15,50. O preview do modelo substituiu as variáveis do cliente e do processo. A prática também evidenciou os problemas de rascunho e de data local, corrigidos e retestados apenas no código local, sem alterar retroativamente os registros publicados. O inventário e as evidências estão em docs/testes/TESTES_PRATICOS.md."),
+
+  h2("7.7. Avaliação e Limitações"),
+  p("O parecer é APTO COM RESSALVAS, no escopo local validado. Permanecem pendentes a cobertura mínima do frontend, a comprovação remota do CI e da versão publicada, as verificações administrativas de ACL/RLS e bucket do Supabase, backup e restauração, agendadores e entrega por provedores. Não foram feitas chamadas pagas de IA, testes de carga remotos ou confirmação de pagamento real. As correções permanecem locais, sem deploy."),
   p("A rodada local utilizou um PostgreSQL temporário separado da produção, dados de demonstração, navegador Chromium em perfis de computador e celular, testes Django e Jest. As chamadas externas de IA e de consulta cadastral são simuladas nos testes específicos. A massa de testes não contém informações de clientes reais. Os testes de navegação incluem compromisso para assistente, cadastro por etapas, busca que abre o registro, persistência da aparência e conferência de publicação fictícia."),
   p("As verificações automáticas de acessibilidade executam regras WCAG 2 A/AA do axe nas telas cobertas; não constituem certificação nem substituem inspeção por teclado e leitor de tela. Não foram realizados, nesta rodada, teste formal com três a cinco profissionais independentes, avaliação SUS, medição de ganho de produtividade, ensaio de carga representativo ou auditoria externa de segurança. Portanto, não se afirma eficácia comprovada no uso jurídico real, conformidade integral com a LGPD ou ausência de vulnerabilidades."),
   p("Para a avaliação com usuários, propõe-se observar cinco tarefas: cadastrar cliente, criar processo, lançar e conferir prazo, localizar documento e preparar mensagem ao cliente. Devem ser registrados tempo, erros, pedidos de ajuda e conclusão sem intervenção, com questionário SUS ao final. O teste deve usar dados fictícios e consentimento dos participantes; seus resultados só poderão ser apresentados depois da execução."),
@@ -839,7 +880,7 @@ const conclusao = [
   p("A revisão do projeto mostrou que ampliar funcionalidades não é suficiente: também é necessário verificar se o comportamento corresponde ao que a interface promete. Foram encontrados e tratados problemas de renovação e revogação de sessão, indicadores financeiros, permissões, navegação e integração entre módulos. Os requisitos e o backlog passaram a compartilhar identificadores consistentes, diferenciando o que está implementado do que permanece adiado."),
   p("A rodada mais recente priorizou três aspectos: organização visual com menos informação simultânea, segurança de dados e conferência de ações sensíveis. O cadastro por etapas conserva valores e inclui revisão antes do envio; o menu agrupado e recolhível, a ajuda progressiva e a busca direta favorecem a orientação. O suporte ao CNPJ alfanumérico preserva a compatibilidade com registros anteriores. A conferência de intimações registra autor e horário e é invalidada quando o vencimento muda, sem confundir leitura com validação do prazo."),
   p("Na camada de privacidade, o contexto enviado à IA passou a minimizar informações pessoais estruturadas e padrões reconhecidos; o histórico de auditoria também foi considerado na anonimização de clientes. Essas medidas reduzem exposição, mas não eliminam o risco de dados sensíveis em texto livre nem equivalem a uma declaração de conformidade integral. O sistema não armazena respostas autenticadas da API para uso offline, evitando apresentar dados antigos como atuais."),
-  p("A verificação combina testes de backend, componentes e fluxos no navegador, além de análise estática, build, validação OpenAPI e auditoria de dependências. Os resultados e limitações estão descritos na seção 7. A evidência automatizada sustenta o comportamento dos cenários cobertos, mas não demonstra, por si só, ganho de produtividade ou usabilidade para todos os perfis."),
+  p("A auditoria final aprovou 532 testes Django, 275 Jest e 34 Playwright, totalizando 841 casos automatizados, além de análise estática, build, validação OpenAPI e auditoria de dependências. A cobertura de linhas foi de 91,47% no escopo medido do backend e de 35,55% no frontend; este último permaneceu abaixo da meta de 70%. Na aplicação publicada, 21 verificações práticas foram aprovadas, uma ficou bloqueada e os 19 registros criados foram preservados. O parecer é apto com ressalvas no escopo local validado, sem publicação das correções. Os resultados e limitações estão descritos na seção 7. A evidência automatizada sustenta o comportamento dos cenários cobertos, mas não demonstra, por si só, ganho de produtividade ou usabilidade para todos os perfis."),
   p("O próximo passo de avaliação é realizar sessões observadas com profissionais de escritórios, usando dados fictícios, registrando erros, tempo, conclusão de tarefas e percepção de usabilidade. Portal do cliente, fluxos configuráveis, versionamento de documentos e integrações de cobrança permanecem evoluções propostas. A principal contribuição do trabalho é uma solução integrada com mecanismos verificáveis de controle e orientação, acompanhada da explicitação de seus limites e das condições para sua continuidade."),
 ];
 

@@ -64,7 +64,7 @@ export default function RedefinirSenhaForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form method="post" onSubmit={handleSubmit}>
       <h2>Nova senha</h2>
       <p className="subtitle">Escolha uma nova senha para acessar o sistema.</p>
 

@@ -32,7 +32,7 @@ describe("resolverApiUrl", () => {
   });
 
   test("preserva a API configurada fora da Vercel", () => {
-    expect(resolverApiUrl("localhost")).toBe("http://127.0.0.1:8000/api");
+    expect(resolverApiUrl("localhost")).toBe(process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api");
   });
 });
 

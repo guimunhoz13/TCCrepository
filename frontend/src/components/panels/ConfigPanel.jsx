@@ -397,7 +397,7 @@ function DoisFatoresSection({ usuario, setDados, feedback }) {
       description="Além da senha, o login pede um código do aplicativo autenticador do celular. Quem descobrir sua senha não entra sem ele."
     >
       {ativo && (
-        <form onSubmit={desativar}>
+        <form method="post" onSubmit={desativar}>
           <p className="status-2fa"><ShieldCheck size={16} /> Ativa nesta conta.</p>
           <div className="form-grid">
             <Field label="Senha atual"><input type="password" autoComplete="current-password" value={senha} onChange={(e) => setSenha(e.target.value)} required /></Field>
@@ -412,7 +412,7 @@ function DoisFatoresSection({ usuario, setDados, feedback }) {
       )}
 
       {!ativo && cadastro && (
-        <form onSubmit={ativar}>
+        <form method="post" onSubmit={ativar}>
           <div className="qr-2fa">
             <img src={cadastro.qr_code} alt="QR code para cadastrar o LexNexo no aplicativo autenticador" />
             <div>
@@ -719,7 +719,7 @@ export function EquipeSection({ dados, setDados, feedback, admin }) {
       )}
 
       {admin && incluindo && (
-        <form onSubmit={incluir} style={{ marginTop: 16 }}>
+        <form method="post" onSubmit={incluir} style={{ marginTop: 16 }}>
           <div className="form-grid">
             <Field label="Nome"><input required maxLength={255} value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} /></Field>
             <Field label="E-mail"><input type="email" required value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></Field>

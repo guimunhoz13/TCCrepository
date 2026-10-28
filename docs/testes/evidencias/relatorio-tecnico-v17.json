@@ -1,0 +1,17 @@
+{
+  "data_revisao": "2026-10-28",
+  "arquivo": "docs/tcc/RT-TDS-2026-39_v1.7.docx",
+  "sha256": "6490557d1c7ea8347c55162e4c32884557365066474468b8a8ce293f94c15f3d",
+  "marca": "LexNexo",
+  "paginas_renderizadas": 59,
+  "titulos_sumario": 61,
+  "sumario_estavel": true,
+  "capturas_atualizadas": 34,
+  "capturas_incorporadas_verificadas_por_hash": 34,
+  "ocorrencias_marca_anterior_em_texto_xml": 0,
+  "revisao_visual": "Todas as páginas renderizadas foram revisadas em painéis de imagens, com ampliação das páginas de marca, API, autenticação e resultados.",
+  "metrica_auditoria": "Preservadas as métricas verificadas de 27/10/2026; não houve nova execução integral das suítes nesta revisão documental.",
+  "validacoes": "Integridade ZIP/DOCX, hashes das capturas incorporadas, paginação estável, sintaxe dos geradores e git diff --check aprovados.",
+  "historico": "v1.4, v1.5 e v1.6 preservadas; entrega atual é v1.7.",
+  "remoto": "Nenhum registro remoto alterado, nenhum commit, push ou deploy nesta revisão."
+}

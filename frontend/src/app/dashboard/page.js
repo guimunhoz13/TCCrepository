@@ -40,7 +40,6 @@ import PlanosPanel from "@/components/panels/PlanosPanel";
 import Avatar from "@/components/ui/Avatar";
 import { PanelProvider, usePanel, PANELS } from "@/contexts/PanelContext";
 import { DashboardDataProvider, useDashboardData } from "@/contexts/DashboardDataContext";
-import { PreferencesProvider } from "@/contexts/PreferencesContext";
 import useRegistroDeAtividade from "@/hooks/useRegistroDeAtividade";
 import { useAgora } from "@/hooks/useAgora";
 import { useAvisos } from "@/contexts/AvisosContext";
@@ -606,12 +605,10 @@ function DashboardContent() {
 
 export default function DashboardPage() {
   return (
-    <PreferencesProvider>
-      <DashboardDataProvider>
-        <PanelProvider>
-          <DashboardContent />
-        </PanelProvider>
-      </DashboardDataProvider>
-    </PreferencesProvider>
+    <DashboardDataProvider>
+      <PanelProvider>
+        <DashboardContent />
+      </PanelProvider>
+    </DashboardDataProvider>
   );
 }

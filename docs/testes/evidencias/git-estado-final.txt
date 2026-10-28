@@ -1,0 +1,104 @@
+ M .github/workflows/ci.yml
+ M .gitignore
+ M README.md
+ M backend/advocacia/push.py
+ M backend/advocacia/serializers.py
+ M backend/advocacia/tests/test_push.py
+ M backend/advocacia/views/configuracoes.py
+ M backend/advocacia/views/financeiro.py
+ M backend/advocacia/views/horas_e_despesas.py
+ M backend/advocacia/views/notificacoes_push.py
+ M backend/advocacia/views/processos.py
+ M backend/advocacia/views/sessao.py
+ M backend/requirements.txt
+ M docs/TESTE-DE-USABILIDADE.md
+ M docs/deploy-piloto.md
+ M docs/tcc/README.md
+ M docs/tcc/build_rt.js
+ M docs/tcc/diagramas/print_2fa.png
+ M docs/tcc/diagramas/print_ajuda.png
+ M docs/tcc/diagramas/print_auditoria.png
+ M docs/tcc/diagramas/print_busca.png
+ M docs/tcc/diagramas/print_cnpj_cadastro.png
+ M docs/tcc/diagramas/print_cnpj_cliente.png
+ M docs/tcc/diagramas/print_contratos.png
+ M docs/tcc/diagramas/print_dashboard.png
+ M docs/tcc/diagramas/print_datajud.png
+ M docs/tcc/diagramas/print_equipe.png
+ M docs/tcc/diagramas/print_evolucao_conferencia.png
+ M docs/tcc/diagramas/print_evolucao_dashboard.png
+ M docs/tcc/diagramas/print_feriados.png
+ M docs/tcc/diagramas/print_feriados_calculo.png
+ M docs/tcc/diagramas/print_financeiro.png
+ M docs/tcc/diagramas/print_horas.png
+ M docs/tcc/diagramas/print_ics.png
+ M docs/tcc/diagramas/print_intimacoes.png
+ M docs/tcc/diagramas/print_kanban.png
+ M docs/tcc/diagramas/print_lgpd.png
+ M docs/tcc/diagramas/print_login.png
+ M docs/tcc/diagramas/print_login_2fa.png
+ M docs/tcc/diagramas/print_master.png
+ M docs/tcc/diagramas/print_modelos.png
+ M docs/tcc/diagramas/print_perfil_estagiario.png
+ M docs/tcc/diagramas/print_pix.png
+ M docs/tcc/diagramas/print_planos.png
+ M docs/tcc/diagramas/print_planos_site.png
+ M docs/tcc/diagramas/print_prazo.png
+ M docs/tcc/diagramas/print_push.png
+ M docs/tcc/diagramas/print_resumo.png
+ M docs/tcc/diagramas/print_sigilo.png
+ M docs/tcc/diagramas/print_swagger.png
+ M docs/tcc/diagramas/print_tarefas.png
+ M docs/tcc/gerar_rt.js
+ M docs/tcc/main.js
+ M docs/tcc/paginar.py
+ M docs/tcc/paginas.json
+ M frontend/README.md
+ M frontend/e2e/evolucao.spec.js
+ M frontend/e2e/processos.spec.js
+ M frontend/jest.config.mjs
+ M frontend/package-lock.json
+ M frontend/src/app/master/page.js
+ M frontend/src/components/forms/EsqueciSenhaForm.jsx
+ M frontend/src/components/forms/LoginForm.jsx
+ M frontend/src/components/forms/RedefinirSenhaForm.jsx
+ M frontend/src/components/forms/RegisterForm.jsx
+ M frontend/src/components/forms/__tests__/LoginForm.test.js
+ M frontend/src/components/panels/ConfigPanel.jsx
+ M frontend/src/components/panels/FichaProcesso.jsx
+ M frontend/src/components/panels/HorasPanel.jsx
+ M frontend/src/hooks/__tests__/useRascunhoFormulario.test.js
+ M frontend/src/hooks/useRascunhoFormulario.js
+ M frontend/src/services/__tests__/api.test.js
+ M frontend/src/utils/__tests__/formato.test.js
+ M frontend/src/utils/formato.js
+?? .codex-ppt-build/
+?? .opencode/
+?? ENTREGA-DOCKER.md
+?? PROMPT_AUDITORIA_COMPLETA_TCC.md
+?? assets/design-concepts/
+?? assets/software-maintenance-cover.png
+?? backend/advocacia/tests/test_auditoria.py
+?? backend/core/settings_auditoria.py
+?? build_slides.mjs
+?? docs/security/
+?? docs/tcc/AUDITORIA-2026-10-27.md
+?? docs/tcc/RT-TDS-2026-39_v1.6.docx
+?? docs/tcc/RT-TDS-2026-39_v1.7.docx
+?? docs/tcc/RT-TDS-2026-39_v1.8.docx
+?? docs/testes/
+?? entrega-compose-codespaces.zip
+?? entrega-compose-codespaces/
+?? entrega-docker-labex.zip
+?? entrega-docker-labex/
+?? evidencialabex.jpg
+?? evidencialabex2.jpg
+?? frontend/e2e/auditoria.spec.js
+?? frontend/src/components/panels/__tests__/FichaProcesso.test.jsx
+?? output/
+?? relatorio-seguranca.md
+?? roteiro-apresentacao-seguranca.md
+?? scripts/auditoria-local.sh
+?? scripts/documentar-auditoria.py
+?? scripts/medir-api-auditoria.py
+?? seguranca/

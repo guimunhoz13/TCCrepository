@@ -1,0 +1,107 @@
+{
+  "commit_base": "8b41a295e0d7be677600295eb56537bb2c0f871e",
+  "data_local": "2026-10-27",
+  "timezone": "America/Sao_Paulo",
+  "backend": {
+    "testes": 532,
+    "resumo": [
+      "Ran 532 tests in 44.754s",
+      "OK"
+    ]
+  },
+  "jest": {
+    "numPassedTests": 275,
+    "numFailedTests": 0,
+    "numTotalTestSuites": 46,
+    "startTime": 1793148846099
+  },
+  "playwright": {
+    "startTime": "2026-10-28T01:02:07.869Z",
+    "duration": 74821.261,
+    "expected": 34,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "comandos": [
+    {
+      "id": "initdb",
+      "exit_code": 0,
+      "duracao_segundos": 0
+    },
+    {
+      "id": "pip-check",
+      "exit_code": 0,
+      "duracao_segundos": 1
+    },
+    {
+      "id": "check",
+      "exit_code": 0,
+      "duracao_segundos": 0
+    },
+    {
+      "id": "migrations",
+      "exit_code": 0,
+      "duracao_segundos": 1
+    },
+    {
+      "id": "backend",
+      "exit_code": 0,
+      "duracao_segundos": 30
+    },
+    {
+      "id": "cobertura-backend",
+      "exit_code": 0,
+      "duracao_segundos": 0
+    },
+    {
+      "id": "openapi",
+      "exit_code": 0,
+      "duracao_segundos": 1
+    },
+    {
+      "id": "migrate",
+      "exit_code": 0,
+      "duracao_segundos": 2
+    },
+    {
+      "id": "seed",
+      "exit_code": 0,
+      "duracao_segundos": 2
+    },
+    {
+      "id": "npm-ci",
+      "exit_code": 0,
+      "duracao_segundos": 10
+    },
+    {
+      "id": "lint",
+      "exit_code": 0,
+      "duracao_segundos": 9
+    },
+    {
+      "id": "jest",
+      "exit_code": 0,
+      "duracao_segundos": 7
+    },
+    {
+      "id": "build",
+      "exit_code": 0,
+      "duracao_segundos": 5
+    },
+    {
+      "id": "e2e",
+      "exit_code": 0,
+      "duracao_segundos": 70
+    }
+  ],
+  "reteste_pos_dependencias": {
+    "backend_testes": 532,
+    "backend_duracao_suite_s": 44.754,
+    "backend_exit_code": 0,
+    "e2e_testes": 34,
+    "e2e_duracao_ms": 74821.261,
+    "e2e_exit_code": 0,
+    "observacao": "comandos TSV são da rodada integrada anterior; backend e E2E foram repetidos após atualização do venv"
+  }
+}

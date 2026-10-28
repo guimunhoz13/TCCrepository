@@ -16,9 +16,19 @@ const footer = new Footer({
 });
 
 const doc = new Document({
+  title: "Sistema Web para Gerenciamento de Escritório de Advocacia",
+  subject: "Relatório técnico do TCC — revisão 1.8 com auditoria de 27/10/2026",
+  creator: "João Henrique Souza Sabino e Guilherme Munhoz",
   styles: {
     default: {
       document: { run: { font: "Calibri", size: 22 } },
+      title: { run: { color: "000000" } },
+      heading1: { run: { color: "000000" } },
+      heading2: { run: { color: "000000" } },
+      heading3: { run: { color: "000000" } },
+      heading4: { run: { color: "000000" } },
+      heading5: { run: { color: "000000" } },
+      heading6: { run: { color: "000000" } },
     },
   },
   sections: [
@@ -50,6 +60,6 @@ const doc = new Document({
 });
 
 Packer.toBuffer(doc).then((buffer) => {
-  fs.writeFileSync(`${__dirname}/RT-TDS-2026-39_v1.5.docx`, buffer);
+  fs.writeFileSync(`${__dirname}/RT-TDS-2026-39_v1.8.docx`, buffer);
   console.log("OK: documento gerado.");
 });

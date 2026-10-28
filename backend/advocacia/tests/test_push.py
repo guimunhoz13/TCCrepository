@@ -72,6 +72,8 @@ class NotificacoesPushAPITestCase(_EquipeDoEscritorio, APITestCase):
         endpoint = post.call_args[0][0]
         self.assertEqual(endpoint, self.aparelho.inscricao["endpoint"])
         cabecalhos = post.call_args[1]["headers"]
+        self.assertFalse(post.call_args.kwargs["allow_redirects"])
+        self.assertEqual(post.call_args.kwargs["timeout"], 10)
         self.assertTrue(cabecalhos["Authorization"].startswith("vapid t="))
         self.assertIn(f"k={PUBLICA}", cabecalhos["Authorization"])
         self.assertEqual(cabecalhos["content-encoding"], "aes128gcm")

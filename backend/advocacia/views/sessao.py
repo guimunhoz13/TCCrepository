@@ -139,7 +139,7 @@ def _revogar_refresh_token(refresh):
     tags=["autenticacao"],
     summary="Sair (revoga o refresh token)",
     request=inline_serializer("Logout", {"refresh": campos.CharField()}),
-    responses={205: None, 400: OpenApiTypes.OBJECT},
+    responses={200: OpenApiTypes.OBJECT, 400: OpenApiTypes.OBJECT},
 )
 class LogoutView(APIView):
     """Revoga (blacklista) o refresh token, encerrando a sessão de verdade

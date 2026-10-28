@@ -459,9 +459,13 @@ class AdvogadoSerializer(serializers.ModelSerializer):
     telefone = serializers.CharField(
         source="usuario.telefone", required=False, allow_blank=True, validators=[validar_telefone]
     )
-    foto = serializers.ImageField(source="usuario.foto", required=False, allow_null=True)
+    foto = serializers.ImageField(
+        source="usuario.foto", required=False, allow_null=True,
+        validators=Usuario._meta.get_field("foto").validators,
+    )
     documento_identidade = serializers.FileField(
-        source="usuario.documento_identidade", required=False, allow_null=True, write_only=True
+        source="usuario.documento_identidade", required=False, allow_null=True, write_only=True,
+        validators=Usuario._meta.get_field("documento_identidade").validators,
     )
     documento_identidade_enviado = serializers.SerializerMethodField()
     cpf = serializers.CharField(

@@ -1,5 +1,9 @@
 /** Formatações de valor e de tempo usadas no relatório impresso e na dashboard. */
 
+export function dataLocalISO(valor = new Date()) {
+  return `${valor.getFullYear()}-${String(valor.getMonth() + 1).padStart(2, "0")}-${String(valor.getDate()).padStart(2, "0")}`;
+}
+
 export function formatarData(valor, comHora = false) {
   if (!valor) return "—";
   // Campos de data pura ("2026-09-21") seriam lidos pelo Date como meia-noite

@@ -1,0 +1,13 @@
+{
+  "arquivo": "docs/tcc/RT-TDS-2026-39_v1.6.docx",
+  "sha256": "de46511118f8c7345c024ec3d53d615e8338e6c338dd69267b65a067de8dd26e",
+  "paginas_renderizadas": 57,
+  "titulos_sumario": 61,
+  "sumario_estavel": true,
+  "revisao_visual": "Revisão geral das 57 páginas e ampliação das seções atualizadas e das legendas corrigidas.",
+  "integridade_docx": "APROVADO",
+  "conteudo_auditoria": "APROVADO",
+  "versoes_historicas": "v1.4 e v1.5 idênticas a HEAD",
+  "validacoes": "Sintaxe dos geradores JavaScript e git diff --check aprovados. Alteração documental, sem repetição da suíte do produto.",
+  "publicacao": "Sem commit, push ou deploy."
+}

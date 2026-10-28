@@ -42,7 +42,11 @@ test("busca abre diretamente o cliente escolhido", async ({ page }) => {
 
 test("menu recolhido e densidade sobrevivem ao recarregamento sem cortar controles", async ({ page }) => {
   await page.setViewportSize({ width: 1093, height: 768 });
+  const configuracao = page.waitForResponse((res) => res.url().includes("/configuracoes/") && res.request().method() === "GET");
   await entrar(page);
+  const preferencias = (await (await configuracao).json()).preferencias;
+  await expect(page.getByRole("button", { name: "Alternar densidade das listas" }))
+    .toHaveAttribute("aria-pressed", String(preferencias.densidade_tabela === "compact"));
   await page.getByRole("button", { name: "Recolher menu lateral" }).click();
   const densidade = page.getByRole("button", { name: "Alternar densidade das listas" });
   const estadoAnterior = await densidade.getAttribute("aria-pressed");

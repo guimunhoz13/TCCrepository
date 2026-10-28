@@ -47,7 +47,7 @@ def _gerar_parcelas(contrato):
         Decimal("0.01"), rounding=ROUND_HALF_UP
     )
 
-    hoje = timezone.now().date()
+    hoje = timezone.localdate()
     soma = Decimal("0.00")
 
     for numero in range(1, total_parcelas + 1):

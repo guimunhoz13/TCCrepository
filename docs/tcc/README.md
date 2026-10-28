@@ -1,5 +1,43 @@
 # Relatório técnico do TCC (gerado por script)
 
+## Versão 1.8 — títulos em preto de 28/10/2026
+
+O [relatório técnico atual](RT-TDS-2026-39_v1.8.docx) usa preto nos títulos e
+subtítulos, tanto na formatação direta quanto nos estilos de título do Word.
+Conteúdo, capturas, tamanhos de fonte, negrito e espaçamento foram mantidos.
+O documento anterior v1.7 permanece preservado como registro histórico.
+
+## Versão 1.7 — identidade LexNexo de 28/10/2026
+
+O [relatório técnico v1.7](RT-TDS-2026-39_v1.7.docx) apresenta 34 capturas
+novas da interface LexNexo, incluindo login, painel, API, equipe, segunda etapa
+de autenticação, planos e cadastro. As proporções das imagens foram recalculadas;
+a imagem antiga de 11 testes Playwright foi substituída pelo quadro dos 34
+cenários da auditoria registrada. As descrições identificam dados fictícios,
+respostas simuladas e configurações locais sem chaves externas. A revisão de
+marca não equivale a uma nova execução integral da auditoria de 27/10.
+
+A versão 1.7 substitui a 1.6 como entrega atual. Os arquivos v1.4, v1.5 e v1.6
+permanecem preservados no repositório como registros históricos. Referências
+operacionais ao alias de configuração legado permanecem documentadas por
+compatibilidade e não são nomes de marca apresentados na interface.
+
+## Versão 1.6 — auditoria completa de 27/10/2026
+
+O [relatório técnico v1.6](RT-TDS-2026-39_v1.6.docx) incorpora os resultados
+da auditoria: 532 testes Django, 275 Jest e 34 Playwright, cobertura de linhas
+de 91,47%/35,55%, correções, dependências e limites. As seções 7.5 e 7.6
+registram a auditoria e os testes práticos; a seção 7.7 e a conclusão apresentam
+o parecer **APTO COM RESSALVAS, no escopo local validado**. Foram preservados
+19 registros na conta publicada, com 21 casos práticos aprovados e um bloqueado.
+As correções permanecem locais, sem deploy.
+
+Resumo, metodologia, descrição dos testes e conclusão foram atualizados;
+o sumário foi recalculado a partir da renderização. As versões v1.4 e v1.5
+permanecem preservadas como registros históricos. O [adendo](AUDITORIA-2026-10-27.md)
+e os [relatórios de testes](../testes/RELATORIO_VALIDACAO.md) mantêm as evidências
+detalhadas. As contagens históricas abaixo pertencem às respectivas revisões.
+
 ## Versão 1.5 — revisão de 27/10/2026
 
 Atualiza os identificadores do backlog, separa notificação automática adiada
@@ -20,7 +58,7 @@ O documento `RT-TDS-2026-39` é gerado a partir de `gerar_rt.js` (conteúdo),
 biblioteca `docx`:
 
 ```bash
-cd docs/tcc && npm install docx && node main.js   # gera RT-TDS-2026-39_v1.5.docx
+cd docs/tcc && npm install docx && node main.js   # gera RT-TDS-2026-39_v1.8.docx
 ```
 
 Os diagramas ficam em `diagramas/*.puml` (PlantUML) e são renderizados com
@@ -35,8 +73,8 @@ renderizado (precisa de LibreOffice e poppler-utils):
 
 ```bash
 node main.js
-soffice --headless --convert-to pdf RT-TDS-2026-39_v1.5.docx
-python3 paginar.py RT-TDS-2026-39_v1.5.pdf   # grava paginas.json
+soffice --headless --convert-to pdf RT-TDS-2026-39_v1.8.docx
+python3 paginar.py RT-TDS-2026-39_v1.8.pdf   # grava paginas.json
 node main.js                                 # gera de novo com as páginas certas
 ```
 

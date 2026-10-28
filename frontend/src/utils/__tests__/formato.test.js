@@ -30,3 +30,9 @@ describe("formatarHoras", () => {
     expect(formatarHoras(undefined)).toBe("0h00");
   });
 });
+import { dataLocalISO } from "../formato";
+
+test("data de formulário usa o dia local na virada UTC", () => {
+  expect(dataLocalISO(new Date("2026-10-28T00:30:00Z"))).toBe("2026-10-27");
+  expect(dataLocalISO(new Date("2027-01-01T01:00:00Z"))).toBe("2026-12-31");
+});

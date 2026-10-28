@@ -105,7 +105,7 @@ export default function LoginForm() {
 
   if (desafio) {
     return (
-      <form onSubmit={handleSegundoFator}>
+      <form method="post" onSubmit={handleSegundoFator}>
         <h2>Verificação em duas etapas</h2>
         <p className="subtitle">
           Abra o aplicativo autenticador (Google Authenticator, Authy, Microsoft
@@ -155,7 +155,7 @@ export default function LoginForm() {
   }
 
   return (
-    <form onSubmit={handleLogin}>
+    <form method="post" onSubmit={handleLogin}>
       <h2>Entrar</h2>
       <p className="subtitle">Acesse o ERP do seu escritório de advocacia</p>
 

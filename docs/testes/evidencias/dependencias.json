@@ -1,0 +1,351 @@
+{
+  "python_instalado_antes": [
+    {
+      "pacote": "certifi",
+      "versao": "2026.7.22",
+      "avisos": [
+        {
+          "id": "PYSEC-2026-4320",
+          "correcoes": [
+            "2026.10.18"
+          ]
+        },
+        {
+          "id": "PYSEC-2026-4320",
+          "correcoes": [
+            "2026.10.19"
+          ]
+        }
+      ]
+    },
+    {
+      "pacote": "dnspython",
+      "versao": "2.8.0",
+      "avisos": [
+        {
+          "id": "CVE-2026-114605",
+          "correcoes": [
+            "2.9.0"
+          ]
+        }
+      ]
+    },
+    {
+      "pacote": "filelock",
+      "versao": "4.0.12",
+      "avisos": [
+        {
+          "id": "CVE-2026-112940",
+          "correcoes": [
+            "4.2.1"
+          ]
+        },
+        {
+          "id": "CVE-2026-112913",
+          "correcoes": [
+            "4.2.1"
+          ]
+        },
+        {
+          "id": "CVE-2026-112907",
+          "correcoes": [
+            "4.2.1"
+          ]
+        }
+      ]
+    },
+    {
+      "pacote": "pillow",
+      "versao": "12.3.0",
+      "avisos": [
+        {
+          "id": "PYSEC-2026-4327",
+          "correcoes": [
+            "13.0.0"
+          ]
+        },
+        {
+          "id": "PYSEC-2026-4328",
+          "correcoes": [
+            "13.0.0"
+          ]
+        },
+        {
+          "id": "PYSEC-2026-4326",
+          "correcoes": [
+            "13.0.0"
+          ]
+        },
+        {
+          "id": "CVE-2026-112895",
+          "correcoes": [
+            "13.0.0"
+          ]
+        },
+        {
+          "id": "CVE-2026-112400",
+          "correcoes": [
+            "13.0.0"
+          ]
+        },
+        {
+          "id": "CVE-2026-112397",
+          "correcoes": [
+            "13.0.0"
+          ]
+        },
+        {
+          "id": "CVE-2026-112896",
+          "correcoes": [
+            "13.0.0"
+          ]
+        },
+        {
+          "id": "CVE-2026-112897",
+          "correcoes": [
+            "13.0.0"
+          ]
+        },
+        {
+          "id": "CVE-2026-112395",
+          "correcoes": [
+            "13.0.0"
+          ]
+        },
+        {
+          "id": "CVE-2026-112404",
+          "correcoes": [
+            "13.0.0"
+          ]
+        },
+        {
+          "id": "CVE-2026-112899",
+          "correcoes": [
+            "13.0.0"
+          ]
+        },
+        {
+          "id": "CVE-2026-112402",
+          "correcoes": [
+            "13.0.0"
+          ]
+        },
+        {
+          "id": "CVE-2026-112900",
+          "correcoes": [
+            "13.0.0"
+          ]
+        },
+        {
+          "id": "CVE-2026-112893",
+          "correcoes": [
+            "13.0.0"
+          ]
+        },
+        {
+          "id": "CVE-2026-112891",
+          "correcoes": [
+            "13.0.0"
+          ]
+        },
+        {
+          "id": "CVE-2026-112405",
+          "correcoes": [
+            "13.0.0"
+          ]
+        },
+        {
+          "id": "CVE-2026-112390",
+          "correcoes": [
+            "13.0.0"
+          ]
+        },
+        {
+          "id": "CVE-2026-112401",
+          "correcoes": [
+            "13.0.0"
+          ]
+        },
+        {
+          "id": "CVE-2026-112901",
+          "correcoes": [
+            "13.0.0"
+          ]
+        },
+        {
+          "id": "CVE-2026-112391",
+          "correcoes": [
+            "13.0.0"
+          ]
+        },
+        {
+          "id": "CVE-2026-112894",
+          "correcoes": [
+            "13.0.0"
+          ]
+        },
+        {
+          "id": "CVE-2026-112406",
+          "correcoes": [
+            "13.0.0"
+          ]
+        },
+        {
+          "id": "CVE-2026-112399",
+          "correcoes": [
+            "13.0.0"
+          ]
+        },
+        {
+          "id": "CVE-2026-112892",
+          "correcoes": [
+            "13.0.0"
+          ]
+        },
+        {
+          "id": "CVE-2026-112393",
+          "correcoes": [
+            "13.0.0"
+          ]
+        },
+        {
+          "id": "CVE-2026-96638",
+          "correcoes": [
+            "13.0.0"
+          ]
+        },
+        {
+          "id": "CVE-2026-96641",
+          "correcoes": [
+            "13.0.0"
+          ]
+        },
+        {
+          "id": "CVE-2026-96640",
+          "correcoes": [
+            "13.0.0"
+          ]
+        },
+        {
+          "id": "CVE-2026-96642",
+          "correcoes": [
+            "13.0.0"
+          ]
+        },
+        {
+          "id": "CVE-2026-96639",
+          "correcoes": [
+            "13.0.0"
+          ]
+        },
+        {
+          "id": "CVE-2026-96643",
+          "correcoes": [
+            "13.0.0"
+          ]
+        },
+        {
+          "id": "CVE-2026-96637",
+          "correcoes": [
+            "13.0.0"
+          ]
+        },
+        {
+          "id": "CVE-2026-96644",
+          "correcoes": [
+            "13.0.0"
+          ]
+        },
+        {
+          "id": "CVE-2026-96778",
+          "correcoes": [
+            "13.0.0"
+          ]
+        },
+        {
+          "id": "CVE-2026-96636",
+          "correcoes": [
+            "13.0.0"
+          ]
+        },
+        {
+          "id": "GHSA-78g4-xqwv-q3g8",
+          "correcoes": [
+            "13.0.0"
+          ]
+        },
+        {
+          "id": "CVE-2026-114501",
+          "correcoes": [
+            "13.0.0"
+          ]
+        },
+        {
+          "id": "CVE-2026-112398",
+          "correcoes": [
+            "13.0.0"
+          ]
+        }
+      ]
+    },
+    {
+      "pacote": "pip",
+      "versao": "26.1.2",
+      "avisos": [
+        {
+          "id": "PYSEC-2026-3721",
+          "correcoes": [
+            "26.2"
+          ]
+        },
+        {
+          "id": "PYSEC-2026-3721",
+          "correcoes": [
+            "26.2.0"
+          ]
+        }
+      ]
+    }
+  ],
+  "python_instalado_depois": {
+    "pacotes_com_alertas": 0,
+    "total_entradas": 0
+  },
+  "python_requirements_resolvido": {
+    "total_alertas": 0,
+    "comando": "pip-audit -r backend/requirements.txt"
+  },
+  "npm_antes": {
+    "info": 0,
+    "low": 5,
+    "moderate": 0,
+    "high": 1,
+    "critical": 0,
+    "total": 6
+  },
+  "npm_depois": {
+    "info": 0,
+    "low": 5,
+    "moderate": 0,
+    "high": 0,
+    "critical": 0,
+    "total": 5
+  },
+  "npm_producao": {
+    "info": 0,
+    "low": 0,
+    "moderate": 0,
+    "high": 0,
+    "critical": 0,
+    "total": 0
+  },
+  "npm_alto_gate_exit_code": 0,
+  "versoes_corrigidas": {
+    "Pillow": "13.0.0",
+    "dnspython": "2.9.0",
+    "certifi": "2026.10.23",
+    "filelock": "4.2.4",
+    "pip": "26.2.2",
+    "zod": "4.6.7"
+  }
+}
