@@ -815,6 +815,17 @@ class ContratoSerializer(EscopoDoEscritorioMixin, serializers.ModelSerializer):
 
     campos_do_escritorio = ("processo",)
 
+    def validate(self, attrs):
+        attrs = super().validate(attrs)
+        forma = attrs.get("forma_pagamento", getattr(self.instance, "forma_pagamento", "avista"))
+        valor = attrs.get("valor_total", getattr(self.instance, "valor_total", None))
+        parcelas = attrs.get("numero_parcelas", getattr(self.instance, "numero_parcelas", 1))
+        if forma == "parcelado" and valor is not None and parcelas > valor * 100:
+            raise serializers.ValidationError({
+                "numero_parcelas": "Cada parcela deve ter pelo menos R$ 0,01. Reduza a quantidade de parcelas."
+            })
+        return attrs
+
 
     numero_processo = serializers.CharField(source="processo.numero_processo", read_only=True)
     processo_titulo = serializers.CharField(source="processo.titulo", read_only=True)

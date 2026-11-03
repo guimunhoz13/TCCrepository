@@ -1,7 +1,8 @@
 """Contratos de honorários, parcelas e PIX."""
 
-from decimal import ROUND_HALF_UP, Decimal
+from decimal import ROUND_DOWN, Decimal
 
+from django.db import transaction
 from django.utils import timezone
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
@@ -44,7 +45,7 @@ def _gerar_parcelas(contrato):
     total_parcelas = max(1, total_parcelas)
 
     valor_parcela = (contrato.valor_total / total_parcelas).quantize(
-        Decimal("0.01"), rounding=ROUND_HALF_UP
+        Decimal("0.01"), rounding=ROUND_DOWN
     )
 
     hoje = timezone.localdate()
@@ -86,6 +87,7 @@ class ContratoViewSet(
             .order_by("-criado_em")
         )
 
+    @transaction.atomic
     def perform_create(self, serializer):
         escritorio = self.get_escritorio()
 
