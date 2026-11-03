@@ -47,6 +47,7 @@ export default function GlobalSearch({ onSelect }) {
       <Search size={16} className="global-search-icon" />
       <input
         type="text"
+        data-campo-busca
         placeholder="Buscar em todo o escritório..."
         aria-label="Buscar em todo o escritório"
         value={termo}

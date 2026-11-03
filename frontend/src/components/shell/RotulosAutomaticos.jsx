@@ -182,6 +182,8 @@ function valorDoControle(campo) {
 }
 
 function controleSemFormularioFoiAlterado(campo) {
+  // Buscas e filtros não são cadastros pendentes de gravação.
+  if (campo.type === "search" || campo.hasAttribute("data-campo-busca")) return false;
   const inicial = valoresIniciaisControles.get(campo);
   return inicial !== undefined && inicial !== valorDoControle(campo);
 }

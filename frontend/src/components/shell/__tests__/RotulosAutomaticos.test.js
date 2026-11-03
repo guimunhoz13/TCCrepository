@@ -184,6 +184,47 @@ describe("RotulosAutomaticos — formulários", () => {
     expect(getByLabelText("Nome").value).toBe("Ana Maria");
   });
 
+  test("buscar na ajuda não exige descartar alterações ao fechar", () => {
+    document.body.innerHTML = "";
+    const fechar = jest.fn();
+    window.confirm = jest.fn(() => false);
+    const { getByRole } = render(<><RotulosAutomaticos />
+      <div role="dialog"><input type="search" aria-label="Buscar na ajuda" />
+        <button type="button" onClick={fechar}>Fechar a ajuda</button></div>
+    </>);
+    getByRole("searchbox").focus();
+    fireEvent.input(getByRole("searchbox"), { target: { value: "prazo" } });
+    fireEvent.click(getByRole("button", { name: "Fechar a ajuda" }));
+    expect(fechar).toHaveBeenCalled();
+    expect(window.confirm).not.toHaveBeenCalled();
+  });
+
+  test("busca não aciona aviso ao sair da página", () => {
+    document.body.innerHTML = "";
+    render(<><RotulosAutomaticos /><input type="search" aria-label="Buscar" /></>);
+    const campo = document.querySelector('input[type="search"]');
+    campo.focus();
+    fireEvent.input(campo, { target: { value: "auditoria" } });
+    const evento = new Event("beforeunload", { cancelable: true });
+    window.dispatchEvent(evento);
+    expect(evento.defaultPrevented).toBe(false);
+  });
+
+  test("edição sem elemento form continua protegida", () => {
+    document.body.innerHTML = "";
+    const fechar = jest.fn();
+    window.confirm = jest.fn(() => false);
+    const { getByRole } = render(<><RotulosAutomaticos />
+      <div role="dialog"><input aria-label="Nome do cadastro" />
+        <button type="button" onClick={fechar}>Fechar</button></div>
+    </>);
+    getByRole("textbox").focus();
+    fireEvent.input(getByRole("textbox"), { target: { value: "Nome fictício" } });
+    fireEvent.click(getByRole("button", { name: "Fechar" }));
+    expect(window.confirm).toHaveBeenCalled();
+    expect(fechar).not.toHaveBeenCalled();
+  });
+
   test("avisa antes de cancelar um formulário com alterações", () => {
     const aoCancelar = jest.fn();
     window.confirm = jest.fn(() => false);

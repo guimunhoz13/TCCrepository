@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import AppSidebar from "@/components/shell/AppSidebar";
 import TopBar from "@/components/shell/TopBar";
-import AssistenteChat from "@/components/assistente/AssistenteChat";
+import AcessoAssistente from "@/components/assistente/AcessoAssistente";
 import { PanelProvider } from "@/contexts/PanelContext";
 import { PreferencesProvider } from "@/contexts/PreferencesContext";
 import GuiaContextual from "@/components/shell/GuiaContextual";
@@ -32,7 +32,7 @@ function AssistenteContent() {
 
         <GuiaContextual assunto="assistente" />
 
-        <AssistenteChat />
+        <AcessoAssistente />
       </main>
 
     </div>

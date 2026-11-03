@@ -1,20 +1,29 @@
 """Gera inventário e evidências compactas de uma rodada real da auditoria.
 
-Uso: backend/ambiente/bin/python scripts/documentar-auditoria.py /tmp/rodada
+Uso: backend/ambiente/bin/python scripts/documentar-auditoria.py /tmp/rodada --data AAAA-MM-DD
 Não copia logs HTTP, tokens, senhas, banco ou dados da conta publicada.
 """
+import argparse
 import ast
+from datetime import date
 import json
 from pathlib import Path
 import re
 import subprocess
-import sys
 
 import yaml
 
 raiz = Path(__file__).resolve().parents[1]
-rodada = Path(sys.argv[1])
-destino = raiz / "docs/testes"
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument("rodada", type=Path)
+parser.add_argument("--data", type=date.fromisoformat, default=None,
+                    required=True, help="Data local real da execução (AAAA-MM-DD).")
+parser.add_argument("--destino", type=Path, default=raiz / "docs/testes")
+args = parser.parse_args()
+rodada = args.rodada
+destino = args.destino
+data_local = args.data.isoformat()
+data_legivel = args.data.strftime("%d/%m/%Y")
 evidencias = destino / "evidencias"
 evidencias.mkdir(parents=True, exist_ok=True)
 commit = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=raiz, text=True).strip()
@@ -67,7 +76,7 @@ def percorrer(suite):
 percorrer(e2e)
 gravar_json("casos-executados.json", {"commit_base": commit, "casos": casos})
 gravar_json("execucoes.json", {
-    "commit_base": commit, "data_local": "2026-10-27", "timezone": "America/Sao_Paulo",
+    "commit_base": commit, "data_local": data_local, "timezone": "America/Sao_Paulo",
     "backend": {"testes": sum(c["tipo"] == "Django" for c in casos),
                 "resumo": re.findall(r"Ran .*|^OK$", backend_log, re.M)},
     "jest": {k: jest[k] for k in ("numPassedTests", "numFailedTests", "numTotalTestSuites", "startTime")},
@@ -77,7 +86,7 @@ gravar_json("execucoes.json", {
 })
 
 linhas = ["# Inventário da implementação e verificações", "",
-          f"Base `{commit}`; execução de 27/10/2026, America/Sao_Paulo.", "",
+          f"Base `{commit}`; execução de {data_legivel}, America/Sao_Paulo.", "",
           "## Operações da API", "",
           "Extraídas do OpenAPI validado. Cada operação protegida foi chamada sem token",
           "por `AuditoriaRotasAnonimasTests` e retornou 401/403. Isso comprova a barreira",
