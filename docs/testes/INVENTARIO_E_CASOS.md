@@ -1,5 +1,17 @@
 # Inventário da implementação e verificações
 
+<!-- auditoria-2026-11-04:inicio -->
+
+## Catálogo atual de 04 de novembro de 2026
+
+O [inventário datado atual](evidencias/2026-11-04/inventario-e-casos.md) e seu
+[JSON](evidencias/2026-11-04/casos-executados.json) relacionam os **854 casos**
+executados (535 Django, 282 Jest, 37 Playwright). Os 166 métodos/paths da API
+mantêm os limites de cobertura funcional descritos em cada família. O catálogo
+abaixo é histórico e seus IDs não devem ser associados à rodada atual.
+
+<!-- auditoria-2026-11-04:fim -->
+
 Base `8b41a295e0d7be677600295eb56537bb2c0f871e`; execução de 27/10/2026, America/Sao_Paulo.
 
 ## Operações da API

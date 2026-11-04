@@ -1,0 +1,24 @@
+{
+  "consultado_em": "2026-11-04",
+  "codigo_testado": "3a54547d2ddf4863462045c927493b7e2f146af3",
+  "frontend": {
+    "provedor": "Vercel",
+    "deployment": "dpl_GeQ2CnKhY488WmdaKAfwcndREY5C",
+    "github_deployment": 7559712087,
+    "status": "Ready",
+    "url": "https://lexnexo-lpedm6zi8-zeldation.vercel.app",
+    "alias": "https://lexnexo.vercel.app",
+    "foto_proxy_retestada": true
+  },
+  "backend": {
+    "provedor": "Render",
+    "workspace": "tea-db81kilg1s2s738mfhf0",
+    "service": "srv-db90meks728c73bbtvlg",
+    "deployment": "dep-dbh8223bc2fs73frc6i0",
+    "commit": "89b675facd02cf8a03d1c249795b20448d3ae230",
+    "status": "live",
+    "autoDeploy": "yes",
+    "novas_correcoes_implantadas": false,
+    "limite": "Não apareceu deploy novo após os pushes. Storage de documentos e recuperação devem ser confirmados antes de substituir instância, respeitando preservação dos anexos."
+  }
+}

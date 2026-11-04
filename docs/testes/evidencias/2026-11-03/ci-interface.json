@@ -1,0 +1,47 @@
+{
+  "conclusion": "success",
+  "headSha": "7219e1321831052b4eea90e4bded203202626a7a",
+  "jobs": [
+    {
+      "name": "Frontend (Next.js)",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-11-03T23:32:06Z",
+      "completedAt": "2026-11-03T23:33:47Z",
+      "url": "https://github.com/guimunhoz13/TCCrepository/actions/runs/41739893748/job/126278483358"
+    },
+    {
+      "name": "Backend (Django)",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-11-03T23:32:06Z",
+      "completedAt": "2026-11-03T23:33:37Z",
+      "url": "https://github.com/guimunhoz13/TCCrepository/actions/runs/41739893748/job/126278483769"
+    },
+    {
+      "name": "E2E (Playwright)",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-11-03T23:32:06Z",
+      "completedAt": "2026-11-03T23:35:54Z",
+      "url": "https://github.com/guimunhoz13/TCCrepository/actions/runs/41739893748/job/126278483866"
+    },
+    {
+      "name": "Imagem Docker Compose (HTTP)",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-11-03T23:32:06Z",
+      "completedAt": "2026-11-03T23:32:25Z",
+      "url": "https://github.com/guimunhoz13/TCCrepository/actions/runs/41739893748/job/126278483971"
+    }
+  ],
+  "status": "completed",
+  "url": "https://github.com/guimunhoz13/TCCrepository/actions/runs/41739893748",
+  "casos": {
+    "django": 535,
+    "jest": 282,
+    "playwright": 36,
+    "total": 853
+  },
+  "contagens_conferidas_nos_logs": true
+}

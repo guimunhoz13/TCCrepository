@@ -1,0 +1,24 @@
+@startuml
+!include skinparam.iuml
+title Cálculo e cadastro de prazo
+actor Usuário
+participant "Frontend Agenda" as F
+participant "API Agenda" as A
+participant "Cálculo de prazos" as C
+database "PostgreSQL" as B
+Usuário -> F : informa referência, duração e abrangência
+F -> A : solicita cálculo autenticado
+A -> C : valida parâmetros
+C -> B : consulta feriados locais aplicáveis
+C --> A : vencimento e memória de cálculo
+A --> F : proposta de data
+Usuário -> F : confere regra, data e processo
+F -> A : POST /api/agenda/
+A -> B : verifica escritório e acesso ao processo
+alt dados válidos e autorização
+ A -> B : grava evento e auditoria
+ A --> F : 201 evento criado
+else erro de validação ou acesso
+ A --> F : 400 / 403 / 404
+end
+@enduml

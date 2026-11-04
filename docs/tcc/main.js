@@ -17,7 +17,7 @@ const footer = new Footer({
 
 const doc = new Document({
   title: "Sistema Web para Gerenciamento de Escritório de Advocacia",
-  subject: "Relatório técnico do TCC — revisão 1.8 com auditoria de 27/10/2026",
+  subject: "Relatório técnico do TCC — revisão 1.10 atualizada em 04/11/2026 com auditoria e publicação verificadas",
   creator: "João Henrique Souza Sabino e Guilherme Munhoz",
   styles: {
     default: {
@@ -60,6 +60,6 @@ const doc = new Document({
 });
 
 Packer.toBuffer(doc).then((buffer) => {
-  fs.writeFileSync(`${__dirname}/RT-TDS-2026-39_v1.8.docx`, buffer);
+  fs.writeFileSync(`${__dirname}/LexNexo_Relatorio_Tecnico_v1.10.docx`, buffer);
   console.log("OK: documento gerado.");
 });

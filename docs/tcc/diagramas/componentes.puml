@@ -1,6 +1,6 @@
 @startuml
 !include skinparam.iuml
-title Diagrama de Componentes — Backend (Django)
+title Diagrama de Componentes C3 do Backend Django
 
 package "Backend (Django)" {
   package "Views (advocacia/views/)" {
@@ -14,7 +14,7 @@ package "Backend (Django)" {
   component "Documentação OpenAPI\n<<drf-spectacular>>" as Docs
 }
 
-database "PostgreSQL\n(Supabase)" as DB
+database "PostgreSQL\n[container de dados]" as DB
 cloud "Serviços externos\n(OpenAI, SMTP, DataJud,\nDJEN, push)" as Externos
 
 Views ..> Serializers

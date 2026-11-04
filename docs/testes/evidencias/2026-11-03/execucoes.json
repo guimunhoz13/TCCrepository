@@ -1,0 +1,98 @@
+{
+  "commit_base": "7219e1321831052b4eea90e4bded203202626a7a",
+  "data_local": "2026-11-03",
+  "timezone": "America/Sao_Paulo",
+  "backend": {
+    "testes": 535,
+    "resumo": [
+      "Ran 535 tests in 28.010s",
+      "OK"
+    ]
+  },
+  "jest": {
+    "numPassedTests": 282,
+    "numFailedTests": 0,
+    "numTotalTestSuites": 47,
+    "startTime": 1793748627808
+  },
+  "playwright": {
+    "startTime": "2026-11-03T23:30:39.436Z",
+    "duration": 69279.955,
+    "expected": 36,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "comandos": [
+    {
+      "id": "initdb",
+      "exit_code": 0,
+      "duracao_segundos": 0
+    },
+    {
+      "id": "pip-check",
+      "exit_code": 0,
+      "duracao_segundos": 1
+    },
+    {
+      "id": "check",
+      "exit_code": 0,
+      "duracao_segundos": 0
+    },
+    {
+      "id": "migrations",
+      "exit_code": 0,
+      "duracao_segundos": 1
+    },
+    {
+      "id": "backend",
+      "exit_code": 0,
+      "duracao_segundos": 30
+    },
+    {
+      "id": "cobertura-backend",
+      "exit_code": 0,
+      "duracao_segundos": 1
+    },
+    {
+      "id": "openapi",
+      "exit_code": 0,
+      "duracao_segundos": 1
+    },
+    {
+      "id": "migrate",
+      "exit_code": 0,
+      "duracao_segundos": 2
+    },
+    {
+      "id": "seed",
+      "exit_code": 0,
+      "duracao_segundos": 2
+    },
+    {
+      "id": "npm-ci",
+      "exit_code": 0,
+      "duracao_segundos": 12
+    },
+    {
+      "id": "lint",
+      "exit_code": 0,
+      "duracao_segundos": 10
+    },
+    {
+      "id": "jest",
+      "exit_code": 0,
+      "duracao_segundos": 7
+    },
+    {
+      "id": "build",
+      "exit_code": 0,
+      "duracao_segundos": 3
+    },
+    {
+      "id": "e2e",
+      "exit_code": 0,
+      "duracao_segundos": 70
+    }
+  ]
+}

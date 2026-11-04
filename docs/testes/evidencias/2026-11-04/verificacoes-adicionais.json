@@ -1,0 +1,25 @@
+{
+  "data": "2026-11-04",
+  "deploy_check": {
+    "ambiente": "Settings simulados, .env ignorado, DB_HOST=127.0.0.1, sem consulta ao banco remoto",
+    "comando": "manage.py check --deploy --fail-level WARNING",
+    "status": "APROVADO",
+    "observado": "System check identified no issues (1 silenced).",
+    "silenciado": "HSTS preload, conforme configuração existente"
+  },
+  "npm_audit": {
+    "total": 26,
+    "moderadas": 23,
+    "baixas": 3,
+    "altas": 0,
+    "criticas": 0,
+    "advisories_raiz": 3,
+    "status": "REPROVADO",
+    "producao": 0
+  },
+  "pip_audit_requirements": {
+    "alertas": 0,
+    "status": "APROVADO"
+  },
+  "limite": "Vulnerabilidades conhecidas na data da consulta; não é certificação de segurança."
+}

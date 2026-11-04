@@ -1,0 +1,16 @@
+{
+  "data": "2026-11-04",
+  "casos_automatizados": 854,
+  "praticos": {
+    "APROVADO": 41,
+    "BLOQUEADO": 2
+  },
+  "links_locais_conferidos": true,
+  "metricas_rt_guia_consistentes": true,
+  "titulos_word_pretos": true,
+  "sumario_titulos": 64,
+  "rt_paginas": 64,
+  "guia_paginas": 65,
+  "video_produzido": false,
+  "limite": "QA documental e de evidências; bloqueios operacionais continuam no relatório."
+}

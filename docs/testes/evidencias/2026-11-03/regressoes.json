@@ -1,0 +1,62 @@
+{
+  "data": "2026-11-03",
+  "base_inicial": "0702332fa4c86c14aab6c679d51ec7f054b11870",
+  "commit_correcao": "b58034d846b688b7c11b83ab97de8b402c98e683",
+  "baseline": {
+    "backend": [
+      "Ran 532 tests in 36.183s",
+      "OK"
+    ],
+    "jest": 275,
+    "playwright": 36,
+    "total": 843
+  },
+  "novas_regressoes": {
+    "antes": {
+      "casos": 3,
+      "reprovados": 3,
+      "causas": [
+        "Contrato e primeira parcela permaneceram após falha sintética na segunda parcela.",
+        "0,06 em quatro parcelas gerou [0,02,0,02,0,02,0,00].",
+        "0,02 em quatro parcelas foi aceito, com última parcela negativa."
+      ]
+    },
+    "apos": {
+      "resumo": [
+        "Ran 9 tests in 0.421s",
+        "OK"
+      ]
+    },
+    "teste": "backend/advocacia/tests/test_financeiro.py:AuditoriaIntegridadeContratoTests"
+  },
+  "suite_final": {
+    "django": 535,
+    "jest": 282,
+    "playwright": 36,
+    "total": 853
+  },
+  "sem_migracoes_novas": true,
+  "regressoes_interface": {
+    "A19": {
+      "antes": {
+        "reprovados": 3,
+        "aprovados": 1
+      },
+      "depois": {
+        "aprovados": 4
+      },
+      "origem": "Página real /assistente-ia com plano simulado, sem API externa."
+    },
+    "A20": {
+      "antes": {
+        "reprovados": 2,
+        "aprovados": 15
+      },
+      "depois": {
+        "aprovados": 17
+      },
+      "origem": "Teste de fechamento da busca e beforeunload; edição de cadastro sem form continua protegida."
+    }
+  },
+  "commit_interface": "7219e1321831052b4eea90e4bded203202626a7a"
+}

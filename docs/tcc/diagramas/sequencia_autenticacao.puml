@@ -1,0 +1,27 @@
+@startuml
+!include skinparam.iuml
+title Autenticação com segunda etapa opcional
+actor Usuário
+participant "Frontend" as F
+participant "API de sessão" as A
+participant "Validador TOTP" as T
+database "PostgreSQL" as B
+Usuário -> F : informa credenciais
+F -> A : POST /api/login/
+A -> B : consulta usuário e valida senha
+alt credenciais inválidas / limite excedido
+ A --> F : erro de autenticação / limitação
+else usuário com 2FA ativo
+ A --> F : desafio temporário
+ Usuário -> F : informa código TOTP ou recuperação
+ F -> A : POST /api/login/2fa/
+ A -> T : valida desafio e código
+ T -> B : confere segredo / consome recuperação
+ A --> F : access e refresh se válido
+else sem 2FA
+ A --> F : access e refresh
+end
+F -> A : recurso protegido com Bearer access
+A -> B : verifica conta, escritório e versão de sessão
+A --> F : dados permitidos ou acesso negado
+@enduml

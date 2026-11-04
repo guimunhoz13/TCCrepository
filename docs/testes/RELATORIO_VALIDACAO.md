@@ -1,5 +1,122 @@
 # Relatório de validação do LexNexo
 
+<!-- auditoria-2026-11-04:inicio -->
+
+## Resultado atual consolidado em 04/11/2026
+
+**APTO COM RESSALVAS, no escopo validado.** Nova auditoria iniciada em 03/11,
+com reteste integral em 04/11: **854 casos automatizados aprovados**, sem
+falhas, skips ou flaky. Base inicial `0702332fa4c86c14aab6c679d51ec7f054b11870`;
+correções financeiras em `b58034d846b688b7c11b83ab97de8b402c98e683`, interface em
+`7219e1321831052b4eea90e4bded203202626a7a` e proxy de fotos em
+`3a54547` (hash completo no catálogo). Alterações locais documentais anteriores
+foram preservadas. Data e fuso: 03–04/11/2026, America/Sao_Paulo.
+
+### Execução e rastreabilidade
+
+| Data | Ambiente | Django | Jest | Playwright | Total |
+|---|---|---:|---:|---:|---:|
+| 2026-10-27 | local | 532 | 275 | 34 | 841 |
+| 2026-10-28 | CI | 532 | 275 | 36 | 843 |
+| 2026-11-03 | local | 535 | 282 | 36 | 853 |
+| 2026-11-04 | local | 535 | 282 | 37 | 854 |
+| 2026-11-04 | CI | 535 | 282 | 37 | 854 |
+
+A tabela é gerada da [fonte única](evidencias/metricas-atuais.json), também
+usada pelo relatório técnico e pelo guia. As rodadas não se somam: o total
+corrente é 854. Casos protegidos por subtestes não são inflados na contagem.
+Catálogo atual: [854 casos identificados](evidencias/2026-11-04/inventario-e-casos.md).
+Inventário: 27 modelos, 37 migrations, 13 páginas, 102 paths e 166 operações.
+O cenário anônimo das 155 operações protegidas não comprova todos os seus
+fluxos positivos. Requisitos e limites permanecem na matriz RF/RNF.
+
+| Categoria | Comando / procedimento | Observado | Estado | Evidência |
+|---|---|---|---|---|
+| Django | coverage run --branch … manage.py test | 535 aprovados; 31,572 s de suíte | APROVADO | [execuções](evidencias/2026-11-04/execucoes.json) |
+| Jest | npm test -- --runInBand --coverage | 282 aprovados, 47 suítes; 12 s do comando | APROVADO | catálogo e cobertura frontend |
+| Playwright | playwright test --reporter=json --trace=off | 37 aprovados; 82,333 s; 36 cenários Chromium + 1 integração HTTP/proxy sem UI; 0 falhas/skips/flaky | APROVADO | catálogo e execuções |
+| Build e lint | npm run build; npm run lint -- --max-warnings=0 | Build concluído, lint sem avisos; 4 s/14 s | APROVADO | execuções |
+| Django/schema/migrations | check; makemigrations --check --dry-run; spectacular --validate --fail-on-warn | Sem erro; nenhuma migration nova; cadeia aplicada somente no banco exclusivo | APROVADO | execuções e operações API |
+| Configuração de deploy | check --deploy com settings simulados de produção | Passou; aviso HSTS preload deliberadamente silenciado conforme projeto | APROVADO | [evidências da rodada](EVIDENCIAS.md) |
+| Dependências de produção | pip-audit requirements; npm audit --omit=dev | Sem alertas conhecidos na consulta de 04/11 | APROVADO | JSONs datados de 04/11 |
+| Ferramentas npm | npm audit completo | 26 entradas transitivas, 23 moderadas/3 baixas; zero altas/críticas; três advisories raiz | REPROVADO | npm-audit.json, A17 |
+| Cobertura frontend | Jest incluindo src inteiro | 36,17% de linhas; meta 70% não atingida | REPROVADO | cobertura-frontend.json |
+| Medição leve local | APIClient, 12 amostras por operação | Medianas 3,72–25,24 ms; processos 4 consultas com páginas de 5/25, dashboard 24 | APROVADO | desempenho-local.json |
+| Práticos publicados | Interface e conferências autenticadas da massa sintética | 41 APROVADO, 0 REPROVADO, 2 BLOQUEADO em 43 verificações; consultar reteste da foto | APROVADO no escopo aprovado | [casos e dados preservados](TESTES_PRATICOS.md) |
+| CI remoto atual | GitHub Actions 41926536601 | Quatro jobs aprovados; 535+282+37=854; execução remota não soma à local | APROVADO | evidencias/2026-11-04/ci.json |
+| PDF/relatório em nova aba | Navegador integrado | Nova aba/conteúdo não observável; download binário da API aprovado separadamente | BLOQUEADO | PR26-21/29 |
+| Serviços externos e recuperação | Entrega SMTP/push, IA paga, agendador, ACL/RLS/bucket completo, backup/restore | Não comprovados em operação real; mocks e inspeção não substituem essa validação | BLOQUEADO | riscos R03–R08 |
+| Navegadores e usuários | Firefox/WebKit, estudo com profissionais/SUS e carga remota | Não executados; sem conclusão de capacidade ou eficácia jurídica | BLOQUEADO | RNFs e resposta ao parecer |
+| RF52 | Notificação automática ao cliente via n8n | Adiado, sem implementação encontrada | NÃO APLICÁVEL | backlog |
+
+Os estados da tabela classificam verificações agrupadas; não se somam aos
+854 casos, nem aos registros criados. O agrupamento prático aprovado conserva
+seus casos reprovados/bloqueados identificados individualmente.
+
+### Cobertura e ambiente
+
+| Métrica de 04/11 | Backend | Frontend |
+|---|---:|---:|
+| Linhas | 91,49% (4430/4842) | 36,17% (1653/4569) |
+| Ramos | 79,08% (824/1042) | 32,63% (1120/3432) |
+| Meta de linhas | 80%, atingida | 70%, faltam 33,83 pontos |
+
+Backend cobre advocacia, sem tests/migrations; core/settings/storage não
+integram esse denominador. Frontend cobre JS/JSX de src inteiro, sem CSS/public.
+Não somar cobertura de Playwright à Jest. Lacunas incluem painéis grandes,
+fluxos secundários de autenticação/conta e métodos do cliente de API.
+
+Linux x86_64, Python 3.14.7, Django 6.0.8, DRF 3.18.2, PostgreSQL 18.6,
+Node 22.23.2, Next 16.4.2, React 19.2.4. PostgreSQL exclusivo em loopback,
+settings_auditoria, LEXNEXO_ENV_FILE=/dev/null, e-mail em memória, sem chaves
+pagas e integrações isoladas. Nenhum seed/reset, teste de carga ou migração
+administrativa foi executado na base publicada. Um reteste interrompido antes
+da conclusão em 03/11 não foi contado; a rodada completa de 04/11 está preservada.
+
+Reprodução: `PG_BIN=… PG_SHARE=… AUDIT_OUTPUT_DIR=… AUDIT_DB_PORT=55445
+AUDIT_API_PORT=18005 AUDIT_FRONTEND_PORT=13005 bash scripts/auditoria-local.sh`.
+Use diretório e cluster NOVOS e as bibliotecas compatíveis do PostgreSQL.
+A tentativa inicial de 04/11 falhou antes de iniciar o banco por libssl.so.4
+ausente; a biblioteca oficial foi extraída apenas no runtime isolado, sem
+alterar o sistema, e o reteste subsequente passou. Logs brutos e pgdata não
+integram a entrega; JSONs são resumos sanitizados.
+
+### Correções, publicação e documentação
+
+A15/A16 corrigem rollback de contrato/parcelas e divisão de centavos: três
+regressões falhavam antes e passaram depois. A18 corrige a data fixa do
+gerador de evidências. A19 restringe o chat conforme o plano (3 falhas/1
+aprovação antes, 4 aprovações depois). A20 elimina o aviso de descarte em
+buscas (duas falhas antes, 17 testes do componente passam depois). A19/A20
+passaram também na interface publicada. A21 trata o proxy de fotos, com
+API direta 200 e Vercel 404 antes da correção; o teste local passava antes,
+portanto não é apresentado como reprodução local da falha exclusiva publicada.
+Estado final de implantação e reteste: [PUBLICACAO-2026-11-04.md](PUBLICACAO-2026-11-04.md).
+
+Foram mantidos **18 novos registros de negócio e uma foto sintética** na conta,
+além dos registros anteriores. Nenhum registro foi apagado, inativado ou
+anonimizado. PIX foi simulação; não houve cobrança ou baixa financeira real.
+Avisos automáticos foram autorizados, mas seu recebimento não foi comprovado.
+
+O relatório técnico v1.10 e o guia usam as mesmas métricas, títulos pretos e
+limites explícitos. C1/C2 já existiam no fonte v1.9; a entrega agora os identifica
+separadamente de C3 e da implantação, acrescenta TOTP/prazo e esclarece OpenAI,
+esquema compartilhado/escritorio_id, storage e contingência. Vídeo continua
+pendente, com [roteiro e resposta aos achados](../tcc/RESPOSTA_AO_PARECER-2026-11-04.md).
+
+Prioridades: concluir vídeo com indicação honesta de simulações; confirmar
+implantação da API preservando arquivos; retestar PDF em navegador com popups;
+ampliar cobertura frontend; corrigir ferramentas com versão compatível;
+validar recuperação, integrações e agendador em staging controlado. O parecer
+acadêmico não certifica segurança, conformidade legal ou prontidão para produção.
+
+## Histórico das rodadas anteriores
+
+As seções abaixo conservam datas e resultados históricos. Afirmações antigas
+sobre ausência de commit/deploy ou cobertura não substituem o estado acima.
+
+<!-- auditoria-2026-11-04:fim -->
+
 > **Atualização de 28/10/2026:** as correções foram publicadas no GitHub, na Vercel e no Render. O CI remoto aprovou 843 casos. A auditoria original abaixo conserva sua data e seus limites; veja o [registro de publicação](PUBLICACAO-2026-10-28.md) para o estado atual.
 
 **Parecer: APTO COM RESSALVAS, no escopo local validado.** Os fluxos
@@ -136,7 +253,7 @@ exigem revisão/publicação antes de repetir a validação do site corrigido.
 
 Documentos entregues: plano, matriz, inventário/casos, este relatório,
 defeitos/riscos, evidências, arquitetura/API/manual, testes práticos e adendo
-acadêmico, além do [relatório técnico v1.8](../tcc/RT-TDS-2026-39_v1.8.docx),
+acadêmico, além do [relatório técnico v1.9](../tcc/RT-TDS-2026-39_v1.9.docx),
 que incorpora os resultados e limites nas seções 7.5–7.7 e na conclusão.
 A revisão documental de 28/10/2026 atualizou 34 capturas e a identidade LexNexo,
 sem contabilizar essa revisão como nova execução integral da suíte.
@@ -190,3 +307,12 @@ Essa rodada passa a comprovar o CI e a revisão publicada (V18); não encerra as
 demais pendências operacionais. Nenhuma alteração do histórico antigo foi enviada.
 Procedimento, identificadores dos deploys e limites:
 [PUBLICACAO-2026-10-28.md](PUBLICACAO-2026-10-28.md).
+
+## Consolidação do relatório técnico em 02/11/2026
+
+O Word v1.9 incorpora o CI remoto e a publicação, atualiza o caso de navegação,
+explicita a persistência de fotos e o PIX de teste e corrige RF21 para refletir
+a revogação do refresh. A consulta de 02/11 confirmou main em 0702332, Vercel
+READY, Render live e saúde HTTP 200 do site/API. Não houve nova execução das
+suítes nem nova medição de cobertura. As datas históricas foram preservadas.
+Evidência: [relatorio-tecnico-v19.json](evidencias/relatorio-tecnico-v19.json).

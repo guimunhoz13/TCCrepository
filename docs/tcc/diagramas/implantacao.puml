@@ -1,0 +1,28 @@
+@startuml
+!include skinparam.iuml
+title Nós de implantação do LexNexo
+node "Dispositivo do usuário" {
+ artifact "Navegador / PWA" as Navegador
+}
+node "Vercel" {
+ artifact "Frontend Next.js\nproxy /api" as Frontend
+}
+node "Render" {
+ artifact "Gunicorn + Django/DRF" as API
+}
+node "Supabase" {
+ database "PostgreSQL\ndados e fotos persistentes" as DB
+ artifact "Storage S3 privado\nquando MEDIA_STORAGE=s3" as S3
+}
+node "Agendador externo\nconfiguração operacional a confirmar" as Cron
+Navegador --> Frontend : HTTPS
+Frontend --> API : HTTPS / JWT
+API --> DB : conexão PostgreSQL / TLS
+API --> S3 : S3 autenticado
+Cron ..> API : comandos Django\nexecução depende do agendador
+note bottom of S3
+  Se filesystem estiver configurado, documentos
+  dependem de armazenamento persistente separado.
+  A auditoria não comprovou o bucket ativo.
+end note
+@enduml

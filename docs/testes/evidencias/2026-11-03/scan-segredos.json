@@ -1,0 +1,9 @@
+{
+  "data": "2026-11-03",
+  "escopo": "Heurística sobre arquivos de texto rastreados menores que 500 kB; não lê .env; não certifica ausência de segredos. Valores correspondentes nunca foram copiados.",
+  "arquivos_inspecionados": 404,
+  "arquivos_com_padroes": [],
+  "arquivos_ambiente_rastreados": [
+    "backend/.env.example"
+  ]
+}

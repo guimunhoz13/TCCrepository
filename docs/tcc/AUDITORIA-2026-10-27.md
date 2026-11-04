@@ -94,3 +94,16 @@ acima continuam relativos à auditoria original. Comandos e reprodução estão 
 [relatório de validação atualizado](../testes/RELATORIO_VALIDACAO.md#reteste-da-dashboard).
 O relatório Word v1.8 conserva os resultados históricos de 27/10; este complemento
 registra a correção posterior. Não houve publicação da aplicação nesta rodada.
+
+## Nova execução consolidada em 04/11/2026
+
+A auditoria de 03–04/11 foi incorporada à revisão 1.10 do relatório técnico,
+com tabela datada compartilhada com o guia: 535 Django, 282 Jest e 37
+Playwright, total 854, também aprovados no CI 41926536601. Cobertura de linhas
+91,49%/36,17%. Casos práticos: 41 aprovados e dois bloqueados em 43;
+18 novos registros de negócio e foto sintética preservados na conta.
+A correção do proxy de foto foi retestada publicada; implantação financeira
+da API, vídeo, recuperação e serviços externos continuam limitados conforme
+[relatório atual](../testes/RELATORIO_VALIDACAO.md) e
+[resposta ao parecer](RESPOSTA_AO_PARECER-2026-11-04.md).
+Os resultados de outubro acima permanecem históricos.

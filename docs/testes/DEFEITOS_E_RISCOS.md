@@ -60,3 +60,56 @@ falha nem skip nos 841 casos dos três runners.
 LGPD: isolamento, minimização e anonimização têm testes; texto livre,
 documentos, retenção, backups e envio a terceiros exigem controles operacionais.
 Esta auditoria não constitui parecer jurídico nem certificação de conformidade.
+
+## Nova rodada de 03/11/2026
+
+| ID | Gravidade | Reprodução e impacto | Correção e evidência | Situação |
+|---|---|---|---|---|
+| A15 | MÉDIA | Falha sintética ao criar a segunda parcela deixava contrato e primeira parcela persistidos, impedindo nova tentativa consistente. | `transaction.atomic` em `ContratoViewSet.perform_create`; regressão de rollback. | Corrigido no código; implantação da API deve ser confirmada separadamente. |
+| A16 | MÉDIA | R$ 0,06 em quatro parcelas gerava última parcela zero; R$ 0,02 em quatro era aceito e o arredondamento podia produzir saldo negativo. | Validação de pelo menos um centavo por parcela e divisão com ROUND_DOWN, atribuindo o restante à última. Não altera parcelas antigas. | Corrigido; três regressões financeiras falharam antes e passam após a correção. |
+| A17 | MÉDIA | npm audit completo informou 31 alertas moderados e três baixos na cadeia de desenvolvimento. Nenhum em produção. | glob/minimatch exigem versões principais novas; deepmerge sem patch. Não aplicar sugestões de downgrade de Jest/ESLint nem overrides globais incompatíveis. | Pendente; zero altos/críticos. |
+| A18 | BAIXA | Gerador de evidências fixava a data em 27/10, mesmo em nova execução. | `--data` obrigatório e `--destino` para separar evidências; geração conferida com data atual. | Corrigido. |
+| A19 | BAIXA | Página do assistente mostrava chat no plano Gratuito; API já restringia o recurso. | Consulta do plano antes de montar o chat; estados de carga e erro; quatro testes (3 falhas/1 aprovado antes). | Corrigido no código; reteste publicado registrado nos casos práticos. |
+| A20 | BAIXA | Pesquisar na ajuda gerava confirmação de alterações não salvas ao fechar. | Buscas fora de form não representam cadastros pendentes; busca global identificada explicitamente. Duas regressões falharam antes; proteção de edição de cadastro permanece testada. | Corrigido no código; reteste publicado registrado nos casos práticos. |
+
+Fontes primárias dos alertas A17:
+[glob](https://github.com/advisories/GHSA-3g3m-2fjr-6pw4),
+[minimatch](https://github.com/advisories/GHSA-g3hv-75wg-m249) e
+[deepmerge](https://github.com/advisories/GHSA-gcqx-w48m-w2h4). As contagens
+34/31/3 incluem a cadeia transitiva; são três advisories raiz, não 34
+vulnerabilidades independentes do produto. O caminho de exploração no
+serviço publicado não foi demonstrado nem testado ativamente.
+
+Permanecem a meta de cobertura frontend, confirmação de entrega externa,
+restauração, ACL/RLS/bucket completo, navegadores adicionais, carga remota
+e avaliação com profissionais. A abertura de PDF/relatório em nova aba no
+navegador integrado segue BLOQUEADO; o download binário pela API passou
+nesta rodada. Não concluir que ambos os cenários são o mesmo teste.
+
+## Encerramento técnico em 04/11/2026
+
+| ID | Gravidade | Local e reprodução | Impacto e probabilidade | Correção | Reteste e situação |
+|---|---|---|---|---|---|
+| A21 | MÉDIA | next.config.mjs; foto autenticada 200 direto, 404 pela Vercel; com barra final a API também retornava 404 | Foto gravada não aparecia na interface publicada; reprodução consistente na origem testada | Regra de fotos antes da genérica, preservando o caminho sem barra extra; nenhuma permissão alterada | Publicado em 3a54547; proxy/API 200, bytes idênticos e anônimo 401. APROVADO. E2E local já passava antes, não é prova de reprodução do provedor |
+| R09 | MÉDIA | Render ainda em 89b675f, apesar de main/autoDeploy configurados | Correção A15/A16 ainda ausente da API publicada; condição observada, causa do acionamento não determinada | Confirmar armazenamento persistente/recuperação antes de substituir instância e publicar uma única revisão testada | BLOQUEADO; publicação.json distingue frontend atualizado e backend anterior |
+| R10 | MÉDIA | Parecer recebido sem vídeo; código oficial do grupo divergente entre parecer e nomes antigos | Entrega acadêmica incompleta ou identificação incorreta | Roteiro de vídeo e resposta aos itens; confirmar identificação institucional | BLOQUEADO vídeo e confirmação do código; diagramas/métricas revisados |
+
+Reteste integral de 04/11: **854 aprovados**. A19/A20 passaram também no site
+publicado. A15/A16 estão aprovados no código e nos testes locais/CI, mas sua
+implantação na API permanece BLOQUEADO (R09). A18 está corrigido no gerador.
+A17 segue REPROVADO na consulta datada de 03/11, sem alerta de produção,
+alto ou crítico. Cobertura frontend atual 36,17%, ainda abaixo de 70%; não se
+usa a porcentagem antiga de R01 como medida atual. O scan heurístico não
+constitui prova de ausência de segredos em todo o histórico.
+
+Não foi identificado novo achado crítico/alto nas reproduções desta rodada;
+isso não equivale a uma certificação nem elimina os bloqueios operacionais.
+
+A consulta adicional de **04/11/2026** retornou **26 entradas npm transitivas:
+23 moderadas e três baixas**, com os mesmos três advisories raiz (glob,
+minimatch e deepmerge). Nenhuma alteração de lockfile foi feita para ocultar
+alertas; não atribuir a redução de entradas a uma correção de dependências.
+As 34 entradas da tabela de 03/11 são históricas. A17 permanece REPROVADO.
+`npm audit --omit=dev` e `pip-audit -r requirements.txt` voltaram a retornar
+zero alertas; o deploy check simulado passou com um aviso silenciado.
+Evidência atual: `evidencias/2026-11-04/verificacoes-adicionais.json`.

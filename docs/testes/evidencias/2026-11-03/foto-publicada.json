@@ -1,0 +1,23 @@
+{
+  "data": "2026-11-03",
+  "cliente_id": 8,
+  "leitura_http": 200,
+  "tipo": "WEBP",
+  "dimensoes": [
+    128,
+    128
+  ],
+  "bytes": 572,
+  "sha256": "014d506faf8690226131749429051735443bef410a8aa3d3a963a947fd61d31d",
+  "arquivo_sintetico": true,
+  "campo_persistido": true,
+  "proveniencia": "Tentativa de envio pela interface seguida de conferências pela API; a primeira consulta não preservou a informação que distingue qual envio gravou a foto. Persistência e leitura direta comprovadas.",
+  "leitura_proxy_http_antes": 404,
+  "leitura_api_direta_http": 200,
+  "leitura_proxy_depois": {
+    "data": "2026-11-04",
+    "status_http": 200,
+    "foto_identica": true,
+    "anonimo_http": 401
+  }
+}

@@ -1,5 +1,28 @@
 # Plano de auditoria — LexNexo
 
+<!-- auditoria-2026-11-04:inicio -->
+
+## Encerramento da nova execução em 04 de novembro de 2026
+
+Executado o plano adicional iniciado em 03/11, com baseline 843 e reteste
+integral final de 854 casos. Cobertura de linhas 91,49%/36,17%, lint/build,
+schema e migrations conferidos. A15/A16/A18/A19/A20 corrigidos e retestados;
+A21 exige a conferência publicada descrita no registro da implantação.
+
+Os testes práticos da conta preservam 18 registros novos de negócio, foto e
+todos os anteriores. Nenhuma limpeza foi aplicada. Operações destrutivas,
+perfis negativos, concorrência e falhas deliberadas ficaram restritos ao
+PostgreSQL local. Não houve pagamento nem chamada paga de IA.
+
+Critérios tratados: inventário, baseline, execução e correção, regressões,
+segurança, acessibilidade automatizada, desempenho leve, dependências, CI,
+limites de publicação, rastreabilidade, evidências e revisão documental.
+Bloqueios operacionais, vídeo, meta frontend e navegação PDF são mantidos no
+relatório; não foram convertidos em sucesso por falta de acesso ou tempo.
+A seção “em execução” no histórico descreve o planejamento original.
+
+<!-- auditoria-2026-11-04:fim -->
+
 Execução iniciada em 27/10/2026, America/Sao_Paulo. Base: commit
 `8b41a295e0d7be677600295eb56537bb2c0f871e`, branch `main`, com alterações
 locais anteriores preservadas (inventário em EVIDENCIAS.md).
@@ -78,3 +101,30 @@ A execução do CI remoto e o smoke da navegação publicada estão separados da
 rodada local original em [PUBLICACAO-2026-10-28.md](PUBLICACAO-2026-10-28.md).
 As preferências de aparência foram temporariamente alternadas para conferência
 e restauradas. Não houve criação ou exclusão de registros de negócio nesse smoke.
+
+## Nova rodada em 03/11/2026 (em execução)
+
+Base: `0702332fa4c86c14aab6c679d51ec7f054b11870`, branch main, incluindo
+as alterações locais documentais já existentes. Estado inicial e hashes
+registrados antes de editar. Não misturar os resultados desta rodada com
+os de 27/10 ou com o CI de 28/10.
+
+1. Reexecutar Django, Jest, lint, build, OpenAPI, migrations e E2E sobre
+   PostgreSQL local exclusivo, sem credenciais ou banco de produção.
+2. Rever lacunas de autorização, sessão, documentos, prazos e integrações;
+   reproduzir defeitos e acrescentar regressões antes da correção.
+3. Executar testes práticos pela interface em https://lexnexo.vercel.app,
+   na conta autorizada, com prefixo AUDITORIA TCC 20261103. Criar cliente,
+   processos, prazos, audiências, tarefas, contrato/parcelas, horas, despesas,
+   documento, modelo e feriado quando os recursos permitirem.
+4. Conferir busca, detalhes, edição dos novos registros, persistência após
+   novo login, calendário, relatórios, preferências e modo PIX de teste.
+5. Preservar tudo o que for adicionado na conta publicada. Exclusões,
+   anonimização, tentativas de invasão e testes negativos de perfis ficam
+   restritos ao ambiente local. Avisos automáticos já autorizados pelo
+   proprietário; sem mensagens manuais a terceiros, pagamento ou IA paga.
+6. Registrar evidências sanitizadas e atualizar relatórios, matriz e guia,
+   com bloqueios explícitos para recursos não executados.
+
+A solicitação de testar todos os módulos orienta o inventário; não significa
+certificação de todos os estados, provedores ou situações possíveis.

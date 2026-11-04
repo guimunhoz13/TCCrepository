@@ -1,0 +1,49 @@
+{
+  "data": "2026-11-03",
+  "ambiente": "https://lexnexo.vercel.app/api/",
+  "escopo": "Leituras autenticadas por API após cadastros pela interface; sem gravar ou remover dados de negócio.",
+  "processos": [
+    {
+      "id": 8,
+      "numero": "AUDITORIA-TCC-20261103-02",
+      "sigiloso": true
+    },
+    {
+      "id": 7,
+      "numero": "AUDITORIA-TCC-20261103-01",
+      "sigiloso": false
+    }
+  ],
+  "cliente_id": 8,
+  "documento_id": 4,
+  "download": {
+    "status_http": 200,
+    "bytes": 1783,
+    "sha256": "920b8a0d26e94c2deecfd12d802274973ae60fe753fefb0f2b307a644f4d6f1c",
+    "identico_ao_original": true
+  },
+  "relatorio_processo": {
+    "status": "APROVADO",
+    "resumo": {
+      "minutos_trabalhados": 75,
+      "minutos_faturaveis": 75,
+      "valor_horas_faturaveis": 150.0,
+      "total_despesas": 23.45,
+      "despesas_a_reembolsar": 23.45,
+      "valor_contratado": 100.01,
+      "valor_pago": 0.0,
+      "valor_pendente": 100.01
+    },
+    "documentos": 1,
+    "agenda": 4
+  },
+  "relatorio_cliente": {
+    "status": "APROVADO",
+    "processos": 2
+  },
+  "ficha": {
+    "status": "APROVADO",
+    "agenda": 4,
+    "documentos": 1
+  }
+}

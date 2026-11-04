@@ -1,0 +1,45 @@
+{
+  "data": "2026-11-03",
+  "resultados": [
+    {
+      "url": "https://lexnexo.vercel.app",
+      "status": 200,
+      "headers": {
+        "Content-Security-Policy": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' blob: data: https://lexoffice-api-piloto.onrender.com; connect-src 'self' https://lexoffice-api-piloto.onrender.com https://viacep.com.br https://brasilapi.com.br; frame-src 'self' blob: https://lexoffice-api-piloto.onrender.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests",
+        "Referrer-Policy": "strict-origin-when-cross-origin",
+        "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+        "X-Content-Type-Options": "nosniff",
+        "X-Frame-Options": "DENY"
+      }
+    },
+    {
+      "url": "https://lexnexo.vercel.app/api/health/",
+      "status": 200,
+      "headers": {
+        "Content-Security-Policy": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' blob: data: https://lexoffice-api-piloto.onrender.com; connect-src 'self' https://lexoffice-api-piloto.onrender.com https://viacep.com.br https://brasilapi.com.br; frame-src 'self' blob: https://lexoffice-api-piloto.onrender.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests",
+        "Referrer-Policy": "strict-origin-when-cross-origin",
+        "Strict-Transport-Security": "max-age=2592000; includeSubDomains",
+        "X-Content-Type-Options": "nosniff",
+        "X-Frame-Options": "DENY"
+      },
+      "body": {
+        "status": "ok",
+        "service": "LexNexo"
+      }
+    },
+    {
+      "url": "https://lexoffice-api-piloto.onrender.com/api/health/",
+      "status": 200,
+      "headers": {
+        "referrer-policy": "same-origin",
+        "strict-transport-security": "max-age=2592000; includeSubDomains",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "DENY"
+      },
+      "body": {
+        "status": "ok",
+        "service": "LexNexo"
+      }
+    }
+  ]
+}

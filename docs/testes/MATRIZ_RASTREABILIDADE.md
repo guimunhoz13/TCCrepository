@@ -1,5 +1,30 @@
 # Matriz de rastreabilidade
 
+<!-- auditoria-2026-11-04:inicio -->
+
+## Referência atual de 04 de novembro de 2026
+
+A matriz RF01–RF53/RNF01–RNF21 abaixo continua descrevendo os mesmos requisitos.
+Para esta reexecução, use o [catálogo atual de 854 casos](evidencias/2026-11-04/inventario-e-casos.md), sem reutilizar números BE/FE da rodada anterior.
+
+| Requisitos/área | Nova evidência | Estado e limite |
+|---|---|---|
+| RF01/RF14/RF21/RF40 | Django autenticação/permissões/sigilo e E2E; PR26-01/22/41/42 | APROVADO nos cenários; não se muda a autenticação de pessoas reais |
+| RF03–RF07/RF12/RF23–RF24 | PR26-02–10/19–24/26–30/32/39/40; catálogo atual | APROVADO; abertura PDF/relatório em nova aba BLOQUEADO |
+| RF08/RF09/RF26/RF27/RF45 | AuditoriaIntegridadeContratoTests; financeiro.spec.js; PR26-13–16 | APROVADO local e PIX simulado; publicação da correção da API deve ser consultada separadamente |
+| RF16/RF46/RF49 | AcessoAssistente.test.js; testes de planos/IA; PR26-25/34/35 | APROVADO bloqueio do Gratuito/fallback; IA paga BLOQUEADO |
+| RF30/RF36/RF37/RF44/RF50 | PR26-06/07/11/12/17/18/32/37/38 | APROVADO no escopo; busca não implica descarte de cadastro |
+| Fotos e segregação | fotos-proxy.spec.js; testes de fotos; PR26-43 | Consultar reteste publicado A21; anônimo continua negado |
+| RNF qualidade/cobertura | 535 Django + 282 Jest + 37 Playwright; lint/build/schema | APROVADO suítes; meta frontend REPROVADO (36,17% <70%) |
+| Entrega externa/backup/ACL/agendador | Mocks e inspeção, sem prova operacional integral | BLOQUEADO |
+| RF52 | Backlog adiado | NÃO APLICÁVEL |
+
+Contagens e cobertura atuais: [fonte única](evidencias/metricas-atuais.json).
+Os limites externos e não funcionais da matriz histórica não são encerrados
+pelo simples sucesso de um teste unitário ou pela revisão documental.
+
+<!-- auditoria-2026-11-04:fim -->
+
 Data: 27/10/2026 (America/Sao_Paulo). Base `8b41a295e0d7be677600295eb56537bb2c0f871e`.
 
 Fonte dos requisitos: backlog RF01–RF53 e RNF01–RNF21 de `docs/tcc/gerar_rt.js`.
@@ -30,7 +55,7 @@ Cada caso e arquivo pode ser localizado em [INVENTARIO_E_CASOS.md](INVENTARIO_E_
 | RF18 | Registro de auditoria (login e criação/edição/exclusão de dados) | `backend/advocacia/tests/test_auditoria_e_mestre.py`; casos correspondentes do catálogo e execucoes.json | APROVADO | Cenários do runner final; não garante todos os caminhos/volumes |
 | RF19 | Redefinição de senha por e-mail | `backend/advocacia/tests/test_autenticacao.py`; casos do catálogo | APROVADO | Solicitação/validação com e-mail em memória; entrega SMTP BLOQUEADO |
 | RF20 | Confirmação de e-mail no auto-cadastro do escritório (produção) | `backend/advocacia/tests/test_cadastro_e_equipe.py`; casos correspondentes do catálogo e execucoes.json | APROVADO | Envio real por SMTP/entrega externa BLOQUEADO; testes com mocks/locmem |
-| RF21 | Revogação de sessão ao sair do sistema (logout) | `backend/advocacia/tests/test_autenticacao.py`; casos correspondentes do catálogo e execucoes.json | APROVADO | Cenários do runner final; não garante todos os caminhos/volumes |
+| RF21 | Encerramento da sessão e revogação do refresh no logout; access expira em até 30 minutos | `backend/advocacia/tests/test_autenticacao.py`; casos correspondentes do catálogo e execucoes.json | APROVADO | Cenários do runner final; não garante todos os caminhos/volumes |
 | RF22 | Cálculo automático de prazo processual em dias úteis | `backend/advocacia/tests/test_feriados_locais.py`; casos correspondentes do catálogo e execucoes.json | APROVADO | Cenários do runner final; não garante todos os caminhos/volumes |
 | RF23 | Registro de dados jurídicos do processo (área, vara, comarca, valor da causa, parte contrária) | `backend/advocacia/tests/test_processos.py`; casos correspondentes do catálogo e execucoes.json | APROVADO | Cenários do runner final; não garante todos os caminhos/volumes |
 | RF24 | Estimativa de honorários de sucumbência | `backend/advocacia/tests/test_processos.py`; casos correspondentes do catálogo e execucoes.json | APROVADO | Cenários do runner final; não garante todos os caminhos/volumes |

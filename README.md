@@ -1,5 +1,27 @@
 # LexNexo — ERP Jurídico
 
+<!-- auditoria-2026-11-04:inicio -->
+
+## Auditoria e documentação atuais de novembro de 2026
+
+Rodada de 03/11 e reteste integral de 04/11: **535 Django, 282 Jest e 37
+Playwright, total 854 casos aprovados**; cobertura de linhas **91,49% backend
+e 36,17% frontend**. Meta frontend ainda não atingida. Parecer **APTO COM
+RESSALVAS**; limites de serviços externos e publicação documentados.
+
+- [Relatório de validação e resultados atuais](docs/testes/RELATORIO_VALIDACAO.md).
+- [Relatório técnico v1.10 em PDF](docs/tcc/LexNexo_Relatorio_Tecnico_v1.10.pdf) e [Word](docs/tcc/LexNexo_Relatorio_Tecnico_v1.10.docx).
+- [Manual com capturas atualizado](docs/Guia-de-Funcionalidades-LexNexo.pdf).
+- [Testes práticos e registros mantidos](docs/testes/TESTES_PRATICOS.md).
+- [Resposta ao parecer e roteiro de vídeo](docs/tcc/RESPOSTA_AO_PARECER-2026-11-04.md).
+- [Tabela única de métricas](docs/testes/evidencias/metricas-atuais.json) e [publicação](docs/testes/PUBLICACAO-2026-11-04.md).
+
+Os 18 registros novos de negócio e a foto fictícia foram preservados, assim
+como os registros anteriores. Os números nas seções históricas abaixo
+pertencem às datas ali indicadas, sem somar rodadas diferentes.
+
+<!-- auditoria-2026-11-04:fim -->
+
 <p align="center">
   <img src="assets/branding/lexnexo-logo.svg" alt="LexNexo" width="360">
 </p>
@@ -275,9 +297,10 @@ o [plano](docs/testes/PLANO_DE_TESTES.md), a
 [guia de arquitetura, API e uso](docs/testes/ARQUITETURA_API_E_MANUAL.md) e os
 [testes práticos preservados na conta autorizada](docs/testes/TESTES_PRATICOS.md).
 
-O [relatório técnico atual, versão 1.8](docs/tcc/RT-TDS-2026-39_v1.8.docx),
-incorpora os resultados e apresenta 34 capturas atualizadas da interface
-LexNexo em 28/10/2026, com sumário revisado e identificação das simulações.
+O [relatório técnico atual, versão 1.9](docs/tcc/RT-TDS-2026-39_v1.9.docx),
+foi consolidado em 02/11/2026 e incorpora os testes remotos, a publicação e
+as correções posteriores à auditoria. Preserva 34 capturas da interface de
+28/10/2026, com sumário recalculado, títulos pretos e identificação das simulações.
 
 As correções foram publicadas em 28/10/2026 no commit 89b675f. O CI remoto
 aprovou 532 testes Django, 275 Jest e 36 Playwright, e o smoke online conferiu

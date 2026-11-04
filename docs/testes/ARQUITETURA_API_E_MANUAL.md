@@ -1,5 +1,41 @@
 # Arquitetura, API e operação do LexNexo
 
+<!-- auditoria-2026-11-04:inicio -->
+
+## Revisão operacional de 04 de novembro de 2026
+
+Esta revisão complementa o manual abaixo e a conferência de 03/11.
+Contratos novos usam transação única para contrato/parcelas e exigem pelo
+menos um centavo por parcela. A divisão preserva o total sem parcela zero;
+os contratos antigos não são recalculados. Publicação da API deve ser
+confirmada no registro de implantação.
+
+O Assistente IA no Gratuito informa o plano Profissional e não monta o chat.
+Em erro ao consultar o plano, permite tentar novamente sem liberar o recurso.
+Pesquisar na ajuda ou busca global não representa cadastro não salvo; fechar
+a busca não deve pedir descarte. A edição de cadastro segue protegida.
+Fotos usam rota autenticada sem barra final; a regra específica do proxy não
+altera os nomes de arquivo. Não expor MEDIA_ROOT publicamente.
+
+O provedor de IA no código é OpenAI; OPENAI_MODEL seleciona o modelo e o
+padrão do código é gpt-4o-mini, sem comprovação do valor ativo remoto.
+O esquema de banco é compartilhado com relações a Escritorio; isolamento
+aplicado na API, serializers e sigilo, sem esquemas separados por cliente.
+A RLS específica de fotos não comprova políticas completas do Supabase.
+
+O guia PDF atualizado conserva passos e capturas históricas identificados,
+acrescenta resultados e exemplos de novembro e usa a mesma tabela datada do
+RT. C1, C2 e C3 estão nos fontes de diagramas; implantação física e sequência
+TOTP/prazo têm arquivos separados. Em falha de CEP/CNPJ, preencher manualmente;
+em falha de CNJ, consultar o canal oficial e registrar movimento/prazo manual
+com conferência. Sem IA, usar o fallback disponível e revisão humana.
+
+[Resultados atuais](RELATORIO_VALIDACAO.md), [publicação](PUBLICACAO-2026-11-04.md),
+[resposta ao parecer e roteiro de vídeo](../tcc/RESPOSTA_AO_PARECER-2026-11-04.md).
+Afirmações de que o CI não foi consultado nas seções antigas são históricas.
+
+<!-- auditoria-2026-11-04:fim -->
+
 Revisão de 27/10/2026; commit base
 `8b41a295e0d7be677600295eb56537bb2c0f871e`, com correções locais descritas no
 [relatório](RELATORIO_VALIDACAO.md). Fontes: core/settings.py, models.py,
@@ -155,3 +191,43 @@ A execução remota do pipeline não foi consultada; a alteração local anterio
 em `.github/workflows/ci.yml` foi preservada. A rodada local usou Python
 3.14.7/PostgreSQL 18.6; equivalência exata com o CI e serviços publicados
 continua uma limitação explícita.
+
+## Conferência prática de 03/11/2026
+
+Os novos registros usam o prefixo **AUDITORIA TCC 20261103** e permanecem
+na conta publicada: cliente Gama, processos Gama e Delta, dois prazos, duas
+audiências, tarefa, contrato com três parcelas, horas, despesa, documento,
+modelo e movimentação. A suspensão fictícia de 13/11 foi limitada à
+abrangência AUDITORIA TCC 20261103; não representa um feriado real.
+
+Para repetir a demonstração com os dados preservados:
+
+1. Use a busca global `20261103`. Os resultados abrem o cadastro ou a ficha
+   correspondente, separados por área.
+2. Abra `AUDITORIA-TCC-20261103-01`: a ficha reúne os quatro eventos, tarefa,
+   anexo, movimentação e quadro financeiro. O contrato de R$ 100,01 continua
+   pendente; a simulação PIX não quitou nenhuma parcela.
+3. Em Compromissos, confira 16/11 às 14h30 e 25/11 às 9h; na Agenda, os
+   prazos de 10/11 às 18h e 24/11 às 16h. A calculadora excluiu 03/11 e
+   contou cinco dias úteis até 10/11. Não substitui conferência jurídica.
+4. Em Modelos de documento, escolha Declaração Gama e o processo Gama.
+   O preview substitui cliente, número e data. Revise antes de usar.
+5. Em Documentos, o anexo Gama é um PDF fictício. O download autenticado
+   foi comparado byte a byte com o original. A abertura por nova aba no
+   navegador integrado não foi comprovada, nem a impressão do relatório.
+6. O apontamento sintético de 1h15 a R$ 120/h resulta em R$ 150,00. Ele
+   conservou a data 27/10 restaurada do rascunho; a despesa de R$ 23,45 é
+   de 03/11. Conferir a data restaurada antes de salvar novos lançamentos.
+
+A auditoria corrigiu a criação atômica de contratos e a distribuição de
+centavos para novas parcelas. Contratos já existentes não são recalculados.
+Também corrigiu o acesso visual ao assistente conforme o recurso do plano
+e o aviso de descarte indevido ao fechar buscas. As versões publicadas e
+os limites de reteste estão no relatório de validação e nas evidências
+datadas; um commit no GitHub não comprova implantação da API.
+
+A leitura de Conta, Escritório, Notificações, Aparência, Dados, Relatórios,
+Auditoria, Faturamento, Advogados e Contato não equivale a executar todas
+as ações administrativas. Senhas, perfis, pagamento real, desativação,
+exclusões e anonimização não foram alterados na conta publicada. Os testes
+negativos e destrutivos correspondentes ocorreram apenas no banco local.

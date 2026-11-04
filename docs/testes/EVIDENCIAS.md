@@ -1,13 +1,33 @@
 # Evidências e reprodução
 
+<!-- auditoria-2026-11-04:inicio -->
+
+## Evidências atuais de 03 e 04 de novembro de 2026
+
+- [Fonte única de métricas](evidencias/metricas-atuais.json), usada por RT e guia.
+- [Execuções e durações](evidencias/2026-11-04/execucoes.json), [854 casos](evidencias/2026-11-04/casos-executados.json), [inventário atual](evidencias/2026-11-04/inventario-e-casos.md), [operações da API](evidencias/2026-11-04/operacoes-api.json).
+- Cobertura [backend](evidencias/2026-11-04/cobertura-backend.json) e [frontend](evidencias/2026-11-04/cobertura-frontend.json), com denominadores reais.
+- [Casos práticos](evidencias/2026-11-03/praticos.json), [conferência binária/API](evidencias/2026-11-03/api-publicada.json), [foto](evidencias/2026-11-03/foto-publicada.json) e [regressões](evidencias/2026-11-03/regressoes.json).
+- CI [financeiro](evidencias/2026-11-03/ci.json) e [interface](evidencias/2026-11-03/ci-interface.json): execuções separadas, não somadas.
+- Dependências foram consultadas novamente em 04/11 (26 alertas de desenvolvimento, zero em produção). Saúde, scan e desempenho de 03/11 conservam suas datas; não são medições novas de produção.
+- Capturas sintéticas de ficha, modelo, busca, persistência e assistente. PIX foi reconferido em 04/11; a captura com fundo de outros cadastros foi excluída da entrega, mantendo o registro textual do caso.
+- [Publicação e retestes](PUBLICACAO-2026-11-04.md) identificam frontend e backend separadamente.
+
+Logs de servidores, tokens, traces HTTP de login, banco, .env e imagens com dados de terceiros não integram a entrega. O catálogo registra o método e o resultado observado; não representa gravação integral de todas as sessões. Os índices abaixo são históricos.
+
+<!-- auditoria-2026-11-04:fim -->
+
 Auditoria executada em **27/10/2026**, America/Sao_Paulo. Commit base
 `8b41a295e0d7be677600295eb56537bb2c0f871e`, branch main. Os testes incluem o
-diff local desta auditoria; não existe commit novo que identifique essas mudanças.
+diff local daquela auditoria; as correções foram posteriormente registradas no
+commit `89b675f` e publicadas em 28/10. A consulta documental de 02/11 está
+registrada no JSON da revisão 1.9, sem reexecutar as suítes.
 
 ## Índice de evidências sanitizadas
 
 | Arquivo | Conteúdo e origem |
 |---|---|
+| [relatorio-tecnico-v19.json](evidencias/relatorio-tecnico-v19.json) | Revisão Word 1.9 de 02/11: versões remotas, saúde HTTP, integridade, sumário e inspeção visual das 61 páginas |
 | [publicacao-2026-10-28.json](evidencias/publicacao-2026-10-28.json) | CI remoto com 843 casos, deploys Vercel/Render, correção do domínio e oito estados do smoke publicado |
 | [ambiente.json](evidencias/ambiente.json) | Versões, banco e limites do scan heurístico de segredos |
 | [execucoes.json](evidencias/execucoes.json) | Exit codes e tempos da rodada integrada; reteste após atualização do ambiente |
@@ -134,7 +154,7 @@ cd ..
 backend/ambiente/bin/python -m pip_audit -r backend/requirements.txt
 backend/ambiente/bin/python -m pip_audit --local
 backend/ambiente/bin/python scripts/medir-api-auditoria.py
-backend/ambiente/bin/python scripts/documentar-auditoria.py /tmp/diretorio-da-rodada
+backend/ambiente/bin/python scripts/documentar-auditoria.py /tmp/diretorio-da-rodada --data 2026-10-27
 ```
 
 O script de medição cria 20 processos sintéticos apenas no banco local
@@ -155,5 +175,6 @@ essas latências não incluem rede/SSL/navegador e não representam produção.
   Playwright; não há resultado desses browsers nesta rodada.
 - Usabilidade: aplicar `docs/TESTE-DE-USABILIDADE.md` com participantes e
   consentimento; registrar tarefas, falhas, tempos e SUS reais.
-- Produção: revisar/publicar correções sob autorização própria e repetir
-  smoke tests; os registros AUDITORIA TCC devem continuar preservados.
+- Produção: a publicação e o smoke de navegação foram concluídos em 28/10
+  (ver PUBLICACAO-2026-10-28.md); configuração operacional completa e testes
+  restantes continuam pendentes. Os registros AUDITORIA TCC permanecem preservados.
