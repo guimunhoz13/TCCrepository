@@ -54,6 +54,12 @@ const nextConfig = {
     },
     async rewrites() {
       return [
+        // Fotos são arquivos sem barra final. A regra genérica com barra é
+        // opcional no roteamento da Vercel e alterava o nome enviado ao Django.
+        {
+          source: "/api/fotos/:path*",
+          destination: `${API_DESTINO}/fotos/:path*`,
+        },
         {
           source: "/api/:path*/",
           destination: `${API_DESTINO}/:path*/`,
