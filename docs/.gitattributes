@@ -1,0 +1,2 @@
+# PDFs podem conter trechos ASCII; preservar seus bytes e omitir diff textual.
+*.pdf binary
