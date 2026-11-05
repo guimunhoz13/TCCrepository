@@ -14,7 +14,12 @@ export async function abrirArquivo(obterBlob, nomeArquivo = "documento") {
     // pode ser salvo, sem expor URL autenticada nem token no endereço.
     const link = document.createElement("a");
     link.href = url;
-    link.download = nomeArquivo;
+    const extensao = {
+      "application/pdf": ".pdf", "image/png": ".png", "image/jpeg": ".jpg",
+      "application/msword": ".doc",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document": ".docx",
+    }[blob.type] || "";
+    link.download = /\.[a-z0-9]+$/i.test(nomeArquivo) ? nomeArquivo : nomeArquivo + extensao;
     document.body.appendChild(link);
     link.click();
     link.remove();

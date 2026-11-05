@@ -38,8 +38,11 @@ describe("abertura de arquivos após uma consulta autenticada", () => {
 
   test("com popups bloqueados, baixa o documento sem perder o conteúdo", async () => {
     window.open.mockReturnValue(null);
-    global.fetch = jest.fn().mockResolvedValue({ ok: true, status: 200, blob: async () => new Blob(["PDF"]) });
+    let nomeSalvo;
+    HTMLAnchorElement.prototype.click.mockImplementation(function () { nomeSalvo = this.download; });
+    global.fetch = jest.fn().mockResolvedValue({ ok: true, status: 200, blob: async () => new Blob(["PDF"], { type: "application/pdf" }) });
     await expect(abrirDocumento(7)).resolves.toBe("download");
+    expect(nomeSalvo).toBe("documento.pdf");
     expect(HTMLAnchorElement.prototype.click).toHaveBeenCalled();
     expect(document.querySelector('a[download]')).toBeNull();
   });
