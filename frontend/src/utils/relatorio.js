@@ -4,6 +4,7 @@ import {
   formatarData,
 } from "./formato";
 import { TIPO_HONORARIO_LABEL as TIPOS_HONORARIO, situacaoDespesa } from "../lib/contrato";
+import { abrirArquivo } from "./abrirArquivo";
 
 function secoesFinanceiras({ contratos, apontamentos, despesas, resumo, comProcesso }) {
   // A coluna do processo só entra no relatório do cliente: no do processo
@@ -351,12 +352,9 @@ export function gerarHtmlRelatorioProcesso(dados) {
   });
 }
 
-export function abrirRelatorio(html) {
-  const janela = window.open("", "_blank");
-  if (!janela) {
-    throw new Error("Não foi possível abrir a janela do relatório. Verifique o bloqueador de pop-ups.");
-  }
-  janela.document.open();
-  janela.document.write(html);
-  janela.document.close();
+export function abrirRelatorio(obterHtml) {
+  return abrirArquivo(async () => {
+    const html = typeof obterHtml === "function" ? await obterHtml() : obterHtml;
+    return new Blob([html], { type: "text/html;charset=utf-8" });
+  }, "relatorio-lexnexo.html");
 }

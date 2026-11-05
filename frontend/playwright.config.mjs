@@ -8,6 +8,12 @@ import { defineConfig, devices } from "@playwright/test";
  * `npm run e2e`. No CI, o job "E2E (Playwright)" faz tudo isso sozinho.
  */
 const NO_CI = Boolean(process.env.CI);
+const dispositivoComputador = {
+  chromium: "Desktop Chrome",
+  firefox: "Desktop Firefox",
+  webkit: "Desktop Safari",
+}[process.env.E2E_BROWSER || "chromium"];
+if (!dispositivoComputador) throw new Error("E2E_BROWSER deve ser chromium, firefox ou webkit.");
 
 export default defineConfig({
   testDir: "./e2e",
@@ -25,7 +31,7 @@ export default defineConfig({
     screenshot: "only-on-failure",
   },
   projects: [
-    { name: "computador", use: { ...devices["Desktop Chrome"] }, testIgnore: /celular\.spec/ },
+    { name: "computador", use: { ...devices[dispositivoComputador] }, testIgnore: /celular\.spec/ },
     { name: "celular", use: { ...devices["Pixel 7"] }, testMatch: /celular\.spec/ },
   ],
 });

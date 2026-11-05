@@ -1,3 +1,5 @@
+import { abrirArquivo } from "../utils/abrirArquivo";
+
 const API_URL_CONFIGURADA =
   process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api";
 
@@ -630,11 +632,8 @@ async function downloadArquivo(endpoint, nomeArquivo) {
 
 // Para abrir o arquivo numa nova aba (visualizar PDF/imagem) em vez de
 // forçar o download, como os antigos <a href={...} target="_blank"> faziam.
-export async function abrirArquivoEmNovaAba(endpoint) {
-  const blob = await buscarArquivoAutenticado(endpoint);
-  const url = URL.createObjectURL(blob);
-  window.open(url, "_blank");
-  setTimeout(() => URL.revokeObjectURL(url), 60000);
+export function abrirArquivoEmNovaAba(endpoint) {
+  return abrirArquivo(() => buscarArquivoAutenticado(endpoint));
 }
 
 export function baixarDocumento(documentoId, nomeArquivo) {

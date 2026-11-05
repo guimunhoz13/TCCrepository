@@ -1,6 +1,7 @@
 """Utilitários compartilhados pelas views (filtros da query string, download)."""
 
 from datetime import date
+import mimetypes
 
 from django.http import FileResponse, Http404
 from rest_framework.exceptions import ValidationError
@@ -48,4 +49,7 @@ def _resposta_download_arquivo(arquivo, nome_sugerido=None):
     if not arquivo:
         raise Http404("Arquivo não encontrado.")
     nome = nome_sugerido or arquivo.name.rsplit("/", 1)[-1]
-    return FileResponse(arquivo.open("rb"), as_attachment=True, filename=nome)
+    # O título exibido pode não ter extensão (ex.: "Petição inicial"). O
+    # navegador precisa do tipo do arquivo armazenado para visualizar o PDF.
+    tipo = mimetypes.guess_type(arquivo.name)[0] or "application/octet-stream"
+    return FileResponse(arquivo.open("rb"), as_attachment=True, filename=nome, content_type=tipo)

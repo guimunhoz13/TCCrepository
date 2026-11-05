@@ -957,14 +957,15 @@ function RelatoriosTab({ feedback, t }) {
     }
     try {
       setGerando(true);
-      if (tipo === "cliente") {
-        const relatorio = await getRelatorioCliente(selecionado);
-        abrirRelatorio(gerarHtmlRelatorioCliente(relatorio));
-      } else {
-        const relatorio = await getRelatorioProcesso(selecionado);
-        abrirRelatorio(gerarHtmlRelatorioProcesso(relatorio));
-      }
-      feedback("Relatório gerado em uma nova aba. Use \"Imprimir / Salvar como PDF\" para exportá-lo.");
+      const modo = await abrirRelatorio(async () => {
+        if (tipo === "cliente") {
+          return gerarHtmlRelatorioCliente(await getRelatorioCliente(selecionado));
+        }
+        return gerarHtmlRelatorioProcesso(await getRelatorioProcesso(selecionado));
+      });
+      feedback(modo === "download"
+        ? "Relatório salvo em HTML porque o navegador bloqueou a nova aba. Abra o arquivo e use Imprimir / Salvar como PDF."
+        : "Relatório gerado em uma nova aba. Use \"Imprimir / Salvar como PDF\" para exportá-lo.");
     } catch (e) {
       feedback(e.message, true);
     } finally {
