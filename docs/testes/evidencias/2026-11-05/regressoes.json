@@ -1,0 +1,31 @@
+{
+  "data": "2026-11-05",
+  "A22": {
+    "problema": "Nova aba aberta após await podia ser bloqueada; nenhum fallback de download. Relatório tinha o mesmo fluxo.",
+    "antes": {
+      "jest_reprovados": 6
+    },
+    "depois": {
+      "jest_aprovados": 6,
+      "e2e_arquivos_e_relatorio_aprovados": 2
+    },
+    "seguranca": "Busca autenticada preservada; opener nulo; erros fecham aba; blobs revogados; não há token em URL."
+  },
+  "A23": {
+    "problema": "Título de documento sem extensão levava a application/octet-stream em PDF.",
+    "antes": "Asserção application/pdf falhou com application/octet-stream.",
+    "depois": "Teste específico e E2E aprovados; tipo vem do nome armazenado, sem mudar título ou bytes."
+  },
+  "preparacao_e2e": [
+    {
+      "motivo": "Seletor de envio ambíguo entre aba e botão do formulário",
+      "classificacao": "Erro do teste, corrigido com escopo form."
+    },
+    {
+      "motivo": "Chromium headless baixa PDF em vez de acionar visualizador; navegação abortada em ERR_ABORTED.",
+      "classificacao": "A asserção final valida abertura ou download com bytes idênticos e Content-Type PDF, sem tratar download como falha do produto."
+    }
+  ],
+  "video_produzido": false,
+  "grupo_confirmado": "TDS-2026-038"
+}

@@ -1,0 +1,23 @@
+{
+  "data": "2026-11-06",
+  "grupo": "TDS-2026-038",
+  "testes_referencia_data": "2026-11-05",
+  "casos_automatizados": 863,
+  "rt_paginas": 65,
+  "manual_paginas": 65,
+  "roteiro_paginas": 11,
+  "roteiro_cenas": 30,
+  "roteiro_fala_ate": "19:45",
+  "margem_segundos": 15,
+  "divisao": {
+    "Guilherme": "frontend e demonstração",
+    "João": "backend, APIs e banco"
+  },
+  "metricas_comuns_rt_manual": true,
+  "titulos_word_pretos": true,
+  "links_conferidos": true,
+  "QA_visual": "RT: 55 páginas idênticas ao render anterior já conferido, dez alteradas inspecionadas e sumário recalculado; manual: páginas originais preservadas e cinco revisadas inspecionadas; roteiro: todas as onze páginas inspecionadas.",
+  "video_produzido": false,
+  "novo_deploy_confirmado": false,
+  "sistema_publicado_modificado_nesta_preparacao": false
+}

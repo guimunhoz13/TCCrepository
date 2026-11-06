@@ -1,0 +1,20 @@
+{
+  "data": "2026-11-05",
+  "grupo": "TDS-2026-038",
+  "commit_local": "32a097433a1b2d16c64e5344e0bac677c17a6ee6",
+  "push_executado": false,
+  "deploy_disparado": false,
+  "motivo": "Sessão do Render expirada; conferir armazenamento antes de push/publicação, preservando anexos.",
+  "render": {
+    "workspace": "tea-db81kilg1s2s738mfhf0",
+    "servico": "srv-db90meks728c73bbtvlg",
+    "live_deploy": "dep-dbh8223bc2fs73frc6i0",
+    "live_commit": "89b675facd02cf8a03d1c249795b20448d3ae230"
+  },
+  "video_produzido": false,
+  "registros_publicados_apagados": 0,
+  "commits_locais_da_correcao": [
+    "7191b09",
+    "32a0974"
+  ]
+}

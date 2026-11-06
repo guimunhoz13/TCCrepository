@@ -1,0 +1,108 @@
+{
+  "commit_base": "a3032882e56603cc0bd1078ee7525b9e179e998e",
+  "data_local": "2026-11-05",
+  "timezone": "America/Sao_Paulo",
+  "backend": {
+    "testes": 536,
+    "resumo": [
+      "Ran 536 tests in 26.155s",
+      "OK"
+    ]
+  },
+  "jest": {
+    "numPassedTests": 288,
+    "numFailedTests": 0,
+    "numTotalTestSuites": 48,
+    "startTime": 1793887746086
+  },
+  "playwright": {
+    "startTime": "2026-11-05T13:58:26.775Z",
+    "duration": 67575.087,
+    "expected": 39,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "comandos": [
+    {
+      "id": "initdb",
+      "exit_code": 0,
+      "duracao_segundos": 2
+    },
+    {
+      "id": "pip-check",
+      "exit_code": 0,
+      "duracao_segundos": 0
+    },
+    {
+      "id": "check",
+      "exit_code": 0,
+      "duracao_segundos": 1
+    },
+    {
+      "id": "migrations",
+      "exit_code": 0,
+      "duracao_segundos": 0
+    },
+    {
+      "id": "backend",
+      "exit_code": 0,
+      "duracao_segundos": 29
+    },
+    {
+      "id": "cobertura-backend",
+      "exit_code": 0,
+      "duracao_segundos": 1
+    },
+    {
+      "id": "openapi",
+      "exit_code": 0,
+      "duracao_segundos": 0
+    },
+    {
+      "id": "migrate",
+      "exit_code": 0,
+      "duracao_segundos": 2
+    },
+    {
+      "id": "seed",
+      "exit_code": 0,
+      "duracao_segundos": 2
+    },
+    {
+      "id": "npm-ci",
+      "exit_code": 0,
+      "duracao_segundos": 8
+    },
+    {
+      "id": "lint",
+      "exit_code": 0,
+      "duracao_segundos": 8
+    },
+    {
+      "id": "jest",
+      "exit_code": 0,
+      "duracao_segundos": 5
+    },
+    {
+      "id": "build",
+      "exit_code": 0,
+      "duracao_segundos": 4
+    },
+    {
+      "id": "e2e-final",
+      "exit_code": 0,
+      "duracao_segundos": 68
+    }
+  ],
+  "observacao": "Backend, Jest, lint, build e schema na rodada validacao; E2E corrigido e repetido integralmente em e2e-final.json. As falhas anteriores de preparação do teste estão em regressoes.json.",
+  "codigo_validado": "32a097433a1b2d16c64e5344e0bac677c17a6ee6",
+  "publicado": false,
+  "reteste_frontend_final": {
+    "motivo": "Preservar extensão PDF no download alternativo, depois da rodada integrada.",
+    "jest": 288,
+    "lint_exit": 0,
+    "build_exit": 0,
+    "escopo": "Jest completo e lint/build repetidos. Fluxos normais de abertura sem mudança após os E2E aprovados."
+  }
+}

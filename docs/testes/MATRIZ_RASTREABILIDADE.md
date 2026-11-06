@@ -1,5 +1,20 @@
 # Matriz de rastreabilidade
 
+<!-- auditoria-2026-11-05:inicio -->
+
+## Referência atual de 05/11/2026
+
+Grupo confirmado: **TDS-2026-038**. A rodada local final possui **863 testes
+aprovados** (536 Django, 288 Jest, 39 Playwright).
+Consulte o [relatório de validação](RELATORIO_VALIDACAO.md), a
+[fonte única de métricas](evidencias/metricas-atuais.json) e o
+[catálogo atualizado](evidencias/2026-11-05/inventario-e-casos.md).
+Abertura de documentos/relatórios e MIME PDF corrigidos localmente; publicação
+aguarda reconexão ao Render e conferência do armazenamento. Vídeo a gravar pelos
+integrantes. As seções abaixo conservam as datas e resultados históricos.
+
+<!-- auditoria-2026-11-05:fim -->
+
 <!-- auditoria-2026-11-04:inicio -->
 
 ## Referência atual de 04 de novembro de 2026

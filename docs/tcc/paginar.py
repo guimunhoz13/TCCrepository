@@ -1,7 +1,7 @@
 """Segunda passada do sumário: acha em que página do PDF cada título aparece.
 
-    node main.js && soffice --headless --convert-to pdf LexNexo_Relatorio_Tecnico_v1.10.docx
-    python3 paginar.py LexNexo_Relatorio_Tecnico_v1.10.pdf && node main.js
+    node main.js && soffice --headless --convert-to pdf TDS-2026-038_Relatorio_Tecnico_v1.11.docx
+    python3 paginar.py TDS-2026-038_Relatorio_Tecnico_v1.11.pdf && node main.js
 """
 import json
 import re

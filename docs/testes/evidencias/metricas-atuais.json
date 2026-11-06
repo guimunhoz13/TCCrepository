@@ -1,6 +1,6 @@
 {
-  "atualizado_em": "2026-11-04",
-  "fonte_atual": "2026-11-04/execucoes.json",
+  "atualizado_em": "2026-11-05",
+  "fonte_atual": "2026-11-05/execucoes.json",
   "rodadas": [
     {
       "data": "2026-10-27",
@@ -41,20 +41,29 @@
       "jest": 282,
       "playwright": 37,
       "total": 854
+    },
+    {
+      "data": "2026-11-05",
+      "ambiente": "local",
+      "django": 536,
+      "jest": 288,
+      "playwright": 39,
+      "total": 863
     }
   ],
   "cobertura": {
-    "data": "2026-11-04",
+    "data": "2026-11-05",
     "backend_linhas": "91,49%",
-    "frontend_linhas": "36,17%",
     "backend_ramos": "79,08%",
-    "frontend_ramos": "32,63%"
+    "frontend_linhas": "36,93%",
+    "frontend_ramos": "33,20%"
   },
   "escopo_playwright_atual": {
-    "navegador": 36,
-    "computador": 33,
+    "navegador": 38,
+    "computador": 35,
     "celular": 3,
     "integracao_http_proxy_sem_ui": 1,
-    "total_runner": 37
-  }
+    "total_runner": 39
+  },
+  "grupo": "TDS-2026-038"
 }

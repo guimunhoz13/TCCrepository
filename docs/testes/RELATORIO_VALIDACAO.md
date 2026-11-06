@@ -1,8 +1,47 @@
 # Relatório de validação do LexNexo
 
+<!-- auditoria-2026-11-05:inicio -->
+
+## Consolidação final de 05/11/2026 — grupo TDS-2026-038
+
+Identificação confirmada pelo proprietário: **TDS-2026-038**. A entrega atual é o
+[relatório técnico v1.11](../tcc/TDS-2026-038_Relatorio_Tecnico_v1.11.pdf), com
+[Word editável](../tcc/TDS-2026-038_Relatorio_Tecnico_v1.11.docx) e
+[manual ilustrado](../Guia-de-Funcionalidades-LexNexo.pdf).
+
+A execução local final aprovou **863 casos**: 536 Django,
+288 Jest e 39 Playwright (38 de navegador,
+três deles no celular, e uma integração HTTP/proxy sem UI). Rodadas não se somam.
+Cobertura de linhas: **91,49% backend / 36,93% frontend**;
+a meta frontend de 70% continua como melhoria de qualidade, sem exclusão de código
+para inflar a medida. O CI anterior de 04/11 possui 854 casos e mantém sua data.
+
+Foram corrigidas a abertura tardia de abas de documentos/relatórios e a perda do
+tipo PDF quando o título não tem extensão. Há seis regressões Jest, uma Django
+e dois novos fluxos de navegador. Nenhum registro publicado foi removido ou alterado
+por essas correções. As 43 verificações práticas de 03–04/11 (41 aprovadas e duas
+bloqueadas) são históricas; os novos cenários locais não são renomeados como testes
+publicados. A publicação dessas novas mudanças aguarda a reconexão ao Render e a
+verificação do armazenamento dos documentos antes de um push que possa disparar deploy.
+
+As correções documentais obrigatórias do parecer estão prontas, com C1/C2/C3,
+implantação separada, sequências, OpenAI e métricas comuns. **Vídeo não produzido**:
+a gravação e submissão ficam com os integrantes. RF52 permanece no backlog previsto.
+Serviços externos pagos, recebimento SMTP/push, recuperação integral, estudo com
+profissionais e meta de cobertura não são declarados concluídos sem evidência.
+
+Evidências: [execuções](evidencias/2026-11-05/execucoes.json),
+[catálogo](evidencias/2026-11-05/inventario-e-casos.md),
+[regressões](evidencias/2026-11-05/regressoes.json),
+[navegadores](evidencias/2026-11-05/navegadores.json) e
+[fonte única de métricas](evidencias/metricas-atuais.json).
+As seções datadas abaixo preservam as situações observadas nas rodadas anteriores.
+
+<!-- auditoria-2026-11-05:fim -->
+
 <!-- auditoria-2026-11-04:inicio -->
 
-## Resultado atual consolidado em 04/11/2026
+## Resultado histórico consolidado em 04/11/2026
 
 **APTO COM RESSALVAS, no escopo validado.** Nova auditoria iniciada em 03/11,
 com reteste integral em 04/11: **854 casos automatizados aprovados**, sem

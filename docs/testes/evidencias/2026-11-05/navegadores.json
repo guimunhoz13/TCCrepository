@@ -1,0 +1,16 @@
+{
+  "data": "2026-11-05",
+  "firefox": {
+    "startTime": "2026-11-05T14:02:07.576Z",
+    "duration": 85354.48999999999,
+    "expected": 36,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "casos_repetidos_nao_somar_ao_total_funcional": true,
+  "webkit": {
+    "status": "BLOQUEADO",
+    "motivo": "Binário instalado; faltam libicu66, libwebp6 e libffi7 no host Arch. Build de compatibilidade Ubuntu 20.04 sem atualizações. Não foi simulada aprovação."
+  }
+}

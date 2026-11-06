@@ -3,8 +3,9 @@
 Consolidação em 04/11/2026. O parecer recebido informa análise em 03/11 e
 arquivo `TDS-2026-038_RT_v1.pdf`. Não foi disponibilizado esse PDF nesta
 mensagem; a comparação abaixo usa o texto fornecido pelo proprietário e os
-fontes locais. O código oficial do grupo está em conferência, pois arquivos
-anteriores usam 39. A nova entrega usa nome neutro LexNexo até a confirmação.
+fontes locais. O proprietário confirmou em **05/11/2026** o código oficial **TDS-2026-038**,
+aplicado à nova revisão 1.11 e ao manual. Os nomes antigos com 39 são
+registros históricos e não devem ser usados na entrega final.
 A pontuação 81/100 pertence ao revisor; não foi recalculada ou alterada.
 O item A4, registrado como 7/5, requer esclarecimento de quem emitiu o parecer.
 
@@ -67,3 +68,24 @@ senhas, tokens, QR TOTP, código de recuperação ou chaves PIX pessoais.
 Para demonstrar bloqueio por tentativas ou recuperação de senha, use outra
 conta local. Não bloquear a conta do proprietário nem alterar sua senha.
 O roteiro não constitui evidência de uma gravação que ainda não foi produzida.
+
+## Complemento final de 05/11/2026
+
+O grupo oficial é **TDS-2026-038**. A revisão 1.11 aplica essa identificação
+na capa e no nome do relatório, e o manual recebe a mesma identificação.
+Abertura de documentos/relatórios e Content-Type PDF foram corrigidos e testados
+localmente. A execução final e os navegadores têm evidência datada própria.
+As correções documentais obrigatórias do parecer foram concluídas. O vídeo
+continua sob responsabilidade dos integrantes. Publicação da API depende da
+sessão do Render e da preservação dos anexos; não foi declarada concluída.
+As demais limitações de serviços externos, cobertura e estudo com profissionais
+são mantidas como limites de validação, sem inventar sucesso ou alterar a nota.
+
+## Roteiro adaptado ao documento do professor — 06/11/2026
+
+Foi preparado o [roteiro de gravação](ROTEIRO_VIDEO_PREBANCA_2026.md), também
+em [PDF](TDS-2026-038_Roteiro_Video_PreBanca_2026.pdf), seguindo os blocos
+3/3/6/5/3 minutos e a divisão definida pelos integrantes: Guilherme no frontend
+e na demonstração; João no backend, APIs e banco. O material indica os pontos
+do parecer, as evidências a capturar e as integrações ainda condicionais.
+A gravação e o envio do vídeo continuam pendentes com os integrantes.

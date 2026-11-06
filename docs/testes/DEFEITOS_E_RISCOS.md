@@ -1,5 +1,20 @@
 # Defeitos e riscos da auditoria
 
+<!-- auditoria-2026-11-05:inicio -->
+
+## Referência atual de 05/11/2026
+
+Grupo confirmado: **TDS-2026-038**. A rodada local final possui **863 testes
+aprovados** (536 Django, 288 Jest, 39 Playwright).
+Consulte o [relatório de validação](RELATORIO_VALIDACAO.md), a
+[fonte única de métricas](evidencias/metricas-atuais.json) e o
+[catálogo atualizado](evidencias/2026-11-05/inventario-e-casos.md).
+Abertura de documentos/relatórios e MIME PDF corrigidos localmente; publicação
+aguarda reconexão ao Render e conferência do armazenamento. Vídeo a gravar pelos
+integrantes. As seções abaixo conservam as datas e resultados históricos.
+
+<!-- auditoria-2026-11-05:fim -->
+
 > **Complemento de 28/10/2026:** o código de A01–A13 foi publicado no commit 89b675f. O reteste online concentrou-se na navegação e na saúde; não repete toda a auditoria de segurança em produção. A14 e o [registro de publicação](PUBLICACAO-2026-10-28.md) complementam os resultados históricos abaixo.
 
 Execução de 27/10/2026, America/Sao_Paulo. Base
@@ -113,3 +128,16 @@ As 34 entradas da tabela de 03/11 são históricas. A17 permanece REPROVADO.
 `npm audit --omit=dev` e `pip-audit -r requirements.txt` voltaram a retornar
 zero alertas; o deploy check simulado passou com um aviso silenciado.
 Evidência atual: `evidencias/2026-11-04/verificacoes-adicionais.json`.
+
+## Correções de 05/11/2026
+
+| ID | Gravidade | Evidência | Correção e reteste | Situação |
+|---|---|---|---|---|
+| A22 | MÉDIA | Abertura de documento/relatório ocorria após aguardar API; popup podia ser bloqueado | Reserva da janela no clique, opener nulo, download alternativo e limpeza em erro; seis regressões antes/depois e dois E2E | APROVADO local; publicação depende da conferência do storage |
+| A23 | BAIXA | PDF com título sem extensão era enviado como application/octet-stream | MIME determinado pelo arquivo armazenado; título, bytes e autorização preservados; regressão Django e E2E | APROVADO local; publicação depende da conferência do storage |
+| R10 | MÉDIA | Identificação acadêmica | Grupo TDS-2026-038 confirmado e aplicado ao RT v1.11 e manual | Identificação encerrada; vídeo permanece BLOQUEADO até gravação dos integrantes |
+
+R06: a nova implementação resolve o fluxo tardio e acrescenta download quando
+novas abas são impedidas. O reteste local é aprovado; o fechamento do caso
+publicado exige conferir a versão nova online. Não se modifica o histórico 41/43.
+R09: não publicar substituindo instância antes de confirmar a preservação dos anexos.

@@ -1,10 +1,34 @@
 # Relatório técnico do TCC (gerado por script)
 
+## Roteiro da pré-banca — 06/11/2026
+
+[Roteiro completo em PDF](TDS-2026-038_Roteiro_Video_PreBanca_2026.pdf) e
+[texto editável](ROTEIRO_VIDEO_PREBANCA_2026.md), adaptados ao PDF do professor:
+3 minutos de contexto, 3 de arquitetura, 6 de demonstração, 5 de implementação
+e 3 de fechamento. Guilherme apresenta frontend e demonstração; João apresenta
+backend, APIs e banco de dados. Há falas, cliques, trechos de código e preparação
+por cena. Encerramento planejado em 19:45, dentro do teto de 20 minutos.
+O roteiro pronto não equivale a vídeo já produzido.
+
+## Entrega atual do grupo TDS-2026-038
+
+Revisão de **05/11/2026**: [relatório técnico v1.11 em PDF](TDS-2026-038_Relatorio_Tecnico_v1.11.pdf) e
+[Word editável](TDS-2026-038_Relatorio_Tecnico_v1.11.docx).
+A identificação oficial é **TDS-2026-038**, confirmada pelo proprietário.
+As versões antigas com 39 no nome são registros históricos. Não utilizar essas
+versões na submissão final. Títulos e subtítulos continuam pretos.
+
+863 testes locais aprovados; documentação obrigatória revisada; vídeo a gravar
+pelos integrantes. Publicação das novas correções depende da reconexão ao Render
+e da verificação de preservação dos documentos. Consulte o registro atualizado
+de validação e a resposta ao parecer para separar implementação, teste e publicação.
+
+
 <!-- auditoria-2026-11-04:inicio -->
 
 ## Entrega revista em 04 de novembro de 2026
 
-A revisão **1.10** está em [Word](LexNexo_Relatorio_Tecnico_v1.10.docx) e
+A revisão histórica **1.10** está em [Word](LexNexo_Relatorio_Tecnico_v1.10.docx) e
 [PDF](LexNexo_Relatorio_Tecnico_v1.10.pdf). Inclui nova auditoria, tabela datada
 compartilhada com o [guia](../Guia-de-Funcionalidades-LexNexo.pdf), implantação
 separada de C1/C2/C3, sequências TOTP/prazo, provedor OpenAI e contingências.
@@ -12,8 +36,7 @@ Títulos permanecem pretos. As figuras anteriores conservam sua data de origem.
 
 A [resposta ao parecer](RESPOSTA_AO_PARECER-2026-11-04.md) diferencia itens já
 existentes no fonte v1.9 de mudanças novas e pendências; vídeo e validação de
-entrega externa não foram declarados como concluídos. Código oficial do grupo
-em conferência com o proprietário; os novos nomes são neutros.
+entrega externa não foram declarados como concluídos. Código oficial confirmado: **TDS-2026-038**. Os nomes neutros v1.10 abaixo são históricos.
 
 [Resultados da auditoria](../testes/RELATORIO_VALIDACAO.md),
 [métricas únicas](../testes/evidencias/metricas-atuais.json),
@@ -22,11 +45,11 @@ As versões e contagens abaixo são registros históricos.
 
 <!-- auditoria-2026-11-04:fim -->
 
-> A versão atual é a 1.9, consolidada em 02/11/2026. O relatório distingue auditoria local, CI remoto, publicação e consulta de saúde. As versões anteriores permanecem preservadas.
+> Registro histórico da versão 1.9, consolidada em 02/11/2026. O relatório distingue auditoria local, CI remoto, publicação e consulta de saúde. As versões anteriores permanecem preservadas.
 
 ## Versão 1.9 — atualização de 02/11/2026
 
-O [relatório técnico atual](RT-TDS-2026-39_v1.9.docx) incorpora a publicação do
+O [relatório técnico histórico v1.9](RT-TDS-2026-39_v1.9.docx) incorpora a publicação do
 LexNexo na Vercel e no Render, a execução remota com 843 casos e a correção da
 navegação entre Dashboard e Compromissos. A seção 7.8 identifica os commits,
 os deploys e a consulta de saúde de 02/11. O quadro de resultados compara os
@@ -97,12 +120,12 @@ de navegador; quantidades referem-se à rodada, não a cobertura universal.
 O documento anterior v1.4 é preservado. A versão 1.5 é uma revisão técnica
 para validação pelos autores e orientador, não uma aprovação acadêmica.
 
-O documento `RT-TDS-2026-39` é gerado a partir de `gerar_rt.js` (conteúdo),
+O relatório atual do grupo `TDS-2026-038` é gerado a partir de `gerar_rt.js` (conteúdo),
 `build_rt.js` (estilos e utilitários) e `main.js` (montagem), com a
 biblioteca `docx`:
 
 ```bash
-cd docs/tcc && npm install docx && node main.js   # gera LexNexo_Relatorio_Tecnico_v1.10.docx
+cd docs/tcc && npm install docx && node main.js   # gera TDS-2026-038_Relatorio_Tecnico_v1.11.docx
 ```
 
 Os diagramas ficam em `diagramas/*.puml` (PlantUML) e são renderizados com
@@ -117,8 +140,8 @@ renderizado (precisa de LibreOffice e poppler-utils):
 
 ```bash
 node main.js
-soffice --headless --convert-to pdf LexNexo_Relatorio_Tecnico_v1.10.docx
-python3 paginar.py LexNexo_Relatorio_Tecnico_v1.10.pdf   # grava paginas.json
+soffice --headless --convert-to pdf TDS-2026-038_Relatorio_Tecnico_v1.11.docx
+python3 paginar.py TDS-2026-038_Relatorio_Tecnico_v1.11.pdf   # grava paginas.json
 node main.js                                 # gera de novo com as páginas certas
 ```
 

@@ -1,5 +1,19 @@
 # LexNexo — ERP Jurídico
 
+## Entrega atual do grupo TDS-2026-038
+
+Revisão de **05/11/2026**: [relatório técnico v1.11 em PDF](docs/tcc/TDS-2026-038_Relatorio_Tecnico_v1.11.pdf) e
+[Word editável](docs/tcc/TDS-2026-038_Relatorio_Tecnico_v1.11.docx).
+A identificação oficial é **TDS-2026-038**, confirmada pelo proprietário.
+As versões antigas com 39 no nome são registros históricos. Não utilizar essas
+versões na submissão final. Títulos e subtítulos continuam pretos.
+
+863 testes locais aprovados; documentação obrigatória revisada; vídeo a gravar
+pelos integrantes. Publicação das novas correções depende da reconexão ao Render
+e da verificação de preservação dos documentos. Consulte o registro atualizado
+de validação e a resposta ao parecer para separar implementação, teste e publicação.
+
+
 <!-- auditoria-2026-11-04:inicio -->
 
 ## Auditoria e documentação atuais de novembro de 2026
@@ -297,7 +311,7 @@ o [plano](docs/testes/PLANO_DE_TESTES.md), a
 [guia de arquitetura, API e uso](docs/testes/ARQUITETURA_API_E_MANUAL.md) e os
 [testes práticos preservados na conta autorizada](docs/testes/TESTES_PRATICOS.md).
 
-O [relatório técnico atual, versão 1.9](docs/tcc/RT-TDS-2026-39_v1.9.docx),
+O [relatório técnico histórico, versão 1.9](docs/tcc/RT-TDS-2026-39_v1.9.docx),
 foi consolidado em 02/11/2026 e incorpora os testes remotos, a publicação e
 as correções posteriores à auditoria. Preserva 34 capturas da interface de
 28/10/2026, com sumário recalculado, títulos pretos e identificação das simulações.
