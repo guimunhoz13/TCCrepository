@@ -359,4 +359,3 @@ As cenas de integrações e privacidade têm tempos curtos e exigem preparação
 ### Referências usadas para preparar o roteiro
 
 Base: PDF de pré-banca fornecido em 06/11/2026, parecer do chat, RT v1.11, manual, código e métricas locais de 05/11. Este roteiro não reexecuta testes, não confirma deploys e não cria nem apaga dados no sistema.
-
