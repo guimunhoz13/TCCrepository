@@ -1,6 +1,20 @@
 # Relatório técnico do TCC (gerado por script)
 
 
+## Slides e roteiros com a identidade do LexNexo
+
+[PowerPoint editável com seis slides](TDS-2026-038_Apresentacao_PreBanca_LexNexo.pptx) e
+[slides em PDF](TDS-2026-038_Apresentacao_PreBanca_LexNexo.pdf).
+Usam as cores do sistema, fontes DM Sans e Fraunces, monograma original e
+uma captura real datada. Diagramas e textos permanecem editáveis no PowerPoint.
+
+[Roteiro de Guilherme](TDS-2026-038_Roteiro_Guilherme.pdf) e
+[roteiro de João](TDS-2026-038_Roteiro_Joao.pdf), com a ordem de gravação de cada um.
+O [plano completo](TDS-2026-038_Plano_Gravacao_e_Montagem.pdf) e o
+[roteiro detalhado](TDS-2026-038_Roteiro_Video_PreBanca_2026.pdf) foram ajustados aos
+slides efetivamente criados. [Instruções do kit](KIT_VIDEO_LEIA_ME.md).
+
+
 ## Plano de gravação por integrante e montagem
 
 [PDF do plano](TDS-2026-038_Plano_Gravacao_e_Montagem.pdf) e

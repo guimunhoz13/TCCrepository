@@ -4,7 +4,7 @@ Grupo TDS-2026-038 | revisão de 09/11/2026
 
 ## Roteiro de gravação LexNexo
 
-Pré-banca 2026 | TDS-2026-038 | Preparado em 06/11/2026
+Pré-banca 2026 | TDS-2026-038 | Revisão com slides em 09/11/2026
 
 Guilherme Rossato Munhoz e João Henrique Souza Sabino. Tecnologia em Desenvolvimento de Sistemas. Orientador: Prof. Sérgio Luiz Tonsig. Coorientador: Prof. Francisco Antônio de Souza.
 
@@ -44,7 +44,7 @@ Os registros AUDITORIA TCC 20261109 podem servir de referência no site: cliente
 
 ### Abas e sessões preparadas
 
-1. Capa com projeto e grupo. 2. Diagramas C1, C2 e C3/DER. 3. LexNexo como administrador. 4. Outra sessão local como estagiário ou outro perfil restrito. 5. Painel mestre local. 6. Editor com os arquivos da página 10. 7. Tabela de testes datada. Use dois perfis de navegador para não sobrescrever a sessão ao trocar de usuário.
+1. Apresentação com os seis slides prontos. 2. C1/C2/C3 completos e DER do RT apenas como apoio. 3. LexNexo como administrador. 4. Outra sessão local como estagiário ou outro perfil restrito. 5. Painel mestre local. 6. Editor com os arquivos da página 10. 7. Tabela de testes datada. Use dois perfis de navegador para não sobrescrever a sessão ao trocar de usuário.
 
 ### Pontos que precisam de ensaio próprio
 
@@ -61,25 +61,25 @@ Os registros AUDITORIA TCC 20261109 podem servir de referência no site: cliente
 
 ### 00:00–00:35 — Guilherme
 
-**Tela e cliques:** Capa com LexNexo, TDS-2026-038, nomes completos, curso, orientador e coorientador. Os dois podem aparecer brevemente em câmera.
+**Tela e cliques:** Slide 1: capa com LexNexo, grupo TDS-2026-038, integrantes, curso, orientador e coorientador.
 
 **Fala sugerida:** Olá, somos Guilherme Rossato Munhoz e João Henrique Souza Sabino, do grupo TDS-2026-038. Nosso projeto é o LexNexo, um sistema web de gestão para escritórios de advocacia, desenvolvido no curso de Tecnologia em Desenvolvimento de Sistemas, com orientação do professor Sérgio Luiz Tonsig e coorientação do professor Francisco Antônio de Souza.
 
 ### 00:35–01:25 — Guilherme
 
-**Tela e cliques:** Um quadro simples com cliente → processo → prazo → documento → honorários. Depois, uma visão da dashboard.
+**Tela e cliques:** Slide 2: problema de informações espalhadas e objetivo de reunir a rotina do escritório. Manter os slides na tela; a captura é ilustrativa.
 
 **Fala sugerida:** Imagine um escritório que acompanha clientes em uma planilha, prazos em uma agenda e documentos em pastas separadas. Para saber o que precisa fazer em um processo, a equipe acaba consultando vários lugares. Essa fragmentação dificulta o acompanhamento e aumenta a chance de esquecer uma informação importante. Foi essa rotina que motivou o projeto.
 
 ### 01:25–02:15 — Guilherme
 
-**Tela e cliques:** Dashboard e menu lateral, sem entrar ainda em todos os painéis.
+**Tela e cliques:** Continuar no slide 2 e explicar a relação entre cliente, processo, agenda, documentos e honorários.
 
 **Fala sugerida:** O objetivo do LexNexo é reunir essas informações em um mesmo ambiente. Um cliente pode ter processos; cada processo pode reunir movimentações, documentos, compromissos e controle financeiro. A proposta é facilitar a consulta e manter a relação entre as informações, com acesso definido pelo perfil de cada usuário.
 
 ### 02:15–03:00 — Guilherme
 
-**Tela e cliques:** Apontar clientes, processos, agenda e contratos. Identificar o ambiente de gravação.
+**Tela e cliques:** Ainda no slide 2: público-alvo e ambiente da gravação. Preparar a passagem para a arquitetura.
 
 **Fala sugerida:** O público-alvo são escritórios de advocacia e suas equipes. O sistema atende funções administrativas e de acompanhamento, sem substituir a análise jurídica do profissional. Nesta apresentação, vamos usar dados fictícios em uma base de demonstração local. Primeiro mostraremos a arquitetura, depois um fluxo de uso e, por fim, algumas decisões de implementação e os resultados dos testes.
 
@@ -91,13 +91,13 @@ Os registros AUDITORIA TCC 20261109 podem servir de referência no site: cliente
 
 ### 03:00–04:00 — Guilherme
 
-**Tela e cliques:** C1 c4_contexto.png, visão rápida. Depois mostrar a estrutura de componentes e services/api.js; destacar o frontend no C2.
+**Tela e cliques:** Slide 3, Arquitetura do LexNexo. Destacar a interface em Next.js/React e a comunicação com a API. Permanecer nos slides; o editor entra no bloco de implementação.
 
-**Fala sugerida:** O C1 mostra quem utiliza o LexNexo e os serviços com que ele se comunica. No frontend, usamos Next.js e React para organizar páginas, painéis e formulários em componentes. A camada de serviços concentra as chamadas à API, e a interface apresenta estados de carregamento, confirmação e validação. Também trabalhamos a navegação, a adaptação para celular e as preferências visuais. Escolhemos essa organização para reaproveitar os elementos da interface e manter o comportamento consistente. O João vai explicar agora como essas requisições são processadas e como os dados se relacionam.
+**Fala sugerida:** Esta visão mostra a comunicação entre a interface, a API e o banco. No frontend, usamos Next.js e React para organizar páginas, painéis e formulários em componentes. A camada de serviços concentra as chamadas à API, e a interface apresenta estados de carregamento, confirmação e validação. Também trabalhamos a navegação, a adaptação para celular e as preferências visuais. Escolhemos essa organização para reaproveitar os elementos da interface e manter o comportamento consistente. O João vai explicar agora como essas requisições são processadas e como os dados se relacionam.
 
 ### 04:00–05:00 — João
 
-**Tela e cliques:** Diagrama C2 c4_containers.png. Percorrer navegador → frontend → API → banco. Mostrar a implantação por alguns segundos.
+**Tela e cliques:** Continuar no slide 3 e percorrer interface, API, ORM e banco. Apontar os serviços de implantação e as integrações.
 
 **Fala sugerida:** A API utiliza Python, Django e Django REST Framework, e os dados são armazenados em PostgreSQL. O frontend envia requisições HTTP; a API valida a entrada, aplica permissões e acessa o banco pelo ORM. Django oferece uma estrutura para modelos, validações e autenticação, e PostgreSQL permite manter relacionamentos e transações. A implantação usa Vercel para o frontend, Render para a API e Supabase para banco e armazenamento quando configurado. No C2, essas unidades aparecem separadas. A versão e o ambiente desta gravação são os que identificamos na abertura.
 
@@ -105,9 +105,9 @@ Os registros AUDITORIA TCC 20261109 podem servir de referência no site: cliente
 
 ### 05:00–06:00 — João
 
-**Tela e cliques:** C3 componentes.png e recorte do DER ou classes: Escritório, Usuário, Cliente, Processo, Agenda, Documento, Contrato e Parcela.
+**Tela e cliques:** Slide 4, Modelo de dados e módulos. Apontar Cliente, Processo, Contrato, Parcela, Agenda e Documento no recorte editável.
 
-**Fala sugerida:** Internamente, a API está organizada por domínios, como clientes, processos, agenda e financeiro. O banco mantém os vínculos entre essas entidades. O escritório é a referência para separar os dados de cada organização. Um processo pertence a um cliente, e documentos, agenda e contratos se relacionam ao processo. O C3 mostra os módulos lógicos; o diagrama de implantação mostra onde os serviços executam. Não são o mesmo tipo de representação. Agora vamos acompanhar esse caminho pela interface.
+**Fala sugerida:** Internamente, a API está organizada por domínios, como clientes, processos, agenda e financeiro. O banco mantém os vínculos entre essas entidades. Um processo pertence a um cliente e pode ter um contrato; esse contrato reúne as parcelas. Documentos e eventos da agenda também se relacionam ao processo. O esquema é compartilhado entre os escritórios, e a API aplica o escopo do escritório nas consultas e nos vínculos. Este slide mostra um recorte dos relacionamentos. Agora vamos acompanhar esse caminho pela interface.
 
 ## Parte 3  Do cliente ao processo
 
@@ -277,13 +277,13 @@ Os registros AUDITORIA TCC 20261109 podem servir de referência no site: cliente
 
 ### 17:00–17:40 — Guilherme
 
-**Tela e cliques:** Voltar à ficha do caso principal com cliente, agenda, documento e contrato. Comparar com o problema mostrado na abertura.
+**Tela e cliques:** Slide 5, Resultados da auditoria. Retomar o problema e o fluxo demonstrado; apresentar as métricas datadas.
 
 **Fala sugerida:** Retomando o problema inicial, o LexNexo reúne informações que antes ficariam espalhadas em controles separados. Na demonstração, cadastramos um cliente, vinculamos um processo e acompanhamos agenda, documentos e honorários. A principal contribuição é manter a relação entre esses dados e permitir o acompanhamento conforme o perfil de acesso. Os testes documentam os cenários que conseguimos verificar.
 
 ### 17:40–18:30 — João
 
-**Tela e cliques:** Quadro curto: implementado, limites de validação e backlog. Mostrar RF52 adiado e cobertura frontend abaixo da meta.
+**Tela e cliques:** Slide 6, Limites e evolução. Identificar RF52, cobertura frontend e verificações externas pendentes.
 
 **Fala sugerida:** Também há limites. A notificação automática ao cliente a cada atualização do processo permanece no backlog. O PIX demonstrado é estático ou simulado; não há confirmação bancária automática. A cobertura de frontend precisa crescer, e ainda precisamos de avaliação de usabilidade com profissionais. Integrações externas só são apresentadas como validadas quando conseguimos demonstrar uma resposta ou recebimento real.
 
@@ -291,13 +291,13 @@ Os registros AUDITORIA TCC 20261109 podem servir de referência no site: cliente
 
 ### 18:30–19:15 — João
 
-**Tela e cliques:** Dois exemplos visuais: relacionamento por escritório e contrato com suas parcelas. Uma referência ao teste correspondente.
+**Tela e cliques:** Continuar no slide 6 e comentar as dificuldades de isolamento por escritório e consistência financeira.
 
 **Fala sugerida:** Entre as principais dificuldades estiveram a separação de dados entre escritórios, as diferenças de permissão e a consistência das operações financeiras. Trabalhamos com desenvolvimento incremental, testes e revisões para corrigir problemas encontrados. O projeto nos ajudou a relacionar interface, API, banco e documentação, e a perceber que uma funcionalidade precisa ser verificada além do caminho em que tudo dá certo.
 
 ### 19:15–19:45 — João
 
-**Tela e cliques:** Tela final com LexNexo, grupo, nomes e agradecimento. Se ambos estiverem em câmera, deixar a tela legível.
+**Tela e cliques:** Voltar ao slide 1 como tela final. Agradecer em nome dos dois e encerrar até 19:45.
 
 **Fala sugerida:** Como próximos passos, pretendemos ampliar os testes da interface, validar a operação dos serviços externos e realizar sessões com profissionais de advocacia. O LexNexo responde ao problema de organização ao reunir a rotina do escritório em um ambiente integrado. Agradecemos aos orientadores e à banca e ficamos à disposição para perguntas.
 
@@ -311,9 +311,9 @@ Referência para o ensaio | Não ler estes caminhos em voz alta
 
 | Minuto | Arquivo / símbolo | O que apontar |
 | --- | --- | --- |
-| 03:00 | docs/tcc/diagramas/c4_contexto.png | Pessoas, sistema e serviços externos. |
-| 04:00 | docs/tcc/diagramas/c4_containers.png | Frontend, API e banco; fluxo HTTP. |
-| 05:00 | docs/tcc/diagramas/componentes.png e classes.png | Módulos lógicos e relações principais; ampliar apenas o recorte relevante. |
+| 03:00 | Apresentação, slide 3 | Frontend e comunicação com a API. |
+| 04:00 | Apresentação, slide 3 | API, banco, tecnologias e implantação. |
+| 05:00 | Apresentação, slide 4 | Recorte dos relacionamentos e módulos da API. |
 | 12:00 | frontend/src/services/api.js; backend/advocacia/serializers.py: ContratoSerializer | Requisição e validação. |
 | 12:45 | backend/advocacia/models.py e recorte do DER | Chaves estrangeiras, vínculos, valores decimais e ORM. |
 | 13:30 | backend/advocacia/mixins.py: EscritorioScopedMixin; permissoes.py; sigilo.py | Filtro por escritório e regras de acesso. |
@@ -341,7 +341,7 @@ O roteiro organiza a gravação; a evidência será o vídeo efetivamente produz
 | --- | --- | --- |
 | Identificação e participação dos dois | 00:00; trocas de fala ao longo do vídeo | Grupo 038, nomes, curso e orientador legíveis; ambos apresentam. |
 | Cinco partes e duração | 00:00–20:00 | Todos os blocos aparecem; arquivo completo tem até 20 min. |
-| C1, C2 e separação de componentes | 03:00–06:00 | Diagramas legíveis e explicação das diferenças. |
+| Arquitetura e modelo de dados | 03:00–06:00 | Slides 3 e 4 legíveis. C1/C2/C3 completos e implantação separados permanecem no RT. |
 | Cliente → processo → agenda → documento → contrato | 06:25–11:10 | Ações e resultados vinculados, sem só percorrer telas prontas. |
 | PJ/BrasilAPI e DataJud | 07:15; 08:35 | Distinguir consulta, cadastro e importação; resposta externa real quando exigida. |
 | Perfis, sigilo e responsividade | 11:10–12:00; 13:30 | Outra identidade de fato restrita; operação visível em tela menor. |

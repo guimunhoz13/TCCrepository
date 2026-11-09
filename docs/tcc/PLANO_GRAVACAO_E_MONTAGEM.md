@@ -10,14 +10,14 @@ Preparem oito clipes e montem um único vídeo de até 20 minutos. A ordem abaix
 
 | Ordem e tempo final | Quem apresenta | Tela principal |
 | --- | --- | --- |
-| 01 | 00:00 a 03:00 | Guilherme | Slides 1 e 2 |
-| 02 | 03:00 a 04:00 | Guilherme | Slide 3 |
-| 03 | 04:00 a 06:00 | João | Slides 3 e 4 |
-| 04 | 06:00 a 12:00 | Guilherme | Sistema no navegador |
-| 05 | 12:00 a 14:30 | João | Editor e DER |
-| 06 | 14:30 a 17:00 | João narra; Guilherme grava telas de apoio | Sistema, código e testes |
-| 07 | 17:00 a 17:40 | Guilherme | Slide 5 |
-| 08 | 17:40 a 19:45 | João | Slide 6 e capa final |
+| 01 — 00:00 a 03:00 | Guilherme | Slides 1 e 2 |
+| 02 — 03:00 a 04:00 | Guilherme | Slide 3 |
+| 03 — 04:00 a 06:00 | João | Slides 3 e 4 |
+| 04 — 06:00 a 12:00 | Guilherme | Sistema no navegador |
+| 05 — 12:00 a 14:30 | João | Editor e DER |
+| 06 — 14:30 a 17:00 | João narra; Guilherme grava telas de apoio | Sistema, código e testes |
+| 07 — 17:00 a 17:40 | Guilherme | Slide 5 |
+| 08 — 17:40 a 19:45 | João | Slide 6 e capa final |
 
 ### Trocas de tela na montagem
 
@@ -25,14 +25,14 @@ Preparem oito clipes e montem um único vídeo de até 20 minutos. A ordem abaix
 
 A gravação pode ser feita em outra ordem. Os números dos arquivos determinam a posição na edição, não obrigam vocês a gravar juntos ou em sequência.
 
-## Preparar slides arquivos e sessões
+## Slides prontos e preparação da gravação
 
-| Slide | Conteúdo a preparar | Quem usa |
+| Slide | Conteúdo do slide | Quem usa |
 | --- | --- | --- |
 | 1 | Capa: LexNexo, grupo 038, integrantes, curso, orientador e coorientador. | Guilherme na abertura; João no fim. |
 | 2 | Problema, objetivo e público-alvo. Um fluxo simples: cliente > processo > prazo > documento > honorários. | Guilherme |
-| 3 | Arquitetura: C1/C2, comunicação frontend/API/banco e tecnologias com justificativas. Recorte legível da estrutura do frontend. | Guilherme e João |
-| 4 | Modelo do banco e organização dos módulos. Recortes ampliados de C3 e DER, com entidades principais. | João |
+| 3 | Slide 3, Arquitetura do LexNexo: containers, tecnologias, implantação e comunicação frontend/API/banco. | Guilherme e João |
+| 4 | Slide 4, Modelo de dados e módulos: recorte de Cliente, Processo, Contrato, Parcela, Agenda e Documento. | João |
 | 5 | Resultados: fluxo demonstrado, 885 testes em 09/11 e cobertura de linhas 91,85% backend / 38,03% frontend. | Guilherme; João retoma os números nos testes. |
 | 6 | Limitações, dificuldades, aprendizados e evolução. RF52 adiado e cobertura frontend abaixo da meta. | João |
 
@@ -104,9 +104,9 @@ Guilherme | 03:00 a 04:00 no vídeo final | arquivo: 02_gui_frontend.mp4
 
 ### 03:00 a 04:00
 
-Na tela: Slide 3: destacar o frontend no C2 e mostrar um recorte legível de páginas, componentes e services/api.js. Permanecer nos slides; o editor entra no clipe 05.
+Na tela: Slide 3: destacar a interface e sua comunicação com a API. Explicar a organização do frontend. Permanecer nos slides; o editor entra no clipe 05.
 
-Fala-base: O C1 mostra quem utiliza o LexNexo e os serviços com que ele se comunica. No frontend, usamos Next.js e React para organizar páginas, painéis e formulários em componentes. A camada de serviços concentra as chamadas à API, e a interface apresenta estados de carregamento, confirmação e validação. Também trabalhamos a navegação, a adaptação para celular e as preferências visuais. Escolhemos essa organização para reaproveitar os elementos da interface e manter o comportamento consistente. O João vai explicar agora como essas requisições são processadas e como os dados se relacionam.
+Fala-base: Esta visão mostra a comunicação entre a interface, a API e o banco. No frontend, usamos Next.js e React para organizar páginas, painéis e formulários em componentes. A camada de serviços concentra as chamadas à API, e a interface apresenta estados de carregamento, confirmação e validação. Também trabalhamos a navegação, a adaptação para celular e as preferências visuais. Escolhemos essa organização para reaproveitar os elementos da interface e manter o comportamento consistente. O João vai explicar agora como essas requisições são processadas e como os dados se relacionam.
 
 ### Passagem para João
 
@@ -199,11 +199,11 @@ Salve essas quatro cenas juntas em 06A_gui_telas_apoio.mp4, com 1:45 de conteúd
 
 ### 17:00 a 17:40
 
-Na tela: Slide 5: resultados, com um recorte legível da ficha do caso principal ao lado das métricas.
+Na tela: Slide 5: resultados da auditoria, com total por suíte, cobertura de linhas e verificações práticas.
 
 Fala-base: Retomando o problema inicial, o LexNexo reúne informações que antes ficariam espalhadas em controles separados. Na demonstração, cadastramos um cliente, vinculamos um processo e acompanhamos agenda, documentos e honorários. A principal contribuição é manter a relação entre esses dados e permitir o acompanhamento conforme o perfil de acesso. Os testes documentam os cenários que conseguimos verificar.
 
-Adaptação de tela: mantenha o slide 5 na gravação; pode incluir nele um recorte da ficha do caso. Diga apenas os resultados efetivamente mostrados nos clipes anteriores.
+Mantenha o slide 5 na gravação e relacione os resultados ao fluxo demonstrado. Use a data de referência das métricas e diga apenas os resultados efetivamente observados.
 
 ## Roteiro de João e ordem de gravação
 
@@ -239,9 +239,9 @@ Fala-base: A API utiliza Python, Django e Django REST Framework, e os dados são
 
 ### 05:00 a 06:00
 
-Na tela: Slide 4: C3 e recorte ampliado do DER com Escritório, Usuário, Cliente, Processo, Agenda, Documento, Contrato e Parcela.
+Na tela: Slide 4: recorte dos relacionamentos de Cliente, Processo, Contrato, Parcela, Agenda e Documento. Explicar os módulos e o escopo por escritório.
 
-Fala-base: Internamente, a API está organizada por domínios, como clientes, processos, agenda e financeiro. O banco mantém os vínculos entre essas entidades. O escritório é a referência para separar os dados de cada organização. Um processo pertence a um cliente, e documentos, agenda e contratos se relacionam ao processo. O C3 mostra os módulos lógicos; o diagrama de implantação mostra onde os serviços executam. Não são o mesmo tipo de representação. Agora vamos acompanhar esse caminho pela interface.
+Fala-base: Internamente, a API está organizada por domínios, como clientes, processos, agenda e financeiro. O banco mantém os vínculos entre essas entidades. Um processo pertence a um cliente e pode ter um contrato; esse contrato reúne as parcelas. Documentos e eventos da agenda também se relacionam ao processo. O esquema é compartilhado entre os escritórios, e a API aplica o escopo do escritório nas consultas e nos vínculos. Este slide mostra um recorte dos relacionamentos. Agora vamos acompanhar esse caminho pela interface.
 
 ### Transição para a demonstração
 
@@ -331,7 +331,7 @@ Fala-base: Também há limites. A notificação automática ao cliente a cada at
 
 ### 18:30 a 19:15
 
-Na tela: Ainda no slide 6: citar os exemplos de segregação por escritório e consistência das parcelas, com pequenos recortes legíveis.
+Na tela: Continuar no slide 6 e comentar as dificuldades de isolamento por escritório e consistência das parcelas.
 
 Fala-base: Entre as principais dificuldades estiveram a separação de dados entre escritórios, as diferenças de permissão e a consistência das operações financeiras. Trabalhamos com desenvolvimento incremental, testes e revisões para corrigir problemas encontrados. O projeto nos ajudou a relacionar interface, API, banco e documentação, e a perceber que uma funcionalidade precisa ser verificada além do caminho em que tudo dá certo.
 
@@ -366,6 +366,6 @@ Confiram a duração total de no máximo 20 minutos, volume semelhante entre as 
 
 ### Referência e uso
 
-Este plano organiza o roteiro detalhado do grupo revisto em 09/11/2026. As ações, falas e limites vêm de docs/tcc/ROTEIRO_VIDEO_PREBANCA_2026.md e da orientação do professor fornecida em PDF. A divisão por integrante foi definida pelo proprietário. Os seis slides devem ser preparados para acompanhar a gravação; a execução dos recursos deve ser conferida no ensaio.
+Este plano organiza o roteiro detalhado do grupo revisto em 09/11/2026. As ações, falas e limites vêm de docs/tcc/ROTEIRO_VIDEO_PREBANCA_2026.md e da orientação do professor fornecida em PDF. A divisão por integrante foi definida pelo proprietário. Use a apresentação editável entregue com estes roteiros. A execução dos recursos deve ser conferida no ensaio.
 
 Este plano conserva a sequência temporal do roteiro existente, com uma mudança operacional: a explicação inicial do frontend fica no slide 3, e o editor entra no bloco de implementação. Os detalhes por cena podem ser adaptados no ensaio mantendo os cinco blocos, a veracidade da demonstração e o teto de 20 minutos.

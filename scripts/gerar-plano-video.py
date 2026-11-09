@@ -45,18 +45,8 @@ clips = [
 assert all(clips[i]['end']==clips[i+1]['start'] for i in range(7))
 assert sum(seconds(c['end'])-seconds(c['start']) for c in clips)==1185
 
-pdfmetrics.registerFont(TTFont('Plano','/usr/share/fonts/TTF/DejaVuSans.ttf'))
-pdfmetrics.registerFont(TTFont('PlanoBold','/usr/share/fonts/TTF/DejaVuSans-Bold.ttf'))
-pdfmetrics.registerFont(TTFont('PlanoItalic','/usr/share/fonts/TTF/DejaVuSans-Oblique.ttf'))
-styles = {
- 'title':ParagraphStyle('PlanoTitle',fontName='PlanoBold',fontSize=21,leading=26,spaceAfter=12,textColor=colors.black),
- 'h':ParagraphStyle('PlanoH',fontName='PlanoBold',fontSize=15,leading=20,spaceAfter=10,textColor=colors.black),
- 'sub':ParagraphStyle('PlanoSub',fontName='PlanoBold',fontSize=10.5,leading=14,spaceBefore=9,spaceAfter=5,keepWithNext=True,textColor=colors.black),
- 'p':ParagraphStyle('PlanoP',fontName='Plano',fontSize=9.5,leading=13,spaceAfter=7,textColor=colors.black),
- 'speech':ParagraphStyle('PlanoSpeech',fontName='PlanoItalic',fontSize=9.5,leading=13,spaceAfter=8,leftIndent=10,textColor=colors.HexColor('#242424')),
- 'cell':ParagraphStyle('PlanoCell',fontName='Plano',fontSize=8.5,leading=11,textColor=colors.black),
- 'small':ParagraphStyle('PlanoSmall',fontName='Plano',fontSize=8,leading=11,spaceAfter=6,textColor=colors.HexColor('#444444')),
-}
+from tema_lexnexo import estilos, moldura, TINTA, PAPEL
+styles = estilos()
 story=[];md=['# Plano de gravação e montagem do vídeo LexNexo','','Grupo TDS-2026-038 | revisão de 09/11/2026','']
 def para(t,style='p'):
     story.append(Paragraph(escape(t).replace('\n','<br/>'),styles[style]));md.extend([t,''])
@@ -67,8 +57,8 @@ def page(title,subtitle=''):
     story.append(Paragraph(escape(title),styles['title' if not story else 'h']));md.extend(['## '+title,''])
     if subtitle:para(subtitle,'small')
 def table(heads,rows,widths):
-    cells=[[Paragraph(escape(str(c)),styles['cell']) for c in row] for row in [heads]+rows]
-    t=Table(cells,colWidths=widths,repeatRows=1,hAlign='LEFT');t.setStyle(TableStyle([('BACKGROUND',(0,0),(-1,0),colors.HexColor('#ededed')),('GRID',(0,0),(-1,-1),.4,colors.HexColor('#cccccc')),('VALIGN',(0,0),(-1,-1),'TOP'),('LEFTPADDING',(0,0),(-1,-1),6),('RIGHTPADDING',(0,0),(-1,-1),6),('TOPPADDING',(0,0),(-1,-1),6),('BOTTOMPADDING',(0,0),(-1,-1),6)]));story.extend([t,Spacer(1,9)])
+    cells=[[Paragraph(escape(str(c)),styles['cellhead' if n==0 else 'cell']) for c in row] for n,row in enumerate([heads]+rows)]
+    t=Table(cells,colWidths=widths,repeatRows=1,hAlign='LEFT');t.setStyle(TableStyle([('BACKGROUND',(0,0),(-1,0),TINTA),('GRID',(0,0),(-1,-1),.4,colors.HexColor('#d9d0bd')),('VALIGN',(0,0),(-1,-1),'TOP'),('LEFTPADDING',(0,0),(-1,-1),6),('RIGHTPADDING',(0,0),(-1,-1),6),('TOPPADDING',(0,0),(-1,-1),6),('BOTTOMPADDING',(0,0),(-1,-1),6)]));story.extend([t,Spacer(1,9)])
     md.extend(['| '+' | '.join(heads)+' |','| '+' | '.join(['---']*len(heads))+' |']+['| '+' | '.join(map(str,row))+' |' for row in rows]+[''])
 def clip_page(n):
     c=next(c for c in clips if c['n']==n)
@@ -86,17 +76,17 @@ def render_scenes(items):
 
 page('Plano de gravação e montagem do vídeo LexNexo','Guilherme Rossato Munhoz e João Henrique Souza Sabino | TDS-2026-038')
 para('Preparem oito clipes e montem um único vídeo de até 20 minutos. A ordem abaixo preserva os cinco blocos do professor: 3 minutos de contexto, 3 de arquitetura, 6 de demonstração, 5 de implementação e 3 de fechamento. A fala termina em 19:45; os 15 segundos restantes são margem, sem conteúdo novo.')
-table(['Ordem e tempo final','Quem apresenta','Tela principal'],[[c['n']+' | '+c['start']+' a '+c['end'],c['person'],c['screen']] for c in clips],[125,190,160])
+table(['Ordem e tempo final','Quem apresenta','Tela principal'],[[c['n']+' — '+c['start']+' a '+c['end'],c['person'],c['screen']] for c in clips],[125,190,160])
 heading('Trocas de tela na montagem')
 para('01 para 02: continuar nos slides e trocar para a arquitetura. 02 para 03: manter o mesmo diagrama e trocar a voz para João. 03 para 04: sair dos slides e entrar no navegador. 04 para 05: sair do sistema e abrir o editor. 05 para 06: intercalar as telas de apoio com a explicação técnica. 06 para 07: voltar ao slide de resultados. 07 para 08: trocar para limitações e encerrar na capa.')
 para('A gravação pode ser feita em outra ordem. Os números dos arquivos determinam a posição na edição, não obrigam vocês a gravar juntos ou em sequência.','small')
 
-page('Preparar slides arquivos e sessões')
-table(['Slide','Conteúdo a preparar','Quem usa'],[
+page('Slides prontos e preparação da gravação')
+table(['Slide','Conteúdo do slide','Quem usa'],[
  ['1','Capa: LexNexo, grupo 038, integrantes, curso, orientador e coorientador.','Guilherme na abertura; João no fim.'],
  ['2','Problema, objetivo e público-alvo. Um fluxo simples: cliente > processo > prazo > documento > honorários.','Guilherme'],
- ['3','Arquitetura: C1/C2, comunicação frontend/API/banco e tecnologias com justificativas. Recorte legível da estrutura do frontend.','Guilherme e João'],
- ['4','Modelo do banco e organização dos módulos. Recortes ampliados de C3 e DER, com entidades principais.','João'],
+ ['3','Slide 3, Arquitetura do LexNexo: containers, tecnologias, implantação e comunicação frontend/API/banco.','Guilherme e João'],
+ ['4','Slide 4, Modelo de dados e módulos: recorte de Cliente, Processo, Contrato, Parcela, Agenda e Documento.','João'],
  ['5','Resultados: fluxo demonstrado, 885 testes em 09/11 e cobertura de linhas 91,85% backend / 38,03% frontend.','Guilherme; João retoma os números nos testes.'],
  ['6','Limitações, dificuldades, aprendizados e evolução. RF52 adiado e cobertura frontend abaixo da meta.','João'],
 ],[42,334,99])
@@ -127,7 +117,7 @@ render_scenes(items)
 heading('Transição para o próximo clipe')
 para('Diga: "Agora vamos apresentar a arquitetura e as tecnologias que sustentam esse fluxo". No corte, entre no slide 3. Não abram o sistema ainda: a demonstração começa no clipe 04.')
 
-c=clip_page('02');items=selected(c['start'],c['end']);items[0]['screen']='Slide 3: destacar o frontend no C2 e mostrar um recorte legível de páginas, componentes e services/api.js. Permanecer nos slides; o editor entra no clipe 05.';render_scenes(items)
+c=clip_page('02');items=selected(c['start'],c['end']);items[0]['screen']='Slide 3: destacar a interface e sua comunicação com a API. Explicar a organização do frontend. Permanecer nos slides; o editor entra no clipe 05.';render_scenes(items)
 heading('Passagem para João')
 para('Termine apontando a seta da interface para a API. João começa o clipe 03 com esse mesmo slide na tela e explica o processamento. A edição troca a voz sem repetir a capa.')
 
@@ -145,8 +135,8 @@ table(['Tempo final','O que você grava sem narração final','Duração'],[
 ],[90,345,40])
 para('Salve essas quatro cenas juntas em 06A_gui_telas_apoio.mp4, com 1:45 de conteúdo útil. Avise João onde cada cena começa. Na edição, silencie o áudio desse arquivo e use a narração dele. Os 45 segundos seguintes, de 16:15 a 17:00, são a tela de testes gravada pelo João.')
 heading('Clipe 07 | 17:00 a 17:40 | slide 5')
-items=selected('17:00','17:40');items[0]['screen']='Slide 5: resultados, com um recorte legível da ficha do caso principal ao lado das métricas.';render_scenes(items)
-para('Adaptação de tela: mantenha o slide 5 na gravação; pode incluir nele um recorte da ficha do caso. Diga apenas os resultados efetivamente mostrados nos clipes anteriores.','small')
+items=selected('17:00','17:40');items[0]['screen']='Slide 5: resultados da auditoria, com total por suíte, cobertura de linhas e verificações práticas.';render_scenes(items)
+para('Mantenha o slide 5 na gravação e relacione os resultados ao fluxo demonstrado. Use a data de referência das métricas e diga apenas os resultados efetivamente observados.','small')
 
 page('Roteiro de João e ordem de gravação')
 para('Sua ordem de gravação: 03, 05, 06B e 08. Apresente backend, APIs e banco. Receba primeiro o arquivo 06A de Guilherme para narrar as telas no mesmo ritmo; deixe o 06B por último se essas capturas ainda não estiverem prontas.')
@@ -166,7 +156,7 @@ table(['Arquivo','Trecho a destacar'],[
  ['backend/advocacia/tests/test_financeiro.py','Teste de geração/centavos ou rollback. Resultado e CI já executados.'],
 ],[245,230])
 
-c=clip_page('03');items=selected(c['start'],c['end']);items[0]['screen']='Slide 3: C2 e implantação, percorrendo navegador, frontend, API e banco com o ponteiro.';items[1]['screen']='Slide 4: C3 e recorte ampliado do DER com Escritório, Usuário, Cliente, Processo, Agenda, Documento, Contrato e Parcela.';render_scenes(items)
+c=clip_page('03');items=selected(c['start'],c['end']);items[0]['screen']='Slide 3: C2 e implantação, percorrendo navegador, frontend, API e banco com o ponteiro.';items[1]['screen']='Slide 4: recorte dos relacionamentos de Cliente, Processo, Contrato, Parcela, Agenda e Documento. Explicar os módulos e o escopo por escritório.';render_scenes(items)
 heading('Transição para a demonstração')
 para('Termine com: "Com essa estrutura em mente, o Guilherme vai demonstrar o caminho de um cliente e seu processo pela interface". Deixe o slide 4 visível por um instante e corte diretamente para o navegador do clipe 04.')
 
@@ -179,7 +169,7 @@ heading('Montagem desse bloco')
 para('Use a voz de 06B durante os 2:30. Nos primeiros 1:45, cubra sua tela com o vídeo 06A do Guilherme. Aos 16:15 do vídeo final, retire essa sobreposição e mostre sua tela de testes. Resultado salvo e CI são evidência de execução anterior datada; não simule que a suíte inteira rodou durante esses 45 segundos.')
 para('IA, e-mail e push dependem de configuração e disponibilidade. Sem resposta ou recebimento reais, ajuste a fala para reconhecer o limite. Não use gravação simulada como comprovação externa.','small')
 
-c=clip_page('08');items=selected(c['start'],c['end']);items[0]['screen']='Slide 6: pronto, limitações e backlog. Identificar RF52 e cobertura frontend abaixo da meta.';items[1]['screen']='Ainda no slide 6: citar os exemplos de segregação por escritório e consistência das parcelas, com pequenos recortes legíveis.';items[2]['screen']='Slide 1, usado como tela final: LexNexo, grupo 038, nomes e agradecimento.';render_scenes(items)
+c=clip_page('08');items=selected(c['start'],c['end']);items[0]['screen']='Slide 6: pronto, limitações e backlog. Identificar RF52 e cobertura frontend abaixo da meta.';items[1]['screen']='Continuar no slide 6 e comentar as dificuldades de isolamento por escritório e consistência das parcelas.';items[2]['screen']='Slide 1, usado como tela final: LexNexo, grupo 038, nomes e agradecimento.';render_scenes(items)
 heading('Encerrar dentro do limite')
 para('Use o slide 6 ao explicar pendências, dificuldades e próximos passos. Na última cena, de 19:15 a 19:45, volte ao slide 1 e agradeça em nome dos dois. Os 15 segundos até 20:00 são margem; não acrescentem conteúdo para preencher esse espaço. A fala sobre dificuldades e aprendizados deve refletir a experiência real de vocês.')
 
@@ -198,13 +188,13 @@ table(['Faixa de vídeo','Faixa de áudio'],[
 heading('Assistir ao arquivo exportado antes de enviar')
 para('Confiram a duração total de no máximo 20 minutos, volume semelhante entre as vozes, ausência de áudio duplicado no bloco 06 e legibilidade do código. Verifiquem se a criação foi seguida de confirmação, se o fluxo usa o mesmo caso fictício e se as limitações foram ditas sem contradizer a demonstração. Os dois devem participar e os cinco blocos do professor devem estar presentes.')
 heading('Referência e uso')
-para('Este plano organiza o roteiro detalhado do grupo revisto em 09/11/2026. As ações, falas e limites vêm de docs/tcc/ROTEIRO_VIDEO_PREBANCA_2026.md e da orientação do professor fornecida em PDF. A divisão por integrante foi definida pelo proprietário. Os seis slides devem ser preparados para acompanhar a gravação; a execução dos recursos deve ser conferida no ensaio.')
+para('Este plano organiza o roteiro detalhado do grupo revisto em 09/11/2026. As ações, falas e limites vêm de docs/tcc/ROTEIRO_VIDEO_PREBANCA_2026.md e da orientação do professor fornecida em PDF. A divisão por integrante foi definida pelo proprietário. Use a apresentação editável entregue com estes roteiros. A execução dos recursos deve ser conferida no ensaio.')
 para('Este plano conserva a sequência temporal do roteiro existente, com uma mudança operacional: a explicação inicial do frontend fica no slide 3, e o editor entra no bloco de implementação. Os detalhes por cena podem ser adaptados no ensaio mantendo os cinco blocos, a veracidade da demonstração e o teto de 20 minutos.','small')
 
 def footer(c,doc):
-    c.setFont('Plano',8);c.setFillColor(colors.HexColor('#444444'));c.drawString(60,27,'LexNexo | TDS-2026-038 | Gravação e montagem | 09/11/2026');c.drawRightString(535,27,str(doc.page))
+    moldura(c,doc,'Plano de gravação')
 
 out=ROOT/'docs/tcc/TDS-2026-038_Plano_Gravacao_e_Montagem.pdf'
-SimpleDocTemplate(str(out),pagesize=(595.276,841.89),leftMargin=60,rightMargin=60,topMargin=45,bottomMargin=48,title='LexNexo Plano de gravação e montagem do vídeo',author='Guilherme Rossato Munhoz e João Henrique Souza Sabino').build(story,onFirstPage=footer,onLaterPages=footer)
+SimpleDocTemplate(str(out),pagesize=(595.276,841.89),leftMargin=60,rightMargin=60,topMargin=70,bottomMargin=48,title='LexNexo Plano de gravação e montagem do vídeo',author='Guilherme Rossato Munhoz e João Henrique Souza Sabino').build(story,onFirstPage=footer,onLaterPages=footer)
 (ROOT/'docs/tcc/PLANO_GRAVACAO_E_MONTAGEM.md').write_text('\n'.join(md).rstrip()+'\n')
 print(out)
