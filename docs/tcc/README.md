@@ -1,5 +1,16 @@
 # Relatório técnico do TCC (gerado por script)
 
+
+## Plano de gravação por integrante e montagem
+
+[PDF do plano](TDS-2026-038_Plano_Gravacao_e_Montagem.pdf) e
+[texto editável](PLANO_GRAVACAO_E_MONTAGEM.md). O plano organiza oito clipes em
+um único vídeo: Guilherme apresenta frontend e demonstração; João apresenta
+backend e banco. Inclui a ordem dos seis slides, as trocas entre apresentação,
+sistema e editor, os nomes dos arquivos e a montagem do bloco com tela de
+Guilherme e narração de João. Mantém 3/3/6/5/3 minutos e fala até 19:45.
+É um complemento operacional ao roteiro detalhado existente.
+
 <!-- auditoria-2026-11-09:inicio -->
 
 ## Entrega atual — 09/11/2026
