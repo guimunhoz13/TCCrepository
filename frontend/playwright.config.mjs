@@ -31,7 +31,9 @@ export default defineConfig({
     screenshot: "only-on-failure",
   },
   projects: [
-    { name: "computador", use: { ...devices[dispositivoComputador] }, testIgnore: /celular\.spec/ },
+    { name: "computador", use: { ...devices[dispositivoComputador],
+      ...(process.env.E2E_BROWSER_EXECUTABLE ? { launchOptions: { executablePath: process.env.E2E_BROWSER_EXECUTABLE } } : {}),
+    }, testIgnore: /celular\.spec/ },
     { name: "celular", use: { ...devices["Pixel 7"] }, testMatch: /celular\.spec/ },
   ],
 });

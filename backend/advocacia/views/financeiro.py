@@ -12,6 +12,8 @@ from rest_framework.response import Response
 
 from ..mixins import (
     EscritorioScopedMixin,
+    capturar_estado_auditoria,
+    montar_alteracoes_auditoria,
     registrar_auditoria,
 )
 from ..models import (
@@ -160,7 +162,14 @@ class ParcelaViewSet(
         parcela = serializer.instance
         novo_status = serializer.validated_data.get("status", parcela.status)
 
+        pago_em = parcela.pago_em
         if novo_status == "pago" and parcela.status != "pago":
-            serializer.save(pago_em=timezone.now())
-        else:
-            serializer.save()
+            pago_em = timezone.now()
+        elif novo_status != "pago":
+            pago_em = None
+        anterior = capturar_estado_auditoria(parcela, serializer.validated_data, extras={"pago_em": pago_em})
+        self._salvar(serializer, pago_em=pago_em)
+        registrar_auditoria(
+            self.request, "edicao", parcela, escritorio=self.get_escritorio(),
+            alteracoes=montar_alteracoes_auditoria(parcela, anterior),
+        )

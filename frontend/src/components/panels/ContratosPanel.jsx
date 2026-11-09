@@ -52,6 +52,7 @@ export default function ContratosPanel() {
   const [formulario, setFormulario] = useState(formularioInicial);
   const [contratoExpandido, setContratoExpandido] = useState(null);
   const [salvando, setSalvando] = useState(false);
+  const [parcelasSalvando, setParcelasSalvando] = useState([]);
   const [parcelaPix, setParcelaPix] = useState(null);
   // Estável entre renderizações: a Janela fecha no Esc via efeito que
   // depende dela.
@@ -105,8 +106,18 @@ export default function ContratosPanel() {
   }
 
   async function handleMarcarPago(parcelaId) {
-    await updateParcela(parcelaId, { status: "pago" });
-    carregarDados();
+    if (parcelasSalvando.includes(parcelaId)) return;
+    setErro("");
+    setParcelasSalvando((atuais) => [...atuais, parcelaId]);
+    try {
+      await updateParcela(parcelaId, { status: "pago" });
+      carregarDados();
+      refreshDashboard().catch(() => {});
+    } catch (error) {
+      setErro(error.message || "Não foi possível registrar o pagamento.");
+    } finally {
+      setParcelasSalvando((atuais) => atuais.filter((id) => id !== parcelaId));
+    }
   }
 
   if (activePanel !== "contratos") return null;
@@ -368,6 +379,7 @@ export default function ContratosPanel() {
                                           className="row-action row-action-success"
                                           title={t("acao_marcar_pago")}
                                           aria-label={t("acao_marcar_pago")}
+                                          disabled={parcelasSalvando.includes(parcela.id)}
                                           onClick={() => handleMarcarPago(parcela.id)}
                                         >
                                           <CircleDollarSign size={15} />

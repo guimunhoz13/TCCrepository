@@ -43,6 +43,8 @@ from ..models import (
     Usuario,
 )
 from ..permissoes import permissoes_do_perfil
+from ..serializers import LoginEntradaSerializer
+from .comum import _texto_da_entrada
 from ..validators import validar_senha_forte
 
 logger = logging.getLogger(__name__)
@@ -232,7 +234,7 @@ _SESSAO_ABERTA = inline_serializer("Sessao", {
     description=(
         "Devolve o par de tokens e o usuário. Se a conta tem verificação em duas "
         "etapas, devolve `requer_2fa: true` e um `desafio` (válido por 5 minutos) "
-        "para concluir em /api/login/2fa/. Cinco senhas erradas bloqueiam por 15 minutos."
+        "para concluir em /api/login/2fa/. Três senhas erradas bloqueiam por 15 minutos."
     ),
     request=inline_serializer("Login", {"email": campos.EmailField(), "senha": campos.CharField()}),
     responses={200: _SESSAO_ABERTA, 401: OpenApiTypes.OBJECT, 403: OpenApiTypes.OBJECT},
@@ -246,8 +248,10 @@ class LoginView(APIView):
 
     def post(self, request):
 
-        email = request.data.get("email", "").strip()
-        senha = request.data.get("senha", "")
+        entrada = LoginEntradaSerializer(data=request.data)
+        entrada.is_valid(raise_exception=True)
+        email = entrada.validated_data["email"]
+        senha = entrada.validated_data["senha"]
 
         if not email or not senha:
             return Response(
@@ -471,7 +475,7 @@ class SolicitarRedefinicaoSenhaView(APIView):
     throttle_scope = "sensivel"
 
     def post(self, request):
-        email = request.data.get("email", "").strip()
+        email = _texto_da_entrada(request.data, "email").strip()
 
         resposta_generica = Response(
             {"detail": "Se este e-mail estiver cadastrado, enviaremos um link de redefinição."},
@@ -517,7 +521,7 @@ class RedefinirSenhaView(APIView):
     throttle_scope = "sensivel"
 
     def post(self, request):
-        token_valor = request.data.get("token", "").strip()
+        token_valor = _texto_da_entrada(request.data, "token").strip()
         nova_senha = request.data.get("nova_senha", "")
         confirmar_senha = request.data.get("confirmar_senha", "")
 

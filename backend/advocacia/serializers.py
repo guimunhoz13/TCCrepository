@@ -43,6 +43,47 @@ from .models import (
 )
 
 
+class LoginEntradaSerializer(serializers.Serializer):
+    email = serializers.CharField(max_length=254)
+    senha = serializers.CharField(trim_whitespace=False, write_only=True)
+
+
+class GerarDocumentoEntradaSerializer(serializers.Serializer):
+    cliente = serializers.IntegerField(required=False, allow_null=True, min_value=1, max_value=2**63 - 1)
+    processo = serializers.IntegerField(required=False, allow_null=True, min_value=1, max_value=2**63 - 1)
+
+    def validate(self, dados):
+        if not dados.get("cliente") and not dados.get("processo"):
+            raise serializers.ValidationError("Informe um processo ou um cliente para preencher o modelo.")
+        return dados
+
+
+class ContextoIAEntradaSerializer(serializers.Serializer):
+    cliente_id = serializers.IntegerField(required=False, allow_null=True, min_value=1, max_value=2**63 - 1)
+    processo_id = serializers.IntegerField(required=False, allow_null=True, min_value=1, max_value=2**63 - 1)
+
+
+class PerguntaIAEntradaSerializer(serializers.Serializer):
+    mensagem = serializers.CharField(max_length=4000)
+    historico = serializers.ListField(child=serializers.DictField(), required=False, default=list)
+    contexto = ContextoIAEntradaSerializer(required=False, default=dict)
+
+
+class CalculoPrazoEntradaSerializer(serializers.Serializer):
+    data_inicio = serializers.DateField()
+    # Limite técnico para impedir uma iteração arbitrariamente longa.
+    dias = serializers.IntegerField(min_value=1, max_value=10000)
+    dias_uteis = serializers.BooleanField(default=True)
+    processo = serializers.IntegerField(required=False, allow_null=True, min_value=1, max_value=2**63 - 1)
+
+    def validate(self, dados):
+        # BooleanField aceita strings de formulários; esta operação recebe
+        # JSON e precisa distinguir false de uma string não vazia.
+        if not isinstance(self.initial_data.get("dias_uteis", True), bool):
+            raise serializers.ValidationError({"dias_uteis": "Informe verdadeiro ou falso."})
+        return dados
+
+
 class RascunhoFormularioSerializer(serializers.ModelSerializer):
     TAMANHO_MAXIMO_BYTES = 64 * 1024
 
@@ -817,6 +858,16 @@ class ContratoSerializer(EscopoDoEscritorioMixin, serializers.ModelSerializer):
 
     def validate(self, attrs):
         attrs = super().validate(attrs)
+        if self.instance and self.instance.parcelas.exists():
+            # As parcelas são um histórico financeiro. Alterar só o cabeçalho
+            # deixava total, vínculo e quantidade divergentes das cobranças.
+            bloqueados = {
+                campo: "Este acordo já tem parcelas emitidas; não é possível alterar este campo."
+                for campo in ("processo", "valor_total", "forma_pagamento", "numero_parcelas")
+                if campo in attrs and attrs[campo] != getattr(self.instance, campo)
+            }
+            if bloqueados:
+                raise serializers.ValidationError(bloqueados)
         forma = attrs.get("forma_pagamento", getattr(self.instance, "forma_pagamento", "avista"))
         valor = attrs.get("valor_total", getattr(self.instance, "valor_total", None))
         parcelas = attrs.get("numero_parcelas", getattr(self.instance, "numero_parcelas", 1))
@@ -922,6 +973,15 @@ class RegistroAuditoriaSerializer(serializers.ModelSerializer):
 
 
 class ConfiguracaoEscritorioSerializer(serializers.ModelSerializer):
+    def validate_timezone(self, valor):
+        from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
+
+        try:
+            ZoneInfo(valor)
+        except (ZoneInfoNotFoundError, ValueError):
+            raise serializers.ValidationError("Informe um fuso horário IANA válido.")
+        return valor
+
     class Meta:
         model = ConfiguracaoEscritorio
         fields = [

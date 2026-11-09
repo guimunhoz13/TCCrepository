@@ -18,6 +18,7 @@ from ..models import (
 from ..permissoes import VER, PermissaoPorPerfil
 from ..serializers import (
     ModeloDocumentoSerializer,
+    GerarDocumentoEntradaSerializer,
 )
 from ..sigilo import esconder_sigilosos
 
@@ -51,14 +52,10 @@ class ModeloDocumentoViewSet(
         modelo = self.get_object()
         escritorio = self.get_escritorio()
 
-        processo_id = request.data.get("processo")
-        cliente_id = request.data.get("cliente")
-
-        if not processo_id and not cliente_id:
-            return Response(
-                {"detail": "Informe um processo ou um cliente para preencher o modelo."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        entrada = GerarDocumentoEntradaSerializer(data=request.data)
+        entrada.is_valid(raise_exception=True)
+        processo_id = entrada.validated_data.get("processo")
+        cliente_id = entrada.validated_data.get("cliente")
 
         processo = None
         cliente = None
@@ -87,6 +84,12 @@ class ModeloDocumentoViewSet(
                     {"detail": "Cliente não encontrado."},
                     status=status.HTTP_404_NOT_FOUND,
                 )
+
+        if processo is not None and cliente is not None and processo.cliente_id != cliente.pk:
+            return Response(
+                {"cliente": ["O cliente informado precisa ser o titular do processo selecionado."]},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         contexto = montar_contexto(escritorio, cliente=cliente, processo=processo)
         conteudo, nao_encontradas, vazias = preencher(modelo.conteudo, contexto)

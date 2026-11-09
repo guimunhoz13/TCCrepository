@@ -37,6 +37,8 @@ from ..serializers import (
 )
 from ..validators import validar_email_real, validar_senha_forte, validar_telefone
 
+from .comum import _texto_da_entrada
+
 # =========================================================
 # CONFIGURAÇÕES
 # =========================================================
@@ -73,9 +75,12 @@ class ConfiguracoesContaView(APIView):
         if not usuario:
             return Response({"detail": "Usuário não identificado."}, status=status.HTTP_401_UNAUTHORIZED)
 
-        nome = request.data.get("nome", usuario.nome).strip()
-        email = request.data.get("email", usuario.email).strip()
-        telefone = request.data.get("telefone", usuario.telefone).strip()
+        dados_conta = {
+            campo: _texto_da_entrada(request.data, campo, getattr(usuario, campo),
+                                     tamanho_maximo=Usuario._meta.get_field(campo).max_length).strip()
+            for campo in ("nome", "email", "telefone")
+        }
+        nome, email, telefone = (dados_conta[campo] for campo in ("nome", "email", "telefone"))
 
         if not nome or not email:
             return Response({"detail": "Nome e e-mail são obrigatórios."}, status=status.HTTP_400_BAD_REQUEST)
@@ -136,9 +141,9 @@ class ConfiguracoesSenhaView(APIView):
         if not usuario:
             return Response({"detail": "Usuário não identificado."}, status=status.HTTP_401_UNAUTHORIZED)
 
-        senha_atual = request.data.get("senha_atual", "")
-        nova_senha = request.data.get("nova_senha", "")
-        confirmar_senha = request.data.get("confirmar_senha", "")
+        senha_atual = _texto_da_entrada(request.data, "senha_atual")
+        nova_senha = _texto_da_entrada(request.data, "nova_senha")
+        confirmar_senha = _texto_da_entrada(request.data, "confirmar_senha")
 
         if not check_password(senha_atual, usuario.senha):
             return Response({"detail": "Senha atual incorreta."}, status=status.HTTP_400_BAD_REQUEST)
@@ -291,6 +296,13 @@ class ConfiguracoesEscritorioView(APIView):
         if usuario.tipo_usuario != "admin":
             return Response({"detail": "Somente administradores podem alterar o escritório."}, status=status.HTTP_403_FORBIDDEN)
 
+        campos = ["nome", "email", "telefone", "endereco", "cidade", "estado"]
+        entrada = EscritorioSerializer(usuario.escritorio, data={
+            campo: _texto_da_entrada(request.data, campo) for campo in campos if campo in request.data
+        }, partial=True)
+        entrada.is_valid(raise_exception=True)
+        dados_escritorio = entrada.validated_data
+
         if "email" in request.data:
             try:
                 validar_email_real(request.data["email"])
@@ -303,17 +315,10 @@ class ConfiguracoesEscritorioView(APIView):
             except DjangoValidationError as exc:
                 return Response({"telefone": list(exc.messages)}, status=status.HTTP_400_BAD_REQUEST)
 
-        campos = ["nome", "email", "telefone", "endereco", "cidade", "estado"]
-        dados_escritorio = {
-            campo: request.data[campo] for campo in campos if campo in request.data
-        }
         estado_escritorio = capturar_estado_auditoria(
             usuario.escritorio, dados_escritorio
         )
-        for campo in campos:
-            if campo in request.data:
-                setattr(usuario.escritorio, campo, request.data[campo])
-        usuario.escritorio.save()
+        entrada.save()
 
         config, _ = ConfiguracaoEscritorio.objects.get_or_create(escritorio=usuario.escritorio)
         config_data = {

@@ -32,6 +32,7 @@ from ..models import (
 from ..permissoes import VER, PermissaoPorPerfil, pode
 from ..serializers import (
     AgendaSerializer,
+    CalculoPrazoEntradaSerializer,
     FeriadoLocalSerializer,
 )
 from ..sigilo import esconder_sigilosos
@@ -43,12 +44,7 @@ from ..sigilo import esconder_sigilosos
 @extend_schema(
     tags=["agenda"],
     summary="Calcular a data final de um prazo",
-    request=inline_serializer("CalculoDePrazo", {
-        "data_inicio": campos.DateField(),
-        "dias": campos.IntegerField(min_value=1),
-        "dias_uteis": campos.BooleanField(default=True),
-        "processo": campos.IntegerField(required=False, min_value=1),
-    }),
+    request=CalculoPrazoEntradaSerializer,
     responses={200: OpenApiTypes.OBJECT},
 )
 class CalcularPrazoView(APIView):
@@ -63,34 +59,12 @@ class CalcularPrazoView(APIView):
     acoes_permissao = {None: VER}
 
     def post(self, request):
-        data_inicio_str = request.data.get("data_inicio", "")
-        dias = request.data.get("dias")
-        dias_uteis = request.data.get("dias_uteis", True)
-        processo_id = request.data.get("processo")
-
-        if not data_inicio_str or dias in (None, ""):
-            return Response(
-                {"detail": "Informe a data de início e a quantidade de dias."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        try:
-            data_inicio = date.fromisoformat(data_inicio_str)
-            dias = int(dias)
-        except (ValueError, TypeError):
-            return Response(
-                {"detail": "Data de início ou quantidade de dias inválida."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        if dias <= 0:
-            return Response(
-                {"detail": "A quantidade de dias deve ser maior que zero."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        if not isinstance(dias_uteis, bool):
-            return Response({"detail": "Informe dias_uteis como verdadeiro ou falso."}, status=status.HTTP_400_BAD_REQUEST)
+        entrada = CalculoPrazoEntradaSerializer(data=request.data)
+        entrada.is_valid(raise_exception=True)
+        data_inicio = entrada.validated_data["data_inicio"]
+        dias = entrada.validated_data["dias"]
+        dias_uteis = entrada.validated_data["dias_uteis"]
+        processo_id = entrada.validated_data.get("processo")
 
         usuario = get_usuario_from_request(request)
         comarca = ""
@@ -108,7 +82,11 @@ class CalcularPrazoView(APIView):
             comarca = processo.comarca
 
         locais = FeriadosLocais.do_escritorio(usuario.escritorio, comarca=comarca) if usuario else FeriadosLocais()
-        data_final = calcular_prazo(data_inicio, dias, dias_uteis=dias_uteis, locais=locais)
+        try:
+            data_final = calcular_prazo(data_inicio, dias, dias_uteis=dias_uteis, locais=locais)
+        except (OverflowError, ValueError):
+            return Response({"detail": "O prazo excede o intervalo de datas suportado."},
+                            status=status.HTTP_400_BAD_REQUEST)
 
         return Response({
             "data_final": data_final.isoformat(),

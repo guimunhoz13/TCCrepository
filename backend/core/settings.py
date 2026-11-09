@@ -371,6 +371,12 @@ CORS_ALLOWED_ORIGINS.extend(
 
 REST_FRAMEWORK = {
 
+    "DEFAULT_PARSER_CLASSES": (
+        "advocacia.parsers.ObjetoJSONParser",
+        "rest_framework.parsers.FormParser",
+        "rest_framework.parsers.MultiPartParser",
+    ),
+
     "DEFAULT_AUTHENTICATION_CLASSES": (
 
         "advocacia.autenticacao.AutenticacaoContaAtiva",

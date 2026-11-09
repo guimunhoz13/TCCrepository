@@ -24,6 +24,7 @@ from ..models import (
 )
 from ..serializers import (
     EscritorioAdminSerializer,
+    LoginEntradaSerializer,
     RegistroAuditoriaSerializer,
 )
 
@@ -39,8 +40,10 @@ class MasterLoginView(APIView):
 
     def post(self, request):
 
-        email = request.data.get("email", "").strip()
-        senha = request.data.get("senha", "")
+        entrada = LoginEntradaSerializer(data=request.data)
+        entrada.is_valid(raise_exception=True)
+        email = entrada.validated_data["email"]
+        senha = entrada.validated_data["senha"]
 
         if not email or not senha:
             return Response(

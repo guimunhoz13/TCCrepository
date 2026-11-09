@@ -10,7 +10,6 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from ..ia_service import (
-    TAMANHO_MAXIMO_MENSAGEM_IA,
     gerar_resposta_ia,
     montar_contexto_sistema,
 )
@@ -19,6 +18,7 @@ from ..mixins import (
 )
 from ..permissoes import VER, PermissaoPorPerfil
 from ..planos import IA, exigir_recurso
+from ..serializers import PerguntaIAEntradaSerializer
 
 # =========================================================
 # ASSISTENTE IA
@@ -27,14 +27,7 @@ from ..planos import IA, exigir_recurso
 @extend_schema(
     tags=["ia"],
     summary="Perguntar ao assistente de IA",
-    request=inline_serializer("PerguntaIA", {
-        "mensagem": campos.CharField(max_length=4000),
-        "historico": campos.ListField(child=campos.DictField(), required=False),
-        "contexto": inline_serializer("ContextoIA", {
-            "cliente_id": campos.IntegerField(required=False),
-            "processo_id": campos.IntegerField(required=False),
-        }, required=False),
-    }),
+    request=PerguntaIAEntradaSerializer,
     responses={200: inline_serializer("RespostaIA", {"resposta": campos.CharField()}), 503: OpenApiTypes.OBJECT},
 )
 class AssistenteIAView(APIView):
@@ -59,48 +52,13 @@ class AssistenteIAView(APIView):
 
         exigir_recurso(usuario.escritorio, IA)
 
-        mensagem = (request.data.get("mensagem") or "").strip()
-
-        if not mensagem:
-            return Response(
-                {"detail": "Informe uma mensagem."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        if len(mensagem) > TAMANHO_MAXIMO_MENSAGEM_IA:
-            return Response(
-                {
-                    "detail": (
-                        f"A mensagem passou de {TAMANHO_MAXIMO_MENSAGEM_IA} caracteres. "
-                        "Resuma a pergunta ou divida em partes."
-                    )
-                },
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        historico = request.data.get("historico") or []
-        contexto = request.data.get("contexto") or {}
-
+        entrada = PerguntaIAEntradaSerializer(data=request.data)
+        entrada.is_valid(raise_exception=True)
+        mensagem = entrada.validated_data["mensagem"]
+        historico = entrada.validated_data["historico"]
+        contexto = entrada.validated_data["contexto"]
         cliente_id = contexto.get("cliente_id")
         processo_id = contexto.get("processo_id")
-
-        if cliente_id is not None:
-            try:
-                cliente_id = int(cliente_id)
-            except (TypeError, ValueError):
-                return Response(
-                    {"detail": "cliente_id inválido."},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-
-        if processo_id is not None:
-            try:
-                processo_id = int(processo_id)
-            except (TypeError, ValueError):
-                return Response(
-                    {"detail": "processo_id inválido."},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
 
         contexto_sistema = montar_contexto_sistema(
             usuario,

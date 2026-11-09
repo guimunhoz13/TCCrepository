@@ -64,6 +64,50 @@ class AuditoriaIntegridadeContratoTests(_EquipeDoEscritorio, APITestCase):
         self.assertTrue(all(v >= Decimal("0.01") for v in valores), valores)
         self.assertEqual(sum(valores), Decimal("0.06"))
 
+    def test_edicao_nao_pode_desvincular_o_acordo_das_parcelas_emitidas(self):
+        criado = self.client.post("/api/contratos/", self._dados(), format="json")
+        contrato = Contrato.objects.get(pk=criado.data["id"])
+        parcelas_antes = list(contrato.parcelas.values())
+        outro_processo = self._processo(self.escritorio, self.cliente, self.advogado, "AUDIT-OUTRO")
+        for campo, valor in {"valor_total": "200.00", "numero_parcelas": 5,
+                             "forma_pagamento": "avista", "processo": outro_processo.pk}.items():
+            with self.subTest(campo=campo):
+                resposta = self.client.patch(f"/api/contratos/{contrato.pk}/", {campo: valor}, format="json")
+                self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST, resposta.data)
+                self.assertIn(campo, resposta.data)
+        contrato.refresh_from_db()
+        self.assertEqual(contrato.valor_total, Decimal("100.00"))
+        self.assertEqual(contrato.processo_id, self.processo.pk)
+        self.assertEqual(list(contrato.parcelas.values()), parcelas_antes)
+
+    def test_edicao_de_observacoes_e_reenvio_do_acordo_original_preservam_as_parcelas(self):
+        criado = self.client.post("/api/contratos/", self._dados(), format="json")
+        contrato = Contrato.objects.get(pk=criado.data["id"])
+        ids = list(contrato.parcelas.values_list("pk", flat=True))
+        resposta = self.client.patch(f"/api/contratos/{contrato.pk}/",
+                                    {**self._dados(), "observacoes": "Conferência documental."}, format="json")
+        self.assertEqual(resposta.status_code, status.HTTP_200_OK, resposta.data)
+        self.assertEqual(resposta.data["observacoes"], "Conferência documental.")
+        self.assertEqual(list(contrato.parcelas.values_list("pk", flat=True)), ids)
+
+    def test_estorno_da_parcela_limpa_data_de_pagamento_e_registra_a_trilha(self):
+        from ..models import RegistroAuditoria
+
+        criado = self.client.post("/api/contratos/", self._dados(), format="json")
+        parcela = Parcela.objects.get(pk=criado.data["parcelas"][0]["id"])
+        url = f"/api/parcelas/{parcela.pk}/"
+        pago = self.client.patch(url, {"status": "pago"}, format="json")
+        self.assertIsNotNone(pago.data["pago_em"])
+        repetido = self.client.patch(url, {"status": "pago"}, format="json")
+        self.assertEqual(repetido.data["pago_em"], pago.data["pago_em"])
+        estornado = self.client.patch(url, {"status": "pendente"}, format="json")
+        self.assertEqual(estornado.status_code, status.HTTP_200_OK)
+        self.assertIsNone(estornado.data["pago_em"])
+        eventos = RegistroAuditoria.objects.filter(modelo="Parcela", objeto_id=parcela.pk, acao="edicao")
+        self.assertEqual(eventos.count(), 3)
+        alteracoes = list(eventos.values_list("alteracoes", flat=True))
+        self.assertTrue(any(any(a["campo"] == "status" and a["novo"] == "pendente" for a in e) for e in alteracoes))
+
 
 class ContratoHonorarioAPITestCase(APITestCase):
     """Testa a criação de contratos e a geração automática de parcelas."""

@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useCallback, useEffect, useState } from "react";
+import { Fragment, useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useRecurso } from "@/hooks/useRecurso";
 import { useConfirmacao } from "@/contexts/ConfirmacaoContext";
@@ -114,10 +114,43 @@ export default function ConfigPanel() {
   const [activeTab, setActiveTab] = useState("conta");
   const [erro, setErro] = useState("");
   const [sucesso, setSucesso] = useState("");
+  const painelRef = useRef(null);
   const tentarFechar = useCallback(() => {
     const evento = new CustomEvent("lexnexo:tentar-fechar-painel", { cancelable: true });
     if (window.dispatchEvent(evento)) closePanel();
   }, [closePanel]);
+
+  useEffect(() => {
+    if (activePanel !== PANELS.CONFIG) return;
+    const anterior = document.activeElement;
+    const quadro = requestAnimationFrame(() => painelRef.current?.focus({ preventScroll: true }));
+    function aoTeclar(evento) {
+      const painel = painelRef.current;
+      if (!painel?.contains(evento.target)) return;
+      if (evento.key === "Escape") {
+        tentarFechar();
+      } else if (evento.key === "Tab") {
+        const controles = [...painel.querySelectorAll(
+          'button:not(:disabled), a[href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])'
+        )].filter((controle) => controle.getClientRects().length > 0);
+        const primeiro = controles[0];
+        const ultimo = controles.at(-1);
+        if (evento.shiftKey && (document.activeElement === primeiro || document.activeElement === painel)) {
+          evento.preventDefault();
+          ultimo?.focus();
+        } else if (!evento.shiftKey && document.activeElement === ultimo) {
+          evento.preventDefault();
+          primeiro?.focus();
+        }
+      }
+    }
+    window.addEventListener("keydown", aoTeclar);
+    return () => {
+      cancelAnimationFrame(quadro);
+      window.removeEventListener("keydown", aoTeclar);
+      if (anterior?.isConnected) anterior.focus({ preventScroll: true });
+    };
+  }, [activePanel, tentarFechar]);
 
   const recurso = useRecurso(getConfiguracoes, [], { ativo: activePanel === PANELS.CONFIG });
   const carregando = recurso.carregando;
@@ -156,8 +189,10 @@ export default function ConfigPanel() {
   return (
     <div className="overlay-backdrop" onClick={tentarFechar}>
       <div
+        ref={painelRef}
         className="overlay-panel"
         role="dialog"
+        tabIndex={-1}
         aria-modal="true"
         aria-labelledby="config-panel-title"
         onClick={(e) => e.stopPropagation()}

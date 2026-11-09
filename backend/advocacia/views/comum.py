@@ -10,6 +10,15 @@ from rest_framework.exceptions import ValidationError
 # RENOVAÇÃO DE TOKEN
 # =========================================================
 
+def _texto_da_entrada(dados, nome, padrao="", *, tamanho_maximo=None):
+    """Valida campos textuais das operações customizadas antes do uso."""
+    valor = dados.get(nome, padrao)
+    if not isinstance(valor, str):
+        raise ValidationError({nome: ["Informe um texto válido."]})
+    if tamanho_maximo is not None and len(valor) > tamanho_maximo:
+        raise ValidationError({nome: [f"Use no máximo {tamanho_maximo} caracteres."]})
+    return valor
+
 def _data_do_filtro(params, nome):
     """Lê um parâmetro de data da query string, recusando lixo com 400.
 
@@ -33,7 +42,10 @@ def _id_do_filtro(params, nome):
     if not valor:
         return None
     try:
-        return int(valor)
+        identificador = int(valor)
+        if identificador <= 0 or identificador > 2**63 - 1:
+            raise ValueError
+        return identificador
     except (TypeError, ValueError):
         raise ValidationError({nome: ["Informe um identificador numérico."]})
 

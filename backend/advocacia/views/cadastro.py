@@ -25,6 +25,8 @@ from ..serializers import (
 logger = logging.getLogger(__name__)
 
 
+from .comum import _texto_da_entrada
+
 # =========================================================
 # REGISTRO CENTRAL DO ESCRITÓRIO
 # =========================================================
@@ -98,7 +100,7 @@ class ConfirmarEmailView(APIView):
     throttle_scope = "sensivel"
 
     def post(self, request):
-        token_valor = request.data.get("token", "").strip()
+        token_valor = _texto_da_entrada(request.data, "token").strip()
 
         if not token_valor:
             return Response({"detail": "Token inválido."}, status=status.HTTP_400_BAD_REQUEST)

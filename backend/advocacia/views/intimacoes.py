@@ -27,6 +27,8 @@ from ..serializers import (
     ConferenciaPrazoSerializer,
 )
 
+from .comum import _id_do_filtro
+
 # =========================================================
 # INTIMAÇÕES (DJEN)
 # =========================================================
@@ -54,7 +56,7 @@ class IntimacaoViewSet(EscritorioScopedMixin, viewsets.ModelViewSet):
         lida = self.request.query_params.get("lida")
         if lida in ("true", "false"):
             queryset = queryset.filter(lida=(lida == "true"))
-        processo = self.request.query_params.get("processo")
+        processo = _id_do_filtro(self.request.query_params, "processo")
         if processo:
             queryset = queryset.filter(processo_id=processo)
         if self.request.query_params.get("conferencia") == "pendente":
