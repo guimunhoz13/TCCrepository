@@ -1,0 +1,59 @@
+{
+  "data": "2026-11-09",
+  "ambiente": "APIClient Django + PostgreSQL loopback, sem rede HTTP nem simulação de concorrência",
+  "maquina": {
+    "sistema": "Linux-7.2.9-1-cachyos-x86_64-with-glibc2.44",
+    "cpu_logicas": 12
+  },
+  "limites": "Medição leve local de 12 amostras aquecidas por endpoint; p95 amostral calculado por nearest-rank (maior entre 12). Não é carga, SLA ou latência de produção.",
+  "medidas": [
+    {
+      "endpoint": "/api/dashboard/",
+      "amostras": 12,
+      "mediana_ms": 25.65,
+      "p95_amostral_ms": 34.46,
+      "consultas_sql_min": 24,
+      "consultas_sql_max": 24
+    },
+    {
+      "endpoint": "/api/clientes/",
+      "amostras": 12,
+      "mediana_ms": 3.21,
+      "p95_amostral_ms": 3.88,
+      "consultas_sql_min": 3,
+      "consultas_sql_max": 3
+    },
+    {
+      "endpoint": "/api/processos/",
+      "amostras": 12,
+      "mediana_ms": 5.58,
+      "p95_amostral_ms": 6.1,
+      "consultas_sql_min": 4,
+      "consultas_sql_max": 4
+    },
+    {
+      "endpoint": "/api/agenda/",
+      "amostras": 12,
+      "mediana_ms": 4.69,
+      "p95_amostral_ms": 8.9,
+      "consultas_sql_min": 3,
+      "consultas_sql_max": 3
+    },
+    {
+      "endpoint": "/api/contratos/",
+      "amostras": 12,
+      "mediana_ms": 5.0,
+      "p95_amostral_ms": 6.43,
+      "consultas_sql_min": 4,
+      "consultas_sql_max": 4
+    },
+    {
+      "endpoint": "/api/tarefas/",
+      "amostras": 12,
+      "mediana_ms": 5.99,
+      "p95_amostral_ms": 6.45,
+      "consultas_sql_min": 3,
+      "consultas_sql_max": 3
+    }
+  ]
+}

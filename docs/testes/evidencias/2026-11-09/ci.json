@@ -1,0 +1,20 @@
+{
+  "data": "2026-11-09",
+  "commit": "98ff6bfc57aa5c819207ddb63edfd7540b687b5b",
+  "run_id": 42616807545,
+  "url": "https://github.com/guimunhoz13/TCCrepository/actions/runs/42616807545",
+  "resultado": "success",
+  "jobs": {
+    "Backend (Django)": "success",
+    "Frontend (Next.js)": "success",
+    "E2E (Playwright)": "success",
+    "Imagem Docker Compose (HTTP)": "success"
+  },
+  "contagens_extraidas_do_log": {
+    "Django": 550,
+    "Jest": 290,
+    "Playwright": 44,
+    "total": 884
+  },
+  "cobertura": "A cobertura consolidada foi coletada localmente; não é uma medição de cobertura do CI."
+}

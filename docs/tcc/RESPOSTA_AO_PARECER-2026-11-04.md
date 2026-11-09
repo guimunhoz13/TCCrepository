@@ -1,5 +1,26 @@
 # Resposta técnica ao parecer de revisão
 
+<!-- auditoria-2026-11-09:inicio -->
+
+## Complemento final de 09/11/2026
+
+Grupo confirmado **TDS-2026-038**. A entrega vigente é o relatório v1.12 e o manual
+revisto em 09/11. C1, C2, C3, implantação e sequências permanecem separados;
+OpenAI é nomeada; segregação por escritório e contingências são explicitadas.
+As métricas únicas registram 885 casos na referência final e cobertura de linhas
+91,85%/38,03%. Sete achados adicionais da auditoria foram corrigidos e a aplicação
+foi publicada, preservando dados e anexos. [Validação](../testes/RELATORIO_VALIDACAO.md).
+
+O vídeo obrigatório **ainda será gravado pelos integrantes**. O roteiro foi
+atualizado sem alterar 3/3/6/5/3 minutos: Guilherme frontend/demonstração; João
+backend, APIs e banco. Não se declara que só a gravação resta para qualidade
+integral do produto: cobertura frontend, alertas de ferramentas, integrações e
+verificações operacionais conservam suas ressalvas. A pontuação acadêmica é da banca.
+
+As seções datadas anteriores são histórico e não substituem esta referência.
+
+<!-- auditoria-2026-11-09:fim -->
+
 Consolidação em 04/11/2026. O parecer recebido informa análise em 03/11 e
 arquivo `TDS-2026-038_RT_v1.pdf`. Não foi disponibilizado esse PDF nesta
 mensagem; a comparação abaixo usa o texto fornecido pelo proprietário e os

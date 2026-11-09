@@ -1,0 +1,998 @@
+[
+  {
+    "metodo": "GET",
+    "endpoint": "/api/advogados/",
+    "protegido": true,
+    "operationId": "advogados_list"
+  },
+  {
+    "metodo": "POST",
+    "endpoint": "/api/advogados/",
+    "protegido": true,
+    "operationId": "advogados_create"
+  },
+  {
+    "metodo": "GET",
+    "endpoint": "/api/advogados/{id}/",
+    "protegido": true,
+    "operationId": "advogados_retrieve"
+  },
+  {
+    "metodo": "PUT",
+    "endpoint": "/api/advogados/{id}/",
+    "protegido": true,
+    "operationId": "advogados_update"
+  },
+  {
+    "metodo": "PATCH",
+    "endpoint": "/api/advogados/{id}/",
+    "protegido": true,
+    "operationId": "advogados_partial_update"
+  },
+  {
+    "metodo": "DELETE",
+    "endpoint": "/api/advogados/{id}/",
+    "protegido": true,
+    "operationId": "advogados_destroy"
+  },
+  {
+    "metodo": "POST",
+    "endpoint": "/api/advogados/registrar/",
+    "protegido": true,
+    "operationId": "advogados_registrar_create"
+  },
+  {
+    "metodo": "GET",
+    "endpoint": "/api/agenda/",
+    "protegido": true,
+    "operationId": "agenda_list"
+  },
+  {
+    "metodo": "POST",
+    "endpoint": "/api/agenda/",
+    "protegido": true,
+    "operationId": "agenda_create"
+  },
+  {
+    "metodo": "GET",
+    "endpoint": "/api/agenda/{id}/",
+    "protegido": true,
+    "operationId": "agenda_retrieve"
+  },
+  {
+    "metodo": "PUT",
+    "endpoint": "/api/agenda/{id}/",
+    "protegido": true,
+    "operationId": "agenda_update"
+  },
+  {
+    "metodo": "PATCH",
+    "endpoint": "/api/agenda/{id}/",
+    "protegido": true,
+    "operationId": "agenda_partial_update"
+  },
+  {
+    "metodo": "DELETE",
+    "endpoint": "/api/agenda/{id}/",
+    "protegido": true,
+    "operationId": "agenda_destroy"
+  },
+  {
+    "metodo": "GET",
+    "endpoint": "/api/agenda/assinatura/",
+    "protegido": true,
+    "operationId": "agenda_assinatura_retrieve"
+  },
+  {
+    "metodo": "POST",
+    "endpoint": "/api/agenda/assinatura/",
+    "protegido": true,
+    "operationId": "agenda_assinatura_create"
+  },
+  {
+    "metodo": "DELETE",
+    "endpoint": "/api/agenda/assinatura/",
+    "protegido": true,
+    "operationId": "agenda_assinatura_destroy"
+  },
+  {
+    "metodo": "POST",
+    "endpoint": "/api/agenda/calcular-prazo/",
+    "protegido": true,
+    "operationId": "agenda_calcular_prazo_create"
+  },
+  {
+    "metodo": "GET",
+    "endpoint": "/api/agenda/exportar-ics/",
+    "protegido": true,
+    "operationId": "agenda_exportar_ics_retrieve"
+  },
+  {
+    "metodo": "GET",
+    "endpoint": "/api/agenda/feed/{token}.ics",
+    "protegido": false,
+    "operationId": "agenda_feed_.ics_retrieve"
+  },
+  {
+    "metodo": "GET",
+    "endpoint": "/api/agenda/feriados/",
+    "protegido": true,
+    "operationId": "agenda_feriados_retrieve"
+  },
+  {
+    "metodo": "GET",
+    "endpoint": "/api/apontamentos/",
+    "protegido": true,
+    "operationId": "apontamentos_list"
+  },
+  {
+    "metodo": "POST",
+    "endpoint": "/api/apontamentos/",
+    "protegido": true,
+    "operationId": "apontamentos_create"
+  },
+  {
+    "metodo": "GET",
+    "endpoint": "/api/apontamentos/{id}/",
+    "protegido": true,
+    "operationId": "apontamentos_retrieve"
+  },
+  {
+    "metodo": "PUT",
+    "endpoint": "/api/apontamentos/{id}/",
+    "protegido": true,
+    "operationId": "apontamentos_update"
+  },
+  {
+    "metodo": "PATCH",
+    "endpoint": "/api/apontamentos/{id}/",
+    "protegido": true,
+    "operationId": "apontamentos_partial_update"
+  },
+  {
+    "metodo": "DELETE",
+    "endpoint": "/api/apontamentos/{id}/",
+    "protegido": true,
+    "operationId": "apontamentos_destroy"
+  },
+  {
+    "metodo": "POST",
+    "endpoint": "/api/assistente-ia/",
+    "protegido": true,
+    "operationId": "assistente_ia_create"
+  },
+  {
+    "metodo": "POST",
+    "endpoint": "/api/atividade/",
+    "protegido": true,
+    "operationId": "atividade_create"
+  },
+  {
+    "metodo": "GET",
+    "endpoint": "/api/auditoria/",
+    "protegido": true,
+    "operationId": "auditoria_list"
+  },
+  {
+    "metodo": "GET",
+    "endpoint": "/api/auditoria/{id}/",
+    "protegido": true,
+    "operationId": "auditoria_retrieve"
+  },
+  {
+    "metodo": "GET",
+    "endpoint": "/api/busca/",
+    "protegido": true,
+    "operationId": "busca_retrieve"
+  },
+  {
+    "metodo": "GET",
+    "endpoint": "/api/clientes/",
+    "protegido": true,
+    "operationId": "clientes_list"
+  },
+  {
+    "metodo": "POST",
+    "endpoint": "/api/clientes/",
+    "protegido": true,
+    "operationId": "clientes_create"
+  },
+  {
+    "metodo": "GET",
+    "endpoint": "/api/clientes/{id}/",
+    "protegido": true,
+    "operationId": "clientes_retrieve"
+  },
+  {
+    "metodo": "PUT",
+    "endpoint": "/api/clientes/{id}/",
+    "protegido": true,
+    "operationId": "clientes_update"
+  },
+  {
+    "metodo": "PATCH",
+    "endpoint": "/api/clientes/{id}/",
+    "protegido": true,
+    "operationId": "clientes_partial_update"
+  },
+  {
+    "metodo": "DELETE",
+    "endpoint": "/api/clientes/{id}/",
+    "protegido": true,
+    "operationId": "clientes_destroy"
+  },
+  {
+    "metodo": "POST",
+    "endpoint": "/api/clientes/{id}/anonimizar/",
+    "protegido": true,
+    "operationId": "clientes_anonimizar_create"
+  },
+  {
+    "metodo": "GET",
+    "endpoint": "/api/clientes/{id}/documento-identidade/",
+    "protegido": true,
+    "operationId": "clientes_documento_identidade_retrieve"
+  },
+  {
+    "metodo": "GET",
+    "endpoint": "/api/clientes/{id}/exportar-dados/",
+    "protegido": true,
+    "operationId": "clientes_exportar_dados_retrieve"
+  },
+  {
+    "metodo": "GET",
+    "endpoint": "/api/configuracoes/",
+    "protegido": true,
+    "operationId": "configuracoes_retrieve"
+  },
+  {
+    "metodo": "POST",
+    "endpoint": "/api/configuracoes/2fa/",
+    "protegido": true,
+    "operationId": "configuracoes_2fa_create"
+  },
+  {
+    "metodo": "PATCH",
+    "endpoint": "/api/configuracoes/conta/",
+    "protegido": true,
+    "operationId": "configuracoes_conta_partial_update"
+  },
+  {
+    "metodo": "POST",
+    "endpoint": "/api/configuracoes/desativar-escritorio/",
+    "protegido": true,
+    "operationId": "configuracoes_desativar_escritorio_create"
+  },
+  {
+    "metodo": "PATCH",
+    "endpoint": "/api/configuracoes/escritorio/",
+    "protegido": true,
+    "operationId": "configuracoes_escritorio_partial_update"
+  },
+  {
+    "metodo": "GET",
+    "endpoint": "/api/configuracoes/exportar/clientes/",
+    "protegido": true,
+    "operationId": "configuracoes_exportar_clientes_retrieve"
+  },
+  {
+    "metodo": "GET",
+    "endpoint": "/api/configuracoes/exportar/processos/",
+    "protegido": true,
+    "operationId": "configuracoes_exportar_processos_retrieve"
+  },
+  {
+    "metodo": "PATCH",
+    "endpoint": "/api/configuracoes/preferencias/",
+    "protegido": true,
+    "operationId": "configuracoes_preferencias_partial_update"
+  },
+  {
+    "metodo": "GET",
+    "endpoint": "/api/configuracoes/relatorio/cliente/{cliente_id}/",
+    "protegido": true,
+    "operationId": "configuracoes_relatorio_cliente_retrieve"
+  },
+  {
+    "metodo": "POST",
+    "endpoint": "/api/configuracoes/relatorio/cliente/{cliente_id}/email/",
+    "protegido": true,
+    "operationId": "configuracoes_relatorio_cliente_email_create"
+  },
+  {
+    "metodo": "GET",
+    "endpoint": "/api/configuracoes/relatorio/processo/{processo_id}/",
+    "protegido": true,
+    "operationId": "configuracoes_relatorio_processo_retrieve"
+  },
+  {
+    "metodo": "POST",
+    "endpoint": "/api/configuracoes/relatorio/processo/{processo_id}/email/",
+    "protegido": true,
+    "operationId": "configuracoes_relatorio_processo_email_create"
+  },
+  {
+    "metodo": "POST",
+    "endpoint": "/api/configuracoes/senha/",
+    "protegido": true,
+    "operationId": "configuracoes_senha_create"
+  },
+  {
+    "metodo": "GET",
+    "endpoint": "/api/contratos/",
+    "protegido": true,
+    "operationId": "contratos_list"
+  },
+  {
+    "metodo": "POST",
+    "endpoint": "/api/contratos/",
+    "protegido": true,
+    "operationId": "contratos_create"
+  },
+  {
+    "metodo": "GET",
+    "endpoint": "/api/contratos/{id}/",
+    "protegido": true,
+    "operationId": "contratos_retrieve"
+  },
+  {
+    "metodo": "PUT",
+    "endpoint": "/api/contratos/{id}/",
+    "protegido": true,
+    "operationId": "contratos_update"
+  },
+  {
+    "metodo": "PATCH",
+    "endpoint": "/api/contratos/{id}/",
+    "protegido": true,
+    "operationId": "contratos_partial_update"
+  },
+  {
+    "metodo": "DELETE",
+    "endpoint": "/api/contratos/{id}/",
+    "protegido": true,
+    "operationId": "contratos_destroy"
+  },
+  {
+    "metodo": "GET",
+    "endpoint": "/api/dashboard/",
+    "protegido": true,
+    "operationId": "dashboard_retrieve"
+  },
+  {
+    "metodo": "GET",
+    "endpoint": "/api/dashboard/stats/",
+    "protegido": true,
+    "operationId": "dashboard_stats_retrieve"
+  },
+  {
+    "metodo": "GET",
+    "endpoint": "/api/despesas/",
+    "protegido": true,
+    "operationId": "despesas_list"
+  },
+  {
+    "metodo": "POST",
+    "endpoint": "/api/despesas/",
+    "protegido": true,
+    "operationId": "despesas_create"
+  },
+  {
+    "metodo": "GET",
+    "endpoint": "/api/despesas/{id}/",
+    "protegido": true,
+    "operationId": "despesas_retrieve"
+  },
+  {
+    "metodo": "PUT",
+    "endpoint": "/api/despesas/{id}/",
+    "protegido": true,
+    "operationId": "despesas_update"
+  },
+  {
+    "metodo": "PATCH",
+    "endpoint": "/api/despesas/{id}/",
+    "protegido": true,
+    "operationId": "despesas_partial_update"
+  },
+  {
+    "metodo": "DELETE",
+    "endpoint": "/api/despesas/{id}/",
+    "protegido": true,
+    "operationId": "despesas_destroy"
+  },
+  {
+    "metodo": "GET",
+    "endpoint": "/api/documentos/",
+    "protegido": true,
+    "operationId": "documentos_list"
+  },
+  {
+    "metodo": "POST",
+    "endpoint": "/api/documentos/",
+    "protegido": true,
+    "operationId": "documentos_create"
+  },
+  {
+    "metodo": "GET",
+    "endpoint": "/api/documentos/{id}/",
+    "protegido": true,
+    "operationId": "documentos_retrieve"
+  },
+  {
+    "metodo": "PUT",
+    "endpoint": "/api/documentos/{id}/",
+    "protegido": true,
+    "operationId": "documentos_update"
+  },
+  {
+    "metodo": "PATCH",
+    "endpoint": "/api/documentos/{id}/",
+    "protegido": true,
+    "operationId": "documentos_partial_update"
+  },
+  {
+    "metodo": "DELETE",
+    "endpoint": "/api/documentos/{id}/",
+    "protegido": true,
+    "operationId": "documentos_destroy"
+  },
+  {
+    "metodo": "GET",
+    "endpoint": "/api/documentos/{id}/download/",
+    "protegido": true,
+    "operationId": "documentos_download_retrieve"
+  },
+  {
+    "metodo": "POST",
+    "endpoint": "/api/equipe/registrar/",
+    "protegido": true,
+    "operationId": "equipe_registrar_create"
+  },
+  {
+    "metodo": "GET",
+    "endpoint": "/api/escritorios/",
+    "protegido": true,
+    "operationId": "escritorios_list"
+  },
+  {
+    "metodo": "GET",
+    "endpoint": "/api/escritorios/{id}/",
+    "protegido": true,
+    "operationId": "escritorios_retrieve"
+  },
+  {
+    "metodo": "POST",
+    "endpoint": "/api/escritorios/confirmar-email/",
+    "protegido": false,
+    "operationId": "escritorios_confirmar_email_create"
+  },
+  {
+    "metodo": "POST",
+    "endpoint": "/api/escritorios/registrar/",
+    "protegido": false,
+    "operationId": "escritorios_registrar_create"
+  },
+  {
+    "metodo": "GET",
+    "endpoint": "/api/feriados-locais/",
+    "protegido": true,
+    "operationId": "feriados_locais_list"
+  },
+  {
+    "metodo": "POST",
+    "endpoint": "/api/feriados-locais/",
+    "protegido": true,
+    "operationId": "feriados_locais_create"
+  },
+  {
+    "metodo": "GET",
+    "endpoint": "/api/feriados-locais/{id}/",
+    "protegido": true,
+    "operationId": "feriados_locais_retrieve"
+  },
+  {
+    "metodo": "PUT",
+    "endpoint": "/api/feriados-locais/{id}/",
+    "protegido": true,
+    "operationId": "feriados_locais_update"
+  },
+  {
+    "metodo": "PATCH",
+    "endpoint": "/api/feriados-locais/{id}/",
+    "protegido": true,
+    "operationId": "feriados_locais_partial_update"
+  },
+  {
+    "metodo": "DELETE",
+    "endpoint": "/api/feriados-locais/{id}/",
+    "protegido": true,
+    "operationId": "feriados_locais_destroy"
+  },
+  {
+    "metodo": "GET",
+    "endpoint": "/api/fotos/{arquivo}",
+    "protegido": true,
+    "operationId": "fotos_retrieve"
+  },
+  {
+    "metodo": "GET",
+    "endpoint": "/api/intimacoes/",
+    "protegido": true,
+    "operationId": "intimacoes_list"
+  },
+  {
+    "metodo": "POST",
+    "endpoint": "/api/intimacoes/",
+    "protegido": true,
+    "operationId": "intimacoes_create"
+  },
+  {
+    "metodo": "GET",
+    "endpoint": "/api/intimacoes/{id}/",
+    "protegido": true,
+    "operationId": "intimacoes_retrieve"
+  },
+  {
+    "metodo": "PATCH",
+    "endpoint": "/api/intimacoes/{id}/",
+    "protegido": true,
+    "operationId": "intimacoes_partial_update"
+  },
+  {
+    "metodo": "POST",
+    "endpoint": "/api/intimacoes/{id}/conferir/",
+    "protegido": true,
+    "operationId": "intimacoes_conferir_create"
+  },
+  {
+    "metodo": "POST",
+    "endpoint": "/api/intimacoes/buscar/",
+    "protegido": true,
+    "operationId": "intimacoes_buscar_create"
+  },
+  {
+    "metodo": "POST",
+    "endpoint": "/api/login/",
+    "protegido": false,
+    "operationId": "login_create"
+  },
+  {
+    "metodo": "POST",
+    "endpoint": "/api/login/2fa/",
+    "protegido": false,
+    "operationId": "login_2fa_create"
+  },
+  {
+    "metodo": "POST",
+    "endpoint": "/api/login/esqueci-senha/",
+    "protegido": false,
+    "operationId": "login_esqueci_senha_create"
+  },
+  {
+    "metodo": "POST",
+    "endpoint": "/api/login/redefinir-senha/",
+    "protegido": false,
+    "operationId": "login_redefinir_senha_create"
+  },
+  {
+    "metodo": "POST",
+    "endpoint": "/api/logout/",
+    "protegido": false,
+    "operationId": "logout_create"
+  },
+  {
+    "metodo": "GET",
+    "endpoint": "/api/master/auditoria/",
+    "protegido": true,
+    "operationId": "master_auditoria_list"
+  },
+  {
+    "metodo": "GET",
+    "endpoint": "/api/master/auditoria/{id}/",
+    "protegido": true,
+    "operationId": "master_auditoria_retrieve"
+  },
+  {
+    "metodo": "GET",
+    "endpoint": "/api/master/escritorios/",
+    "protegido": true,
+    "operationId": "master_escritorios_list"
+  },
+  {
+    "metodo": "POST",
+    "endpoint": "/api/master/escritorios/",
+    "protegido": true,
+    "operationId": "master_escritorios_create"
+  },
+  {
+    "metodo": "GET",
+    "endpoint": "/api/master/escritorios/{id}/",
+    "protegido": true,
+    "operationId": "master_escritorios_retrieve"
+  },
+  {
+    "metodo": "PUT",
+    "endpoint": "/api/master/escritorios/{id}/",
+    "protegido": true,
+    "operationId": "master_escritorios_update"
+  },
+  {
+    "metodo": "PATCH",
+    "endpoint": "/api/master/escritorios/{id}/",
+    "protegido": true,
+    "operationId": "master_escritorios_partial_update"
+  },
+  {
+    "metodo": "DELETE",
+    "endpoint": "/api/master/escritorios/{id}/",
+    "protegido": true,
+    "operationId": "master_escritorios_destroy"
+  },
+  {
+    "metodo": "POST",
+    "endpoint": "/api/master/login/",
+    "protegido": false,
+    "operationId": "master_login_create"
+  },
+  {
+    "metodo": "GET",
+    "endpoint": "/api/master/stats/",
+    "protegido": true,
+    "operationId": "master_stats_retrieve"
+  },
+  {
+    "metodo": "GET",
+    "endpoint": "/api/modelos-documento/",
+    "protegido": true,
+    "operationId": "modelos_documento_list"
+  },
+  {
+    "metodo": "POST",
+    "endpoint": "/api/modelos-documento/",
+    "protegido": true,
+    "operationId": "modelos_documento_create"
+  },
+  {
+    "metodo": "GET",
+    "endpoint": "/api/modelos-documento/{id}/",
+    "protegido": true,
+    "operationId": "modelos_documento_retrieve"
+  },
+  {
+    "metodo": "PUT",
+    "endpoint": "/api/modelos-documento/{id}/",
+    "protegido": true,
+    "operationId": "modelos_documento_update"
+  },
+  {
+    "metodo": "PATCH",
+    "endpoint": "/api/modelos-documento/{id}/",
+    "protegido": true,
+    "operationId": "modelos_documento_partial_update"
+  },
+  {
+    "metodo": "DELETE",
+    "endpoint": "/api/modelos-documento/{id}/",
+    "protegido": true,
+    "operationId": "modelos_documento_destroy"
+  },
+  {
+    "metodo": "POST",
+    "endpoint": "/api/modelos-documento/{id}/gerar/",
+    "protegido": true,
+    "operationId": "modelos_documento_gerar_create"
+  },
+  {
+    "metodo": "GET",
+    "endpoint": "/api/modelos-documento/variaveis/",
+    "protegido": true,
+    "operationId": "modelos_documento_variaveis_retrieve"
+  },
+  {
+    "metodo": "GET",
+    "endpoint": "/api/movimentacoes/",
+    "protegido": true,
+    "operationId": "movimentacoes_list"
+  },
+  {
+    "metodo": "POST",
+    "endpoint": "/api/movimentacoes/",
+    "protegido": true,
+    "operationId": "movimentacoes_create"
+  },
+  {
+    "metodo": "GET",
+    "endpoint": "/api/movimentacoes/{id}/",
+    "protegido": true,
+    "operationId": "movimentacoes_retrieve"
+  },
+  {
+    "metodo": "PUT",
+    "endpoint": "/api/movimentacoes/{id}/",
+    "protegido": true,
+    "operationId": "movimentacoes_update"
+  },
+  {
+    "metodo": "PATCH",
+    "endpoint": "/api/movimentacoes/{id}/",
+    "protegido": true,
+    "operationId": "movimentacoes_partial_update"
+  },
+  {
+    "metodo": "DELETE",
+    "endpoint": "/api/movimentacoes/{id}/",
+    "protegido": true,
+    "operationId": "movimentacoes_destroy"
+  },
+  {
+    "metodo": "GET",
+    "endpoint": "/api/noticias/",
+    "protegido": true,
+    "operationId": "noticias_retrieve"
+  },
+  {
+    "metodo": "GET",
+    "endpoint": "/api/parcelas/",
+    "protegido": true,
+    "operationId": "parcelas_list"
+  },
+  {
+    "metodo": "GET",
+    "endpoint": "/api/parcelas/{id}/",
+    "protegido": true,
+    "operationId": "parcelas_retrieve"
+  },
+  {
+    "metodo": "PATCH",
+    "endpoint": "/api/parcelas/{id}/",
+    "protegido": true,
+    "operationId": "parcelas_partial_update"
+  },
+  {
+    "metodo": "GET",
+    "endpoint": "/api/parcelas/{id}/pix/",
+    "protegido": true,
+    "operationId": "parcelas_pix_retrieve"
+  },
+  {
+    "metodo": "PATCH",
+    "endpoint": "/api/parcelas/{id}/simular-pix/",
+    "protegido": true,
+    "operationId": "parcelas_simular_pix_partial_update"
+  },
+  {
+    "metodo": "GET",
+    "endpoint": "/api/plano/",
+    "protegido": true,
+    "operationId": "plano_retrieve"
+  },
+  {
+    "metodo": "GET",
+    "endpoint": "/api/plano/pix-teste/",
+    "protegido": true,
+    "operationId": "plano_pix_teste_retrieve"
+  },
+  {
+    "metodo": "PATCH",
+    "endpoint": "/api/plano/pix-teste/",
+    "protegido": true,
+    "operationId": "plano_pix_teste_partial_update"
+  },
+  {
+    "metodo": "GET",
+    "endpoint": "/api/planos/",
+    "protegido": false,
+    "operationId": "planos_retrieve"
+  },
+  {
+    "metodo": "GET",
+    "endpoint": "/api/processos/",
+    "protegido": true,
+    "operationId": "processos_list"
+  },
+  {
+    "metodo": "POST",
+    "endpoint": "/api/processos/",
+    "protegido": true,
+    "operationId": "processos_create"
+  },
+  {
+    "metodo": "GET",
+    "endpoint": "/api/processos/{id}/",
+    "protegido": true,
+    "operationId": "processos_retrieve"
+  },
+  {
+    "metodo": "PUT",
+    "endpoint": "/api/processos/{id}/",
+    "protegido": true,
+    "operationId": "processos_update"
+  },
+  {
+    "metodo": "PATCH",
+    "endpoint": "/api/processos/{id}/",
+    "protegido": true,
+    "operationId": "processos_partial_update"
+  },
+  {
+    "metodo": "DELETE",
+    "endpoint": "/api/processos/{id}/",
+    "protegido": true,
+    "operationId": "processos_destroy"
+  },
+  {
+    "metodo": "POST",
+    "endpoint": "/api/processos/{id}/consultar-datajud/",
+    "protegido": true,
+    "operationId": "processos_consultar_datajud_create"
+  },
+  {
+    "metodo": "GET",
+    "endpoint": "/api/processos/{id}/ficha/",
+    "protegido": true,
+    "operationId": "processos_ficha_retrieve"
+  },
+  {
+    "metodo": "POST",
+    "endpoint": "/api/processos/{id}/resumo-cliente/",
+    "protegido": true,
+    "operationId": "processos_resumo_cliente_create"
+  },
+  {
+    "metodo": "GET",
+    "endpoint": "/api/push/",
+    "protegido": true,
+    "operationId": "push_retrieve"
+  },
+  {
+    "metodo": "POST",
+    "endpoint": "/api/push/cancelar/",
+    "protegido": true,
+    "operationId": "push_cancelar_create"
+  },
+  {
+    "metodo": "POST",
+    "endpoint": "/api/push/inscrever/",
+    "protegido": true,
+    "operationId": "push_inscrever_create"
+  },
+  {
+    "metodo": "POST",
+    "endpoint": "/api/push/testar/",
+    "protegido": true,
+    "operationId": "push_testar_create"
+  },
+  {
+    "metodo": "GET",
+    "endpoint": "/api/rascunhos/",
+    "protegido": true,
+    "operationId": "rascunhos_list"
+  },
+  {
+    "metodo": "POST",
+    "endpoint": "/api/rascunhos/",
+    "protegido": true,
+    "operationId": "rascunhos_create"
+  },
+  {
+    "metodo": "GET",
+    "endpoint": "/api/rascunhos/{chave}/",
+    "protegido": true,
+    "operationId": "rascunhos_retrieve"
+  },
+  {
+    "metodo": "DELETE",
+    "endpoint": "/api/rascunhos/{chave}/",
+    "protegido": true,
+    "operationId": "rascunhos_destroy"
+  },
+  {
+    "metodo": "GET",
+    "endpoint": "/api/relatorios/tempo-uso/",
+    "protegido": true,
+    "operationId": "relatorios_tempo_uso_retrieve"
+  },
+  {
+    "metodo": "GET",
+    "endpoint": "/api/tarefas/",
+    "protegido": true,
+    "operationId": "tarefas_list"
+  },
+  {
+    "metodo": "POST",
+    "endpoint": "/api/tarefas/",
+    "protegido": true,
+    "operationId": "tarefas_create"
+  },
+  {
+    "metodo": "GET",
+    "endpoint": "/api/tarefas/{id}/",
+    "protegido": true,
+    "operationId": "tarefas_retrieve"
+  },
+  {
+    "metodo": "PUT",
+    "endpoint": "/api/tarefas/{id}/",
+    "protegido": true,
+    "operationId": "tarefas_update"
+  },
+  {
+    "metodo": "PATCH",
+    "endpoint": "/api/tarefas/{id}/",
+    "protegido": true,
+    "operationId": "tarefas_partial_update"
+  },
+  {
+    "metodo": "DELETE",
+    "endpoint": "/api/tarefas/{id}/",
+    "protegido": true,
+    "operationId": "tarefas_destroy"
+  },
+  {
+    "metodo": "POST",
+    "endpoint": "/api/token/refresh/",
+    "protegido": false,
+    "operationId": "token_refresh_create"
+  },
+  {
+    "metodo": "GET",
+    "endpoint": "/api/usuarios/",
+    "protegido": true,
+    "operationId": "usuarios_list"
+  },
+  {
+    "metodo": "POST",
+    "endpoint": "/api/usuarios/",
+    "protegido": true,
+    "operationId": "usuarios_create"
+  },
+  {
+    "metodo": "GET",
+    "endpoint": "/api/usuarios/{id}/",
+    "protegido": true,
+    "operationId": "usuarios_retrieve"
+  },
+  {
+    "metodo": "PUT",
+    "endpoint": "/api/usuarios/{id}/",
+    "protegido": true,
+    "operationId": "usuarios_update"
+  },
+  {
+    "metodo": "PATCH",
+    "endpoint": "/api/usuarios/{id}/",
+    "protegido": true,
+    "operationId": "usuarios_partial_update"
+  },
+  {
+    "metodo": "DELETE",
+    "endpoint": "/api/usuarios/{id}/",
+    "protegido": true,
+    "operationId": "usuarios_destroy"
+  },
+  {
+    "metodo": "POST",
+    "endpoint": "/api/usuarios/{id}/alternar-ativo/",
+    "protegido": true,
+    "operationId": "usuarios_alternar_ativo_create"
+  },
+  {
+    "metodo": "POST",
+    "endpoint": "/api/usuarios/{id}/definir-perfil/",
+    "protegido": true,
+    "operationId": "usuarios_definir_perfil_create"
+  },
+  {
+    "metodo": "GET",
+    "endpoint": "/api/usuarios/{id}/documento-identidade/",
+    "protegido": true,
+    "operationId": "usuarios_documento_identidade_retrieve"
+  },
+  {
+    "metodo": "POST",
+    "endpoint": "/api/usuarios/{id}/redefinir-2fa/",
+    "protegido": true,
+    "operationId": "usuarios_redefinir_2fa_create"
+  }
+]

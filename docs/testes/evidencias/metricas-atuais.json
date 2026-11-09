@@ -1,6 +1,6 @@
 {
-  "atualizado_em": "2026-11-05",
-  "fonte_atual": "2026-11-05/execucoes.json",
+  "atualizado_em": "2026-11-09",
+  "fonte_atual": "2026-11-09/execucoes.json",
   "rodadas": [
     {
       "data": "2026-10-27",
@@ -49,21 +49,45 @@
       "jest": 288,
       "playwright": 39,
       "total": 863
+    },
+    {
+      "data": "2026-11-09",
+      "ambiente": "CI",
+      "django": 550,
+      "jest": 290,
+      "playwright": 44,
+      "total": 884
+    },
+    {
+      "data": "2026-11-09",
+      "ambiente": "local",
+      "django": 550,
+      "jest": 290,
+      "playwright": 45,
+      "total": 885
+    },
+    {
+      "data": "2026-11-09",
+      "ambiente": "CI final",
+      "django": 550,
+      "jest": 290,
+      "playwright": 45,
+      "total": 885
     }
   ],
   "cobertura": {
-    "data": "2026-11-05",
-    "backend_linhas": "91,49%",
-    "backend_ramos": "79,08%",
-    "frontend_linhas": "36,93%",
-    "frontend_ramos": "33,20%"
+    "data": "2026-11-09",
+    "backend_linhas": "91,85%",
+    "backend_ramos": "79,75%",
+    "frontend_linhas": "38,03%",
+    "frontend_ramos": "34,02%"
   },
   "escopo_playwright_atual": {
-    "navegador": 38,
-    "computador": 35,
+    "navegador": 44,
+    "computador": 41,
     "celular": 3,
     "integracao_http_proxy_sem_ui": 1,
-    "total_runner": 39
+    "total_runner": 45
   },
   "grupo": "TDS-2026-038"
 }

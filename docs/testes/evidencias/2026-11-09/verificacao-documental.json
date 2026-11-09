@@ -1,0 +1,23 @@
+{
+  "data": "2026-11-09",
+  "grupo": "TDS-2026-038",
+  "casos_automatizados": 885,
+  "paginas": {
+    "TDS-2026-038_Relatorio_Tecnico_v1.12.pdf": 66,
+    "Guia-de-Funcionalidades-LexNexo.pdf": 66
+  },
+  "roteiro_paginas": 11,
+  "roteiro_cenas": 30,
+  "roteiro_fala_ate": "19:45",
+  "margem_segundos": 15,
+  "divisao": {
+    "Guilherme": "frontend e demonstração",
+    "João": "backend, APIs e banco"
+  },
+  "metricas_comuns_rt_manual": true,
+  "titulos_word_pretos": true,
+  "links_conferidos": true,
+  "video_produzido": false,
+  "aplicacao_publicada": "98ff6bf",
+  "QA_visual": "Páginas renderizadas em PNG; folhas de contato inspecionadas e páginas alteradas conferidas ampliadas. Sumário recalculado. Manual preserva as 61 páginas originais, com nota de revisão na capa e índice complementado. As páginas originais conservam sua data."
+}

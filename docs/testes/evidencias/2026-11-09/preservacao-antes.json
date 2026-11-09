@@ -1,0 +1,131 @@
+{
+  "data": "2026-11-09",
+  "fase": "antes",
+  "operacoes_de_negocio": "Somente leitura",
+  "metodo": "IDs de todos os registros visíveis e SHA-256 dos anexos autenticados; conteúdo e nomes de arquivos reais não são registrados.",
+  "registros": {
+    "clientes": [
+      1,
+      2,
+      3,
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "processos": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "agenda": [
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16
+    ],
+    "tarefas": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8
+    ],
+    "movimentacoes": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "documentos": [
+      2,
+      3,
+      4,
+      5
+    ],
+    "modelos-documento": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "contratos": [
+      2,
+      3,
+      4
+    ],
+    "apontamentos": [
+      1,
+      2,
+      3
+    ],
+    "despesas": [
+      1,
+      2,
+      3
+    ],
+    "feriados-locais": [
+      1,
+      2
+    ],
+    "usuarios": [
+      1,
+      4,
+      5
+    ],
+    "advogados": [
+      2
+    ]
+  },
+  "anexos": [
+    {
+      "recurso": "foto-cliente",
+      "id": 8,
+      "bytes": 572,
+      "sha256": "014d506faf8690226131749429051735443bef410a8aa3d3a963a947fd61d31d",
+      "content_type": "image/webp"
+    },
+    {
+      "recurso": "documentos",
+      "id": 5,
+      "bytes": 1783,
+      "sha256": "920b8a0d26e94c2deecfd12d802274973ae60fe753fefb0f2b307a644f4d6f1c",
+      "content_type": "application/octet-stream"
+    },
+    {
+      "recurso": "documentos",
+      "id": 4,
+      "bytes": 1783,
+      "sha256": "920b8a0d26e94c2deecfd12d802274973ae60fe753fefb0f2b307a644f4d6f1c",
+      "content_type": "application/octet-stream"
+    },
+    {
+      "recurso": "documentos",
+      "id": 3,
+      "bytes": 454692,
+      "sha256": "bc7e62c981d6cd01cb12486f2b5f039b66b0871ff9f0b1369b1a880be5554605",
+      "content_type": "application/octet-stream"
+    },
+    {
+      "recurso": "documentos",
+      "id": 2,
+      "bytes": 1134737,
+      "sha256": "f4c0e04ad4b17e3d8d2286a6beca4da3058f5ead740849b614ddc60bf85c8181",
+      "content_type": "application/octet-stream"
+    }
+  ]
+}

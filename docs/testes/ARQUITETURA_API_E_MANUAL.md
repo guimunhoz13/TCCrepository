@@ -1,5 +1,53 @@
 # Arquitetura, API e operação do LexNexo
 
+<!-- auditoria-2026-11-09:inicio -->
+
+## Auditoria final de 09/11/2026 — TDS-2026-038
+
+**APTO COM RESSALVAS.** Referência final: **885 testes** — 550 Django, 290 Jest e
+45 Playwright (44 cenários de navegador, três deles em viewport móvel, e um
+HTTP/proxy sem UI). Rodadas e repetições entre navegadores não se somam.
+Cobertura de linhas: **91,85% backend e 38,03% frontend**. A meta frontend de
+70% permanece pendente; não foram excluídos componentes para elevar a medida.
+
+Sete achados adicionais, A24–A30, foram corrigidos e retestados: consistência
+contrato/parcelas, estorno e auditoria, entradas malformadas, cálculo de prazo,
+vínculo cliente/processo no modelo, erro de baixa e foco/Escape em Configurações.
+A aplicação `98ff6bf` foi publicada na Vercel e no Render. O CI dessa versão
+aprovou 884 casos; o CI complementar [42620912216](https://github.com/guimunhoz13/TCCrepository/actions/runs/42620912216) aprovou 885 após acrescentar o caso PWA.
+
+Na conta publicada: **37 APROVADO e 1 BLOQUEADO em 38 verificações**, com **15 novos
+registros principais mantidos**. Cliente e processo foram criados pela interface;
+os demais lançamentos tiveram conferência autenticada e confirmação visual na ficha.
+Nenhum pagamento real, exclusão ou anonimização foi feito em produção. Cinco
+anexos conservaram bytes/SHA-256 e os IDs anteriores de 13 famílias foram preservados.
+A inspeção visual da nova aba PDF foi bloqueada pela política de URL blob da
+ferramenta; a verificação binária da API tem evidência independente.
+
+Fontes: [execuções](evidencias/2026-11-09/execucoes.json),
+[catálogo](evidencias/2026-11-09/inventario-e-casos.md),
+[práticos](evidencias/2026-11-09/praticos.json),
+[publicação](PUBLICACAO-2026-11-09.md) e [métricas únicas](evidencias/metricas-atuais.json).
+A API exige objeto JSON no corpo; listas, números ou texto na raiz retornam
+400. Uploads continuam aceitando multipart. Validam-se tipos, limites de campos,
+IDs positivos de 64 bits e fuso IANA. Prazo exige inteiro de 1 a 10.000 dias;
+valores fracionários/booleanos e datas fora do intervalo retornam 400.
+
+Após emissão de parcelas, mudanças incompatíveis de processo, total, forma ou
+quantidade são recusadas. Metadados permitidos continuam editáveis. A mudança de
+pago para outro status limpa pago_em e registra auditoria. Modelos não combinam
+cliente diferente do cliente do processo. Em Configurações, Tab fica no modal e
+Escape respeita a confirmação de alterações. O PWA exibe Sem conexão sem guardar
+respostas de API; não oferece escrita offline de dados do escritório.
+
+Modo S3 confirmado no Render em 09/11; esquema PostgreSQL compartilhado com vínculos
+por escritório e escopo na API. Não se afirma esquema por escritório nem RLS
+completa. C1/C2/C3 e implantação permanecem separados no relatório técnico.
+
+As seções datadas anteriores são histórico e não substituem esta referência.
+
+<!-- auditoria-2026-11-09:fim -->
+
 <!-- auditoria-2026-11-05:inicio -->
 
 ## Referência atual de 05/11/2026

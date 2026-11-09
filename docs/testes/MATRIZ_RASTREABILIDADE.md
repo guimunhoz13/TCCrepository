@@ -1,5 +1,55 @@
 # Matriz de rastreabilidade
 
+<!-- auditoria-2026-11-09:inicio -->
+
+## Auditoria final de 09/11/2026 — TDS-2026-038
+
+Repetições finais: **41 casos aprovados no Firefox e 41 no WebKit Linux**,
+com um cenário PWA bloqueado em cada runtime, validado somente no Chromium.
+Os cliques prematuros da preparação anterior foram corrigidos aguardando o
+estado pronto da dashboard; não se usaram retries. Isso não comprova Safari
+real. [Resultados e limites](evidencias/2026-11-09/navegadores.json).
+
+**APTO COM RESSALVAS.** Referência final: **885 testes** — 550 Django, 290 Jest e
+45 Playwright (44 cenários de navegador, três deles em viewport móvel, e um
+HTTP/proxy sem UI). Rodadas e repetições entre navegadores não se somam.
+Cobertura de linhas: **91,85% backend e 38,03% frontend**. A meta frontend de
+70% permanece pendente; não foram excluídos componentes para elevar a medida.
+
+Sete achados adicionais, A24–A30, foram corrigidos e retestados: consistência
+contrato/parcelas, estorno e auditoria, entradas malformadas, cálculo de prazo,
+vínculo cliente/processo no modelo, erro de baixa e foco/Escape em Configurações.
+A aplicação `98ff6bf` foi publicada na Vercel e no Render. O CI dessa versão
+aprovou 884 casos; o CI complementar [42620912216](https://github.com/guimunhoz13/TCCrepository/actions/runs/42620912216) aprovou 885 após acrescentar o caso PWA.
+
+Na conta publicada: **37 APROVADO e 1 BLOQUEADO em 38 verificações**, com **15 novos
+registros principais mantidos**. Cliente e processo foram criados pela interface;
+os demais lançamentos tiveram conferência autenticada e confirmação visual na ficha.
+Nenhum pagamento real, exclusão ou anonimização foi feito em produção. Cinco
+anexos conservaram bytes/SHA-256 e os IDs anteriores de 13 famílias foram preservados.
+A inspeção visual da nova aba PDF foi bloqueada pela política de URL blob da
+ferramenta; a verificação binária da API tem evidência independente.
+
+Fontes: [execuções](evidencias/2026-11-09/execucoes.json),
+[catálogo](evidencias/2026-11-09/inventario-e-casos.md),
+[práticos](evidencias/2026-11-09/praticos.json),
+[publicação](PUBLICACAO-2026-11-09.md) e [métricas únicas](evidencias/metricas-atuais.json).
+| Requisitos/área | Complemento da rodada | Evidência |
+|---|---|---|
+| RF01/RF19/RF21 e 2FA | Tipos de credencial, objetos JSON, login TOTP real UI local | Catálogo Django/autenticacao-completa |
+| Contratos/parcelas/horas/despesas | A24/A25/A29, soma 100,01, erro de baixa, auditoria | financeiro/ContratosPanel/geral e práticos |
+| Prazo/agenda/RF53 | A27, datas locais, feriado de comarca sintética | robustez/geral/práticos |
+| Modelos/documentos | A28, PDF e preservação de anexos | robustez/preservacao/práticos |
+| Configurações/acessibilidade | A30, Tab/Escape/foco, 18 estados Axe | geral.spec |
+| RNF PWA | Worker real e cache sem respostas privadas | pwa.spec |
+
+A existência de um cenário não significa cobertura universal de todas as variantes.
+A matriz histórica RF01–RF53 continua abaixo; RF52 permanece adiado.
+
+As seções datadas anteriores são histórico e não substituem esta referência.
+
+<!-- auditoria-2026-11-09:fim -->
+
 <!-- auditoria-2026-11-05:inicio -->
 
 ## Referência atual de 05/11/2026

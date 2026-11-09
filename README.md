@@ -1,5 +1,25 @@
 # LexNexo — ERP Jurídico
 
+<!-- auditoria-2026-11-09:inicio -->
+
+## Entrega final revisada em 09/11/2026
+
+Grupo **TDS-2026-038**. [Relatório técnico v1.12 PDF](docs/tcc/TDS-2026-038_Relatorio_Tecnico_v1.12.pdf),
+[Word](docs/tcc/TDS-2026-038_Relatorio_Tecnico_v1.12.docx) e
+[manual ilustrado](docs/Guia-de-Funcionalidades-LexNexo.pdf).
+
+**885 casos automatizados**, 91,85%/38,03% de cobertura de linhas backend/frontend;
+sete achados corrigidos e publicados. Na conta publicada, 37 de 38 verificações
+práticas aprovadas, uma inspeção visual bloqueada, 15 registros principais novos
+mantidos e cinco anexos preservados. [Relatório e limites](docs/testes/RELATORIO_VALIDACAO.md).
+[Publicação Vercel/Render](docs/testes/PUBLICACAO-2026-11-09.md).
+O vídeo permanece a gravar; o [roteiro atualizado](docs/tcc/ROTEIRO_VIDEO_PREBANCA_2026.md)
+mantém Guilherme no frontend/demonstração e João no backend/banco.
+
+As seções datadas anteriores são histórico e não substituem esta referência.
+
+<!-- auditoria-2026-11-09:fim -->
+
 ## Entrega atual do grupo TDS-2026-038
 
 Revisão de **05/11/2026**: [relatório técnico v1.11 em PDF](docs/tcc/TDS-2026-038_Relatorio_Tecnico_v1.11.pdf) e

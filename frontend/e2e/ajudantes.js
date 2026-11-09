@@ -13,6 +13,9 @@ export async function entrar(page, perfil = "admin") {
   await page.getByPlaceholder("••••••••").fill(SENHA);
   await page.getByRole("button", { name: "Entrar no sistema" }).click();
   await page.waitForURL("**/dashboard**");
+  // A URL muda antes de a dashboard terminar de montar/carregar.
+  // Começar pelo estado pronto evita clicar no HTML inicial da navegação.
+  await expect(page.getByRole("button", { name: "Atualizar dados do painel", exact: true, includeHidden: true })).toBeEnabled();
 }
 
 /** Abre um item do menu lateral (no celular, abre a gaveta antes). */

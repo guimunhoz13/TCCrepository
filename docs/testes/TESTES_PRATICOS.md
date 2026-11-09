@@ -1,5 +1,54 @@
 # Testes práticos na conta autorizada
 
+<!-- auditoria-2026-11-09:inicio -->
+
+## Auditoria final de 09/11/2026 — TDS-2026-038
+
+**APTO COM RESSALVAS.** Referência final: **885 testes** — 550 Django, 290 Jest e
+45 Playwright (44 cenários de navegador, três deles em viewport móvel, e um
+HTTP/proxy sem UI). Rodadas e repetições entre navegadores não se somam.
+Cobertura de linhas: **91,85% backend e 38,03% frontend**. A meta frontend de
+70% permanece pendente; não foram excluídos componentes para elevar a medida.
+
+Sete achados adicionais, A24–A30, foram corrigidos e retestados: consistência
+contrato/parcelas, estorno e auditoria, entradas malformadas, cálculo de prazo,
+vínculo cliente/processo no modelo, erro de baixa e foco/Escape em Configurações.
+A aplicação `98ff6bf` foi publicada na Vercel e no Render. O CI dessa versão
+aprovou 884 casos; o CI complementar [42620912216](https://github.com/guimunhoz13/TCCrepository/actions/runs/42620912216) aprovou 885 após acrescentar o caso PWA.
+
+Na conta publicada: **37 APROVADO e 1 BLOQUEADO em 38 verificações**, com **15 novos
+registros principais mantidos**. Cliente e processo foram criados pela interface;
+os demais lançamentos tiveram conferência autenticada e confirmação visual na ficha.
+Nenhum pagamento real, exclusão ou anonimização foi feito em produção. Cinco
+anexos conservaram bytes/SHA-256 e os IDs anteriores de 13 famílias foram preservados.
+A inspeção visual da nova aba PDF foi bloqueada pela política de URL blob da
+ferramenta; a verificação binária da API tem evidência independente.
+
+Fontes: [execuções](evidencias/2026-11-09/execucoes.json),
+[catálogo](evidencias/2026-11-09/inventario-e-casos.md),
+[práticos](evidencias/2026-11-09/praticos.json),
+[publicação](PUBLICACAO-2026-11-09.md) e [métricas únicas](evidencias/metricas-atuais.json).
+[38 casos publicados](evidencias/2026-11-09/praticos.json): 37 APROVADO,
+1 BLOQUEADO por inspeção da aba blob no navegador integrado. Dois cadastros foram
+feitos pela interface; demais lançamentos e regressões usam a API autenticada e
+conferência da ficha. Consultas e verificações não contam como registros criados.
+
+Foram mantidos 15 registros principais: cliente #9, processo #9, feriado #2,
+eventos #15/#16, tarefa #8, movimento #4, modelo #4, documento #5, hora #3,
+despesa #3, contrato #5 e parcelas #9/#10/#11. Localize 20261109 na busca.
+A audiência é 26/11 14h30, prazo 17/11 18h, horas R$ 180,00 e despesa R$ 23,47.
+Contrato R$ 100,01: 33,33 + 33,33 + 33,35, parcelas pendentes. O PDF sintético
+reutiliza conteúdo de 03/11. Feriado restrito à comarca sintética. Nenhuma
+exclusão, anonimização, mudança de credenciais ou pagamento real em produção.
+
+Os registros Gama/Delta e os anteriores permanecem. Cinco anexos privados foram
+comparados antes/depois do deploy, com bytes idênticos; IDs anteriores em 13
+famílias foram preservados. Compromissos manteve modo compacto na conferência.
+
+As seções datadas anteriores são histórico e não substituem esta referência.
+
+<!-- auditoria-2026-11-09:fim -->
+
 <!-- auditoria-2026-11-05:inicio -->
 
 ## Referência atual de 05/11/2026

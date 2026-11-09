@@ -1,0 +1,421 @@
+{
+  "data": "2026-11-09",
+  "ambiente": "produção",
+  "grupo": "TDS-2026-038",
+  "casos": [
+    {
+      "id": "PR-FINAL-01",
+      "cenario": "Login autenticado na API",
+      "status": "APROVADO",
+      "modo": "API publicada"
+    },
+    {
+      "id": "PR-FINAL-02",
+      "cenario": "Cliente criado pela UI persiste na API",
+      "status": "APROVADO",
+      "modo": "UI publicada + leitura API",
+      "evidencia": {
+        "cliente_id": 9
+      }
+    },
+    {
+      "id": "PR-FINAL-03",
+      "cenario": "Processo criado pela UI mantém cliente, responsável e sucumbência",
+      "status": "APROVADO",
+      "modo": "UI publicada + leitura API",
+      "evidencia": {
+        "processo_id": 9
+      }
+    },
+    {
+      "id": "PR-FINAL-04",
+      "cenario": "Leitura /dashboard/",
+      "status": "APROVADO",
+      "modo": "API publicada",
+      "evidencia": {
+        "http": 200
+      }
+    },
+    {
+      "id": "PR-FINAL-05",
+      "cenario": "Leitura /dashboard/stats/",
+      "status": "APROVADO",
+      "modo": "API publicada",
+      "evidencia": {
+        "http": 200
+      }
+    },
+    {
+      "id": "PR-FINAL-06",
+      "cenario": "Leitura /configuracoes/",
+      "status": "APROVADO",
+      "modo": "API publicada",
+      "evidencia": {
+        "http": 200
+      }
+    },
+    {
+      "id": "PR-FINAL-07",
+      "cenario": "Leitura /plano/",
+      "status": "APROVADO",
+      "modo": "API publicada",
+      "evidencia": {
+        "http": 200
+      }
+    },
+    {
+      "id": "PR-FINAL-08",
+      "cenario": "Leitura /push/",
+      "status": "APROVADO",
+      "modo": "API publicada",
+      "evidencia": {
+        "http": 200
+      }
+    },
+    {
+      "id": "PR-FINAL-09",
+      "cenario": "Busca global encontra a massa fictícia",
+      "status": "APROVADO",
+      "modo": "API publicada"
+    },
+    {
+      "id": "PR-FINAL-10",
+      "cenario": "Exportação LGPD somente do cliente fictício",
+      "status": "APROVADO",
+      "modo": "API publicada"
+    },
+    {
+      "id": "PR-FINAL-11",
+      "cenario": "Feriado limitado à comarca sintética",
+      "status": "APROVADO",
+      "modo": "API publicada",
+      "evidencia": {
+        "feriado_id": 2
+      }
+    },
+    {
+      "id": "PR-FINAL-12",
+      "cenario": "Cálculo ignora suspensão local e fim de semana",
+      "status": "APROVADO",
+      "modo": "API publicada",
+      "evidencia": {
+        "data_final": "2026-11-17",
+        "feriados_locais": [
+          {
+            "data": "2026-11-12",
+            "descricao": "AUDITORIA TCC 20261109 — Suspensão fictícia Ômega"
+          }
+        ]
+      }
+    },
+    {
+      "id": "PR-FINAL-13",
+      "cenario": "Audiência gravada com vínculo e horário",
+      "status": "APROVADO",
+      "modo": "API publicada",
+      "evidencia": {
+        "evento_id": 15,
+        "data_evento": "2026-11-26T14:30:00-03:00"
+      }
+    },
+    {
+      "id": "PR-FINAL-14",
+      "cenario": "Prazo fatal mantido pendente",
+      "status": "APROVADO",
+      "modo": "API publicada",
+      "evidencia": {
+        "evento_id": 16
+      }
+    },
+    {
+      "id": "PR-FINAL-15",
+      "cenario": "Tarefa vinculada passa para Fazendo",
+      "status": "APROVADO",
+      "modo": "API publicada",
+      "evidencia": {
+        "tarefa_id": 8
+      }
+    },
+    {
+      "id": "PR-FINAL-16",
+      "cenario": "Movimentação identifica origem manual e autoria",
+      "status": "APROVADO",
+      "modo": "API publicada",
+      "evidencia": {
+        "movimentacao_id": 4
+      }
+    },
+    {
+      "id": "PR-FINAL-17",
+      "cenario": "Modelo substitui cliente e número do processo",
+      "status": "APROVADO",
+      "modo": "API publicada",
+      "evidencia": {
+        "modelo_id": 4
+      }
+    },
+    {
+      "id": "PR-FINAL-18",
+      "cenario": "Upload e download preservam bytes do PDF sintético",
+      "status": "APROVADO",
+      "modo": "API publicada",
+      "evidencia": {
+        "documento_id": 5,
+        "bytes": 1783,
+        "sha256": "920b8a0d26e94c2deecfd12d802274973ae60fe753fefb0f2b307a644f4d6f1c",
+        "content_type": "application/octet-stream"
+      }
+    },
+    {
+      "id": "PR-FINAL-19",
+      "cenario": "Anônimo não baixa documento privado",
+      "status": "APROVADO",
+      "modo": "API publicada"
+    },
+    {
+      "id": "PR-FINAL-20",
+      "cenario": "Horas calculam 1,5 h e R$ 180,00",
+      "status": "APROVADO",
+      "modo": "API publicada",
+      "evidencia": {
+        "apontamento_id": 3
+      }
+    },
+    {
+      "id": "PR-FINAL-21",
+      "cenario": "Despesa sintética permanece sem reembolso",
+      "status": "APROVADO",
+      "modo": "API publicada",
+      "evidencia": {
+        "despesa_id": 3
+      }
+    },
+    {
+      "id": "PR-FINAL-22",
+      "cenario": "Calendário ICS contém os eventos da rodada",
+      "status": "APROVADO",
+      "modo": "API publicada"
+    },
+    {
+      "id": "PR-FINAL-23",
+      "cenario": "Conferência /processos/9/",
+      "status": "APROVADO",
+      "modo": "API publicada",
+      "evidencia": {
+        "http": 200
+      }
+    },
+    {
+      "id": "PR-FINAL-24",
+      "cenario": "Conferência /configuracoes/relatorio/processo/9/",
+      "status": "APROVADO",
+      "modo": "API publicada",
+      "evidencia": {
+        "http": 200
+      }
+    },
+    {
+      "id": "PR-FINAL-25",
+      "cenario": "Saúde https://lexnexo.vercel.app",
+      "status": "APROVADO",
+      "modo": "API publicada após implantação de 98ff6bf"
+    },
+    {
+      "id": "PR-FINAL-26",
+      "cenario": "Saúde https://lexoffice-api-piloto.onrender.com",
+      "status": "APROVADO",
+      "modo": "API publicada após implantação de 98ff6bf"
+    },
+    {
+      "id": "PR-FINAL-27",
+      "cenario": "Novo contrato mantém centavos e parcelas positivas",
+      "status": "APROVADO",
+      "modo": "API publicada após implantação de 98ff6bf",
+      "evidencia": {
+        "contrato_id": 5,
+        "parcelas": [
+          {
+            "id": 9,
+            "numero": 1,
+            "valor": "33.33",
+            "status": "pendente",
+            "pago_em": null
+          },
+          {
+            "id": 10,
+            "numero": 2,
+            "valor": "33.33",
+            "status": "pendente",
+            "pago_em": null
+          },
+          {
+            "id": 11,
+            "numero": 3,
+            "valor": "33.35",
+            "status": "pendente",
+            "pago_em": null
+          }
+        ]
+      }
+    },
+    {
+      "id": "PR-FINAL-28",
+      "cenario": "Regressão A24 recusa alterar total sem reemitir parcelas",
+      "status": "APROVADO",
+      "modo": "API publicada após implantação de 98ff6bf"
+    },
+    {
+      "id": "PR-FINAL-29",
+      "cenario": "Rejeição preserva total original e IDs das parcelas",
+      "status": "APROVADO",
+      "modo": "API publicada após implantação de 98ff6bf"
+    },
+    {
+      "id": "PR-FINAL-30",
+      "cenario": "PIX fictício confirma sem baixa nem dinheiro",
+      "status": "APROVADO",
+      "modo": "API publicada após implantação de 98ff6bf"
+    },
+    {
+      "id": "PR-FINAL-31",
+      "cenario": "Parcela permanece pendente após simulação",
+      "status": "APROVADO",
+      "modo": "API publicada após implantação de 98ff6bf"
+    },
+    {
+      "id": "PR-FINAL-32",
+      "cenario": "Regressão A27 recusa prazo fracionário",
+      "status": "APROVADO",
+      "modo": "API publicada após implantação de 98ff6bf"
+    },
+    {
+      "id": "PR-FINAL-33",
+      "cenario": "Regressão A26 recusa tipo inválido antes da autenticação",
+      "status": "APROVADO",
+      "modo": "API publicada após implantação de 98ff6bf"
+    },
+    {
+      "id": "PR-FINAL-34",
+      "cenario": "Regressão A28 impede misturar Gama e processo Ômega",
+      "status": "APROVADO",
+      "modo": "API publicada após implantação de 98ff6bf"
+    },
+    {
+      "id": "PR-FINAL-35",
+      "cenario": "Regressão A23 PDF tem Content-Type correto após deploy",
+      "status": "APROVADO",
+      "modo": "API publicada após implantação de 98ff6bf",
+      "evidencia": {
+        "documento_id": 5,
+        "bytes": 1783
+      }
+    },
+    {
+      "id": "PR-FINAL-36",
+      "cenario": "Ficha publicada reúne cliente, agenda, tarefa, movimento, documento, contrato, horas e despesa Ômega",
+      "status": "APROVADO",
+      "modo": "UI publicada",
+      "evidencia": "ficha-omega-publicada.jpg; parcelas R$ 33,33/33,33/33,35 e valores sintéticos conferidos na interface."
+    },
+    {
+      "id": "PR-FINAL-37",
+      "cenario": "Visualizar conteúdo do PDF na aba criada pelo clique",
+      "status": "BLOQUEADO",
+      "modo": "UI publicada",
+      "evidencia": "A aba blob: foi criada com o título do PDF. A política do navegador integrado permite somente http/https e bloqueou a inspeção de blob:. O download autenticado foi verificado separadamente e os E2E locais cobrem a abertura."
+    },
+    {
+      "id": "PR-FINAL-38",
+      "cenario": "Compromissos mantém densidade compacta após navegação e carregamento",
+      "status": "APROVADO",
+      "modo": "UI publicada",
+      "evidencia": "data-density=compact antes/depois; menu expandido; audiência Ômega visível."
+    }
+  ],
+  "registros_criados_por_este_script": [
+    {
+      "recurso": "/feriados-locais/",
+      "id": 2,
+      "rotulo": "AUDITORIA TCC 20261109 — Suspensão fictícia Ômega"
+    },
+    {
+      "recurso": "/agenda/",
+      "id": 15,
+      "rotulo": "AUDITORIA TCC 20261109 — Audiência fictícia Ômega"
+    },
+    {
+      "recurso": "/agenda/",
+      "id": 16,
+      "rotulo": "AUDITORIA TCC 20261109 — Prazo fatal fictício Ômega"
+    },
+    {
+      "recurso": "/tarefas/",
+      "id": 8,
+      "rotulo": "AUDITORIA TCC 20261109 — Conferência final Ômega"
+    },
+    {
+      "recurso": "/movimentacoes/",
+      "id": 4,
+      "rotulo": "AUDITORIA TCC 20261109 — Movimentação manual exclusivamente fictícia. Nenhum andamento judicial real."
+    },
+    {
+      "recurso": "/modelos-documento/",
+      "id": 4,
+      "rotulo": "AUDITORIA TCC 20261109 — Declaração fictícia Ômega"
+    },
+    {
+      "recurso": "/documentos/",
+      "id": 5,
+      "rotulo": "AUDITORIA TCC 20261109 — Anexo fictício Ômega"
+    },
+    {
+      "recurso": "/apontamentos/",
+      "id": 3,
+      "rotulo": "AUDITORIA TCC 20261109 — Trabalho fictício Ômega"
+    },
+    {
+      "recurso": "/despesas/",
+      "id": 3,
+      "rotulo": "AUDITORIA TCC 20261109 — Custo fictício Ômega"
+    },
+    {
+      "recurso": "/contratos/",
+      "id": 5,
+      "rotulo": "AUDITORIA TCC 20261109 — Contrato Ômega"
+    },
+    {
+      "recurso": "/parcelas/",
+      "id": 9,
+      "rotulo": "AUDITORIA TCC 20261109 — Parcela Ômega"
+    },
+    {
+      "recurso": "/parcelas/",
+      "id": 10,
+      "rotulo": "AUDITORIA TCC 20261109 — Parcela Ômega"
+    },
+    {
+      "recurso": "/parcelas/",
+      "id": 11,
+      "rotulo": "AUDITORIA TCC 20261109 — Parcela Ômega"
+    }
+  ],
+  "cliente_ui_id": 9,
+  "processo_ui_id": 9,
+  "nenhum_registro_de_negocio_excluido": true,
+  "anexos_preservados": true,
+  "acoes_financeiras_reais": false,
+  "entrega_de_notificacoes_comprovada": false,
+  "novos_registros_principais": 15,
+  "registros_criados_pela_interface": [
+    {
+      "recurso": "clientes",
+      "id": 9,
+      "rotulo": "AUDITORIA TCC 20261109 — Cliente Ômega Fictício"
+    },
+    {
+      "recurso": "processos",
+      "id": 9,
+      "rotulo": "AUDITORIA-TCC-20261109-01"
+    }
+  ]
+}

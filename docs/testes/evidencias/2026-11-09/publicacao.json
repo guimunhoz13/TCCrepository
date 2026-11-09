@@ -1,0 +1,29 @@
+{
+  "data": "2026-11-09",
+  "commit_aplicacao": "98ff6bfc57aa5c819207ddb63edfd7540b687b5b",
+  "github": "https://github.com/guimunhoz13/TCCrepository/commit/98ff6bfc57aa5c819207ddb63edfd7540b687b5b",
+  "ci": "https://github.com/guimunhoz13/TCCrepository/actions/runs/42616807545",
+  "render": {
+    "servico": "srv-db90meks728c73bbtvlg",
+    "workspace": "tea-db81kilg1s2s738mfhf0",
+    "deploy": "dep-dbornn9srm7s73ctj3k0",
+    "status": "live",
+    "trigger": "manual",
+    "concluido_utc": "2026-11-09T12:27:44.516415Z",
+    "media_storage_confirmado": "s3",
+    "secrets_revelados": false
+  },
+  "vercel": {
+    "github_deployment_id": 7654619994,
+    "status": "success",
+    "url_deploy": "https://lexnexo-qtn5r489t-zeldation.vercel.app",
+    "alias_publico": "https://lexnexo.vercel.app"
+  },
+  "preservacao": {
+    "anexos_sha256_comparados": 5,
+    "todos_identicos": true,
+    "ids_anteriores_presentes_em_13_familias": true
+  },
+  "migracoes_novas": 0,
+  "observacao": "Push não iniciou deploy do Render na janela observada; painel usado uma única vez. Não se afirma causa da ausência do gatilho automático. Sem troca de serviço, plano, variáveis ou banco."
+}

@@ -1,0 +1,27 @@
+{
+  "data": "2026-11-09",
+  "achados": [
+    "A24 contrato/parcelas divergentes em edição",
+    "A25 estorno com data de pagamento e ausência de trilha",
+    "A26 tipos JSON e limites de campos causando erro interno",
+    "A27 cálculo aceitava fração/booleano e podia exceder datas",
+    "A28 modelo misturava cliente e processo de pessoas diferentes",
+    "A29 baixa com erro sem feedback e sem proteção contra repetição",
+    "A30 Configurações sem foco modal e Escape"
+  ],
+  "antes": "Regressões específicas falharam antes de cada correção; a contagem de subtestes não é tratada como quantidade de requisitos ou novos testes.",
+  "depois": "550 Django, 290 Jest e 45 Playwright na rodada final, sem falhas/skips/flaky.",
+  "falhas_de_preparacao_separadas": [
+    "Mock sem retorno de IA gerou serialização de MagicMock; execução interrompida e mock corrigido antes da reprodução válida.",
+    "Seletores de títulos/abas/ações foram corrigidos para o texto real da interface.",
+    "O teste de foco passou a aguardar o conteúdo da configuração antes de conferir o último controle.",
+    "O login 2FA usa a página inicial como destino do logout, o placeholder de código e hooks de restauração da conta exclusivamente local.",
+    "A primeira execução WebKit foi comprometida pelo encerramento do processo que mantinha os servidores e por instabilidades do runtime do host. Repetição dedicada e resultados separados em navegadores.json.",
+    "SW contornava page.route nos cenários com respostas simuladas; bloqueado nesses contextos, permitido no caso PWA dedicado.",
+    "A emulação offline do Playwright 1.56 não atingia o worker sem PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS. Opção habilitada e caso PWA real aprovado sem alteração no produto.",
+    "WebKit: aguardar associação de rótulo após montagem React antes de preencher login; aceitar separador Intl local sem relaxar a conferência de horário no banco.",
+    "Após a mudança de URL, a dashboard ainda podia estar montando/carregando. O helper espera o botão de atualização habilitado, sem repetir o clique. Repetições completas Firefox e WebKit passaram, com PWA restrito ao Chromium.",
+    "A espera de prontidão também considera o botão de atualização oculto por CSS no layout móvel (includeHidden); a consulta sem essa opção não encontrava o elemento no celular. Não se removeu a espera de habilitação."
+  ],
+  "producao": "Dados fictícios mantidos; testes de anonimização, exclusão, desativação, bloqueio por senha e alteração de credenciais limitados ao banco local."
+}

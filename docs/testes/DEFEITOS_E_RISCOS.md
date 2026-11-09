@@ -1,5 +1,42 @@
 # Defeitos e riscos da auditoria
 
+<!-- auditoria-2026-11-09:inicio -->
+
+## Achados finais de 09/11/2026
+
+Repetições finais: **41 casos aprovados no Firefox e 41 no WebKit Linux**,
+com um cenário PWA bloqueado em cada runtime, validado somente no Chromium.
+Os cliques prematuros da preparação anterior foram corrigidos aguardando o
+estado pronto da dashboard; não se usaram retries. Isso não comprova Safari
+real. [Resultados e limites](evidencias/2026-11-09/navegadores.json).
+
+| ID | Gravidade | Defeito e correção | Evidência | Estado |
+|---|---|---|---|---|
+| A24 | MÉDIA | Edição divergente de parcelas emitidas; recusar processo/total/forma/quantidade incompatíveis, preservar observações | Regressões Django e recusa 400 publicada | APROVADO |
+| A25 | MÉDIA | Estorno mantinha pago_em e não registrava trilha; limpar data e auditar mudança | Regressão financeira local | APROVADO |
+| A26 | MÉDIA | Tipos/IDs/textos/fuso e JSON malformados causavam 500; validar antes do negócio | 11 novos métodos de robustez, com subcasos não inflados na contagem | APROVADO |
+| A27 | MÉDIA | Prazo truncava fração/booleano e podia exceder datas; inteiro 1–10000 e erro 400 | Regressão local e fração recusada publicada | APROVADO |
+| A28 | MÉDIA | Modelo aceitava cliente distinto do processo; validar vínculo | Caso local e recusa 400 publicada | APROVADO |
+| A29 | MÉDIA | Baixa recusada sem feedback, repetição e dashboard desatualizado; erro visível, bloqueio pendente e atualização | Dois Jest e E2E com 503 simulado | APROVADO |
+| A30 | BAIXA | Configurações sem foco modal/Escape; ciclo Tab, fechamento e restauração do foco | E2E teclado e Axe | APROVADO |
+
+[Regressões e falhas de preparação](evidencias/2026-11-09/regressoes.json).
+As falhas iniciais do PWA eram de emulação: Playwright 1.56 exige habilitar a rede
+do service worker para aplicar offline. As tentativas de alterar o produto foram
+revertidas quando a hipótese não se confirmou. As simulações de erro bloqueiam o
+worker; apenas o caso PWA permite o worker real. A formatação de data no WebKit
+aceita variações de separador; o horário gravado é conferido separadamente.
+
+Permanecem os riscos: cobertura frontend 38,03% abaixo da meta; 26 alertas de
+ferramentas npm; operação externa/recebimento de mensagens; recuperação em nuvem;
+ACL/RLS integral; agendador; Safari real; avaliação por profissionais. O vídeo
+continua por conta dos integrantes. Sem garantia de ausência de defeitos ou
+conformidade jurídica integral. Nenhum dado de teste publicado foi apagado.
+
+As seções datadas anteriores são histórico e não substituem esta referência.
+
+<!-- auditoria-2026-11-09:fim -->
+
 <!-- auditoria-2026-11-05:inicio -->
 
 ## Referência atual de 05/11/2026

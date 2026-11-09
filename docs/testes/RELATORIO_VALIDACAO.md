@@ -1,5 +1,71 @@
 # Relatório de validação do LexNexo
 
+<!-- auditoria-2026-11-09:inicio -->
+
+## Auditoria final de 09/11/2026 — TDS-2026-038
+
+Repetições finais: **41 casos aprovados no Firefox e 41 no WebKit Linux**,
+com um cenário PWA bloqueado em cada runtime, validado somente no Chromium.
+Os cliques prematuros da preparação anterior foram corrigidos aguardando o
+estado pronto da dashboard; não se usaram retries. Isso não comprova Safari
+real. [Resultados e limites](evidencias/2026-11-09/navegadores.json).
+
+**APTO COM RESSALVAS.** Referência final: **885 testes** — 550 Django, 290 Jest e
+45 Playwright (44 cenários de navegador, três deles em viewport móvel, e um
+HTTP/proxy sem UI). Rodadas e repetições entre navegadores não se somam.
+Cobertura de linhas: **91,85% backend e 38,03% frontend**. A meta frontend de
+70% permanece pendente; não foram excluídos componentes para elevar a medida.
+
+Sete achados adicionais, A24–A30, foram corrigidos e retestados: consistência
+contrato/parcelas, estorno e auditoria, entradas malformadas, cálculo de prazo,
+vínculo cliente/processo no modelo, erro de baixa e foco/Escape em Configurações.
+A aplicação `98ff6bf` foi publicada na Vercel e no Render. O CI dessa versão
+aprovou 884 casos; o CI complementar [42620912216](https://github.com/guimunhoz13/TCCrepository/actions/runs/42620912216) aprovou 885 após acrescentar o caso PWA.
+
+Na conta publicada: **37 APROVADO e 1 BLOQUEADO em 38 verificações**, com **15 novos
+registros principais mantidos**. Cliente e processo foram criados pela interface;
+os demais lançamentos tiveram conferência autenticada e confirmação visual na ficha.
+Nenhum pagamento real, exclusão ou anonimização foi feito em produção. Cinco
+anexos conservaram bytes/SHA-256 e os IDs anteriores de 13 famílias foram preservados.
+A inspeção visual da nova aba PDF foi bloqueada pela política de URL blob da
+ferramenta; a verificação binária da API tem evidência independente.
+
+Fontes: [execuções](evidencias/2026-11-09/execucoes.json),
+[catálogo](evidencias/2026-11-09/inventario-e-casos.md),
+[práticos](evidencias/2026-11-09/praticos.json),
+[publicação](PUBLICACAO-2026-11-09.md) e [métricas únicas](evidencias/metricas-atuais.json).
+
+### Verificações e limites
+
+| Verificação | Resultado | Estado |
+|---|---|---|
+| Django, Jest e Playwright Chromium/mobile | 550 + 290 + 45; sem falhas na rodada final | APROVADO |
+| Lint, build, check, migrations, schema OpenAPI | Todos concluídos; nenhuma migration nova | APROVADO |
+| Configuração de produção simulada | check --deploy sem problemas; um aviso HSTS preload já silenciado | APROVADO |
+| Acessibilidade e teclado | Axe em 18 estados, modal, Escape e foco | APROVADO |
+| PWA | Worker real, tela offline e ausência de API/dashboard no Cache Storage | APROVADO no Chromium |
+| Dependências de produção | pip-audit e npm --omit=dev sem alertas conhecidos | APROVADO |
+| Ferramentas npm | 26 alertas transitivos: 23 moderados e três baixos; zero altos/críticos | REPROVADO, A17 |
+| Cobertura frontend | 38,03%, contra meta de 70%; déficit 31,97 pontos | REPROVADO |
+| Heurística de segredos | Zero padrões em fontes versionados e patches alcançáveis; não é certificação | APROVADO |
+| Desempenho leve local | 12 amostras/endpoint, mediana 3,21–25,65 ms em APIClient; sem rede/carga | APROVADO |
+| Restauração local | pg_dump custom → banco vazio; contagens das 39 tabelas do snapshot idênticas | APROVADO |
+| Integrações externas | SMTP/push recebidos, chamada paga IA e periodicidade operacional não comprovados | BLOQUEADO |
+| Nuvem e usuários | ACL/RLS completa, recuperação integral em nuvem, carga remota, Safari real e estudo com profissionais | BLOQUEADO |
+| RF52 | Adiado conforme backlog, sem declaração de implementação | NÃO APLICÁVEL |
+
+[Ensaio de restauração local](evidencias/2026-11-09/restauracao-local.json): não inclui arquivos de storage nem recuperação em nuvem.
+
+O backend cobre 4.497/4.896 linhas e 831/1.042 ramos; o frontend cobre
+1.756/4.617 linhas. Core/settings, migrations e testes não compõem o denominador
+backend. A medição frontend considera todo src JS/JSX; E2E não foi somado à cobertura.
+Os testes externos controlados usam mocks explicitamente identificados. Um retorno
+200 ou um teste anônimo dos endpoints não comprova todos os fluxos de cada operação.
+
+As seções datadas anteriores são histórico e não substituem esta referência.
+
+<!-- auditoria-2026-11-09:fim -->
+
 <!-- auditoria-2026-11-05:inicio -->
 
 ## Consolidação final de 05/11/2026 — grupo TDS-2026-038

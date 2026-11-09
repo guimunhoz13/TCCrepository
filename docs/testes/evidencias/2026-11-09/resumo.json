@@ -1,0 +1,27 @@
+{
+  "data": "2026-11-09",
+  "commit_base_antes_das_mudancas": "8f3d1de",
+  "commit_aplicacao": "98ff6bfc57aa5c819207ddb63edfd7540b687b5b",
+  "baseline": {
+    "Django": 536,
+    "Jest": 288,
+    "Playwright": 39,
+    "total": 863
+  },
+  "final": {
+    "data": "2026-11-09",
+    "ambiente": "local",
+    "django": 550,
+    "jest": 290,
+    "playwright": 45,
+    "total": 885
+  },
+  "baseline_aprovada": true,
+  "alteracao_preexistente_preservada": ".github/workflows/ci.yml",
+  "casos_novos_distintos": 22,
+  "repeticoes_nao_somadas_ao_total": true,
+  "check_deploy": "0 problemas; 1 aviso silenciado de HSTS preload conforme configuração existente",
+  "segredos": "0 correspondências heurísticas em fontes versionados e histórico alcançável; não constitui certificação",
+  "parecer": "APTO COM RESSALVAS",
+  "commit_suite": "1600b28d2e9be624d323a13954f4a920dabaac81"
+}

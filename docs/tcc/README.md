@@ -1,5 +1,24 @@
 # Relatório técnico do TCC (gerado por script)
 
+<!-- auditoria-2026-11-09:inicio -->
+
+## Entrega atual — 09/11/2026
+
+[Relatório v1.12 em PDF](TDS-2026-038_Relatorio_Tecnico_v1.12.pdf) e
+[Word editável](TDS-2026-038_Relatorio_Tecnico_v1.12.docx), grupo **TDS-2026-038**,
+títulos pretos. [Manual ilustrado](../Guia-de-Funcionalidades-LexNexo.pdf) e
+[roteiro PDF](TDS-2026-038_Roteiro_Video_PreBanca_2026.pdf) / [texto](ROTEIRO_VIDEO_PREBANCA_2026.md).
+
+885 testes na referência final; aplicação 98ff6bf publicada na Vercel e no Render.
+37/38 verificações práticas aprovadas, uma inspeção visual bloqueada; 15 novos
+registros principais mantidos. Cobertura de linhas 91,85%/38,03%. O roteiro mantém
+3/3/6/5/3 minutos, encerramento em 19:45, Guilherme no front/demonstração e João no
+backend/banco. **Vídeo não produzido**. [Validação e ressalvas](../testes/RELATORIO_VALIDACAO.md).
+
+As seções datadas anteriores são histórico e não substituem esta referência.
+
+<!-- auditoria-2026-11-09:fim -->
+
 ## Roteiro da pré-banca — 06/11/2026
 
 [Roteiro completo em PDF](TDS-2026-038_Roteiro_Video_PreBanca_2026.pdf) e
@@ -125,7 +144,7 @@ O relatório atual do grupo `TDS-2026-038` é gerado a partir de `gerar_rt.js` (
 biblioteca `docx`:
 
 ```bash
-cd docs/tcc && npm install docx && node main.js   # gera TDS-2026-038_Relatorio_Tecnico_v1.11.docx
+cd docs/tcc && npm install docx && node main.js   # gera TDS-2026-038_Relatorio_Tecnico_v1.12.docx
 ```
 
 Os diagramas ficam em `diagramas/*.puml` (PlantUML) e são renderizados com

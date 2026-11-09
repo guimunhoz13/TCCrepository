@@ -1,0 +1,6 @@
+{
+  "data": "2026-11-09",
+  "metodo": "Padrões de chaves privadas, tokens conhecidos e JWT literais em fontes versionados e diffs alcançáveis de todas as refs locais. Valores não são emitidos.",
+  "limitacoes": "Heurístico; não detecta todo segredo possível, arquivos binários/arquivos >3 MB ou objetos inalcançáveis. Exemplos sintéticos precisam de triagem.",
+  "achados": []
+}

@@ -1,6 +1,6 @@
 # Roteiro de vídeo da pré-banca — LexNexo
 
-Grupo TDS-2026-038 | 06/11/2026
+Grupo TDS-2026-038 | revisão de 09/11/2026
 
 ## Roteiro de gravação LexNexo
 
@@ -26,7 +26,7 @@ As páginas 3 a 9 são a sequência de gravação. Cada cena traz o tempo, quem 
 
 ### Escolham uma versão para mostrar
 
-Para apresentar as correções mais recentes e alternar perfis sem afetar a conta real, prefiram uma base local isolada, identificada na abertura. Se usarem o site publicado, confiram primeiro a versão implantada. Na última conferência, em 05/11, havia mudanças locais ainda não publicadas na API. Este roteiro não confirma uma publicação em 06/11.
+Para apresentar as correções mais recentes e alternar perfis sem afetar a conta real, prefiram uma base local isolada, identificada na abertura. Se usarem o site publicado, confiram primeiro a versão implantada. Em 09/11, as correções da aplicação 98ff6bf foram publicadas na Vercel e no Render. Confiram a versão novamente no dia da gravação. A base local continua indicada para exclusão, anonimização e troca de credenciais.
 
 O vídeo deve mostrar o sistema funcionando. Diagramas e trechos de código complementam a demonstração; não substituem as ações na interface.
 
@@ -38,9 +38,9 @@ Façam um ensaio completo e deixem as abas na ordem de uso.
 
 Use o cliente “Cliente Demonstração 038” e um processo com título “Caso Demonstração 038”. Prepare dados para copiar: CPF de teste livre na base, e-mail demonstracao038@example.com, telefone fictício e endereço fictício. Valide o cadastro no ensaio. Não marque consentimento em nome de uma pessoa real.
 
-Prepare um contrato de R$ 100,01 em três parcelas, um prazo, uma audiência e uma declaração com variáveis. Na versão local corrigida, as parcelas novas são R$ 33,33 + R$ 33,33 + R$ 33,35. A soma é R$ 100,01. Contratos antigos mantêm os valores com que foram criados; não recalcular só para a gravação.
+Prepare um contrato de R$ 100,01 em três parcelas, um prazo, uma audiência e uma declaração com variáveis. Na versão corrigida publicada em 09/11, as parcelas novas são R$ 33,33 + R$ 33,33 + R$ 33,35. A soma é R$ 100,01. Contratos antigos mantêm os valores com que foram criados; não recalcular só para a gravação.
 
-Os registros AUDITORIA TCC 20261103 podem servir de referência no site: cliente Gama, processos Gama e Delta, agenda, documento e contrato. O processo Gama já possui contrato; para demonstrar criação de outro contrato, use um novo processo. Preserve esses registros e tudo que criar no sistema publicado.
+Os registros AUDITORIA TCC 20261109 podem servir de referência no site: cliente e processo Ômega, agenda, documento e contrato. Gama e Delta anteriores continuam preservados. O processo Gama já possui contrato; para demonstrar criação de outro contrato, use um novo processo. Preserve esses registros e tudo que criar no sistema publicado.
 
 ### Abas e sessões preparadas
 
@@ -269,7 +269,7 @@ Os registros AUDITORIA TCC 20261103 podem servir de referência no site: cliente
 
 **Tela e cliques:** Tabela datada de métricas, resultado salvo dos testes e um teste de rollback ou isolamento. Mostrar o workflow e a divisão de pastas do repositório.
 
-**Fala sugerida:** Na execução local de 5 de novembro, passaram 863 testes: 536 Django, 288 Jest e 39 Playwright. O runner Playwright inclui 38 cenários de navegador e uma integração HTTP de proxy. Também repetimos os casos de computador no Firefox. O CI remoto anterior tem sua própria data e contagem. A cobertura de linhas é 91,49% no backend e 36,93% no frontend; a interface ainda está abaixo da meta de 70%. Esses resultados aumentam a confiança nos fluxos testados, mas não significam ausência de falhas.
+**Fala sugerida:** Na execução final de 9 de novembro, passaram 885 testes: 550 Django, 290 Jest e 45 Playwright. O CI tem registro próprio e não se soma à execução local. A cobertura de linhas é 91,85% no backend e 38,03% no frontend, abaixo da meta de 70%. Também conferimos fluxos publicados e mantivemos os dados fictícios. Isso aumenta a confiança nos cenários testados, mas não significa ausência de falhas.
 
 ## Parte 5  Resultados e fechamento
 
@@ -331,7 +331,7 @@ Separação por escritório: “Cada consulta usa o escritório do usuário aute
 
 ### Se a banca pedir um número
 
-Resultado local em 05/11/2026: 536 + 288 + 39 = 863. Dentro dos 39 Playwright: 35 cenários de navegador no computador, três no celular e uma integração HTTP sem UI. O Firefox repetiu 36 casos de computador, incluindo essa integração HTTP; não some a repetição como requisitos novos. O CI de 04/11 registrou 854, não 863.
+Referência final em 09/11/2026: 550 + 290 + 45 = 885. Playwright inclui 41 cenários de navegador no computador, três no celular e um HTTP/proxy sem UI. Repetições Firefox/WebKit têm evidência própria e não aumentam esse total. O PWA offline usa worker real no Chromium; não chamar WebKit de Safari real. CI inicial 42616807545: 884 casos, antes do novo cenário PWA; execução complementar separada na fonte única.
 
 ## Conferência antes de enviar
 
@@ -358,4 +358,4 @@ As cenas de integrações e privacidade têm tempos curtos e exigem preparação
 
 ### Referências usadas para preparar o roteiro
 
-Base: PDF de pré-banca fornecido em 06/11/2026, parecer do chat, RT v1.11, manual, código e métricas locais de 05/11. Este roteiro não reexecuta testes, não confirma deploys e não cria nem apaga dados no sistema.
+Base: PDF de pré-banca fornecido em 06/11/2026, parecer do chat, RT v1.12, manual, código e métricas finais de 09/11. Este roteiro usa a auditoria de 09/11 e não substitui o vídeo. A preparação documental não cria nem apaga dados.

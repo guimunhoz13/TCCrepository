@@ -1,0 +1,97 @@
+{
+  "data": "2026-11-09",
+  "fonte": "Relatórios JSON Playwright locais preservados fora do versionamento; resumo sem tokens ou traces.",
+  "repeticoes_nao_somadas_ao_total": true,
+  "chromium_principal": {
+    "status": "APROVADO",
+    "casos": 45,
+    "escopo": "41 UI desktop + 3 UI mobile emulado + 1 HTTP/proxy; inclui PWA Chromium"
+  },
+  "repeticoes": {
+    "webkit": {
+      "status": "APROVADO",
+      "runtime": "WebKit 26.0 Linux",
+      "stats": {
+        "startTime": "2026-11-09T13:05:01.919Z",
+        "duration": 261370.858,
+        "expected": 41,
+        "skipped": 1,
+        "unexpected": 0,
+        "flaky": 0
+      },
+      "PWA": {
+        "status": "BLOQUEADO",
+        "runner": "skipped",
+        "motivo": "Emulação específica de rede do worker validada no Chromium; não reclassificada como aprovação neste runtime."
+      },
+      "casos_de_UI": 40,
+      "integracao_HTTP_sem_UI": 1
+    },
+    "firefox": {
+      "status": "APROVADO",
+      "runtime": "Firefox 142 Linux",
+      "stats": {
+        "startTime": "2026-11-09T13:09:24.334Z",
+        "duration": 133316.59900000002,
+        "expected": 41,
+        "skipped": 1,
+        "unexpected": 0,
+        "flaky": 0
+      },
+      "PWA": {
+        "status": "BLOQUEADO",
+        "runner": "skipped",
+        "motivo": "Emulação específica de rede do worker validada no Chromium; não reclassificada como aprovação neste runtime."
+      },
+      "casos_de_UI": 40,
+      "integracao_HTTP_sem_UI": 1
+    }
+  },
+  "preparacoes_anteriores": {
+    "webkit": {
+      "status": "REPROVADO",
+      "classificacao": "Preparação de navegação: cliques antes do estado pronto da dashboard",
+      "stats": {
+        "startTime": "2026-11-09T12:57:37.011Z",
+        "duration": 274507.027,
+        "expected": 38,
+        "skipped": 1,
+        "unexpected": 3,
+        "flaky": 0
+      },
+      "correcao": "Esperar botão de atualização habilitado após a navegação. Sem repetição automática de clique, retries=0, mesmas verificações de resultado."
+    },
+    "firefox": {
+      "status": "REPROVADO",
+      "classificacao": "Preparação de navegação: cliques antes do estado pronto da dashboard",
+      "stats": {
+        "startTime": "2026-11-09T13:02:12.318Z",
+        "duration": 128845.87000000001,
+        "expected": 40,
+        "skipped": 1,
+        "unexpected": 1,
+        "flaky": 0
+      },
+      "correcao": "Esperar botão de atualização habilitado após a navegação. Sem repetição automática de clique, retries=0, mesmas verificações de resultado."
+    }
+  },
+  "limites": [
+    "WebKit Linux 26.0 não equivale ao Safari real em macOS/iOS.",
+    "Pixel 7 usa emulação de viewport/toque no Chromium, não aparelho real.",
+    "PWA offline com rede do service worker foi validado somente no Chromium; cenário BLOQUEADO nos outros dois runtimes.",
+    "Os testes com respostas simuladas bloqueiam o worker para que a interceptação não seja contornada."
+  ],
+  "ajudantes_sha256": "60e854f40869655c8ca7b885626fa11392e7475470d066180de507cbedd1c568",
+  "reteste_mobile_apos_espera_prontidao": {
+    "status": "APROVADO",
+    "stats": {
+      "startTime": "2026-11-09T13:15:03.903Z",
+      "duration": 10519.4,
+      "expected": 3,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0
+    },
+    "motivo": "Botão de sincronização fica oculto no layout móvel; includeHidden mantém a espera de habilitação sem exigir controle visível."
+  }
+}
