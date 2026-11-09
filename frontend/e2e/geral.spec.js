@@ -75,7 +75,7 @@ test("agenda grava data e hora locais e reabre a edição sem deslocar o horári
   const registro = await resposta.json();
   expect(registro.data_evento).toMatch(/^2026-11-26T14:30:00-03:00$/);
   const linha = page.getByRole("row").filter({ hasText: titulo });
-  await expect(linha).toContainText("26/11/2026, 14:30");
+  await expect(linha).toContainText(/26\/11\/2026[,\s]+14:30/);
   await linha.getByRole("button", { name: "Editar evento", exact: true }).click();
   await expect(campo(page, "Data e hora")).toHaveValue("2026-11-26T14:30");
 });

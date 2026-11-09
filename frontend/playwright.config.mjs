@@ -7,6 +7,9 @@ import { defineConfig, devices } from "@playwright/test";
  * Localmente, suba o back-end (porta 8000) e o front (porta 3000) e rode
  * `npm run e2e`. No CI, o job "E2E (Playwright)" faz tudo isso sozinho.
  */
+// Playwright 1.56 exige esta opção para aplicar setOffline também ao worker.
+process.env.PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS ||= "1";
+
 const NO_CI = Boolean(process.env.CI);
 const dispositivoComputador = {
   chromium: "Desktop Chrome",
@@ -24,6 +27,10 @@ export default defineConfig({
   retries: 0,
   reporter: NO_CI ? [["github"], ["html", { open: "never" }]] : "list",
   use: {
+    // Rotas simuladas precisam pertencer ao contexto do navegador, sem
+    // interferência do worker de produção. O teste PWA permite o worker
+    // explicitamente e confere cache e navegação offline de verdade.
+    serviceWorkers: "block",
     baseURL: process.env.E2E_BASE_URL || "http://localhost:3000",
     locale: "pt-BR",
     timezoneId: "America/Sao_Paulo",

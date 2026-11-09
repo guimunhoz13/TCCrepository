@@ -7,7 +7,9 @@ export const email = (perfil) => `${perfil}@demo.lexnexo.app`;
 /** Entra pela tela de login, como uma pessoa faria. */
 export async function entrar(page, perfil = "admin") {
   await page.goto("/login");
-  await page.getByPlaceholder("seu@email.com").fill(email(perfil));
+  // O rótulo é associado pelo efeito da aplicação após a montagem. Esperar
+  // por ele evita digitar no HTML inicial antes dos handlers do React.
+  await page.getByRole("textbox", { name: /^E-mail/ }).fill(email(perfil));
   await page.getByPlaceholder("••••••••").fill(SENHA);
   await page.getByRole("button", { name: "Entrar no sistema" }).click();
   await page.waitForURL("**/dashboard**");
