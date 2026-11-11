@@ -450,8 +450,13 @@ export default function HorasPanel() {
                               title="Marcar como reembolsada"
                               aria-label="Marcar como reembolsada"
                               onClick={async () => {
-                                await updateDespesa(d.id, { reembolsada: true });
-                                carregar();
+                                setErro("");
+                                try {
+                                  await updateDespesa(d.id, { reembolsada: true });
+                                  carregar();
+                                } catch (error) {
+                                  setErro(error.message);
+                                }
                               }}
                             >
                               <span aria-hidden="true">R$</span>

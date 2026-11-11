@@ -455,14 +455,19 @@ export default function ProcessosPanel() {
                             title={t("acao_alternar_status")}
                             aria-label={t("acao_alternar_status")}
                             onClick={async () => {
-                              await updateProcesso(processo.id, {
-                                status:
-                                  processo.status === "Em andamento"
-                                    ? "Concluido"
-                                    : "Em andamento",
-                              });
-                              carregarDados();
-                              refreshDashboard().catch(() => {});
+                              setErro("");
+                              try {
+                                await updateProcesso(processo.id, {
+                                  status:
+                                    processo.status === "Em andamento"
+                                      ? "Concluido"
+                                      : "Em andamento",
+                                });
+                                carregarDados();
+                                refreshDashboard().catch(() => {});
+                              } catch (error) {
+                                setErro(error.message);
+                              }
                             }}
                           >
                             <RefreshCw size={15} />

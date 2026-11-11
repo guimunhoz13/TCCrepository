@@ -32,6 +32,9 @@ export default function AssistenteChat() {
     if (mensagensRef.current) {
       mensagensRef.current.scrollTop = mensagensRef.current.scrollHeight;
     }
+    // O campo precisa estar habilitado no DOM antes de receber foco. Fazer
+    // isso no finally ainda tentava focar o textarea desabilitado do envio.
+    if (!carregando && mensagens.length > 1) inputRef.current?.focus();
   }, [mensagens, carregando]);
 
   function montarHistorico() {
@@ -83,7 +86,6 @@ export default function AssistenteChat() {
       setErro(error.message);
     } finally {
       setCarregando(false);
-      inputRef.current?.focus();
     }
   }
 

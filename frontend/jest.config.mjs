@@ -12,6 +12,11 @@ const customJestConfig = {
   moduleNameMapper: { "^@/(.*)$": "<rootDir>/src/$1" },
   testPathIgnorePatterns: ["<rootDir>/.next/", "<rootDir>/node_modules/", "<rootDir>/e2e/"],
   modulePathIgnorePatterns: ["<rootDir>/.next/"],
+  // O mesmo denominador da auditoria: todo JS/JSX de src, inclusive páginas
+  // ainda sem testes. O gate impede regredir abaixo da meta documentada.
+  collectCoverage: true,
+  collectCoverageFrom: ["src/**/*.{js,jsx}"],
+  coverageThreshold: { global: { lines: 70 } },
 };
 
 export default createJestConfig(customJestConfig);

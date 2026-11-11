@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "test": "jest",
+    "test:coverage": "jest --runInBand --coverage",
     "e2e": "playwright test"
   },
   "dependencies": {
