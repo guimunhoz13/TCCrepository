@@ -17,7 +17,7 @@ const footer = new Footer({
 
 const doc = new Document({
   title: "Sistema Web para Gerenciamento de Escritório de Advocacia",
-  subject: "TDS-2026-038 — Relatório técnico do TCC — revisão documental 1.14 de 11/11/2026 — métricas de 11/11/2026",
+  subject: "TDS-2026-036 — Relatório técnico do TCC — revisão documental 1.15 de 11/11/2026 — métricas de 11/11/2026",
   creator: "João Henrique Souza Sabino e Guilherme Rossato Munhoz",
   styles: {
     default: {
@@ -60,6 +60,6 @@ const doc = new Document({
 });
 
 Packer.toBuffer(doc).then((buffer) => {
-  fs.writeFileSync(`${__dirname}/TDS-2026-038_Relatorio_Tecnico_v1.14.docx`, buffer);
+  fs.writeFileSync(`${__dirname}/TDS-2026-036_Relatorio_Tecnico_v1.15.docx`, buffer);
   console.log("OK: documento gerado.");
 });
