@@ -1,0 +1,73 @@
+{
+  "tipo": "conferencia_documental_sem_reexecucao_das_suites",
+  "data_conferencia": "2026-11-11",
+  "data_metricas": "2026-11-09",
+  "grupo": "TDS-2026-038",
+  "versao_relatorio": "1.13",
+  "testes_referencia": {
+    "data": "2026-11-09",
+    "ambiente": "CI final",
+    "django": 550,
+    "jest": 290,
+    "playwright": 45,
+    "total": 885
+  },
+  "cobertura_referencia": {
+    "data": "2026-11-09",
+    "backend_linhas": "91,85%",
+    "backend_ramos": "79,75%",
+    "frontend_linhas": "38,03%",
+    "frontend_ramos": "34,02%"
+  },
+  "paginas_relatorio": {
+    "contexto_c1": [
+      53
+    ],
+    "containers_c2": [
+      54
+    ],
+    "componentes_c3": [
+      54
+    ],
+    "implantacao": [
+      62
+    ],
+    "autenticacao_totp": [
+      27
+    ],
+    "calculo_cadastro_prazo": [
+      28
+    ],
+    "metricas_consolidadas": [
+      59
+    ]
+  },
+  "titulos_cores_explicitas": [
+    "000000"
+  ],
+  "diagramas_no_docx": "seis PNGs conferidos por SHA-256",
+  "pdf_conjunto": "todas as páginas preservadas em ordem e com texto idêntico aos PDFs de origem",
+  "video": "gravacao_e_submissao_nao_verificadas_nesta_conferencia",
+  "orbita": "envio_dos_arquivos_atuais_nao_verificado",
+  "arquivos": {
+    "docs/tcc/TDS-2026-038_Relatorio_Tecnico_v1.13.pdf": {
+      "sha256": "2ad30223066fa7e59efdbd0f48db6d39e5f10be3e6657fc56770f4a47c6601cd",
+      "bytes": 5657896,
+      "paginas": 66
+    },
+    "docs/tcc/TDS-2026-038_Relatorio_Tecnico_v1.13.docx": {
+      "sha256": "d3fa1fc017705808b00918269ff4a0614da1176319255e6b7e4cdb97110d6a4d",
+      "bytes": 7534334
+    },
+    "docs/Guia-de-Funcionalidades-LexNexo.pdf": {
+      "sha256": "0ee8256a8a1f8e616af47b072df1aae9ccfe6ad373827f2cf05d2c2f8ee18cbf",
+      "bytes": 4026309,
+      "paginas": 66
+    },
+    "docs/tcc/TDS-2026-038_Entrega_Documental_v1.13.pdf": {
+      "sha256": "8a3c5d75c26a8217095e6972aa978ebfb083eaf8c9d40adb768cb31ef7cea756",
+      "bytes": 9331444,
+      "paginas": 132
+    }
+  }
+}

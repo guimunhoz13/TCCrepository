@@ -2,11 +2,15 @@
 
 <!-- auditoria-2026-11-09:inicio -->
 
-## Entrega final revisada em 09/11/2026
+## Entrega documental revisada em 11/11/2026
 
-Grupo **TDS-2026-038**. [Relatório técnico v1.12 PDF](docs/tcc/TDS-2026-038_Relatorio_Tecnico_v1.12.pdf),
-[Word](docs/tcc/TDS-2026-038_Relatorio_Tecnico_v1.12.docx) e
+Grupo **TDS-2026-038**. [Relatório técnico v1.13 PDF](docs/tcc/TDS-2026-038_Relatorio_Tecnico_v1.13.pdf),
+[Word](docs/tcc/TDS-2026-038_Relatorio_Tecnico_v1.13.docx) e
 [manual ilustrado](docs/Guia-de-Funcionalidades-LexNexo.pdf).
+
+Conferência documental de 11/11: [tratamento do parecer](docs/tcc/CONFERENCIA_DOCUMENTAL_2026-11-11.md).
+O [PDF de submissão](docs/tcc/TDS-2026-038_Entrega_Documental_v1.13.pdf) reúne relatório e manual.
+Os resultados abaixo mantêm a data de execução de 09/11/2026.
 
 **885 casos automatizados**, 91,85%/38,03% de cobertura de linhas backend/frontend;
 sete achados corrigidos e publicados. Na conta publicada, 37 de 38 verificações

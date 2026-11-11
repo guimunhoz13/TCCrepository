@@ -1,5 +1,21 @@
 # Resposta técnica ao parecer de revisão
 
+## Conferência documental de 11/11/2026
+
+A entrega vigente é o relatório **v1.13**, acompanhado do manual e do
+[PDF conjunto de submissão](TDS-2026-038_Entrega_Documental_v1.13.pdf).
+A [conferência atual](CONFERENCIA_DOCUMENTAL_2026-11-11.md) verifica os itens do
+parecer de 03/11 nos arquivos efetivamente renderizados. A descrição da suíte
+Playwright foi corrigida de 38 para 44 cenários de navegador mais um HTTP/proxy.
+A tabela já estava correta: 550 Django + 290 Jest + 45 Playwright = 885 em 09/11.
+Não houve nova execução de testes nesta revisão documental.
+
+As seções de 04, 05 e 09/11 abaixo são históricas. A indicação antiga de vídeo
+com 10 a 15 minutos foi substituída pelo plano do professor de até 20 minutos,
+com blocos 3/3/6/5/3 e fala até 19:45. O roteiro e os slides estão prontos;
+gravação, montagem e submissão não foram comprovadas nesta conferência local.
+Não se afirma que os arquivos atuais já estejam enviados ao Órbita.
+
 <!-- auditoria-2026-11-09:inicio -->
 
 ## Complemento final de 09/11/2026

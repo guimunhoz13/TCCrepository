@@ -23,6 +23,7 @@ Cron ..> API : comandos Django\nexecução depende do agendador
 note bottom of S3
   Se filesystem estiver configurado, documentos
   dependem de armazenamento persistente separado.
-  A auditoria não comprovou o bucket ativo.
+  Modo S3 confirmado em 09/11/2026.
+  ACL e recuperação em nuvem não comprovadas.
 end note
 @enduml

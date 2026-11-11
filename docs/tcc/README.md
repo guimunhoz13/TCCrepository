@@ -1,6 +1,18 @@
 # Relatório técnico do TCC (gerado por script)
 
 
+## Entrega documental de 11/11/2026
+
+[Relatório técnico v1.13 PDF](TDS-2026-038_Relatorio_Tecnico_v1.13.pdf),
+[Word editável](TDS-2026-038_Relatorio_Tecnico_v1.13.docx) e
+[manual ilustrado](../Guia-de-Funcionalidades-LexNexo.pdf).
+O [PDF de submissão](TDS-2026-038_Entrega_Documental_v1.13.pdf) reúne relatório e
+manual no mesmo arquivo. [Conferência dos itens do parecer](CONFERENCIA_DOCUMENTAL_2026-11-11.md).
+A revisão corrige a descrição do Playwright para 44 cenários de navegador mais
+um HTTP/proxy, de acordo com a fonte única. Não houve nova execução das suítes;
+os números permanecem datados de 09/11/2026. As versões anteriores abaixo são histórico.
+O envio ao Órbita e o vídeo ainda dependem dos integrantes.
+
 ## Slides e roteiros com a identidade do LexNexo
 
 [PowerPoint editável com seis slides](TDS-2026-038_Apresentacao_PreBanca_LexNexo.pptx) e
@@ -169,7 +181,7 @@ O relatório atual do grupo `TDS-2026-038` é gerado a partir de `gerar_rt.js` (
 biblioteca `docx`:
 
 ```bash
-cd docs/tcc && npm install docx && node main.js   # gera TDS-2026-038_Relatorio_Tecnico_v1.12.docx
+cd docs/tcc && npm install docx && node main.js   # gera TDS-2026-038_Relatorio_Tecnico_v1.13.docx
 ```
 
 Os diagramas ficam em `diagramas/*.puml` (PlantUML) e são renderizados com
@@ -184,8 +196,8 @@ renderizado (precisa de LibreOffice e poppler-utils):
 
 ```bash
 node main.js
-soffice --headless --convert-to pdf TDS-2026-038_Relatorio_Tecnico_v1.11.docx
-python3 paginar.py TDS-2026-038_Relatorio_Tecnico_v1.11.pdf   # grava paginas.json
+soffice --headless --convert-to pdf TDS-2026-038_Relatorio_Tecnico_v1.13.docx
+python3 paginar.py TDS-2026-038_Relatorio_Tecnico_v1.13.pdf   # grava paginas.json
 node main.js                                 # gera de novo com as páginas certas
 ```
 
