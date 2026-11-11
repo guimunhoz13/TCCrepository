@@ -1,17 +1,21 @@
 # Relatório técnico do TCC (gerado por script)
 
 
-## Entrega documental de 11/11/2026
+## Relatório atualizado em 11/11/2026
 
-[Relatório técnico v1.13 PDF](TDS-2026-038_Relatorio_Tecnico_v1.13.pdf),
-[Word editável](TDS-2026-038_Relatorio_Tecnico_v1.13.docx) e
-[manual ilustrado](../Guia-de-Funcionalidades-LexNexo.pdf).
-O [PDF de submissão](TDS-2026-038_Entrega_Documental_v1.13.pdf) reúne relatório e
-manual no mesmo arquivo. [Conferência dos itens do parecer](CONFERENCIA_DOCUMENTAL_2026-11-11.md).
-A revisão corrige a descrição do Playwright para 44 cenários de navegador mais
-um HTTP/proxy, de acordo com a fonte única. Não houve nova execução das suítes;
-os números permanecem datados de 09/11/2026. As versões anteriores abaixo são histórico.
-O envio ao Órbita e o vídeo ainda dependem dos integrantes.
+[Relatório técnico v1.14 PDF](TDS-2026-038_Relatorio_Tecnico_v1.14.pdf) e
+[Word editável](TDS-2026-038_Relatorio_Tecnico_v1.14.docx), **sem o guia anexado**,
+conforme solicitado pelo proprietário. O [manual](../Guia-de-Funcionalidades-LexNexo.pdf)
+permanece independente e tem as métricas sincronizadas.
+
+A rodada local de 11/11 aprovou **951 casos**: 550 Django, 356 Jest e 45 Playwright.
+Cobertura de linhas frontend **72,22%**, meta de 70% atingida; backend **91,85%**.
+Foram acrescentados 66 casos Jest e corrigidos três comportamentos com regressões.
+O CI 43113561017 aprovou os mesmos 951 casos; o frontend foi publicado na Vercel.
+[Conferência dos itens do parecer](CONFERENCIA_DOCUMENTAL_2026-11-11.md) e
+[evidências dos testes](../testes/evidencias/2026-11-11/execucoes.json).
+O vídeo e a submissão continuam com os integrantes. Versões anteriores são histórico;
+o PDF conjunto v1.13 não é a entrega atual solicitada.
 
 ## Slides e roteiros com a identidade do LexNexo
 
@@ -39,7 +43,7 @@ Guilherme e narração de João. Mantém 3/3/6/5/3 minutos e fala até 19:45.
 
 <!-- auditoria-2026-11-09:inicio -->
 
-## Entrega atual — 09/11/2026
+## Histórico da entrega de 09/11/2026
 
 [Relatório v1.12 em PDF](TDS-2026-038_Relatorio_Tecnico_v1.12.pdf) e
 [Word editável](TDS-2026-038_Relatorio_Tecnico_v1.12.docx), grupo **TDS-2026-038**,
@@ -66,7 +70,7 @@ backend, APIs e banco de dados. Há falas, cliques, trechos de código e prepara
 por cena. Encerramento planejado em 19:45, dentro do teto de 20 minutos.
 O roteiro pronto não equivale a vídeo já produzido.
 
-## Entrega atual do grupo TDS-2026-038
+## Histórico da entrega de 05/11/2026
 
 Revisão de **05/11/2026**: [relatório técnico v1.11 em PDF](TDS-2026-038_Relatorio_Tecnico_v1.11.pdf) e
 [Word editável](TDS-2026-038_Relatorio_Tecnico_v1.11.docx).

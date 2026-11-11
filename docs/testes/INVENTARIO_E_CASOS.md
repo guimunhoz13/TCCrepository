@@ -1,78 +1,13 @@
 # Inventário da implementação e verificações
 
-<!-- auditoria-2026-11-09:inicio -->
+Referência atual: **951 casos aprovados**, 550 Django, 356 Jest e 45 Playwright.
+Cobertura frontend 72,22% de linhas; meta de 70% atingida, com o mesmo escopo.
+[Validação e limites](RELATORIO_VALIDACAO.md). Este catálogo é o da rodada local
+integrada de 11/11; os catálogos anteriores estão nas pastas de evidências datadas.
+Código testado a partir da base abaixo e registrado depois em `11a128a`.
 
-## Auditoria final de 09/11/2026 — TDS-2026-038
 
-Repetições finais: **41 casos aprovados no Firefox e 41 no WebKit Linux**,
-com um cenário PWA bloqueado em cada runtime, validado somente no Chromium.
-Os cliques prematuros da preparação anterior foram corrigidos aguardando o
-estado pronto da dashboard; não se usaram retries. Isso não comprova Safari
-real. [Resultados e limites](evidencias/2026-11-09/navegadores.json).
-
-**APTO COM RESSALVAS.** Referência final: **885 testes** — 550 Django, 290 Jest e
-45 Playwright (44 cenários de navegador, três deles em viewport móvel, e um
-HTTP/proxy sem UI). Rodadas e repetições entre navegadores não se somam.
-Cobertura de linhas: **91,85% backend e 38,03% frontend**. A meta frontend de
-70% permanece pendente; não foram excluídos componentes para elevar a medida.
-
-Sete achados adicionais, A24–A30, foram corrigidos e retestados: consistência
-contrato/parcelas, estorno e auditoria, entradas malformadas, cálculo de prazo,
-vínculo cliente/processo no modelo, erro de baixa e foco/Escape em Configurações.
-A aplicação `98ff6bf` foi publicada na Vercel e no Render. O CI dessa versão
-aprovou 884 casos; o CI complementar [42620912216](https://github.com/guimunhoz13/TCCrepository/actions/runs/42620912216) aprovou 885 após acrescentar o caso PWA.
-
-Na conta publicada: **37 APROVADO e 1 BLOQUEADO em 38 verificações**, com **15 novos
-registros principais mantidos**. Cliente e processo foram criados pela interface;
-os demais lançamentos tiveram conferência autenticada e confirmação visual na ficha.
-Nenhum pagamento real, exclusão ou anonimização foi feito em produção. Cinco
-anexos conservaram bytes/SHA-256 e os IDs anteriores de 13 famílias foram preservados.
-A inspeção visual da nova aba PDF foi bloqueada pela política de URL blob da
-ferramenta; a verificação binária da API tem evidência independente.
-
-Fontes: [execuções](evidencias/2026-11-09/execucoes.json),
-[catálogo](evidencias/2026-11-09/inventario-e-casos.md),
-[práticos](evidencias/2026-11-09/praticos.json),
-[publicação](PUBLICACAO-2026-11-09.md) e [métricas únicas](evidencias/metricas-atuais.json).
-Catálogo final: [885 identificadores distintos](evidencias/2026-11-09/inventario-e-casos.md).
-Inventário mantido: 27 modelos, 37 migrations, 13 páginas, 102 paths e 166 operações
-OpenAPI. O catálogo discrimina suíte e nome do caso, inclusive falhas simuladas,
-perfis, segregação, arquivos, financeiro, calendário, acessibilidade e PWA.
-O teste de acesso anônimo às 155 operações protegidas não equivale a exercitar
-155 fluxos positivos completos. Repetições entre navegadores ficam em arquivo próprio.
-
-As seções datadas anteriores são histórico e não substituem esta referência.
-
-<!-- auditoria-2026-11-09:fim -->
-
-<!-- auditoria-2026-11-05:inicio -->
-
-## Referência atual de 05/11/2026
-
-Grupo confirmado: **TDS-2026-038**. A rodada local final possui **863 testes
-aprovados** (536 Django, 288 Jest, 39 Playwright).
-Consulte o [relatório de validação](RELATORIO_VALIDACAO.md), a
-[fonte única de métricas](evidencias/metricas-atuais.json) e o
-[catálogo atualizado](evidencias/2026-11-05/inventario-e-casos.md).
-Abertura de documentos/relatórios e MIME PDF corrigidos localmente; publicação
-aguarda reconexão ao Render e conferência do armazenamento. Vídeo a gravar pelos
-integrantes. As seções abaixo conservam as datas e resultados históricos.
-
-<!-- auditoria-2026-11-05:fim -->
-
-<!-- auditoria-2026-11-04:inicio -->
-
-## Catálogo atual de 04 de novembro de 2026
-
-O [inventário datado atual](evidencias/2026-11-04/inventario-e-casos.md) e seu
-[JSON](evidencias/2026-11-04/casos-executados.json) relacionam os **854 casos**
-executados (535 Django, 282 Jest, 37 Playwright). Os 166 métodos/paths da API
-mantêm os limites de cobertura funcional descritos em cada família. O catálogo
-abaixo é histórico e seus IDs não devem ser associados à rodada atual.
-
-<!-- auditoria-2026-11-04:fim -->
-
-Base `8b41a295e0d7be677600295eb56537bb2c0f871e`; execução de 27/10/2026, America/Sao_Paulo.
+Base `fba0663fcde28833c86d0736b738cdc66914b234`; execução de 11/11/2026, America/Sao_Paulo.
 
 ## Operações da API
 
@@ -578,613 +513,710 @@ Comandos completos e ambientes: EVIDENCIAS.md e RELATORIO_VALIDACAO.md.
 | BE-242 | Django | advocacia.tests.test_feriados_locais.FeriadosLocaisAPITestCase.test_mesma_data_duas_vezes_e_recusada — `backend/advocacia/tests/test_feriados_locais.py` | APROVADO |
 | BE-243 | Django | advocacia.tests.test_feriados_locais.FeriadosLocaisAPITestCase.test_mesma_data_pode_ser_cadastrada_para_comarcas_distintas — `backend/advocacia/tests/test_feriados_locais.py` | APROVADO |
 | BE-244 | Django | advocacia.tests.test_feriados_locais.FeriadosLocaisAPITestCase.test_outro_escritorio_nao_ve_nem_usa — `backend/advocacia/tests/test_feriados_locais.py` | APROVADO |
-| BE-245 | Django | advocacia.tests.test_financeiro.ContratoHonorarioAPITestCase.test_contrato_a_vista_gera_uma_unica_parcela — `backend/advocacia/tests/test_financeiro.py` | APROVADO |
-| BE-246 | Django | advocacia.tests.test_financeiro.ContratoHonorarioAPITestCase.test_contrato_parcelado_divide_o_valor_total_sem_perder_centavos — `backend/advocacia/tests/test_financeiro.py` | APROVADO |
-| BE-247 | Django | advocacia.tests.test_financeiro.ContratoHonorarioAPITestCase.test_marcar_parcela_como_paga_atualiza_status_e_data — `backend/advocacia/tests/test_financeiro.py` | APROVADO |
-| BE-248 | Django | advocacia.tests.test_financeiro.ContratoHonorarioAPITestCase.test_nao_e_possivel_criar_dois_contratos_para_o_mesmo_processo — `backend/advocacia/tests/test_financeiro.py` | APROVADO |
-| BE-249 | Django | advocacia.tests.test_financeiro.ContratoValorMinimoAPITestCase.test_contrato_com_numero_de_parcelas_zero_e_rejeitado — `backend/advocacia/tests/test_financeiro.py` | APROVADO |
-| BE-250 | Django | advocacia.tests.test_financeiro.ContratoValorMinimoAPITestCase.test_contrato_com_valor_zero_e_rejeitado — `backend/advocacia/tests/test_financeiro.py` | APROVADO |
-| BE-251 | Django | advocacia.tests.test_fotos.FotosProtegidasAPITestCase.test_documento_e_rota_antiga_nao_sao_publicos — `backend/advocacia/tests/test_fotos.py` | APROVADO |
-| BE-252 | Django | advocacia.tests.test_fotos.FotosProtegidasAPITestCase.test_envio_de_foto_na_conta_persiste_e_e_devolvido_na_proxima_consulta — `backend/advocacia/tests/test_fotos.py` | APROVADO |
-| BE-253 | Django | advocacia.tests.test_fotos.FotosProtegidasAPITestCase.test_foto_exige_login_e_escritorio_correto — `backend/advocacia/tests/test_fotos.py` | APROVADO |
-| BE-254 | Django | advocacia.tests.test_fotos.FotosProtegidasAPITestCase.test_foto_invalida_retorna_erro_sem_trocar_a_atual — `backend/advocacia/tests/test_fotos.py` | APROVADO |
-| BE-255 | Django | advocacia.tests.test_fotos.FotosProtegidasAPITestCase.test_foto_legada_ainda_pode_ser_lida_do_storage_anterior — `backend/advocacia/tests/test_fotos.py` | APROVADO |
-| BE-256 | Django | advocacia.tests.test_fotos.FotosProtegidasAPITestCase.test_foto_persiste_com_nova_instancia_sem_arquivo_no_disco — `backend/advocacia/tests/test_fotos.py` | APROVADO |
-| BE-257 | Django | advocacia.tests.test_fotos.FotosProtegidasAPITestCase.test_tabela_de_fotos_tem_rls_no_postgresql — `backend/advocacia/tests/test_fotos.py` | APROVADO |
-| BE-258 | Django | advocacia.tests.test_horas_e_despesas.ApontamentoHoraAPITestCase.test_apontamento_acima_de_24h_e_rejeitado — `backend/advocacia/tests/test_horas_e_despesas.py` | APROVADO |
-| BE-259 | Django | advocacia.tests.test_horas_e_despesas.ApontamentoHoraAPITestCase.test_apontamento_de_outro_escritorio_nao_aparece — `backend/advocacia/tests/test_horas_e_despesas.py` | APROVADO |
-| BE-260 | Django | advocacia.tests.test_horas_e_despesas.ApontamentoHoraAPITestCase.test_apontamento_e_lancado_em_nome_de_quem_esta_logado — `backend/advocacia/tests/test_horas_e_despesas.py` | APROVADO |
-| BE-261 | Django | advocacia.tests.test_horas_e_despesas.ApontamentoHoraAPITestCase.test_apontamento_em_data_futura_e_rejeitado — `backend/advocacia/tests/test_horas_e_despesas.py` | APROVADO |
-| BE-262 | Django | advocacia.tests.test_horas_e_despesas.ApontamentoHoraAPITestCase.test_criar_apontamento_calcula_horas_e_valor — `backend/advocacia/tests/test_horas_e_despesas.py` | APROVADO |
-| BE-263 | Django | advocacia.tests.test_horas_e_despesas.ApontamentoHoraAPITestCase.test_filtro_por_processo — `backend/advocacia/tests/test_horas_e_despesas.py` | APROVADO |
-| BE-264 | Django | advocacia.tests.test_horas_e_despesas.ApontamentoHoraAPITestCase.test_hora_nao_faturavel_nao_tem_valor — `backend/advocacia/tests/test_horas_e_despesas.py` | APROVADO |
-| BE-265 | Django | advocacia.tests.test_horas_e_despesas.ApontamentoHoraAPITestCase.test_minutos_zero_e_rejeitado — `backend/advocacia/tests/test_horas_e_despesas.py` | APROVADO |
-| BE-266 | Django | advocacia.tests.test_horas_e_despesas.DespesaAPITestCase.test_criar_despesa — `backend/advocacia/tests/test_horas_e_despesas.py` | APROVADO |
-| BE-267 | Django | advocacia.tests.test_horas_e_despesas.DespesaAPITestCase.test_despesa_registra_quem_lancou — `backend/advocacia/tests/test_horas_e_despesas.py` | APROVADO |
-| BE-268 | Django | advocacia.tests.test_horas_e_despesas.DespesaAPITestCase.test_filtro_por_reembolsavel — `backend/advocacia/tests/test_horas_e_despesas.py` | APROVADO |
-| BE-269 | Django | advocacia.tests.test_horas_e_despesas.DespesaAPITestCase.test_nao_reembolsavel_nao_pode_ser_reembolsada — `backend/advocacia/tests/test_horas_e_despesas.py` | APROVADO |
-| BE-270 | Django | advocacia.tests.test_horas_e_despesas.DespesaAPITestCase.test_valor_zero_e_rejeitado — `backend/advocacia/tests/test_horas_e_despesas.py` | APROVADO |
-| BE-271 | Django | advocacia.tests.test_horas_e_despesas.TempoDeUsoAPITestCase.test_admin_ve_o_tempo_de_toda_a_equipe — `backend/advocacia/tests/test_horas_e_despesas.py` | APROVADO |
-| BE-272 | Django | advocacia.tests.test_horas_e_despesas.TempoDeUsoAPITestCase.test_duracao_e_a_diferenca_entre_inicio_e_ultima_atividade — `backend/advocacia/tests/test_horas_e_despesas.py` | APROVADO |
-| BE-273 | Django | advocacia.tests.test_horas_e_despesas.TempoDeUsoAPITestCase.test_mes_invalido_e_rejeitado — `backend/advocacia/tests/test_horas_e_despesas.py` | APROVADO |
-| BE-274 | Django | advocacia.tests.test_horas_e_despesas.TempoDeUsoAPITestCase.test_mes_sem_uso_retorna_lista_vazia — `backend/advocacia/tests/test_horas_e_despesas.py` | APROVADO |
-| BE-275 | Django | advocacia.tests.test_horas_e_despesas.TempoDeUsoAPITestCase.test_nao_admin_ve_apenas_o_proprio_tempo — `backend/advocacia/tests/test_horas_e_despesas.py` | APROVADO |
-| BE-276 | Django | advocacia.tests.test_horas_e_despesas.TempoDeUsoAPITestCase.test_primeiro_sinal_abre_uma_sessao — `backend/advocacia/tests/test_horas_e_despesas.py` | APROVADO |
-| BE-277 | Django | advocacia.tests.test_horas_e_despesas.TempoDeUsoAPITestCase.test_relatorio_soma_o_tempo_do_mes — `backend/advocacia/tests/test_horas_e_despesas.py` | APROVADO |
-| BE-278 | Django | advocacia.tests.test_horas_e_despesas.TempoDeUsoAPITestCase.test_sinal_apos_a_janela_abre_nova_sessao — `backend/advocacia/tests/test_horas_e_despesas.py` | APROVADO |
-| BE-279 | Django | advocacia.tests.test_horas_e_despesas.TempoDeUsoAPITestCase.test_sinal_seguido_estende_a_mesma_sessao — `backend/advocacia/tests/test_horas_e_despesas.py` | APROVADO |
-| BE-280 | Django | advocacia.tests.test_ia.AssistenteIAAPITestCase.test_cliente_de_outro_escritorio_nao_entra_no_contexto — `backend/advocacia/tests/test_ia.py` | APROVADO |
-| BE-281 | Django | advocacia.tests.test_ia.AssistenteIAAPITestCase.test_contexto_do_cliente_nao_envia_documentos_ou_contatos — `backend/advocacia/tests/test_ia.py` | APROVADO |
-| BE-282 | Django | advocacia.tests.test_ia.AssistenteIAAPITestCase.test_falha_da_openai_vira_502_sem_vazar_o_erro — `backend/advocacia/tests/test_ia.py` | APROVADO |
-| BE-283 | Django | advocacia.tests.test_ia.AssistenteIAAPITestCase.test_historico_vindo_do_navegador_nao_injeta_mensagem_de_sistema — `backend/advocacia/tests/test_ia.py` | APROVADO |
-| BE-284 | Django | advocacia.tests.test_ia.AssistenteIAAPITestCase.test_limite_proprio_de_chamadas_por_minuto — `backend/advocacia/tests/test_ia.py` | APROVADO |
-| BE-285 | Django | advocacia.tests.test_ia.AssistenteIAAPITestCase.test_mensagem_e_historico_minimizam_identificadores — `backend/advocacia/tests/test_ia.py` | APROVADO |
-| BE-286 | Django | advocacia.tests.test_ia.AssistenteIAAPITestCase.test_mensagem_grande_demais_e_recusada_sem_chamar_a_openai — `backend/advocacia/tests/test_ia.py` | APROVADO |
-| BE-287 | Django | advocacia.tests.test_ia.AssistenteIAAPITestCase.test_mensagem_vazia_e_recusada — `backend/advocacia/tests/test_ia.py` | APROVADO |
-| BE-288 | Django | advocacia.tests.test_ia.AssistenteIAAPITestCase.test_responde_com_o_texto_devolvido_pela_openai — `backend/advocacia/tests/test_ia.py` | APROVADO |
-| BE-289 | Django | advocacia.tests.test_ia.AssistenteIAAPITestCase.test_sem_chave_configurada_responde_servico_indisponivel — `backend/advocacia/tests/test_ia.py` | APROVADO |
-| BE-290 | Django | advocacia.tests.test_kanban.QuadroDeTarefasAPITestCase.test_mover_o_cartao_para_concluida_registra_a_data — `backend/advocacia/tests/test_kanban.py` | APROVADO |
-| BE-291 | Django | advocacia.tests.test_kanban.QuadroDeTarefasAPITestCase.test_quadro_traz_o_que_esta_em_jogo_e_as_concluidas_recentes — `backend/advocacia/tests/test_kanban.py` | APROVADO |
-| BE-292 | Django | advocacia.tests.test_lembretes_e_avisos.AvisosPorEventoAPITestCase.test_autor_da_acao_nao_recebe_o_proprio_aviso — `backend/advocacia/tests/test_lembretes_e_avisos.py` | APROVADO |
-| BE-293 | Django | advocacia.tests.test_lembretes_e_avisos.AvisosPorEventoAPITestCase.test_edicao_sem_mudar_status_nao_avisa — `backend/advocacia/tests/test_lembretes_e_avisos.py` | APROVADO |
-| BE-294 | Django | advocacia.tests.test_lembretes_e_avisos.AvisosPorEventoAPITestCase.test_falha_de_email_nao_derruba_a_operacao — `backend/advocacia/tests/test_lembretes_e_avisos.py` | APROVADO |
-| BE-295 | Django | advocacia.tests.test_lembretes_e_avisos.AvisosPorEventoAPITestCase.test_mudanca_de_status_avisa_os_colegas — `backend/advocacia/tests/test_lembretes_e_avisos.py` | APROVADO |
-| BE-296 | Django | advocacia.tests.test_lembretes_e_avisos.AvisosPorEventoAPITestCase.test_novo_cliente_avisa_os_colegas — `backend/advocacia/tests/test_lembretes_e_avisos.py` | APROVADO |
-| BE-297 | Django | advocacia.tests.test_lembretes_e_avisos.AvisosPorEventoAPITestCase.test_preferencia_desligada_nao_recebe — `backend/advocacia/tests/test_lembretes_e_avisos.py` | APROVADO |
-| BE-298 | Django | advocacia.tests.test_lembretes_e_avisos.EnvioDeLembretesTestCase.test_comando_e_idempotente — `backend/advocacia/tests/test_lembretes_e_avisos.py` | APROVADO |
-| BE-299 | Django | advocacia.tests.test_lembretes_e_avisos.EnvioDeLembretesTestCase.test_contagem_de_dias_usa_o_fuso_local — `backend/advocacia/tests/test_lembretes_e_avisos.py` | APROVADO |
-| BE-300 | Django | advocacia.tests.test_lembretes_e_avisos.EnvioDeLembretesTestCase.test_dry_run_nao_envia_nem_registra — `backend/advocacia/tests/test_lembretes_e_avisos.py` | APROVADO |
-| BE-301 | Django | advocacia.tests.test_lembretes_e_avisos.EnvioDeLembretesTestCase.test_evento_dentro_da_antecedencia_gera_email — `backend/advocacia/tests/test_lembretes_e_avisos.py` | APROVADO |
-| BE-302 | Django | advocacia.tests.test_lembretes_e_avisos.EnvioDeLembretesTestCase.test_evento_fora_da_antecedencia_nao_gera_email — `backend/advocacia/tests/test_lembretes_e_avisos.py` | APROVADO |
-| BE-303 | Django | advocacia.tests.test_lembretes_e_avisos.EnvioDeLembretesTestCase.test_evento_ja_cumprido_nao_gera_email — `backend/advocacia/tests/test_lembretes_e_avisos.py` | APROVADO |
-| BE-304 | Django | advocacia.tests.test_lembretes_e_avisos.EnvioDeLembretesTestCase.test_falha_de_envio_nao_marca_como_enviado — `backend/advocacia/tests/test_lembretes_e_avisos.py` | APROVADO |
-| BE-305 | Django | advocacia.tests.test_lembretes_e_avisos.EnvioDeLembretesTestCase.test_falha_do_email_nao_impede_o_push — `backend/advocacia/tests/test_lembretes_e_avisos.py` | APROVADO |
-| BE-306 | Django | advocacia.tests.test_lembretes_e_avisos.EnvioDeLembretesTestCase.test_prazo_fatal_e_identificado_no_assunto — `backend/advocacia/tests/test_lembretes_e_avisos.py` | APROVADO |
-| BE-307 | Django | advocacia.tests.test_lembretes_e_avisos.EnvioDeLembretesTestCase.test_prazo_fatal_recebe_reforco_em_dois_dias_um_dia_e_no_dia — `backend/advocacia/tests/test_lembretes_e_avisos.py` | APROVADO |
-| BE-308 | Django | advocacia.tests.test_lembretes_e_avisos.EnvioDeLembretesTestCase.test_preferencia_desligada_nao_gera_email — `backend/advocacia/tests/test_lembretes_e_avisos.py` | APROVADO |
-| BE-309 | Django | advocacia.tests.test_lembretes_e_avisos.EnvioDeLembretesTestCase.test_resumo_semanal_e_enviado_uma_vez_por_semana — `backend/advocacia/tests/test_lembretes_e_avisos.py` | APROVADO |
-| BE-310 | Django | advocacia.tests.test_lembretes_e_avisos.EnvioDeLembretesTestCase.test_resumo_semanal_lista_eventos_da_semana — `backend/advocacia/tests/test_lembretes_e_avisos.py` | APROVADO |
-| BE-311 | Django | advocacia.tests.test_lembretes_e_avisos.EnvioDeLembretesTestCase.test_usuario_de_outro_escritorio_nao_recebe_eventos_alheios — `backend/advocacia/tests/test_lembretes_e_avisos.py` | APROVADO |
-| BE-312 | Django | advocacia.tests.test_lembretes_e_avisos.EnvioDeLembretesTestCase.test_usuario_inativo_nao_recebe — `backend/advocacia/tests/test_lembretes_e_avisos.py` | APROVADO |
-| BE-313 | Django | advocacia.tests.test_lembretes_e_avisos.EnvioDeLembretesTestCase.test_usuario_sem_email_ainda_recebe_push — `backend/advocacia/tests/test_lembretes_e_avisos.py` | APROVADO |
-| BE-314 | Django | advocacia.tests.test_modelos_documento.ModeloDocumentoAPITestCase.test_criar_modelo_pela_api — `backend/advocacia/tests/test_modelos_documento.py` | APROVADO |
-| BE-315 | Django | advocacia.tests.test_modelos_documento.ModeloDocumentoAPITestCase.test_gerar_documento_a_partir_de_cliente — `backend/advocacia/tests/test_modelos_documento.py` | APROVADO |
-| BE-316 | Django | advocacia.tests.test_modelos_documento.ModeloDocumentoAPITestCase.test_gerar_sem_cliente_nem_processo_e_rejeitado — `backend/advocacia/tests/test_modelos_documento.py` | APROVADO |
-| BE-317 | Django | advocacia.tests.test_modelos_documento.ModeloDocumentoAPITestCase.test_listar_variaveis_disponiveis — `backend/advocacia/tests/test_modelos_documento.py` | APROVADO |
-| BE-318 | Django | advocacia.tests.test_modelos_documento.ModeloDocumentoAPITestCase.test_modelo_de_outro_escritorio_nao_e_acessivel — `backend/advocacia/tests/test_modelos_documento.py` | APROVADO |
-| BE-319 | Django | advocacia.tests.test_modelos_documento.ModeloDocumentoAPITestCase.test_nao_preenche_com_cliente_de_outro_escritorio — `backend/advocacia/tests/test_modelos_documento.py` | APROVADO |
-| BE-320 | Django | advocacia.tests.test_modelos_documento.ModeloDocumentoAPITestCase.test_nome_de_modelo_duplicado_no_mesmo_escritorio_e_rejeitado — `backend/advocacia/tests/test_modelos_documento.py` | APROVADO |
-| BE-321 | Django | advocacia.tests.test_modelos_documento.PreenchimentoDeModeloTestCase.test_campo_em_branco_no_cadastro_e_sinalizado — `backend/advocacia/tests/test_modelos_documento.py` | APROVADO |
-| BE-322 | Django | advocacia.tests.test_modelos_documento.PreenchimentoDeModeloTestCase.test_data_por_extenso_e_cidade — `backend/advocacia/tests/test_modelos_documento.py` | APROVADO |
-| BE-323 | Django | advocacia.tests.test_modelos_documento.PreenchimentoDeModeloTestCase.test_espacos_dentro_das_chaves_sao_tolerados — `backend/advocacia/tests/test_modelos_documento.py` | APROVADO |
-| BE-324 | Django | advocacia.tests.test_modelos_documento.PreenchimentoDeModeloTestCase.test_nao_expoe_campo_sensivel_por_travessia_de_atributo — `backend/advocacia/tests/test_modelos_documento.py` | APROVADO |
-| BE-325 | Django | advocacia.tests.test_modelos_documento.PreenchimentoDeModeloTestCase.test_processo_preenche_cliente_e_advogado_automaticamente — `backend/advocacia/tests/test_modelos_documento.py` | APROVADO |
-| BE-326 | Django | advocacia.tests.test_modelos_documento.PreenchimentoDeModeloTestCase.test_substitui_variaveis_do_cliente — `backend/advocacia/tests/test_modelos_documento.py` | APROVADO |
-| BE-327 | Django | advocacia.tests.test_modelos_documento.PreenchimentoDeModeloTestCase.test_variavel_fora_do_catalogo_e_mantida_e_sinalizada — `backend/advocacia/tests/test_modelos_documento.py` | APROVADO |
-| BE-328 | Django | advocacia.tests.test_permissoes.IsolamentoEAutorizacaoTestCase.test_a_mensagem_nao_confirma_a_existencia_do_registro_alheio — `backend/advocacia/tests/test_permissoes.py` | APROVADO |
-| BE-329 | Django | advocacia.tests.test_permissoes.IsolamentoEAutorizacaoTestCase.test_a_rota_generica_nao_troca_senha — `backend/advocacia/tests/test_permissoes.py` | APROVADO |
-| BE-330 | Django | advocacia.tests.test_permissoes.IsolamentoEAutorizacaoTestCase.test_admin_exclui_usuario_sem_vinculos — `backend/advocacia/tests/test_permissoes.py` | APROVADO |
-| BE-331 | Django | advocacia.tests.test_permissoes.IsolamentoEAutorizacaoTestCase.test_admin_nao_exclui_a_propria_conta — `backend/advocacia/tests/test_permissoes.py` | APROVADO |
-| BE-332 | Django | advocacia.tests.test_permissoes.IsolamentoEAutorizacaoTestCase.test_admin_pode_consultar_dados_completos_de_membro — `backend/advocacia/tests/test_permissoes.py` | APROVADO |
-| BE-333 | Django | advocacia.tests.test_permissoes.IsolamentoEAutorizacaoTestCase.test_administrador_nao_altera_o_proprio_perfil — `backend/advocacia/tests/test_permissoes.py` | APROVADO |
-| BE-334 | Django | advocacia.tests.test_permissoes.IsolamentoEAutorizacaoTestCase.test_administrador_troca_o_perfil_de_outro — `backend/advocacia/tests/test_permissoes.py` | APROVADO |
-| BE-335 | Django | advocacia.tests.test_permissoes.IsolamentoEAutorizacaoTestCase.test_advogado_nao_edita_outro_usuario — `backend/advocacia/tests/test_permissoes.py` | APROVADO |
-| BE-336 | Django | advocacia.tests.test_permissoes.IsolamentoEAutorizacaoTestCase.test_advogado_nao_reativa_a_propria_conta — `backend/advocacia/tests/test_permissoes.py` | APROVADO |
-| BE-337 | Django | advocacia.tests.test_permissoes.IsolamentoEAutorizacaoTestCase.test_advogado_nao_se_promove_a_administrador — `backend/advocacia/tests/test_permissoes.py` | APROVADO |
-| BE-338 | Django | advocacia.tests.test_permissoes.IsolamentoEAutorizacaoTestCase.test_agenda_nao_entra_em_processo_alheio — `backend/advocacia/tests/test_permissoes.py` | APROVADO |
-| BE-339 | Django | advocacia.tests.test_permissoes.IsolamentoEAutorizacaoTestCase.test_apenas_administrador_desativa_usuario — `backend/advocacia/tests/test_permissoes.py` | APROVADO |
-| BE-340 | Django | advocacia.tests.test_permissoes.IsolamentoEAutorizacaoTestCase.test_apontamento_nao_entra_em_processo_alheio — `backend/advocacia/tests/test_permissoes.py` | APROVADO |
-| BE-341 | Django | advocacia.tests.test_permissoes.IsolamentoEAutorizacaoTestCase.test_cada_um_edita_os_proprios_dados — `backend/advocacia/tests/test_permissoes.py` | APROVADO |
-| BE-342 | Django | advocacia.tests.test_permissoes.IsolamentoEAutorizacaoTestCase.test_cliente_sem_processo_continua_excluivel — `backend/advocacia/tests/test_permissoes.py` | APROVADO |
-| BE-343 | Django | advocacia.tests.test_permissoes.IsolamentoEAutorizacaoTestCase.test_colega_ve_apenas_resumo_da_equipe — `backend/advocacia/tests/test_permissoes.py` | APROVADO |
-| BE-344 | Django | advocacia.tests.test_permissoes.IsolamentoEAutorizacaoTestCase.test_contrato_nao_entra_em_processo_alheio — `backend/advocacia/tests/test_permissoes.py` | APROVADO |
-| BE-345 | Django | advocacia.tests.test_permissoes.IsolamentoEAutorizacaoTestCase.test_despesa_nao_entra_em_processo_alheio — `backend/advocacia/tests/test_permissoes.py` | APROVADO |
-| BE-346 | Django | advocacia.tests.test_permissoes.IsolamentoEAutorizacaoTestCase.test_escritorio_desativado_derruba_os_usuarios — `backend/advocacia/tests/test_permissoes.py` | APROVADO |
-| BE-347 | Django | advocacia.tests.test_permissoes.IsolamentoEAutorizacaoTestCase.test_escritorio_nao_fica_sem_administrador — `backend/advocacia/tests/test_permissoes.py` | APROVADO |
-| BE-348 | Django | advocacia.tests.test_permissoes.IsolamentoEAutorizacaoTestCase.test_excluir_cliente_com_processo_e_recusado — `backend/advocacia/tests/test_permissoes.py` | APROVADO |
-| BE-349 | Django | advocacia.tests.test_permissoes.IsolamentoEAutorizacaoTestCase.test_filtro_invalido_responde_400_e_nao_500 — `backend/advocacia/tests/test_permissoes.py` | APROVADO |
-| BE-350 | Django | advocacia.tests.test_permissoes.IsolamentoEAutorizacaoTestCase.test_filtro_valido_continua_funcionando — `backend/advocacia/tests/test_permissoes.py` | APROVADO |
-| BE-351 | Django | advocacia.tests.test_permissoes.IsolamentoEAutorizacaoTestCase.test_movimentacao_nao_entra_em_processo_alheio — `backend/advocacia/tests/test_permissoes.py` | APROVADO |
-| BE-352 | Django | advocacia.tests.test_permissoes.IsolamentoEAutorizacaoTestCase.test_processo_nao_aceita_cliente_de_outro_escritorio — `backend/advocacia/tests/test_permissoes.py` | APROVADO |
-| BE-353 | Django | advocacia.tests.test_permissoes.IsolamentoEAutorizacaoTestCase.test_refresh_nao_renova_acesso_de_conta_desativada — `backend/advocacia/tests/test_permissoes.py` | APROVADO |
-| BE-354 | Django | advocacia.tests.test_permissoes.IsolamentoEAutorizacaoTestCase.test_usuario_com_processo_nao_e_excluido — `backend/advocacia/tests/test_permissoes.py` | APROVADO |
-| BE-355 | Django | advocacia.tests.test_permissoes.IsolamentoEAutorizacaoTestCase.test_usuario_desativado_perde_o_acesso_imediatamente — `backend/advocacia/tests/test_permissoes.py` | APROVADO |
-| BE-356 | Django | advocacia.tests.test_permissoes.PerfisDeAcessoAPITestCase.test_admin_cadastra_membro_sem_oab_e_ele_consegue_entrar — `backend/advocacia/tests/test_permissoes.py` | APROVADO |
-| BE-357 | Django | advocacia.tests.test_permissoes.PerfisDeAcessoAPITestCase.test_admin_troca_perfil_para_financeiro — `backend/advocacia/tests/test_permissoes.py` | APROVADO |
-| BE-358 | Django | advocacia.tests.test_permissoes.PerfisDeAcessoAPITestCase.test_busca_nao_traz_area_que_o_perfil_nao_ve — `backend/advocacia/tests/test_permissoes.py` | APROVADO |
-| BE-359 | Django | advocacia.tests.test_permissoes.PerfisDeAcessoAPITestCase.test_estagiario_cadastra_cliente_mas_nao_exclui — `backend/advocacia/tests/test_permissoes.py` | APROVADO |
-| BE-360 | Django | advocacia.tests.test_permissoes.PerfisDeAcessoAPITestCase.test_estagiario_e_secretaria_nao_veem_o_financeiro — `backend/advocacia/tests/test_permissoes.py` | APROVADO |
-| BE-361 | Django | advocacia.tests.test_permissoes.PerfisDeAcessoAPITestCase.test_financeiro_cuida_dos_contratos_mas_nao_altera_processo — `backend/advocacia/tests/test_permissoes.py` | APROVADO |
-| BE-362 | Django | advocacia.tests.test_permissoes.PerfisDeAcessoAPITestCase.test_login_devolve_as_permissoes_do_perfil — `backend/advocacia/tests/test_permissoes.py` | APROVADO |
-| BE-363 | Django | advocacia.tests.test_permissoes.PerfisDeAcessoAPITestCase.test_secretaria_agenda_compromisso_mas_nao_usa_a_ia — `backend/advocacia/tests/test_permissoes.py` | APROVADO |
-| BE-364 | Django | advocacia.tests.test_permissoes.PerfisDeAcessoAPITestCase.test_so_admin_cadastra_membro — `backend/advocacia/tests/test_permissoes.py` | APROVADO |
-| BE-365 | Django | advocacia.tests.test_permissoes.ProcessoSigilosoAPITestCase.test_outro_advogado_nao_ve_o_processo_nem_o_que_pende_dele — `backend/advocacia/tests/test_permissoes.py` | APROVADO |
-| BE-366 | Django | advocacia.tests.test_permissoes.ProcessoSigilosoAPITestCase.test_relatorio_do_cliente_omite_o_sigiloso_para_quem_nao_pode — `backend/advocacia/tests/test_permissoes.py` | APROVADO |
-| BE-367 | Django | advocacia.tests.test_permissoes.ProcessoSigilosoAPITestCase.test_responsavel_e_administrador_veem — `backend/advocacia/tests/test_permissoes.py` | APROVADO |
-| BE-368 | Django | advocacia.tests.test_pix.BRCodeTestCase.test_crc_do_exemplo_do_manual_do_banco_central — `backend/advocacia/tests/test_pix.py` | APROVADO |
-| BE-369 | Django | advocacia.tests.test_pix.BRCodeTestCase.test_descricao_longa_e_cortada_para_caber_no_campo — `backend/advocacia/tests/test_pix.py` | APROVADO |
-| BE-370 | Django | advocacia.tests.test_pix.BRCodeTestCase.test_normaliza_a_chave_sem_validar_documento — `backend/advocacia/tests/test_pix.py` | APROVADO |
-| BE-371 | Django | advocacia.tests.test_pix.BRCodeTestCase.test_payload_tem_valor_destinatario_e_crc_valido — `backend/advocacia/tests/test_pix.py` | APROVADO |
-| BE-372 | Django | advocacia.tests.test_pix.BRCodeTestCase.test_sem_chave_ou_sem_cidade_explica_o_que_falta — `backend/advocacia/tests/test_pix.py` | APROVADO |
-| BE-373 | Django | advocacia.tests.test_pix.PixDaParcelaAPITestCase.test_chave_sem_tipo_e_recusada — `backend/advocacia/tests/test_pix.py` | APROVADO |
-| BE-374 | Django | advocacia.tests.test_pix.PixDaParcelaAPITestCase.test_gera_qr_code_e_copia_e_cola_da_parcela — `backend/advocacia/tests/test_pix.py` | APROVADO |
-| BE-375 | Django | advocacia.tests.test_pix.PixDaParcelaAPITestCase.test_parcela_de_processo_sigiloso_nao_aparece_para_quem_nao_ve — `backend/advocacia/tests/test_pix.py` | APROVADO |
-| BE-376 | Django | advocacia.tests.test_pix.PixDaParcelaAPITestCase.test_parcela_paga_nao_gera_pix — `backend/advocacia/tests/test_pix.py` | APROVADO |
-| BE-377 | Django | advocacia.tests.test_pix.PixDaParcelaAPITestCase.test_perfil_sem_financeiro_nao_acessa — `backend/advocacia/tests/test_pix.py` | APROVADO |
-| BE-378 | Django | advocacia.tests.test_pix.PixDaParcelaAPITestCase.test_sem_chave_cadastrada_explica_onde_configurar — `backend/advocacia/tests/test_pix.py` | APROVADO |
-| BE-379 | Django | advocacia.tests.test_pix.PixDaParcelaAPITestCase.test_simulacao_exige_permissao_e_escritorio_correto — `backend/advocacia/tests/test_pix.py` | APROVADO |
-| BE-380 | Django | advocacia.tests.test_pix.PixDaParcelaAPITestCase.test_simulacao_recusa_codigo_real_e_modo_invalido — `backend/advocacia/tests/test_pix.py` | APROVADO |
-| BE-381 | Django | advocacia.tests.test_pix.PixDaParcelaAPITestCase.test_simulacao_repetida_nao_altera_parcela_real — `backend/advocacia/tests/test_pix.py` | APROVADO |
-| BE-382 | Django | advocacia.tests.test_pix.PixDaParcelaAPITestCase.test_teste_funciona_sem_chave_e_nao_contem_dados_bancarios — `backend/advocacia/tests/test_pix.py` | APROVADO |
-| BE-383 | Django | advocacia.tests.test_planos.PlanosAPITestCase.test_cadastrar_processo_ja_arquivado_nao_esbarra_no_limite — `backend/advocacia/tests/test_planos.py` | APROVADO |
-| BE-384 | Django | advocacia.tests.test_planos.PlanosAPITestCase.test_catalogo_e_publico_e_o_primeiro_plano_e_gratuito — `backend/advocacia/tests/test_planos.py` | APROVADO |
-| BE-385 | Django | advocacia.tests.test_planos.PlanosAPITestCase.test_catalogo_funciona_mesmo_com_token_vencido_no_navegador — `backend/advocacia/tests/test_planos.py` | APROVADO |
-| BE-386 | Django | advocacia.tests.test_planos.PlanosAPITestCase.test_consulta_manual_ao_datajud_continua_no_gratuito — `backend/advocacia/tests/test_planos.py` | APROVADO |
-| BE-387 | Django | advocacia.tests.test_planos.PlanosAPITestCase.test_desarquivar_acima_do_limite_e_recusado — `backend/advocacia/tests/test_planos.py` | APROVADO |
-| BE-388 | Django | advocacia.tests.test_planos.PlanosAPITestCase.test_escritorio_novo_comeca_no_gratuito_sem_pagar — `backend/advocacia/tests/test_planos.py` | APROVADO |
-| BE-389 | Django | advocacia.tests.test_planos.PlanosAPITestCase.test_gratuito_recusa_novo_advogado_acima_do_limite — `backend/advocacia/tests/test_planos.py` | APROVADO |
-| BE-390 | Django | advocacia.tests.test_planos.PlanosAPITestCase.test_gratuito_recusa_o_quarto_usuario_sem_apagar_ninguem — `backend/advocacia/tests/test_planos.py` | APROVADO |
-| BE-391 | Django | advocacia.tests.test_planos.PlanosAPITestCase.test_gratuito_recusa_processo_acima_de_30_ativos — `backend/advocacia/tests/test_planos.py` | APROVADO |
-| BE-392 | Django | advocacia.tests.test_planos.PlanosAPITestCase.test_ia_fica_no_profissional_e_nao_chama_a_openai_no_gratuito — `backend/advocacia/tests/test_planos.py` | APROVADO |
-| BE-393 | Django | advocacia.tests.test_planos.PlanosAPITestCase.test_intimacoes_do_djen_ficam_nos_planos_pagos — `backend/advocacia/tests/test_planos.py` | APROVADO |
-| BE-394 | Django | advocacia.tests.test_planos.PlanosAPITestCase.test_pix_teste_de_assinatura_nao_contrata_nem_altera_limites — `backend/advocacia/tests/test_planos.py` | APROVADO |
-| BE-395 | Django | advocacia.tests.test_planos.PlanosAPITestCase.test_pix_teste_exige_login_e_plano_valido — `backend/advocacia/tests/test_planos.py` | APROVADO |
-| BE-396 | Django | advocacia.tests.test_planos.PlanosAPITestCase.test_pix_teste_recusa_codigo_de_outro_escritorio_ou_plano — `backend/advocacia/tests/test_planos.py` | APROVADO |
-| BE-397 | Django | advocacia.tests.test_planos.PlanosAPITestCase.test_plano_pago_dentro_da_validade_vale — `backend/advocacia/tests/test_planos.py` | APROVADO |
-| BE-398 | Django | advocacia.tests.test_planos.PlanosAPITestCase.test_plano_pago_libera_mais_usuarios — `backend/advocacia/tests/test_planos.py` | APROVADO |
-| BE-399 | Django | advocacia.tests.test_planos.PlanosAPITestCase.test_plano_pago_vencido_vale_como_gratuito — `backend/advocacia/tests/test_planos.py` | APROVADO |
-| BE-400 | Django | advocacia.tests.test_planos.PlanosAPITestCase.test_processo_arquivado_nao_conta_no_limite — `backend/advocacia/tests/test_planos.py` | APROVADO |
-| BE-401 | Django | advocacia.tests.test_planos.PlanosAPITestCase.test_profissional_nao_tem_limite_de_processos — `backend/advocacia/tests/test_planos.py` | APROVADO |
-| BE-402 | Django | advocacia.tests.test_planos.PlanosAPITestCase.test_reativar_usuario_respeita_o_limite_mas_desativar_sempre_pode — `backend/advocacia/tests/test_planos.py` | APROVADO |
-| BE-403 | Django | advocacia.tests.test_planos.PlanosAPITestCase.test_resumo_ao_cliente_no_gratuito_usa_o_modelo_sem_ia — `backend/advocacia/tests/test_planos.py` | APROVADO |
-| BE-404 | Django | advocacia.tests.test_planos.PlanosAPITestCase.test_rotina_do_djen_pula_escritorio_gratuito — `backend/advocacia/tests/test_planos.py` | APROVADO |
-| BE-405 | Django | advocacia.tests.test_planos.PlanosAPITestCase.test_sincronizacao_automatica_do_datajud_pula_escritorio_gratuito — `backend/advocacia/tests/test_planos.py` | APROVADO |
-| BE-406 | Django | advocacia.tests.test_planos.PlanosAPITestCase.test_situacao_mostra_plano_uso_e_limites — `backend/advocacia/tests/test_planos.py` | APROVADO |
-| BE-407 | Django | advocacia.tests.test_planos.PlanosAPITestCase.test_usuario_de_outro_escritorio_ve_so_o_proprio_plano — `backend/advocacia/tests/test_planos.py` | APROVADO |
-| BE-408 | Django | advocacia.tests.test_popular_demo.PopularDemonstracaoTestCase.test_cria_um_escritorio_completo_e_utilizavel — `backend/advocacia/tests/test_popular_demo.py` | APROVADO |
-| BE-409 | Django | advocacia.tests.test_popular_demo.PopularDemonstracaoTestCase.test_nao_duplica_e_recria_quando_pedido — `backend/advocacia/tests/test_popular_demo.py` | APROVADO |
-| BE-410 | Django | advocacia.tests.test_processos.DownloadAutenticadoAPITestCase.test_admin_baixa_documento_de_identidade_de_qualquer_usuario_do_escritorio — `backend/advocacia/tests/test_processos.py` | APROVADO |
-| BE-411 | Django | advocacia.tests.test_processos.DownloadAutenticadoAPITestCase.test_advogado_baixa_o_proprio_documento_de_identidade — `backend/advocacia/tests/test_processos.py` | APROVADO |
-| BE-412 | Django | advocacia.tests.test_processos.DownloadAutenticadoAPITestCase.test_advogado_nao_baixa_documento_de_identidade_de_outro_advogado — `backend/advocacia/tests/test_processos.py` | APROVADO |
-| BE-413 | Django | advocacia.tests.test_processos.DownloadAutenticadoAPITestCase.test_download_de_documento_de_outro_escritorio_e_404 — `backend/advocacia/tests/test_processos.py` | APROVADO |
-| BE-414 | Django | advocacia.tests.test_processos.DownloadAutenticadoAPITestCase.test_download_de_documento_do_proprio_escritorio_funciona — `backend/advocacia/tests/test_processos.py` | APROVADO |
-| BE-415 | Django | advocacia.tests.test_processos.DownloadAutenticadoAPITestCase.test_download_de_documento_sem_autenticacao_e_negado — `backend/advocacia/tests/test_processos.py` | APROVADO |
-| BE-416 | Django | advocacia.tests.test_processos.DownloadAutenticadoAPITestCase.test_download_do_documento_de_identidade_de_cliente_de_outro_escritorio_e_404 — `backend/advocacia/tests/test_processos.py` | APROVADO |
-| BE-417 | Django | advocacia.tests.test_processos.DownloadAutenticadoAPITestCase.test_download_do_documento_de_identidade_do_cliente_funciona — `backend/advocacia/tests/test_processos.py` | APROVADO |
-| BE-418 | Django | advocacia.tests.test_processos.DownloadAutenticadoAPITestCase.test_serializer_de_cliente_nao_expoe_url_mas_avisa_que_ha_documento — `backend/advocacia/tests/test_processos.py` | APROVADO |
-| BE-419 | Django | advocacia.tests.test_processos.DownloadAutenticadoAPITestCase.test_serializer_de_documento_nao_expoe_url_do_arquivo — `backend/advocacia/tests/test_processos.py` | APROVADO |
-| BE-420 | Django | advocacia.tests.test_processos.FichaDoProcessoAPITestCase.test_ficha_de_processo_vazio_traz_listas_vazias_e_sem_contrato — `backend/advocacia/tests/test_processos.py` | APROVADO |
-| BE-421 | Django | advocacia.tests.test_processos.FichaDoProcessoAPITestCase.test_ficha_exige_autenticacao — `backend/advocacia/tests/test_processos.py` | APROVADO |
-| BE-422 | Django | advocacia.tests.test_processos.FichaDoProcessoAPITestCase.test_ficha_expoe_a_origem_da_movimentacao — `backend/advocacia/tests/test_processos.py` | APROVADO |
-| BE-423 | Django | advocacia.tests.test_processos.FichaDoProcessoAPITestCase.test_ficha_nao_alcanca_processo_de_outro_escritorio — `backend/advocacia/tests/test_processos.py` | APROVADO |
-| BE-424 | Django | advocacia.tests.test_processos.FichaDoProcessoAPITestCase.test_ficha_reune_todos_os_blocos_do_processo — `backend/advocacia/tests/test_processos.py` | APROVADO |
-| BE-425 | Django | advocacia.tests.test_processos.FichaDoProcessoAPITestCase.test_processo_serializado_traz_data_de_sincronizacao_com_datajud — `backend/advocacia/tests/test_processos.py` | APROVADO |
-| BE-426 | Django | advocacia.tests.test_processos.MovimentacaoCriadoPorAPITestCase.test_movimentacao_registra_o_usuario_que_criou — `backend/advocacia/tests/test_processos.py` | APROVADO |
-| BE-427 | Django | advocacia.tests.test_processos.MovimentacaoManualAPITestCase.test_exclui_movimentacao_lancada_manualmente — `backend/advocacia/tests/test_processos.py` | APROVADO |
-| BE-428 | Django | advocacia.tests.test_processos.MovimentacaoManualAPITestCase.test_movimentacao_criada_pela_api_nasce_com_origem_manual — `backend/advocacia/tests/test_processos.py` | APROVADO |
-| BE-429 | Django | advocacia.tests.test_processos.MovimentacaoManualAPITestCase.test_nao_exclui_movimentacao_importada_do_datajud — `backend/advocacia/tests/test_processos.py` | APROVADO |
-| BE-430 | Django | advocacia.tests.test_processos.ProcessosAPITestCase.test_criar_processo — `backend/advocacia/tests/test_processos.py` | APROVADO |
-| BE-431 | Django | advocacia.tests.test_processos.ProcessosAPITestCase.test_criar_processo_com_dados_juridicos_adicionais — `backend/advocacia/tests/test_processos.py` | APROVADO |
-| BE-432 | Django | advocacia.tests.test_processos.ProcessosAPITestCase.test_criar_processo_com_numero_duplicado_retorna_erro_especifico — `backend/advocacia/tests/test_processos.py` | APROVADO |
-| BE-433 | Django | advocacia.tests.test_processos.ProcessosAPITestCase.test_editar_processo_para_numero_de_outro_retorna_erro_especifico — `backend/advocacia/tests/test_processos.py` | APROVADO |
-| BE-434 | Django | advocacia.tests.test_processos.ProcessosAPITestCase.test_percentual_honorarios_sucumbencia_zero_e_rejeitado — `backend/advocacia/tests/test_processos.py` | APROVADO |
-| BE-435 | Django | advocacia.tests.test_processos.ProcessosAPITestCase.test_processo_sem_dados_juridicos_adicionais_tem_estimativa_nula — `backend/advocacia/tests/test_processos.py` | APROVADO |
-| BE-436 | Django | advocacia.tests.test_processos.ProcessosAPITestCase.test_valor_da_causa_zero_e_rejeitado — `backend/advocacia/tests/test_processos.py` | APROVADO |
-| BE-437 | Django | advocacia.tests.test_processos.ProximoPrazoDoProcessoAPITestCase.test_com_varios_prazos_traz_o_mais_proximo — `backend/advocacia/tests/test_processos.py` | APROVADO |
-| BE-438 | Django | advocacia.tests.test_processos.ProximoPrazoDoProcessoAPITestCase.test_compromisso_nao_e_confundido_com_prazo — `backend/advocacia/tests/test_processos.py` | APROVADO |
-| BE-439 | Django | advocacia.tests.test_processos.ProximoPrazoDoProcessoAPITestCase.test_prazo_cumprido_nao_conta_como_proximo_prazo — `backend/advocacia/tests/test_processos.py` | APROVADO |
-| BE-440 | Django | advocacia.tests.test_processos.ProximoPrazoDoProcessoAPITestCase.test_prazo_futuro_aparece_e_nao_esta_atrasado — `backend/advocacia/tests/test_processos.py` | APROVADO |
-| BE-441 | Django | advocacia.tests.test_processos.ProximoPrazoDoProcessoAPITestCase.test_prazo_vencido_aparece_como_atrasado — `backend/advocacia/tests/test_processos.py` | APROVADO |
-| BE-442 | Django | advocacia.tests.test_processos.ProximoPrazoDoProcessoAPITestCase.test_processo_recem_criado_tambem_traz_proximo_prazo — `backend/advocacia/tests/test_processos.py` | APROVADO |
-| BE-443 | Django | advocacia.tests.test_processos.ProximoPrazoDoProcessoAPITestCase.test_processo_sem_prazo_nao_tem_proximo_prazo — `backend/advocacia/tests/test_processos.py` | APROVADO |
-| BE-444 | Django | advocacia.tests.test_push.NotificacoesPushAPITestCase.test_cancelar_remove_so_o_aparelho_da_pessoa — `backend/advocacia/tests/test_push.py` | APROVADO |
-| BE-445 | Django | advocacia.tests.test_push.NotificacoesPushAPITestCase.test_inscreve_e_a_mensagem_chega_cifrada_e_assinada — `backend/advocacia/tests/test_push.py` | APROVADO |
-| BE-446 | Django | advocacia.tests.test_push.NotificacoesPushAPITestCase.test_inscricao_expirada_e_apagada — `backend/advocacia/tests/test_push.py` | APROVADO |
-| BE-447 | Django | advocacia.tests.test_push.NotificacoesPushAPITestCase.test_inscricao_sem_https_ou_sem_chaves_e_recusada — `backend/advocacia/tests/test_push.py` | APROVADO |
-| BE-448 | Django | advocacia.tests.test_push.NotificacoesPushAPITestCase.test_mesmo_aparelho_passa_para_quem_entrou_nele — `backend/advocacia/tests/test_push.py` | APROVADO |
-| BE-449 | Django | advocacia.tests.test_push.NotificacoesPushAPITestCase.test_situacao_traz_a_chave_publica — `backend/advocacia/tests/test_push.py` | APROVADO |
-| BE-450 | Django | advocacia.tests.test_push.NotificacoesPushAPITestCase.test_tarefa_atribuida_avisa_o_responsavel_no_celular — `backend/advocacia/tests/test_push.py` | APROVADO |
-| BE-451 | Django | advocacia.tests.test_push.NotificacoesPushAPITestCase.test_testar_sem_aparelho_explica — `backend/advocacia/tests/test_push.py` | APROVADO |
-| BE-452 | Django | advocacia.tests.test_push.PushDesligadoAPITestCase.test_comando_gera_par_de_chaves — `backend/advocacia/tests/test_push.py` | APROVADO |
-| BE-453 | Django | advocacia.tests.test_push.PushDesligadoAPITestCase.test_sem_chaves_o_sistema_avisa_e_nao_tenta_enviar — `backend/advocacia/tests/test_push.py` | APROVADO |
-| BE-454 | Django | advocacia.tests.test_rascunhos.RascunhoFormularioAPITestCase.test_cria_e_atualiza_o_mesmo_rascunho — `backend/advocacia/tests/test_rascunhos.py` | APROVADO |
-| BE-455 | Django | advocacia.tests.test_rascunhos.RascunhoFormularioAPITestCase.test_rascunho_e_privado_ate_no_mesmo_escritorio — `backend/advocacia/tests/test_rascunhos.py` | APROVADO |
-| BE-456 | Django | advocacia.tests.test_rascunhos.RascunhoFormularioAPITestCase.test_recusa_chave_fora_do_formato_seguro — `backend/advocacia/tests/test_rascunhos.py` | APROVADO |
-| BE-457 | Django | advocacia.tests.test_rascunhos.RascunhoFormularioAPITestCase.test_recusa_conteudo_que_nao_seja_objeto — `backend/advocacia/tests/test_rascunhos.py` | APROVADO |
-| BE-458 | Django | advocacia.tests.test_rascunhos.RascunhoFormularioAPITestCase.test_recusa_rascunho_maior_que_64_kb — `backend/advocacia/tests/test_rascunhos.py` | APROVADO |
-| BE-459 | Django | advocacia.tests.test_rascunhos.RascunhoFormularioAPITestCase.test_usuario_pode_excluir_o_proprio_rascunho — `backend/advocacia/tests/test_rascunhos.py` | APROVADO |
-| BE-460 | Django | advocacia.tests.test_relatorios.ExportacaoCSVSeguraAPITestCase.test_exportacao_de_clientes_neutraliza_nome_com_formula — `backend/advocacia/tests/test_relatorios.py` | APROVADO |
-| BE-461 | Django | advocacia.tests.test_relatorios.ExportacaoCSVSeguraAPITestCase.test_exportacao_de_processos_neutraliza_titulo_com_formula — `backend/advocacia/tests/test_relatorios.py` | APROVADO |
-| BE-462 | Django | advocacia.tests.test_relatorios.RelatorioFinanceiroAPITestCase.test_cliente_sem_lancamentos_tem_resumo_zerado — `backend/advocacia/tests/test_relatorios.py` | APROVADO |
-| BE-463 | Django | advocacia.tests.test_relatorios.RelatorioFinanceiroAPITestCase.test_email_do_relatorio_de_cliente_lista_o_financeiro — `backend/advocacia/tests/test_relatorios.py` | APROVADO |
-| BE-464 | Django | advocacia.tests.test_relatorios.RelatorioFinanceiroAPITestCase.test_email_do_relatorio_de_processo_lista_o_financeiro — `backend/advocacia/tests/test_relatorios.py` | APROVADO |
-| BE-465 | Django | advocacia.tests.test_relatorios.RelatorioFinanceiroAPITestCase.test_hora_sem_valor_hora_nao_entra_no_valor_a_cobrar — `backend/advocacia/tests/test_relatorios.py` | APROVADO |
-| BE-466 | Django | advocacia.tests.test_relatorios.RelatorioFinanceiroAPITestCase.test_relatorio_do_cliente_traz_contratos_horas_e_despesas — `backend/advocacia/tests/test_relatorios.py` | APROVADO |
-| BE-467 | Django | advocacia.tests.test_relatorios.RelatorioFinanceiroAPITestCase.test_relatorio_do_processo_tambem_traz_o_financeiro — `backend/advocacia/tests/test_relatorios.py` | APROVADO |
-| BE-468 | Django | advocacia.tests.test_relatorios.RelatorioFinanceiroAPITestCase.test_relatorio_nao_soma_dados_de_outro_cliente — `backend/advocacia/tests/test_relatorios.py` | APROVADO |
-| BE-469 | Django | advocacia.tests.test_relatorios.RelatorioFinanceiroAPITestCase.test_resumo_do_cliente_consolida_os_valores — `backend/advocacia/tests/test_relatorios.py` | APROVADO |
-| BE-470 | Django | advocacia.tests.test_resumo_cliente.ResumoParaClienteAPITestCase.test_com_ia_manda_so_o_minimo_e_devolve_o_texto_dela — `backend/advocacia/tests/test_resumo_cliente.py` | APROVADO |
-| BE-471 | Django | advocacia.tests.test_resumo_cliente.ResumoParaClienteAPITestCase.test_processo_sigiloso_de_outro_advogado_nao_e_acessivel — `backend/advocacia/tests/test_resumo_cliente.py` | APROVADO |
-| BE-472 | Django | advocacia.tests.test_resumo_cliente.ResumoParaClienteAPITestCase.test_se_a_ia_falha_cai_no_modelo — `backend/advocacia/tests/test_resumo_cliente.py` | APROVADO |
-| BE-473 | Django | advocacia.tests.test_resumo_cliente.ResumoParaClienteAPITestCase.test_secretaria_sem_acesso_a_ia_recebe_o_modelo — `backend/advocacia/tests/test_resumo_cliente.py` | APROVADO |
-| BE-474 | Django | advocacia.tests.test_resumo_cliente.ResumoParaClienteAPITestCase.test_sem_ia_configurada_usa_o_modelo_em_linguagem_simples — `backend/advocacia/tests/test_resumo_cliente.py` | APROVADO |
-| BE-475 | Django | advocacia.tests.test_resumo_cliente.ResumoParaClienteAPITestCase.test_traduz_os_andamentos_mais_comuns — `backend/advocacia/tests/test_resumo_cliente.py` | APROVADO |
-| BE-476 | Django | advocacia.tests.test_tarefas.TarefaAPITestCase.test_alta_prioridade_vem_antes_de_media_e_baixa — `backend/advocacia/tests/test_tarefas.py` | APROVADO |
-| BE-477 | Django | advocacia.tests.test_tarefas.TarefaAPITestCase.test_aviso_respeita_a_preferencia_do_responsavel — `backend/advocacia/tests/test_tarefas.py` | APROVADO |
-| BE-478 | Django | advocacia.tests.test_tarefas.TarefaAPITestCase.test_concluir_tarefa_grava_a_data_de_conclusao — `backend/advocacia/tests/test_tarefas.py` | APROVADO |
-| BE-479 | Django | advocacia.tests.test_tarefas.TarefaAPITestCase.test_criar_tarefa_registra_quem_atribuiu — `backend/advocacia/tests/test_tarefas.py` | APROVADO |
-| BE-480 | Django | advocacia.tests.test_tarefas.TarefaAPITestCase.test_editar_sem_trocar_responsavel_nao_reenvia_aviso — `backend/advocacia/tests/test_tarefas.py` | APROVADO |
-| BE-481 | Django | advocacia.tests.test_tarefas.TarefaAPITestCase.test_entre_tarefas_de_mesma_prioridade_vence_o_prazo_mais_proximo — `backend/advocacia/tests/test_tarefas.py` | APROVADO |
-| BE-482 | Django | advocacia.tests.test_tarefas.TarefaAPITestCase.test_filtro_abertas_deixa_de_fora_concluidas_e_canceladas — `backend/advocacia/tests/test_tarefas.py` | APROVADO |
-| BE-483 | Django | advocacia.tests.test_tarefas.TarefaAPITestCase.test_filtro_responsavel_eu_traz_so_as_minhas — `backend/advocacia/tests/test_tarefas.py` | APROVADO |
-| BE-484 | Django | advocacia.tests.test_tarefas.TarefaAPITestCase.test_nao_atribui_tarefa_a_usuario_inativo — `backend/advocacia/tests/test_tarefas.py` | APROVADO |
-| BE-485 | Django | advocacia.tests.test_tarefas.TarefaAPITestCase.test_quem_se_atribui_uma_tarefa_nao_recebe_aviso_de_si_mesmo — `backend/advocacia/tests/test_tarefas.py` | APROVADO |
-| BE-486 | Django | advocacia.tests.test_tarefas.TarefaAPITestCase.test_reabrir_tarefa_limpa_a_data_de_conclusao — `backend/advocacia/tests/test_tarefas.py` | APROVADO |
-| BE-487 | Django | advocacia.tests.test_tarefas.TarefaAPITestCase.test_responsavel_de_outro_escritorio_e_recusado — `backend/advocacia/tests/test_tarefas.py` | APROVADO |
-| BE-488 | Django | advocacia.tests.test_tarefas.TarefaAPITestCase.test_responsavel_e_avisado_por_email — `backend/advocacia/tests/test_tarefas.py` | APROVADO |
-| BE-489 | Django | advocacia.tests.test_tarefas.TarefaAPITestCase.test_tarefa_com_prazo_vencido_aparece_como_atrasada — `backend/advocacia/tests/test_tarefas.py` | APROVADO |
-| BE-490 | Django | advocacia.tests.test_tarefas.TarefaAPITestCase.test_tarefa_concluida_nao_conta_como_atrasada — `backend/advocacia/tests/test_tarefas.py` | APROVADO |
-| BE-491 | Django | advocacia.tests.test_tarefas.TarefaAPITestCase.test_tarefa_de_outro_escritorio_nao_aparece — `backend/advocacia/tests/test_tarefas.py` | APROVADO |
-| BE-492 | Django | advocacia.tests.test_tarefas.TarefaAPITestCase.test_tarefa_encerrada_vai_para_o_fim_da_lista — `backend/advocacia/tests/test_tarefas.py` | APROVADO |
-| BE-493 | Django | advocacia.tests.test_tarefas.TarefaAPITestCase.test_tarefa_pode_existir_sem_processo — `backend/advocacia/tests/test_tarefas.py` | APROVADO |
-| BE-494 | Django | advocacia.tests.test_tarefas.TarefaAPITestCase.test_tarefa_pode_ser_vinculada_a_um_processo — `backend/advocacia/tests/test_tarefas.py` | APROVADO |
-| BE-495 | Django | advocacia.tests.test_tarefas.TarefaAPITestCase.test_tarefa_sem_prazo_nunca_esta_atrasada — `backend/advocacia/tests/test_tarefas.py` | APROVADO |
-| BE-496 | Django | advocacia.tests.test_tarefas.TarefaAPITestCase.test_titulo_em_branco_e_recusado — `backend/advocacia/tests/test_tarefas.py` | APROVADO |
-| BE-497 | Django | advocacia.tests.test_tarefas.TarefaAPITestCase.test_trocar_o_responsavel_avisa_o_novo — `backend/advocacia/tests/test_tarefas.py` | APROVADO |
-| BE-498 | Django | advocacia.tests.test_validacoes.ModelosTestCase.test_cliente_nao_permite_cpf_duplicado_no_mesmo_escritorio — `backend/advocacia/tests/test_validacoes.py` | APROVADO |
-| BE-499 | Django | advocacia.tests.test_validacoes.ModelosTestCase.test_mesmo_cpf_e_permitido_em_escritorios_diferentes — `backend/advocacia/tests/test_validacoes.py` | APROVADO |
-| BE-500 | Django | advocacia.tests.test_validacoes.ModelosTestCase.test_str_do_escritorio_retorna_o_nome — `backend/advocacia/tests/test_validacoes.py` | APROVADO |
-| BE-501 | Django | advocacia.tests.test_validacoes.ModelosTestCase.test_usuario_e_criado_com_valores_padrao_esperados — `backend/advocacia/tests/test_validacoes.py` | APROVADO |
-| BE-502 | Django | advocacia.tests.test_validacoes.PaginacaoAPITestCase.test_listagem_retorna_envelope_paginado — `backend/advocacia/tests/test_validacoes.py` | APROVADO |
-| BE-503 | Django | advocacia.tests.test_validacoes.PaginacaoAPITestCase.test_page_size_customizado_e_respeitado — `backend/advocacia/tests/test_validacoes.py` | APROVADO |
-| BE-504 | Django | advocacia.tests.test_validacoes.ValidacaoDeDocumentosAPITestCase.test_advogado_com_oab_sem_uf_e_rejeitado — `backend/advocacia/tests/test_validacoes.py` | APROVADO |
-| BE-505 | Django | advocacia.tests.test_validacoes.ValidacaoDeDocumentosAPITestCase.test_advogado_com_oab_valida_e_aceito — `backend/advocacia/tests/test_validacoes.py` | APROVADO |
-| BE-506 | Django | advocacia.tests.test_validacoes.ValidacaoDeDocumentosAPITestCase.test_advogado_com_senha_fraca_e_rejeitado — `backend/advocacia/tests/test_validacoes.py` | APROVADO |
-| BE-507 | Django | advocacia.tests.test_validacoes.ValidacaoDeDocumentosAPITestCase.test_cliente_com_cpf_incompleto_e_rejeitado — `backend/advocacia/tests/test_validacoes.py` | APROVADO |
-| BE-508 | Django | advocacia.tests.test_validacoes.ValidacaoDeDocumentosAPITestCase.test_cliente_com_rg_curto_demais_e_rejeitado — `backend/advocacia/tests/test_validacoes.py` | APROVADO |
-| BE-509 | Django | advocacia.tests.test_validacoes.ValidacaoDeDocumentosAPITestCase.test_cliente_com_telefone_sem_ddd_e_rejeitado — `backend/advocacia/tests/test_validacoes.py` | APROVADO |
-| BE-510 | Django | advocacia.tests.test_validacoes.ValidadoresDeUploadTestCase.test_documento_acima_de_10mb_levanta_erro — `backend/advocacia/tests/test_validacoes.py` | APROVADO |
-| BE-511 | Django | advocacia.tests.test_validacoes.ValidadoresDeUploadTestCase.test_documento_dentro_do_limite_nao_levanta_erro — `backend/advocacia/tests/test_validacoes.py` | APROVADO |
-| BE-512 | Django | advocacia.tests.test_validacoes.ValidadoresDeUploadTestCase.test_docx_com_assinatura_correta_passa — `backend/advocacia/tests/test_validacoes.py` | APROVADO |
-| BE-513 | Django | advocacia.tests.test_validacoes.ValidadoresDeUploadTestCase.test_executavel_renomeado_para_pdf_e_recusado — `backend/advocacia/tests/test_validacoes.py` | APROVADO |
-| BE-514 | Django | advocacia.tests.test_validacoes.ValidadoresDeUploadTestCase.test_imagem_acima_de_5mb_levanta_erro — `backend/advocacia/tests/test_validacoes.py` | APROVADO |
-| BE-515 | Django | advocacia.tests.test_validacoes.ValidadoresDeUploadTestCase.test_imagem_dentro_do_limite_nao_levanta_erro — `backend/advocacia/tests/test_validacoes.py` | APROVADO |
-| BE-516 | Django | advocacia.tests.test_validacoes.ValidadoresDeUploadTestCase.test_jpeg_com_assinatura_correta_passa — `backend/advocacia/tests/test_validacoes.py` | APROVADO |
-| BE-517 | Django | advocacia.tests.test_validacoes.ValidadoresDeUploadTestCase.test_pdf_com_assinatura_correta_passa — `backend/advocacia/tests/test_validacoes.py` | APROVADO |
-| BE-518 | Django | advocacia.tests.test_validacoes.ValidadoresDeUploadTestCase.test_png_com_assinatura_correta_passa — `backend/advocacia/tests/test_validacoes.py` | APROVADO |
-| BE-519 | Django | advocacia.tests.test_validacoes.ValidadoresDeUploadTestCase.test_riff_que_nao_e_webp_e_recusado — `backend/advocacia/tests/test_validacoes.py` | APROVADO |
-| BE-520 | Django | advocacia.tests.test_validacoes.ValidadoresDeUploadTestCase.test_texto_renomeado_para_jpg_e_recusado — `backend/advocacia/tests/test_validacoes.py` | APROVADO |
-| BE-521 | Django | advocacia.tests.test_validacoes.ValidadoresDeUploadTestCase.test_validador_devolve_o_ponteiro_do_arquivo_para_o_inicio — `backend/advocacia/tests/test_validacoes.py` | APROVADO |
-| BE-522 | Django | advocacia.tests.test_validacoes.ValidadoresDeUploadTestCase.test_webp_com_assinatura_correta_passa — `backend/advocacia/tests/test_validacoes.py` | APROVADO |
-| BE-523 | Django | advocacia.tests.test_validacoes.ValidarEmailRealTestCase.test_cnpj_aceita_ambos_formatos_e_exige_dois_digitos_finais — `backend/advocacia/tests/test_validacoes.py` | APROVADO |
-| BE-524 | Django | advocacia.tests.test_validacoes.ValidarEmailRealTestCase.test_dominio_descartavel_levanta_erro — `backend/advocacia/tests/test_validacoes.py` | APROVADO |
-| BE-525 | Django | advocacia.tests.test_validacoes.ValidarEmailRealTestCase.test_dominio_sem_registro_mx_levanta_erro — `backend/advocacia/tests/test_validacoes.py` | APROVADO |
-| BE-526 | Django | advocacia.tests.test_validacoes.ValidarEmailRealTestCase.test_email_com_dominio_valido_e_aceito — `backend/advocacia/tests/test_validacoes.py` | APROVADO |
-| BE-527 | Django | advocacia.tests.test_validacoes.ValidarEmailRealTestCase.test_email_vazio_levanta_erro — `backend/advocacia/tests/test_validacoes.py` | APROVADO |
-| BE-528 | Django | advocacia.tests.test_validacoes.ValidarEmailRealTestCase.test_formato_invalido_levanta_erro — `backend/advocacia/tests/test_validacoes.py` | APROVADO |
-| BE-529 | Django | advocacia.tests.test_deploy.ConfiguracaoPilotoTests.test_health_reporta_banco_disponivel — `backend/advocacia/tests/test_deploy.py` | APROVADO |
-| BE-530 | Django | advocacia.tests.test_deploy.ConfiguracaoPilotoTests.test_health_reporta_banco_indisponivel — `backend/advocacia/tests/test_deploy.py` | APROVADO |
-| BE-531 | Django | advocacia.tests.test_deploy.ConfiguracaoPilotoTests.test_senha_padrao_da_demo_e_recusada_em_producao — `backend/advocacia/tests/test_deploy.py` | APROVADO |
-| BE-532 | Django | advocacia.tests.test_deploy.ConfiguracaoPilotoTests.test_url_da_foto_passa_pela_api_autenticada — `backend/advocacia/tests/test_deploy.py` | APROVADO |
-| FE-001 | Jest | LoginForm sem duas etapas, entra direto com a senha — `frontend/src/components/forms/__tests__/LoginForm.test.js` | APROVADO |
-| FE-002 | Jest | LoginForm com duas etapas, pede o código e só então abre a sessão — `frontend/src/components/forms/__tests__/LoginForm.test.js` | APROVADO |
-| FE-003 | Jest | LoginForm código errado mostra o erro e limpa o campo — `frontend/src/components/forms/__tests__/LoginForm.test.js` | APROVADO |
-| FE-004 | Jest | LoginForm dá para voltar e entrar com outra conta — `frontend/src/components/forms/__tests__/LoginForm.test.js` | APROVADO |
-| FE-005 | Jest | LoginForm avisa quando o servidor demora para responder — `frontend/src/components/forms/__tests__/LoginForm.test.js` | APROVADO |
-| FE-006 | Jest | login não envia senha na URL se o JavaScript falhar — `frontend/src/components/forms/__tests__/LoginForm.test.js` | APROVADO |
-| FE-007 | Jest | useRecurso começa carregando e entrega os dados quando a API responde — `frontend/src/hooks/__tests__/useRecurso.test.js` | APROVADO |
-| FE-008 | Jest | useRecurso não busca nada enquanto estiver inativo — `frontend/src/hooks/__tests__/useRecurso.test.js` | APROVADO |
-| FE-009 | Jest | useRecurso refaz a consulta quando uma das chaves muda — `frontend/src/hooks/__tests__/useRecurso.test.js` | APROVADO |
-| FE-010 | Jest | useRecurso resposta atrasada de uma consulta antiga não sobrescreve a atual — `frontend/src/hooks/__tests__/useRecurso.test.js` | APROVADO |
-| FE-011 | Jest | useRecurso em caso de erro, guarda a mensagem e mantém os dados anteriores — `frontend/src/hooks/__tests__/useRecurso.test.js` | APROVADO |
-| FE-012 | Jest | useRecurso recarregar busca de novo mesmo sem mudar as chaves — `frontend/src/hooks/__tests__/useRecurso.test.js` | APROVADO |
-| FE-013 | Jest | useListaPaginada carrega a primeira página e informa o total do servidor — `frontend/src/hooks/__tests__/useRecurso.test.js` | APROVADO |
-| FE-014 | Jest | useListaPaginada carregarMais junta as páginas seguintes até acabar — `frontend/src/hooks/__tests__/useRecurso.test.js` | APROVADO |
-| FE-015 | Jest | useListaPaginada ao trocar o filtro, descarta as páginas extras do filtro anterior — `frontend/src/hooks/__tests__/useRecurso.test.js` | APROVADO |
-| FE-016 | Jest | useListaPaginada aceita resposta sem paginação (lista simples) — `frontend/src/hooks/__tests__/useRecurso.test.js` | APROVADO |
-| FE-017 | Jest | explica as etapas e atualiza o progresso dos obrigatórios — `frontend/src/components/panels/__tests__/ProcessoForm.test.jsx` | APROVADO |
-| FE-018 | Jest | associa o erro da API ao campo e o limpa quando o usuário corrige — `frontend/src/components/panels/__tests__/ProcessoForm.test.jsx` | APROVADO |
-| FE-019 | Jest | ReceitaDespesas sem movimento nos seis meses mostra o estado vazio, não um gráfico zerado — `frontend/src/components/dashboard/__tests__/ReceitaDespesas.test.js` | APROVADO |
-| FE-020 | Jest | ReceitaDespesas resume o período com recebido, despesas e saldo — `frontend/src/components/dashboard/__tests__/ReceitaDespesas.test.js` | APROVADO |
-| FE-021 | Jest | ReceitaDespesas oferece a mesma informação em tabela, para quem não enxerga o gráfico — `frontend/src/components/dashboard/__tests__/ReceitaDespesas.test.js` | APROVADO |
-| FE-022 | Jest | useRascunhoFormulario restaura o rascunho privado vindo do servidor — `frontend/src/hooks/__tests__/useRascunhoFormulario.test.js` | APROVADO |
-| FE-023 | Jest | useRascunhoFormulario salva alterações no servidor depois do intervalo — `frontend/src/hooks/__tests__/useRascunhoFormulario.test.js` | APROVADO |
-| FE-024 | Jest | useRascunhoFormulario descarta o rascunho após o cadastro definitivo — `frontend/src/hooks/__tests__/useRascunhoFormulario.test.js` | APROVADO |
-| FE-025 | Jest | useRascunhoFormulario rascunho atrasado não sobrescreve o que a pessoa já digitou — `frontend/src/hooks/__tests__/useRascunhoFormulario.test.js` | APROVADO |
-| FE-026 | Jest | useRascunhoFormulario aguarda gravação em andamento antes de descartar o rascunho — `frontend/src/hooks/__tests__/useRascunhoFormulario.test.js` | APROVADO |
-| FE-027 | Jest | cadastro do escritório preenchido pelo CNPJ preenche nome, telefone, endereço, cidade, UF e CEP com os dados da Receita — `frontend/src/components/forms/__tests__/RegisterFormCnpj.test.js` | APROVADO |
-| FE-028 | Jest | cadastro do escritório preenchido pelo CNPJ não sobrescreve o que a pessoa já digitou — `frontend/src/components/forms/__tests__/RegisterFormCnpj.test.js` | APROVADO |
-| FE-029 | Jest | cadastro do escritório preenchido pelo CNPJ CNPJ não encontrado só avisa; o formulário continua editável — `frontend/src/components/forms/__tests__/RegisterFormCnpj.test.js` | APROVADO |
-| FE-030 | Jest | descreverData feriado anual mostra só dia e mês — `frontend/src/components/panels/__tests__/AgendaFeriados.test.js` | APROVADO |
-| FE-031 | Jest | AgendaFeriados lista os feriados cadastrados — `frontend/src/components/panels/__tests__/AgendaFeriados.test.js` | APROVADO |
-| FE-032 | Jest | AgendaFeriados sem feriados, avisa — `frontend/src/components/panels/__tests__/AgendaFeriados.test.js` | APROVADO |
-| FE-033 | Jest | AgendaFeriados cadastra um feriado novo e recarrega — `frontend/src/components/panels/__tests__/AgendaFeriados.test.js` | APROVADO |
-| FE-034 | Jest | AgendaFeriados perfil que só consulta não vê o formulário nem o excluir — `frontend/src/components/panels/__tests__/AgendaFeriados.test.js` | APROVADO |
-| FE-035 | Jest | TarefasQuadro distribui os cartões nas colunas com a contagem — `frontend/src/components/panels/__tests__/TarefasQuadroComponente.test.js` | APROVADO |
-| FE-036 | Jest | TarefasQuadro a seta move o cartão na hora e grava na API — `frontend/src/components/panels/__tests__/TarefasQuadroComponente.test.js` | APROVADO |
-| FE-037 | Jest | TarefasQuadro se a API recusa, o cartão volta e o erro aparece — `frontend/src/components/panels/__tests__/TarefasQuadroComponente.test.js` | APROVADO |
-| FE-038 | Jest | TarefasQuadro sem permissão de editar, não há setas nem arrastar — `frontend/src/components/panels/__tests__/TarefasQuadroComponente.test.js` | APROVADO |
-| FE-039 | Jest | TarefasQuadro filtro 'Só as minhas' consulta só as do usuário — `frontend/src/components/panels/__tests__/TarefasQuadroComponente.test.js` | APROVADO |
-| FE-040 | Jest | secretaria abre a ficha com resumo nulo e sem blocos não autorizados — `frontend/src/components/panels/__tests__/FichaProcesso.test.jsx` | APROVADO |
-| FE-041 | Jest | estagiario vê horas e despesas permitidas sem contrato nem resumo financeiro — `frontend/src/components/panels/__tests__/FichaProcesso.test.jsx` | APROVADO |
-| FE-042 | Jest | administrador continua vendo o resumo e o contrato — `frontend/src/components/panels/__tests__/FichaProcesso.test.jsx` | APROVADO |
-| FE-043 | Jest | IntimacoesLista mostra só as não lidas por padrão, com o prazo estimado sinalizado — `frontend/src/components/panels/__tests__/IntimacoesListaComponente.test.js` | APROVADO |
-| FE-044 | Jest | IntimacoesLista texto longo abre com 'Ler tudo' — `frontend/src/components/panels/__tests__/IntimacoesListaComponente.test.js` | APROVADO |
-| FE-045 | Jest | IntimacoesLista buscar no DJEN avisa o resultado e marcar como lida grava — `frontend/src/components/panels/__tests__/IntimacoesListaComponente.test.js` | APROVADO |
-| FE-046 | Jest | IntimacoesLista quem só consulta não busca nem marca como lida — `frontend/src/components/panels/__tests__/IntimacoesListaComponente.test.js` | APROVADO |
-| FE-047 | Jest | precoDoPlano o plano sem preço aparece como grátis — `frontend/src/components/planos/__tests__/Planos.test.js` | APROVADO |
-| FE-048 | Jest | CartoesDePlanos na página inicial destaca o primeiro plano pago e mostra todos — `frontend/src/components/planos/__tests__/Planos.test.js` | APROVADO |
-| FE-049 | Jest | PlanosPanel mostra o plano atual e o uso dos limites — `frontend/src/components/planos/__tests__/Planos.test.js` | APROVADO |
-| FE-050 | Jest | PlanosPanel os planos acima do atual levam ao contato comercial — `frontend/src/components/planos/__tests__/Planos.test.js` | APROVADO |
-| FE-051 | Jest | PlanosPanel sem contato comercial orienta a falar com o administrador — `frontend/src/components/planos/__tests__/Planos.test.js` | APROVADO |
-| FE-052 | Jest | PlanosPanel avisa quando o plano pago venceu — `frontend/src/components/planos/__tests__/Planos.test.js` | APROVADO |
-| FE-053 | Jest | PlanosPanel plano ilimitado não mostra barra — `frontend/src/components/planos/__tests__/Planos.test.js` | APROVADO |
-| FE-054 | Jest | situacaoDoDia feriado nacional dentro do recesso — `frontend/src/components/dashboard/__tests__/MiniCalendar.test.js` | APROVADO |
-| FE-055 | Jest | situacaoDoDia feriado local e dia comum — `frontend/src/components/dashboard/__tests__/MiniCalendar.test.js` | APROVADO |
-| FE-056 | Jest | situacaoDoDia sem dados da API não marca nada — `frontend/src/components/dashboard/__tests__/MiniCalendar.test.js` | APROVADO |
-| FE-057 | Jest | MiniCalendar marca o feriado e mostra o nome ao clicar no dia — `frontend/src/components/dashboard/__tests__/MiniCalendar.test.js` | APROVADO |
-| FE-058 | Jest | AppSidebar fora da dashboard pré-carrega a dashboard e navega antes de abrir um painel — `frontend/src/components/shell/__tests__/AppSidebar.test.jsx` | APROVADO |
-| FE-059 | Jest | AppSidebar fora da dashboard na dashboard abre o painel sem navegar — `frontend/src/components/shell/__tests__/AppSidebar.test.jsx` | APROVADO |
-| FE-060 | Jest | RotulosAutomaticos — tabelas copia o cabeçalho de cada coluna para o data-label da célula — `frontend/src/components/shell/__tests__/RotulosAutomaticos.test.js` | APROVADO |
-| FE-061 | Jest | RotulosAutomaticos — tabelas linha que ocupa a tabela inteira (vazio, carregando) fica sem rótulo — `frontend/src/components/shell/__tests__/RotulosAutomaticos.test.js` | APROVADO |
-| FE-062 | Jest | RotulosAutomaticos — tabelas rotula também as linhas que aparecem depois — `frontend/src/components/shell/__tests__/RotulosAutomaticos.test.js` | APROVADO |
-| FE-063 | Jest | RotulosAutomaticos — formulários liga o label ao campo do mesmo bloco — `frontend/src/components/shell/__tests__/RotulosAutomaticos.test.js` | APROVADO |
-| FE-064 | Jest | RotulosAutomaticos — formulários respeita o id que o campo já tem — `frontend/src/components/shell/__tests__/RotulosAutomaticos.test.js` | APROVADO |
-| FE-065 | Jest | RotulosAutomaticos — formulários não mexe em label que já envolve o campo — `frontend/src/components/shell/__tests__/RotulosAutomaticos.test.js` | APROVADO |
-| FE-066 | Jest | RotulosAutomaticos — formulários mostra e associa a orientação de campos complexos — `frontend/src/components/shell/__tests__/RotulosAutomaticos.test.js` | APROVADO |
-| FE-067 | Jest | RotulosAutomaticos — formulários identifica visualmente campos obrigatórios sem duplicar o marcador — `frontend/src/components/shell/__tests__/RotulosAutomaticos.test.js` | APROVADO |
-| FE-068 | Jest | RotulosAutomaticos — formulários explica o erro junto ao campo e move o foco para ele — `frontend/src/components/shell/__tests__/RotulosAutomaticos.test.js` | APROVADO |
-| FE-069 | Jest | RotulosAutomaticos — formulários remove a mensagem quando o valor fica válido — `frontend/src/components/shell/__tests__/RotulosAutomaticos.test.js` | APROVADO |
-| FE-070 | Jest | RotulosAutomaticos — formulários preserva o erro retornado pela API até o formulário limpar o estado — `frontend/src/components/shell/__tests__/RotulosAutomaticos.test.js` | APROVADO |
-| FE-071 | Jest | RotulosAutomaticos — formulários associa automaticamente erros da API ao campo com o mesmo name — `frontend/src/components/shell/__tests__/RotulosAutomaticos.test.js` | APROVADO |
-| FE-072 | Jest | RotulosAutomaticos — formulários permite voltar uma etapa que preserva os dados sem pedir descarte — `frontend/src/components/shell/__tests__/RotulosAutomaticos.test.js` | APROVADO |
-| FE-073 | Jest | RotulosAutomaticos — formulários avisa antes de cancelar um formulário com alterações — `frontend/src/components/shell/__tests__/RotulosAutomaticos.test.js` | APROVADO |
-| FE-074 | Jest | ResumoParaCliente mostra o texto, diz de onde veio e envia a versão editada — `frontend/src/components/panels/__tests__/ResumoParaClienteComponente.test.js` | APROVADO |
-| FE-075 | Jest | ResumoParaCliente sem telefone, não oferece WhatsApp e explica — `frontend/src/components/panels/__tests__/ResumoParaClienteComponente.test.js` | APROVADO |
-| FE-076 | Jest | ResumoParaCliente gerar de novo pede outro texto à API — `frontend/src/components/panels/__tests__/ResumoParaClienteComponente.test.js` | APROVADO |
-| FE-077 | Jest | permite iniciar um novo cadastro mesmo após abrir a edição — `frontend/src/components/panels/__tests__/AdvogadosPanel.test.jsx` | APROVADO |
-| FE-078 | Jest | administrador pode desativar e excluir outro usuário, mas não a própria conta — `frontend/src/components/panels/__tests__/EquipeSection.test.jsx` | APROVADO |
-| FE-079 | Jest | cancelar a confirmação não exclui o usuário — `frontend/src/components/panels/__tests__/EquipeSection.test.jsx` | APROVADO |
-| FE-080 | Jest | NotificationBell expõe quantidade, gravidade e detalhes dos alertas — `frontend/src/components/shell/__tests__/NotificationBell.test.jsx` | APROVADO |
-| FE-081 | Jest | NotificationBell fecha com Escape e devolve o foco ao sino — `frontend/src/components/shell/__tests__/NotificationBell.test.jsx` | APROVADO |
-| FE-082 | Jest | NotificationBell abre a agenda completa pelo rodapé — `frontend/src/components/shell/__tests__/NotificationBell.test.jsx` | APROVADO |
-| FE-083 | Jest | ConfirmacaoContext resolve true ao confirmar e fecha a janela — `frontend/src/contexts/__tests__/ConfirmacaoContext.test.js` | APROVADO |
-| FE-084 | Jest | ConfirmacaoContext Esc e Cancelar resolvem false — `frontend/src/contexts/__tests__/ConfirmacaoContext.test.js` | APROVADO |
-| FE-085 | Jest | ConfirmacaoContext em ação destrutiva o foco começa no Cancelar — `frontend/src/contexts/__tests__/ConfirmacaoContext.test.js` | APROVADO |
-| FE-086 | Jest | Janela é um diálogo com título e recebe o foco ao abrir — `frontend/src/components/ui/__tests__/Janela.test.js` | APROVADO |
-| FE-087 | Jest | Janela fecha no Esc, no X e no fundo — `frontend/src/components/ui/__tests__/Janela.test.js` | APROVADO |
-| FE-088 | Jest | Janela devolve o foco a quem abriu — `frontend/src/components/ui/__tests__/Janela.test.js` | APROVADO |
-| FE-089 | Jest | resolverApiUrl usa o proxy de mesma origem nos domínios da Vercel — `frontend/src/services/__tests__/api.test.js` | APROVADO |
-| FE-090 | Jest | resolverApiUrl preserva a API configurada fora da Vercel — `frontend/src/services/__tests__/api.test.js` | APROVADO |
-| FE-091 | Jest | erros de validação da API normaliza mensagens por campo e ignora erros gerais — `frontend/src/services/__tests__/api.test.js` | APROVADO |
-| FE-092 | Jest | erros de validação da API mantém mensagem, status e campos no erro lançado — `frontend/src/services/__tests__/api.test.js` | APROVADO |
-| FE-093 | Jest | normalizarLista retorna a própria lista quando os dados já são um array — `frontend/src/services/__tests__/api.test.js` | APROVADO |
-| FE-094 | Jest | normalizarLista extrai 'results' de uma resposta paginada — `frontend/src/services/__tests__/api.test.js` | APROVADO |
-| FE-095 | Jest | normalizarLista retorna lista vazia para dados inválidos — `frontend/src/services/__tests__/api.test.js` | APROVADO |
-| FE-096 | Jest | getUsuarioLogado retorna null em ambiente sem 'window' (SSR) — `frontend/src/services/__tests__/api.test.js` | APROVADO |
-| FE-097 | Jest | buildQuery retorna string vazia sem parâmetros — `frontend/src/services/__tests__/api.test.js` | APROVADO |
-| FE-098 | Jest | buildQuery monta a query string a partir dos parâmetros informados — `frontend/src/services/__tests__/api.test.js` | APROVADO |
-| FE-099 | Jest | buildQuery ignora valores undefined, null ou vazios — `frontend/src/services/__tests__/api.test.js` | APROVADO |
-| FE-100 | Jest | redefinição de senha solicitarRedefinicaoSenha faz POST para o endpoint correto — `frontend/src/services/__tests__/api.test.js` | APROVADO |
-| FE-101 | Jest | redefinição de senha redefinirSenha faz POST com token e senhas para o endpoint correto — `frontend/src/services/__tests__/api.test.js` | APROVADO |
-| FE-102 | Jest | auditoria getAuditoria consulta o endpoint de auditoria do escritório — `frontend/src/services/__tests__/api.test.js` | APROVADO |
-| FE-103 | Jest | auditoria getMasterAuditoria consulta o endpoint de auditoria da plataforma — `frontend/src/services/__tests__/api.test.js` | APROVADO |
-| FE-104 | Jest | renovação automática do access token expirado ao receber 401, renova o access token e repete a requisição original — `frontend/src/services/__tests__/api.test.js` | APROVADO |
-| FE-105 | Jest | renovação automática do access token expirado se a renovação falhar, propaga o erro original em vez de travar — `frontend/src/services/__tests__/api.test.js` | APROVADO |
-| FE-106 | Jest | renovação automática do access token expirado guarda o refresh novo quando o backend faz a rotação — `frontend/src/services/__tests__/api.test.js` | APROVADO |
-| FE-107 | Jest | renovação automática do access token expirado várias chamadas com 401 ao mesmo tempo compartilham uma única renovação — `frontend/src/services/__tests__/api.test.js` | APROVADO |
-| FE-108 | Jest | renovação automática do access token expirado se outra aba já rotacionou o refresh, tenta de novo com o refresh atual — `frontend/src/services/__tests__/api.test.js` | APROVADO |
-| FE-109 | Jest | revogação do refresh token no logout logout envia o refresh token pra revogação e limpa o localStorage — `frontend/src/services/__tests__/api.test.js` | APROVADO |
-| FE-110 | Jest | revogação do refresh token no logout logout sem refresh token guardado não chama a API — `frontend/src/services/__tests__/api.test.js` | APROVADO |
-| FE-111 | Jest | revogação do refresh token no logout masterLogout envia o master_refresh pra revogação e limpa o localStorage — `frontend/src/services/__tests__/api.test.js` | APROVADO |
-| FE-112 | Jest | calcularPrazo consulta o endpoint de cálculo de prazo com os parâmetros corretos — `frontend/src/services/__tests__/api.test.js` | APROVADO |
-| FE-113 | Jest | calcularPrazo assume dias_uteis=true quando não informado — `frontend/src/services/__tests__/api.test.js` | APROVADO |
-| FE-114 | Jest | apontamento de horas e despesas getApontamentos monta a query só com os filtros preenchidos — `frontend/src/services/__tests__/api.test.js` | APROVADO |
-| FE-115 | Jest | apontamento de horas e despesas getApontamentos sem filtros não acrescenta '?' — `frontend/src/services/__tests__/api.test.js` | APROVADO |
-| FE-116 | Jest | apontamento de horas e despesas createApontamento envia o corpo em JSON — `frontend/src/services/__tests__/api.test.js` | APROVADO |
-| FE-117 | Jest | apontamento de horas e despesas getDespesas repassa os filtros booleanos — `frontend/src/services/__tests__/api.test.js` | APROVADO |
-| FE-118 | Jest | tempo de uso do sistema registrarAtividade faz POST no endpoint de atividade — `frontend/src/services/__tests__/api.test.js` | APROVADO |
-| FE-119 | Jest | tempo de uso do sistema getTempoDeUso repassa o mês quando informado — `frontend/src/services/__tests__/api.test.js` | APROVADO |
-| FE-120 | Jest | tempo de uso do sistema getTempoDeUso sem mês consulta o padrão do servidor — `frontend/src/services/__tests__/api.test.js` | APROVADO |
-| FE-121 | Jest | modelos de documento getVariaveisDocumento consulta o catálogo de variáveis — `frontend/src/services/__tests__/api.test.js` | APROVADO |
-| FE-122 | Jest | modelos de documento gerarDocumento envia o processo e deixa o cliente nulo — `frontend/src/services/__tests__/api.test.js` | APROVADO |
-| FE-123 | Jest | modelos de documento gerarDocumento envia o cliente e deixa o processo nulo — `frontend/src/services/__tests__/api.test.js` | APROVADO |
-| FE-124 | Jest | modelos de documento createModeloDocumento envia o conteúdo em JSON — `frontend/src/services/__tests__/api.test.js` | APROVADO |
-| FE-125 | Jest | consulta ao DataJud consultarDataJud faz POST no endpoint do processo — `frontend/src/services/__tests__/api.test.js` | APROVADO |
-| FE-126 | Jest | ficha do processo getFichaProcesso consulta o endpoint de ficha do processo — `frontend/src/services/__tests__/api.test.js` | APROVADO |
-| FE-127 | Jest | Avatar busca foto protegida com a API e libera o blob ao desmontar — `frontend/src/components/ui/__tests__/Avatar.test.jsx` | APROVADO |
-| FE-128 | Jest | Avatar mostra inicial enquanto não há foto — `frontend/src/components/ui/__tests__/Avatar.test.jsx` | APROVADO |
-| FE-129 | Jest | consulta inicial atrasada não reverte uma preferência escolhida pelo usuário — `frontend/src/contexts/__tests__/PreferencesContext.test.jsx` | APROVADO |
-| FE-130 | Jest | usePermissoes segue a matriz gravada no login — `frontend/src/hooks/__tests__/usePermissoes.test.js` | APROVADO |
-| FE-131 | Jest | usePermissoes sem permissões gravadas deixa a decisão para a API — `frontend/src/hooks/__tests__/usePermissoes.test.js` | APROVADO |
-| FE-132 | Jest | usePermissoes acompanha a troca de perfil sem recarregar a página — `frontend/src/hooks/__tests__/usePermissoes.test.js` | APROVADO |
-| FE-133 | Jest | código de demonstração nunca vira mensagem de cobrança — `frontend/src/components/panels/__tests__/PixDaParcela.test.js` | APROVADO |
-| FE-134 | Jest | mensagem do WhatsApp leva valor, vencimento e o copia e cola — `frontend/src/components/panels/__tests__/PixDaParcela.test.js` | APROVADO |
-| FE-135 | Jest | inativo não altera a rolagem de outra janela — `frontend/src/hooks/__tests__/useBloqueioRolagem.test.js` | APROVADO |
-| FE-136 | Jest | bloqueia html e body e restaura os eixos e prioridades anteriores — `frontend/src/hooks/__tests__/useBloqueioRolagem.test.js` | APROVADO |
-| FE-137 | Jest | fechar uma de duas janelas não libera o documento — `frontend/src/hooks/__tests__/useBloqueioRolagem.test.js` | APROVADO |
-| FE-138 | Jest | ativa e desativa conforme o estado da janela — `frontend/src/hooks/__tests__/useBloqueioRolagem.test.js` | APROVADO |
-| FE-139 | Jest | não deixa bloqueios pendurados no StrictMode — `frontend/src/hooks/__tests__/useBloqueioRolagem.test.js` | APROVADO |
-| FE-140 | Jest | explica de onde veio o texto, no singular e no plural — `frontend/src/components/panels/__tests__/ResumoParaCliente.test.js` | APROVADO |
-| FE-141 | Jest | conteúdo da ajuda toda seção tem título, resumo e ao menos um tópico — `frontend/src/lib/__tests__/ajuda.test.js` | APROVADO |
-| FE-142 | Jest | conteúdo da ajuda os identificadores não se repetem — `frontend/src/lib/__tests__/ajuda.test.js` | APROVADO |
-| FE-143 | Jest | conteúdo da ajuda todo painel citado existe de verdade — `frontend/src/lib/__tests__/ajuda.test.js` | APROVADO |
-| FE-144 | Jest | conteúdo da ajuda os painéis da barra lateral com conteúdo próprio estão cobertos — `frontend/src/lib/__tests__/ajuda.test.js` | APROVADO |
-| FE-145 | Jest | secaoDoPainel encontra a seção do painel aberto — `frontend/src/lib/__tests__/ajuda.test.js` | APROVADO |
-| FE-146 | Jest | secaoDoPainel sem painel aberto, não força nenhuma seção — `frontend/src/lib/__tests__/ajuda.test.js` | APROVADO |
-| FE-147 | Jest | secaoDaAjuda aceita tanto o id da seção quanto o nome do painel — `frontend/src/lib/__tests__/ajuda.test.js` | APROVADO |
-| FE-148 | Jest | secaoDaAjuda usa a visão geral quando o assunto não existe — `frontend/src/lib/__tests__/ajuda.test.js` | APROVADO |
-| FE-149 | Jest | buscarNaAjuda busca vazia devolve tudo — `frontend/src/lib/__tests__/ajuda.test.js` | APROVADO |
-| FE-150 | Jest | buscarNaAjuda acha pelo texto de um tópico, não só pelo título — `frontend/src/lib/__tests__/ajuda.test.js` | APROVADO |
-| FE-151 | Jest | buscarNaAjuda devolve só os tópicos que casam, para a leitura ir direto ao ponto — `frontend/src/lib/__tests__/ajuda.test.js` | APROVADO |
-| FE-152 | Jest | buscarNaAjuda quando o termo casa com o título da seção, mantém todos os tópicos — `frontend/src/lib/__tests__/ajuda.test.js` | APROVADO |
-| FE-153 | Jest | buscarNaAjuda ignora maiúsculas e minúsculas — `frontend/src/lib/__tests__/ajuda.test.js` | APROVADO |
-| FE-154 | Jest | buscarNaAjuda termo sem correspondência devolve lista vazia — `frontend/src/lib/__tests__/ajuda.test.js` | APROVADO |
-| FE-155 | Jest | buscarNaAjuda não altera o conteúdo original — `frontend/src/lib/__tests__/ajuda.test.js` | APROVADO |
-| FE-156 | Jest | mostra o progresso e identifica os itens concluídos — `frontend/src/components/ui/__tests__/ProgressoFormulario.test.jsx` | APROVADO |
-| FE-157 | Jest | gerarHtmlRelatorioCliente mostra contratos, horas e despesas do cliente — `frontend/src/utils/__tests__/relatorio.test.js` | APROVADO |
-| FE-158 | Jest | gerarHtmlRelatorioCliente formata os totais em reais — `frontend/src/utils/__tests__/relatorio.test.js` | APROVADO |
-| FE-159 | Jest | gerarHtmlRelatorioCliente não desloca datas sem hora para o dia anterior — `frontend/src/utils/__tests__/relatorio.test.js` | APROVADO |
-| FE-160 | Jest | gerarHtmlRelatorioCliente marca hora de cortesia em vez de mostrar valor — `frontend/src/utils/__tests__/relatorio.test.js` | APROVADO |
-| FE-161 | Jest | gerarHtmlRelatorioCliente avisa quando não há nada lançado — `frontend/src/utils/__tests__/relatorio.test.js` | APROVADO |
-| FE-162 | Jest | gerarHtmlRelatorioCliente escapa conteúdo vindo do usuário — `frontend/src/utils/__tests__/relatorio.test.js` | APROVADO |
-| FE-163 | Jest | gerarHtmlRelatorioProcesso mostra o bloco financeiro do processo — `frontend/src/utils/__tests__/relatorio.test.js` | APROVADO |
-| FE-164 | Jest | gerarHtmlRelatorioProcesso omite a coluna de processo, que repetiria o mesmo número — `frontend/src/utils/__tests__/relatorio.test.js` | APROVADO |
-| FE-165 | Jest | gerarHtmlRelatorioProcesso mantém a coluna de processo no relatório do cliente — `frontend/src/utils/__tests__/relatorio.test.js` | APROVADO |
-| FE-166 | Jest | cobertura dos grupos cobre as oito áreas com conteúdo pesquisável — `frontend/src/lib/__tests__/busca.test.js` | APROVADO |
-| FE-167 | Jest | cobertura dos grupos todo grupo aponta para um painel que existe — `frontend/src/lib/__tests__/busca.test.js` | APROVADO |
-| FE-168 | Jest | cobertura dos grupos as chaves não se repetem — `frontend/src/lib/__tests__/busca.test.js` | APROVADO |
-| FE-169 | Jest | agruparResultados o mínimo de letras para buscar é dois — `frontend/src/lib/__tests__/busca.test.js` | APROVADO |
-| FE-170 | Jest | agruparResultados mantém a ordem das áreas definida em GRUPOS_BUSCA — `frontend/src/lib/__tests__/busca.test.js` | APROVADO |
-| FE-171 | Jest | agruparResultados área sem resultado não aparece na lista — `frontend/src/lib/__tests__/busca.test.js` | APROVADO |
-| FE-172 | Jest | agruparResultados resposta vazia ou ausente não quebra — `frontend/src/lib/__tests__/busca.test.js` | APROVADO |
-| FE-173 | Jest | agruparResultados limita a quatro resultados por grupo — `frontend/src/lib/__tests__/busca.test.js` | APROVADO |
-| FE-174 | Jest | agruparResultados o título e o detalhe de cada resultado saem do próprio grupo — `frontend/src/lib/__tests__/busca.test.js` | APROVADO |
-| FE-175 | Jest | agruparResultados cliente pessoa jurídica mostra o CNPJ como detalhe — `frontend/src/lib/__tests__/busca.test.js` | APROVADO |
-| FE-176 | Jest | contarResultados soma os itens de todos os grupos — `frontend/src/lib/__tests__/busca.test.js` | APROVADO |
-| FE-177 | Jest | agruparPorColuna separa por situação e deixa cancelada fora do quadro — `frontend/src/components/panels/__tests__/TarefasQuadro.test.js` | APROVADO |
-| FE-178 | Jest | agruparPorColuna o cartão muda de coluna antes da API responder — `frontend/src/components/panels/__tests__/TarefasQuadro.test.js` | APROVADO |
-| FE-179 | Jest | descreverPrazo mostra dias, tipo e vencimento — `frontend/src/components/panels/__tests__/IntimacoesLista.test.js` | APROVADO |
-| FE-180 | Jest | descreverPrazo avisa quando o prazo foi estimado — `frontend/src/components/panels/__tests__/IntimacoesLista.test.js` | APROVADO |
-| FE-181 | Jest | descreverPrazo sem prazo, nada — `frontend/src/components/panels/__tests__/IntimacoesLista.test.js` | APROVADO |
-| FE-182 | Jest | status do processo cobre os quatro status do modelo — `frontend/src/lib/__tests__/statusProcesso.test.js` | APROVADO |
-| FE-183 | Jest | status do processo acentua Concluído, que no banco é gravado sem acento — `frontend/src/lib/__tests__/statusProcesso.test.js` | APROVADO |
-| FE-184 | Jest | status do processo cada status tem um selo próprio — nenhum par se confunde — `frontend/src/lib/__tests__/statusProcesso.test.js` | APROVADO |
-| FE-185 | Jest | status do processo a cor vem da identidade do status, não da posição na lista — `frontend/src/lib/__tests__/statusProcesso.test.js` | APROVADO |
-| FE-186 | Jest | status do processo cada tema tem sua própria cor, validada contra o fundo dele — `frontend/src/lib/__tests__/statusProcesso.test.js` | APROVADO |
-| FE-187 | Jest | status do processo status desconhecido não quebra nem rouba a cor de outro — `frontend/src/lib/__tests__/statusProcesso.test.js` | APROVADO |
-| FE-188 | Jest | status do processo a ordem mantém verde e ameixa longe do âmbar — `frontend/src/lib/__tests__/statusProcesso.test.js` | APROVADO |
-| FE-189 | Jest | limparTelefone remove tudo que não é dígito — `frontend/src/utils/__tests__/whatsapp.test.js` | APROVADO |
-| FE-190 | Jest | limparTelefone retorna string vazia para valores nulos/indefinidos — `frontend/src/utils/__tests__/whatsapp.test.js` | APROVADO |
-| FE-191 | Jest | construirLinkWhatsApp adiciona o prefixo 55 para números com DDD (11 dígitos) — `frontend/src/utils/__tests__/whatsapp.test.js` | APROVADO |
-| FE-192 | Jest | construirLinkWhatsApp não duplica o código do país quando o número já é longo — `frontend/src/utils/__tests__/whatsapp.test.js` | APROVADO |
-| FE-193 | Jest | construirLinkWhatsApp retorna null quando o telefone está vazio — `frontend/src/utils/__tests__/whatsapp.test.js` | APROVADO |
-| FE-194 | Jest | montarMensagemCliente monta a mensagem com os dados do cliente — `frontend/src/utils/__tests__/whatsapp.test.js` | APROVADO |
-| FE-195 | Jest | montarMensagemCliente usa travessão para campos ausentes e trata cliente inativo — `frontend/src/utils/__tests__/whatsapp.test.js` | APROVADO |
-| FE-196 | Jest | montarMensagemCliente mostra CNPJ em vez de CPF para cliente pessoa jurídica — `frontend/src/utils/__tests__/whatsapp.test.js` | APROVADO |
-| FE-197 | Jest | montarMensagemProcesso traduz o status 'Concluido' para 'Concluído' — `frontend/src/utils/__tests__/whatsapp.test.js` | APROVADO |
-| FE-198 | Jest | montarMensagemProcesso omite advogado responsável quando não informado — `frontend/src/utils/__tests__/whatsapp.test.js` | APROVADO |
-| FE-199 | Jest | REQUISITOS_SENHA tem os 4 requisitos esperados — `frontend/src/utils/__tests__/senha.test.js` | APROVADO |
-| FE-200 | Jest | senhaAtendeRequisitos rejeita senha vazia — `frontend/src/utils/__tests__/senha.test.js` | APROVADO |
-| FE-201 | Jest | senhaAtendeRequisitos rejeita senha sem maiúscula — `frontend/src/utils/__tests__/senha.test.js` | APROVADO |
-| FE-202 | Jest | senhaAtendeRequisitos rejeita senha sem número — `frontend/src/utils/__tests__/senha.test.js` | APROVADO |
-| FE-203 | Jest | senhaAtendeRequisitos rejeita senha sem caractere especial — `frontend/src/utils/__tests__/senha.test.js` | APROVADO |
-| FE-204 | Jest | senhaAtendeRequisitos rejeita senha com menos de 8 caracteres — `frontend/src/utils/__tests__/senha.test.js` | APROVADO |
-| FE-205 | Jest | senhaAtendeRequisitos aceita senha que atende todos os requisitos — `frontend/src/utils/__tests__/senha.test.js` | APROVADO |
-| FE-206 | Jest | formatarCPF organiza os dígitos em ###.###.###-## — `frontend/src/utils/__tests__/mascaras.test.js` | APROVADO |
-| FE-207 | Jest | formatarCPF ignora caracteres não numéricos e limita a 11 dígitos — `frontend/src/utils/__tests__/mascaras.test.js` | APROVADO |
-| FE-208 | Jest | formatarCPF formata progressivamente enquanto o usuário digita — `frontend/src/utils/__tests__/mascaras.test.js` | APROVADO |
-| FE-209 | Jest | formatarCNPJ preserva letras em maiúsculas e permite digitação parcial — `frontend/src/utils/__tests__/mascaras.test.js` | APROVADO |
-| FE-210 | Jest | formatarCNPJ organiza os dígitos em ##.###.###/####-## — `frontend/src/utils/__tests__/mascaras.test.js` | APROVADO |
-| FE-211 | Jest | formatarCNPJ limita a 14 dígitos — `frontend/src/utils/__tests__/mascaras.test.js` | APROVADO |
-| FE-212 | Jest | formatarTelefone formata celular (11 dígitos) com hífen após o 5º dígito — `frontend/src/utils/__tests__/mascaras.test.js` | APROVADO |
-| FE-213 | Jest | formatarTelefone formata fixo (10 dígitos) com hífen após o 4º dígito — `frontend/src/utils/__tests__/mascaras.test.js` | APROVADO |
-| FE-214 | Jest | formatarTelefone limita a 11 dígitos — `frontend/src/utils/__tests__/mascaras.test.js` | APROVADO |
-| FE-215 | Jest | formatarRG organiza os dígitos em XX.XXX.XXX — `frontend/src/utils/__tests__/mascaras.test.js` | APROVADO |
-| FE-216 | Jest | formatarRG aceita X maiúsculo ou minúsculo como dígito verificador final — `frontend/src/utils/__tests__/mascaras.test.js` | APROVADO |
-| FE-217 | Jest | formatarRG limita a 8 dígitos além do dígito verificador — `frontend/src/utils/__tests__/mascaras.test.js` | APROVADO |
-| FE-218 | Jest | formatarOAB organiza número e UF no formato número/UF — `frontend/src/utils/__tests__/mascaras.test.js` | APROVADO |
-| FE-219 | Jest | formatarOAB mantém só os números enquanto a UF não é digitada — `frontend/src/utils/__tests__/mascaras.test.js` | APROVADO |
-| FE-220 | Jest | formatarOAB limita o número a 6 dígitos e a UF a 2 letras — `frontend/src/utils/__tests__/mascaras.test.js` | APROVADO |
-| FE-221 | Jest | formatarCEP organiza os dígitos em #####-### — `frontend/src/utils/__tests__/mascaras.test.js` | APROVADO |
-| FE-222 | Jest | formatarCEP ignora caracteres não numéricos e limita a 8 dígitos — `frontend/src/utils/__tests__/mascaras.test.js` | APROVADO |
-| FE-223 | Jest | service worker registra os ciclos de vida e os eventos de notificação — `frontend/src/lib/__tests__/service-worker.test.js` | APROVADO |
-| FE-224 | Jest | service worker nunca intercepta chamadas de API — `frontend/src/lib/__tests__/service-worker.test.js` | APROVADO |
-| FE-225 | Jest | service worker nem mesmo uma navegação para /api/ é servida do cache — `frontend/src/lib/__tests__/service-worker.test.js` | APROVADO |
-| FE-226 | Jest | service worker deixa passar requisição para outra origem — `frontend/src/lib/__tests__/service-worker.test.js` | APROVADO |
-| FE-227 | Jest | service worker ignora tudo que não seja GET — `frontend/src/lib/__tests__/service-worker.test.js` | APROVADO |
-| FE-228 | Jest | service worker assume os estáticos versionados do build — `frontend/src/lib/__tests__/service-worker.test.js` | APROVADO |
-| FE-229 | Jest | service worker assume a navegação para poder mostrar a tela de offline — `frontend/src/lib/__tests__/service-worker.test.js` | APROVADO |
-| FE-230 | Jest | service worker mostra a notificação push com título, texto e destino — `frontend/src/lib/__tests__/service-worker.test.js` | APROVADO |
-| FE-231 | Jest | service worker clique na notificação abre o sistema quando não há aba aberta — `frontend/src/lib/__tests__/service-worker.test.js` | APROVADO |
-| FE-232 | Jest | formatarMoeda formata número e texto no padrão brasileiro — `frontend/src/utils/__tests__/formato.test.js` | APROVADO |
-| FE-233 | Jest | formatarMoeda zero é um valor, não uma ausência — `frontend/src/utils/__tests__/formato.test.js` | APROVADO |
-| FE-234 | Jest | formatarMoeda devolve travessão quando não há valor — `frontend/src/utils/__tests__/formato.test.js` | APROVADO |
-| FE-235 | Jest | formatarHoras converte minutos em horas e minutos — `frontend/src/utils/__tests__/formato.test.js` | APROVADO |
-| FE-236 | Jest | formatarHoras trata ausência de valor como zero — `frontend/src/utils/__tests__/formato.test.js` | APROVADO |
-| FE-237 | Jest | data de formulário usa o dia local na virada UTC — `frontend/src/utils/__tests__/formato.test.js` | APROVADO |
-| FE-238 | Jest | capitalizarNome deixa os nomes legíveis e mantém as siglas societárias — `frontend/src/utils/__tests__/cnpj.test.js` | APROVADO |
-| FE-239 | Jest | interpretarEmpresa converte a resposta do BrasilAPI para os campos do formulário — `frontend/src/utils/__tests__/cnpj.test.js` | APROVADO |
-| FE-240 | Jest | interpretarEmpresa não repete o tipo quando o logradouro já começa com ele, e trata s/n — `frontend/src/utils/__tests__/cnpj.test.js` | APROVADO |
-| FE-241 | Jest | interpretarEmpresa campos ausentes viram texto vazio; sem razão social não há empresa — `frontend/src/utils/__tests__/cnpj.test.js` | APROVADO |
-| FE-242 | Jest | buscarEmpresaPorCnpj consulta CNPJ alfanumérico sem apagar letras — `frontend/src/utils/__tests__/cnpj.test.js` | APROVADO |
-| FE-243 | Jest | buscarEmpresaPorCnpj não chama a API com CNPJ incompleto — `frontend/src/utils/__tests__/cnpj.test.js` | APROVADO |
-| FE-244 | Jest | buscarEmpresaPorCnpj consulta o BrasilAPI só com os dígitos — `frontend/src/utils/__tests__/cnpj.test.js` | APROVADO |
-| FE-245 | Jest | buscarEmpresaPorCnpj CNPJ não encontrado, erro de rede ou resposta inválida devolvem null sem quebrar — `frontend/src/utils/__tests__/cnpj.test.js` | APROVADO |
-| FE-246 | Jest | enderecoDaEmpresa e avisoDaEmpresa monta a linha de endereço — `frontend/src/utils/__tests__/cnpj.test.js` | APROVADO |
-| FE-247 | Jest | enderecoDaEmpresa e avisoDaEmpresa avisa quando não encontrou e quando a situação não é ativa, sem impedir nada — `frontend/src/utils/__tests__/cnpj.test.js` | APROVADO |
-| FE-248 | Jest | converte a chave pública VAPID (base64url) para bytes — `frontend/src/utils/__tests__/push.test.js` | APROVADO |
-| FE-249 | Jest | buscarEnderecoPorCep retorna null sem chamar a API quando o CEP não tem 8 dígitos — `frontend/src/utils/__tests__/cep.test.js` | APROVADO |
-| FE-250 | Jest | buscarEnderecoPorCep retorna o endereço formatado a partir da resposta da API — `frontend/src/utils/__tests__/cep.test.js` | APROVADO |
-| FE-251 | Jest | buscarEnderecoPorCep retorna null quando a API informa CEP inexistente — `frontend/src/utils/__tests__/cep.test.js` | APROVADO |
-| FE-252 | Jest | buscarEnderecoPorCep retorna null quando a requisição falha — `frontend/src/utils/__tests__/cep.test.js` | APROVADO |
-| FE-253 | Jest | montarEnderecoCompleto junta logradouro e bairro separados por vírgula — `frontend/src/utils/__tests__/cep.test.js` | APROVADO |
-| FE-254 | Jest | montarEnderecoCompleto omite partes vazias — `frontend/src/utils/__tests__/cep.test.js` | APROVADO |
-| FE-255 | Jest | getSaudacao às 6 horas retorna 'Bom dia' — `frontend/src/utils/__tests__/greeting.test.js` | APROVADO |
-| FE-256 | Jest | getSaudacao às 11 horas retorna 'Bom dia' — `frontend/src/utils/__tests__/greeting.test.js` | APROVADO |
-| FE-257 | Jest | getSaudacao às 12 horas retorna 'Boa tarde' — `frontend/src/utils/__tests__/greeting.test.js` | APROVADO |
-| FE-258 | Jest | getSaudacao às 17 horas retorna 'Boa tarde' — `frontend/src/utils/__tests__/greeting.test.js` | APROVADO |
-| FE-259 | Jest | getSaudacao às 18 horas retorna 'Boa noite' — `frontend/src/utils/__tests__/greeting.test.js` | APROVADO |
-| FE-260 | Jest | getSaudacao às 23 horas retorna 'Boa noite' — `frontend/src/utils/__tests__/greeting.test.js` | APROVADO |
-| FE-261 | Jest | getSaudacao às 3 horas retorna 'Boa noite' — `frontend/src/utils/__tests__/greeting.test.js` | APROVADO |
-| FE-262 | Jest | getSaudacaoCompleta usa apenas o primeiro nome — `frontend/src/utils/__tests__/greeting.test.js` | APROVADO |
-| FE-263 | Jest | getSaudacaoCompleta retorna só a saudação quando não há nome — `frontend/src/utils/__tests__/greeting.test.js` | APROVADO |
-| FE-264 | Jest | onboarding calcula o progresso a partir dos dados reais do escritório — `frontend/src/lib/__tests__/onboarding.test.js` | APROVADO |
-| FE-265 | Jest | onboarding orienta a cadastrar cliente antes do processo — `frontend/src/lib/__tests__/onboarding.test.js` | APROVADO |
-| FE-266 | Jest | onboarding não oferece etapas que o perfil não pode criar — `frontend/src/lib/__tests__/onboarding.test.js` | APROVADO |
-| FE-267 | Jest | onboarding identifica um escritório sem dados operacionais — `frontend/src/lib/__tests__/onboarding.test.js` | APROVADO |
-| FE-268 | Jest | alertas da agenda explica hoje, amanhã e vencimento sem depender de cor — `frontend/src/lib/__tests__/alertasAgenda.test.js` | APROVADO |
-| FE-269 | Jest | alertas da agenda prioriza prazo fatal vencido e remove o que foi cumprido — `frontend/src/lib/__tests__/alertasAgenda.test.js` | APROVADO |
-| FE-270 | Jest | alertas da agenda pode limitar a lista a prazos dentro da janela escolhida — `frontend/src/lib/__tests__/alertasAgenda.test.js` | APROVADO |
-| FE-271 | Jest | IDIOMAS_SUPORTADOS inclui português, inglês e espanhol — `frontend/src/lib/__tests__/i18n.test.js` | APROVADO |
-| FE-272 | Jest | traduzir retorna a tradução correta para cada idioma suportado — `frontend/src/lib/__tests__/i18n.test.js` | APROVADO |
-| FE-273 | Jest | traduzir recai para pt-BR quando o idioma não é suportado — `frontend/src/lib/__tests__/i18n.test.js` | APROVADO |
-| FE-274 | Jest | traduzir recai para a própria chave quando ela não existe em nenhum dicionário — `frontend/src/lib/__tests__/i18n.test.js` | APROVADO |
-| FE-275 | Jest | traduzir a aba de auditoria está traduzida em todos os idiomas suportados — `frontend/src/lib/__tests__/i18n.test.js` | APROVADO |
+| BE-245 | Django | advocacia.tests.test_financeiro.AuditoriaIntegridadeContratoTests.test_arredondamento_nao_gera_parcela_zero_ou_negativa — `backend/advocacia/tests/test_financeiro.py` | APROVADO |
+| BE-246 | Django | advocacia.tests.test_financeiro.AuditoriaIntegridadeContratoTests.test_edicao_de_observacoes_e_reenvio_do_acordo_original_preservam_as_parcelas — `backend/advocacia/tests/test_financeiro.py` | APROVADO |
+| BE-247 | Django | advocacia.tests.test_financeiro.AuditoriaIntegridadeContratoTests.test_edicao_nao_pode_desvincular_o_acordo_das_parcelas_emitidas — `backend/advocacia/tests/test_financeiro.py` | APROVADO |
+| BE-248 | Django | advocacia.tests.test_financeiro.AuditoriaIntegridadeContratoTests.test_estorno_da_parcela_limpa_data_de_pagamento_e_registra_a_trilha — `backend/advocacia/tests/test_financeiro.py` | APROVADO |
+| BE-249 | Django | advocacia.tests.test_financeiro.AuditoriaIntegridadeContratoTests.test_falha_na_segunda_parcela_desfaz_contrato_e_primeira_parcela — `backend/advocacia/tests/test_financeiro.py` | APROVADO |
+| BE-250 | Django | advocacia.tests.test_financeiro.AuditoriaIntegridadeContratoTests.test_parcelas_nao_podem_exceder_total_em_centavos — `backend/advocacia/tests/test_financeiro.py` | APROVADO |
+| BE-251 | Django | advocacia.tests.test_financeiro.ContratoHonorarioAPITestCase.test_contrato_a_vista_gera_uma_unica_parcela — `backend/advocacia/tests/test_financeiro.py` | APROVADO |
+| BE-252 | Django | advocacia.tests.test_financeiro.ContratoHonorarioAPITestCase.test_contrato_parcelado_divide_o_valor_total_sem_perder_centavos — `backend/advocacia/tests/test_financeiro.py` | APROVADO |
+| BE-253 | Django | advocacia.tests.test_financeiro.ContratoHonorarioAPITestCase.test_marcar_parcela_como_paga_atualiza_status_e_data — `backend/advocacia/tests/test_financeiro.py` | APROVADO |
+| BE-254 | Django | advocacia.tests.test_financeiro.ContratoHonorarioAPITestCase.test_nao_e_possivel_criar_dois_contratos_para_o_mesmo_processo — `backend/advocacia/tests/test_financeiro.py` | APROVADO |
+| BE-255 | Django | advocacia.tests.test_financeiro.ContratoValorMinimoAPITestCase.test_contrato_com_numero_de_parcelas_zero_e_rejeitado — `backend/advocacia/tests/test_financeiro.py` | APROVADO |
+| BE-256 | Django | advocacia.tests.test_financeiro.ContratoValorMinimoAPITestCase.test_contrato_com_valor_zero_e_rejeitado — `backend/advocacia/tests/test_financeiro.py` | APROVADO |
+| BE-257 | Django | advocacia.tests.test_fotos.FotosProtegidasAPITestCase.test_documento_e_rota_antiga_nao_sao_publicos — `backend/advocacia/tests/test_fotos.py` | APROVADO |
+| BE-258 | Django | advocacia.tests.test_fotos.FotosProtegidasAPITestCase.test_envio_de_foto_na_conta_persiste_e_e_devolvido_na_proxima_consulta — `backend/advocacia/tests/test_fotos.py` | APROVADO |
+| BE-259 | Django | advocacia.tests.test_fotos.FotosProtegidasAPITestCase.test_foto_exige_login_e_escritorio_correto — `backend/advocacia/tests/test_fotos.py` | APROVADO |
+| BE-260 | Django | advocacia.tests.test_fotos.FotosProtegidasAPITestCase.test_foto_invalida_retorna_erro_sem_trocar_a_atual — `backend/advocacia/tests/test_fotos.py` | APROVADO |
+| BE-261 | Django | advocacia.tests.test_fotos.FotosProtegidasAPITestCase.test_foto_legada_ainda_pode_ser_lida_do_storage_anterior — `backend/advocacia/tests/test_fotos.py` | APROVADO |
+| BE-262 | Django | advocacia.tests.test_fotos.FotosProtegidasAPITestCase.test_foto_persiste_com_nova_instancia_sem_arquivo_no_disco — `backend/advocacia/tests/test_fotos.py` | APROVADO |
+| BE-263 | Django | advocacia.tests.test_fotos.FotosProtegidasAPITestCase.test_tabela_de_fotos_tem_rls_no_postgresql — `backend/advocacia/tests/test_fotos.py` | APROVADO |
+| BE-264 | Django | advocacia.tests.test_horas_e_despesas.ApontamentoHoraAPITestCase.test_apontamento_acima_de_24h_e_rejeitado — `backend/advocacia/tests/test_horas_e_despesas.py` | APROVADO |
+| BE-265 | Django | advocacia.tests.test_horas_e_despesas.ApontamentoHoraAPITestCase.test_apontamento_de_outro_escritorio_nao_aparece — `backend/advocacia/tests/test_horas_e_despesas.py` | APROVADO |
+| BE-266 | Django | advocacia.tests.test_horas_e_despesas.ApontamentoHoraAPITestCase.test_apontamento_e_lancado_em_nome_de_quem_esta_logado — `backend/advocacia/tests/test_horas_e_despesas.py` | APROVADO |
+| BE-267 | Django | advocacia.tests.test_horas_e_despesas.ApontamentoHoraAPITestCase.test_apontamento_em_data_futura_e_rejeitado — `backend/advocacia/tests/test_horas_e_despesas.py` | APROVADO |
+| BE-268 | Django | advocacia.tests.test_horas_e_despesas.ApontamentoHoraAPITestCase.test_criar_apontamento_calcula_horas_e_valor — `backend/advocacia/tests/test_horas_e_despesas.py` | APROVADO |
+| BE-269 | Django | advocacia.tests.test_horas_e_despesas.ApontamentoHoraAPITestCase.test_filtro_por_processo — `backend/advocacia/tests/test_horas_e_despesas.py` | APROVADO |
+| BE-270 | Django | advocacia.tests.test_horas_e_despesas.ApontamentoHoraAPITestCase.test_hora_nao_faturavel_nao_tem_valor — `backend/advocacia/tests/test_horas_e_despesas.py` | APROVADO |
+| BE-271 | Django | advocacia.tests.test_horas_e_despesas.ApontamentoHoraAPITestCase.test_minutos_zero_e_rejeitado — `backend/advocacia/tests/test_horas_e_despesas.py` | APROVADO |
+| BE-272 | Django | advocacia.tests.test_horas_e_despesas.DespesaAPITestCase.test_criar_despesa — `backend/advocacia/tests/test_horas_e_despesas.py` | APROVADO |
+| BE-273 | Django | advocacia.tests.test_horas_e_despesas.DespesaAPITestCase.test_despesa_registra_quem_lancou — `backend/advocacia/tests/test_horas_e_despesas.py` | APROVADO |
+| BE-274 | Django | advocacia.tests.test_horas_e_despesas.DespesaAPITestCase.test_filtro_por_reembolsavel — `backend/advocacia/tests/test_horas_e_despesas.py` | APROVADO |
+| BE-275 | Django | advocacia.tests.test_horas_e_despesas.DespesaAPITestCase.test_nao_reembolsavel_nao_pode_ser_reembolsada — `backend/advocacia/tests/test_horas_e_despesas.py` | APROVADO |
+| BE-276 | Django | advocacia.tests.test_horas_e_despesas.DespesaAPITestCase.test_valor_zero_e_rejeitado — `backend/advocacia/tests/test_horas_e_despesas.py` | APROVADO |
+| BE-277 | Django | advocacia.tests.test_horas_e_despesas.TempoDeUsoAPITestCase.test_admin_ve_o_tempo_de_toda_a_equipe — `backend/advocacia/tests/test_horas_e_despesas.py` | APROVADO |
+| BE-278 | Django | advocacia.tests.test_horas_e_despesas.TempoDeUsoAPITestCase.test_duracao_e_a_diferenca_entre_inicio_e_ultima_atividade — `backend/advocacia/tests/test_horas_e_despesas.py` | APROVADO |
+| BE-279 | Django | advocacia.tests.test_horas_e_despesas.TempoDeUsoAPITestCase.test_mes_invalido_e_rejeitado — `backend/advocacia/tests/test_horas_e_despesas.py` | APROVADO |
+| BE-280 | Django | advocacia.tests.test_horas_e_despesas.TempoDeUsoAPITestCase.test_mes_sem_uso_retorna_lista_vazia — `backend/advocacia/tests/test_horas_e_despesas.py` | APROVADO |
+| BE-281 | Django | advocacia.tests.test_horas_e_despesas.TempoDeUsoAPITestCase.test_nao_admin_ve_apenas_o_proprio_tempo — `backend/advocacia/tests/test_horas_e_despesas.py` | APROVADO |
+| BE-282 | Django | advocacia.tests.test_horas_e_despesas.TempoDeUsoAPITestCase.test_primeiro_sinal_abre_uma_sessao — `backend/advocacia/tests/test_horas_e_despesas.py` | APROVADO |
+| BE-283 | Django | advocacia.tests.test_horas_e_despesas.TempoDeUsoAPITestCase.test_relatorio_soma_o_tempo_do_mes — `backend/advocacia/tests/test_horas_e_despesas.py` | APROVADO |
+| BE-284 | Django | advocacia.tests.test_horas_e_despesas.TempoDeUsoAPITestCase.test_sinal_apos_a_janela_abre_nova_sessao — `backend/advocacia/tests/test_horas_e_despesas.py` | APROVADO |
+| BE-285 | Django | advocacia.tests.test_horas_e_despesas.TempoDeUsoAPITestCase.test_sinal_seguido_estende_a_mesma_sessao — `backend/advocacia/tests/test_horas_e_despesas.py` | APROVADO |
+| BE-286 | Django | advocacia.tests.test_ia.AssistenteIAAPITestCase.test_cliente_de_outro_escritorio_nao_entra_no_contexto — `backend/advocacia/tests/test_ia.py` | APROVADO |
+| BE-287 | Django | advocacia.tests.test_ia.AssistenteIAAPITestCase.test_contexto_do_cliente_nao_envia_documentos_ou_contatos — `backend/advocacia/tests/test_ia.py` | APROVADO |
+| BE-288 | Django | advocacia.tests.test_ia.AssistenteIAAPITestCase.test_falha_da_openai_vira_502_sem_vazar_o_erro — `backend/advocacia/tests/test_ia.py` | APROVADO |
+| BE-289 | Django | advocacia.tests.test_ia.AssistenteIAAPITestCase.test_historico_vindo_do_navegador_nao_injeta_mensagem_de_sistema — `backend/advocacia/tests/test_ia.py` | APROVADO |
+| BE-290 | Django | advocacia.tests.test_ia.AssistenteIAAPITestCase.test_limite_proprio_de_chamadas_por_minuto — `backend/advocacia/tests/test_ia.py` | APROVADO |
+| BE-291 | Django | advocacia.tests.test_ia.AssistenteIAAPITestCase.test_mensagem_e_historico_minimizam_identificadores — `backend/advocacia/tests/test_ia.py` | APROVADO |
+| BE-292 | Django | advocacia.tests.test_ia.AssistenteIAAPITestCase.test_mensagem_grande_demais_e_recusada_sem_chamar_a_openai — `backend/advocacia/tests/test_ia.py` | APROVADO |
+| BE-293 | Django | advocacia.tests.test_ia.AssistenteIAAPITestCase.test_mensagem_vazia_e_recusada — `backend/advocacia/tests/test_ia.py` | APROVADO |
+| BE-294 | Django | advocacia.tests.test_ia.AssistenteIAAPITestCase.test_responde_com_o_texto_devolvido_pela_openai — `backend/advocacia/tests/test_ia.py` | APROVADO |
+| BE-295 | Django | advocacia.tests.test_ia.AssistenteIAAPITestCase.test_sem_chave_configurada_responde_servico_indisponivel — `backend/advocacia/tests/test_ia.py` | APROVADO |
+| BE-296 | Django | advocacia.tests.test_kanban.QuadroDeTarefasAPITestCase.test_mover_o_cartao_para_concluida_registra_a_data — `backend/advocacia/tests/test_kanban.py` | APROVADO |
+| BE-297 | Django | advocacia.tests.test_kanban.QuadroDeTarefasAPITestCase.test_quadro_traz_o_que_esta_em_jogo_e_as_concluidas_recentes — `backend/advocacia/tests/test_kanban.py` | APROVADO |
+| BE-298 | Django | advocacia.tests.test_lembretes_e_avisos.AvisosPorEventoAPITestCase.test_autor_da_acao_nao_recebe_o_proprio_aviso — `backend/advocacia/tests/test_lembretes_e_avisos.py` | APROVADO |
+| BE-299 | Django | advocacia.tests.test_lembretes_e_avisos.AvisosPorEventoAPITestCase.test_edicao_sem_mudar_status_nao_avisa — `backend/advocacia/tests/test_lembretes_e_avisos.py` | APROVADO |
+| BE-300 | Django | advocacia.tests.test_lembretes_e_avisos.AvisosPorEventoAPITestCase.test_falha_de_email_nao_derruba_a_operacao — `backend/advocacia/tests/test_lembretes_e_avisos.py` | APROVADO |
+| BE-301 | Django | advocacia.tests.test_lembretes_e_avisos.AvisosPorEventoAPITestCase.test_mudanca_de_status_avisa_os_colegas — `backend/advocacia/tests/test_lembretes_e_avisos.py` | APROVADO |
+| BE-302 | Django | advocacia.tests.test_lembretes_e_avisos.AvisosPorEventoAPITestCase.test_novo_cliente_avisa_os_colegas — `backend/advocacia/tests/test_lembretes_e_avisos.py` | APROVADO |
+| BE-303 | Django | advocacia.tests.test_lembretes_e_avisos.AvisosPorEventoAPITestCase.test_preferencia_desligada_nao_recebe — `backend/advocacia/tests/test_lembretes_e_avisos.py` | APROVADO |
+| BE-304 | Django | advocacia.tests.test_lembretes_e_avisos.EnvioDeLembretesTestCase.test_comando_e_idempotente — `backend/advocacia/tests/test_lembretes_e_avisos.py` | APROVADO |
+| BE-305 | Django | advocacia.tests.test_lembretes_e_avisos.EnvioDeLembretesTestCase.test_contagem_de_dias_usa_o_fuso_local — `backend/advocacia/tests/test_lembretes_e_avisos.py` | APROVADO |
+| BE-306 | Django | advocacia.tests.test_lembretes_e_avisos.EnvioDeLembretesTestCase.test_dry_run_nao_envia_nem_registra — `backend/advocacia/tests/test_lembretes_e_avisos.py` | APROVADO |
+| BE-307 | Django | advocacia.tests.test_lembretes_e_avisos.EnvioDeLembretesTestCase.test_evento_dentro_da_antecedencia_gera_email — `backend/advocacia/tests/test_lembretes_e_avisos.py` | APROVADO |
+| BE-308 | Django | advocacia.tests.test_lembretes_e_avisos.EnvioDeLembretesTestCase.test_evento_fora_da_antecedencia_nao_gera_email — `backend/advocacia/tests/test_lembretes_e_avisos.py` | APROVADO |
+| BE-309 | Django | advocacia.tests.test_lembretes_e_avisos.EnvioDeLembretesTestCase.test_evento_ja_cumprido_nao_gera_email — `backend/advocacia/tests/test_lembretes_e_avisos.py` | APROVADO |
+| BE-310 | Django | advocacia.tests.test_lembretes_e_avisos.EnvioDeLembretesTestCase.test_falha_de_envio_nao_marca_como_enviado — `backend/advocacia/tests/test_lembretes_e_avisos.py` | APROVADO |
+| BE-311 | Django | advocacia.tests.test_lembretes_e_avisos.EnvioDeLembretesTestCase.test_falha_do_email_nao_impede_o_push — `backend/advocacia/tests/test_lembretes_e_avisos.py` | APROVADO |
+| BE-312 | Django | advocacia.tests.test_lembretes_e_avisos.EnvioDeLembretesTestCase.test_prazo_fatal_e_identificado_no_assunto — `backend/advocacia/tests/test_lembretes_e_avisos.py` | APROVADO |
+| BE-313 | Django | advocacia.tests.test_lembretes_e_avisos.EnvioDeLembretesTestCase.test_prazo_fatal_recebe_reforco_em_dois_dias_um_dia_e_no_dia — `backend/advocacia/tests/test_lembretes_e_avisos.py` | APROVADO |
+| BE-314 | Django | advocacia.tests.test_lembretes_e_avisos.EnvioDeLembretesTestCase.test_preferencia_desligada_nao_gera_email — `backend/advocacia/tests/test_lembretes_e_avisos.py` | APROVADO |
+| BE-315 | Django | advocacia.tests.test_lembretes_e_avisos.EnvioDeLembretesTestCase.test_resumo_semanal_e_enviado_uma_vez_por_semana — `backend/advocacia/tests/test_lembretes_e_avisos.py` | APROVADO |
+| BE-316 | Django | advocacia.tests.test_lembretes_e_avisos.EnvioDeLembretesTestCase.test_resumo_semanal_lista_eventos_da_semana — `backend/advocacia/tests/test_lembretes_e_avisos.py` | APROVADO |
+| BE-317 | Django | advocacia.tests.test_lembretes_e_avisos.EnvioDeLembretesTestCase.test_usuario_de_outro_escritorio_nao_recebe_eventos_alheios — `backend/advocacia/tests/test_lembretes_e_avisos.py` | APROVADO |
+| BE-318 | Django | advocacia.tests.test_lembretes_e_avisos.EnvioDeLembretesTestCase.test_usuario_inativo_nao_recebe — `backend/advocacia/tests/test_lembretes_e_avisos.py` | APROVADO |
+| BE-319 | Django | advocacia.tests.test_lembretes_e_avisos.EnvioDeLembretesTestCase.test_usuario_sem_email_ainda_recebe_push — `backend/advocacia/tests/test_lembretes_e_avisos.py` | APROVADO |
+| BE-320 | Django | advocacia.tests.test_modelos_documento.ModeloDocumentoAPITestCase.test_criar_modelo_pela_api — `backend/advocacia/tests/test_modelos_documento.py` | APROVADO |
+| BE-321 | Django | advocacia.tests.test_modelos_documento.ModeloDocumentoAPITestCase.test_gerar_documento_a_partir_de_cliente — `backend/advocacia/tests/test_modelos_documento.py` | APROVADO |
+| BE-322 | Django | advocacia.tests.test_modelos_documento.ModeloDocumentoAPITestCase.test_gerar_sem_cliente_nem_processo_e_rejeitado — `backend/advocacia/tests/test_modelos_documento.py` | APROVADO |
+| BE-323 | Django | advocacia.tests.test_modelos_documento.ModeloDocumentoAPITestCase.test_listar_variaveis_disponiveis — `backend/advocacia/tests/test_modelos_documento.py` | APROVADO |
+| BE-324 | Django | advocacia.tests.test_modelos_documento.ModeloDocumentoAPITestCase.test_modelo_de_outro_escritorio_nao_e_acessivel — `backend/advocacia/tests/test_modelos_documento.py` | APROVADO |
+| BE-325 | Django | advocacia.tests.test_modelos_documento.ModeloDocumentoAPITestCase.test_nao_preenche_com_cliente_de_outro_escritorio — `backend/advocacia/tests/test_modelos_documento.py` | APROVADO |
+| BE-326 | Django | advocacia.tests.test_modelos_documento.ModeloDocumentoAPITestCase.test_nome_de_modelo_duplicado_no_mesmo_escritorio_e_rejeitado — `backend/advocacia/tests/test_modelos_documento.py` | APROVADO |
+| BE-327 | Django | advocacia.tests.test_modelos_documento.PreenchimentoDeModeloTestCase.test_campo_em_branco_no_cadastro_e_sinalizado — `backend/advocacia/tests/test_modelos_documento.py` | APROVADO |
+| BE-328 | Django | advocacia.tests.test_modelos_documento.PreenchimentoDeModeloTestCase.test_data_por_extenso_e_cidade — `backend/advocacia/tests/test_modelos_documento.py` | APROVADO |
+| BE-329 | Django | advocacia.tests.test_modelos_documento.PreenchimentoDeModeloTestCase.test_espacos_dentro_das_chaves_sao_tolerados — `backend/advocacia/tests/test_modelos_documento.py` | APROVADO |
+| BE-330 | Django | advocacia.tests.test_modelos_documento.PreenchimentoDeModeloTestCase.test_nao_expoe_campo_sensivel_por_travessia_de_atributo — `backend/advocacia/tests/test_modelos_documento.py` | APROVADO |
+| BE-331 | Django | advocacia.tests.test_modelos_documento.PreenchimentoDeModeloTestCase.test_processo_preenche_cliente_e_advogado_automaticamente — `backend/advocacia/tests/test_modelos_documento.py` | APROVADO |
+| BE-332 | Django | advocacia.tests.test_modelos_documento.PreenchimentoDeModeloTestCase.test_substitui_variaveis_do_cliente — `backend/advocacia/tests/test_modelos_documento.py` | APROVADO |
+| BE-333 | Django | advocacia.tests.test_modelos_documento.PreenchimentoDeModeloTestCase.test_variavel_fora_do_catalogo_e_mantida_e_sinalizada — `backend/advocacia/tests/test_modelos_documento.py` | APROVADO |
+| BE-334 | Django | advocacia.tests.test_permissoes.IsolamentoEAutorizacaoTestCase.test_a_mensagem_nao_confirma_a_existencia_do_registro_alheio — `backend/advocacia/tests/test_permissoes.py` | APROVADO |
+| BE-335 | Django | advocacia.tests.test_permissoes.IsolamentoEAutorizacaoTestCase.test_a_rota_generica_nao_troca_senha — `backend/advocacia/tests/test_permissoes.py` | APROVADO |
+| BE-336 | Django | advocacia.tests.test_permissoes.IsolamentoEAutorizacaoTestCase.test_admin_exclui_usuario_sem_vinculos — `backend/advocacia/tests/test_permissoes.py` | APROVADO |
+| BE-337 | Django | advocacia.tests.test_permissoes.IsolamentoEAutorizacaoTestCase.test_admin_nao_exclui_a_propria_conta — `backend/advocacia/tests/test_permissoes.py` | APROVADO |
+| BE-338 | Django | advocacia.tests.test_permissoes.IsolamentoEAutorizacaoTestCase.test_admin_pode_consultar_dados_completos_de_membro — `backend/advocacia/tests/test_permissoes.py` | APROVADO |
+| BE-339 | Django | advocacia.tests.test_permissoes.IsolamentoEAutorizacaoTestCase.test_administrador_nao_altera_o_proprio_perfil — `backend/advocacia/tests/test_permissoes.py` | APROVADO |
+| BE-340 | Django | advocacia.tests.test_permissoes.IsolamentoEAutorizacaoTestCase.test_administrador_troca_o_perfil_de_outro — `backend/advocacia/tests/test_permissoes.py` | APROVADO |
+| BE-341 | Django | advocacia.tests.test_permissoes.IsolamentoEAutorizacaoTestCase.test_advogado_nao_edita_outro_usuario — `backend/advocacia/tests/test_permissoes.py` | APROVADO |
+| BE-342 | Django | advocacia.tests.test_permissoes.IsolamentoEAutorizacaoTestCase.test_advogado_nao_reativa_a_propria_conta — `backend/advocacia/tests/test_permissoes.py` | APROVADO |
+| BE-343 | Django | advocacia.tests.test_permissoes.IsolamentoEAutorizacaoTestCase.test_advogado_nao_se_promove_a_administrador — `backend/advocacia/tests/test_permissoes.py` | APROVADO |
+| BE-344 | Django | advocacia.tests.test_permissoes.IsolamentoEAutorizacaoTestCase.test_agenda_nao_entra_em_processo_alheio — `backend/advocacia/tests/test_permissoes.py` | APROVADO |
+| BE-345 | Django | advocacia.tests.test_permissoes.IsolamentoEAutorizacaoTestCase.test_apenas_administrador_desativa_usuario — `backend/advocacia/tests/test_permissoes.py` | APROVADO |
+| BE-346 | Django | advocacia.tests.test_permissoes.IsolamentoEAutorizacaoTestCase.test_apontamento_nao_entra_em_processo_alheio — `backend/advocacia/tests/test_permissoes.py` | APROVADO |
+| BE-347 | Django | advocacia.tests.test_permissoes.IsolamentoEAutorizacaoTestCase.test_cada_um_edita_os_proprios_dados — `backend/advocacia/tests/test_permissoes.py` | APROVADO |
+| BE-348 | Django | advocacia.tests.test_permissoes.IsolamentoEAutorizacaoTestCase.test_cliente_sem_processo_continua_excluivel — `backend/advocacia/tests/test_permissoes.py` | APROVADO |
+| BE-349 | Django | advocacia.tests.test_permissoes.IsolamentoEAutorizacaoTestCase.test_colega_ve_apenas_resumo_da_equipe — `backend/advocacia/tests/test_permissoes.py` | APROVADO |
+| BE-350 | Django | advocacia.tests.test_permissoes.IsolamentoEAutorizacaoTestCase.test_contrato_nao_entra_em_processo_alheio — `backend/advocacia/tests/test_permissoes.py` | APROVADO |
+| BE-351 | Django | advocacia.tests.test_permissoes.IsolamentoEAutorizacaoTestCase.test_despesa_nao_entra_em_processo_alheio — `backend/advocacia/tests/test_permissoes.py` | APROVADO |
+| BE-352 | Django | advocacia.tests.test_permissoes.IsolamentoEAutorizacaoTestCase.test_escritorio_desativado_derruba_os_usuarios — `backend/advocacia/tests/test_permissoes.py` | APROVADO |
+| BE-353 | Django | advocacia.tests.test_permissoes.IsolamentoEAutorizacaoTestCase.test_escritorio_nao_fica_sem_administrador — `backend/advocacia/tests/test_permissoes.py` | APROVADO |
+| BE-354 | Django | advocacia.tests.test_permissoes.IsolamentoEAutorizacaoTestCase.test_excluir_cliente_com_processo_e_recusado — `backend/advocacia/tests/test_permissoes.py` | APROVADO |
+| BE-355 | Django | advocacia.tests.test_permissoes.IsolamentoEAutorizacaoTestCase.test_filtro_invalido_responde_400_e_nao_500 — `backend/advocacia/tests/test_permissoes.py` | APROVADO |
+| BE-356 | Django | advocacia.tests.test_permissoes.IsolamentoEAutorizacaoTestCase.test_filtro_valido_continua_funcionando — `backend/advocacia/tests/test_permissoes.py` | APROVADO |
+| BE-357 | Django | advocacia.tests.test_permissoes.IsolamentoEAutorizacaoTestCase.test_movimentacao_nao_entra_em_processo_alheio — `backend/advocacia/tests/test_permissoes.py` | APROVADO |
+| BE-358 | Django | advocacia.tests.test_permissoes.IsolamentoEAutorizacaoTestCase.test_processo_nao_aceita_cliente_de_outro_escritorio — `backend/advocacia/tests/test_permissoes.py` | APROVADO |
+| BE-359 | Django | advocacia.tests.test_permissoes.IsolamentoEAutorizacaoTestCase.test_refresh_nao_renova_acesso_de_conta_desativada — `backend/advocacia/tests/test_permissoes.py` | APROVADO |
+| BE-360 | Django | advocacia.tests.test_permissoes.IsolamentoEAutorizacaoTestCase.test_usuario_com_processo_nao_e_excluido — `backend/advocacia/tests/test_permissoes.py` | APROVADO |
+| BE-361 | Django | advocacia.tests.test_permissoes.IsolamentoEAutorizacaoTestCase.test_usuario_desativado_perde_o_acesso_imediatamente — `backend/advocacia/tests/test_permissoes.py` | APROVADO |
+| BE-362 | Django | advocacia.tests.test_permissoes.PerfisDeAcessoAPITestCase.test_admin_cadastra_membro_sem_oab_e_ele_consegue_entrar — `backend/advocacia/tests/test_permissoes.py` | APROVADO |
+| BE-363 | Django | advocacia.tests.test_permissoes.PerfisDeAcessoAPITestCase.test_admin_troca_perfil_para_financeiro — `backend/advocacia/tests/test_permissoes.py` | APROVADO |
+| BE-364 | Django | advocacia.tests.test_permissoes.PerfisDeAcessoAPITestCase.test_busca_nao_traz_area_que_o_perfil_nao_ve — `backend/advocacia/tests/test_permissoes.py` | APROVADO |
+| BE-365 | Django | advocacia.tests.test_permissoes.PerfisDeAcessoAPITestCase.test_estagiario_cadastra_cliente_mas_nao_exclui — `backend/advocacia/tests/test_permissoes.py` | APROVADO |
+| BE-366 | Django | advocacia.tests.test_permissoes.PerfisDeAcessoAPITestCase.test_estagiario_e_secretaria_nao_veem_o_financeiro — `backend/advocacia/tests/test_permissoes.py` | APROVADO |
+| BE-367 | Django | advocacia.tests.test_permissoes.PerfisDeAcessoAPITestCase.test_financeiro_cuida_dos_contratos_mas_nao_altera_processo — `backend/advocacia/tests/test_permissoes.py` | APROVADO |
+| BE-368 | Django | advocacia.tests.test_permissoes.PerfisDeAcessoAPITestCase.test_login_devolve_as_permissoes_do_perfil — `backend/advocacia/tests/test_permissoes.py` | APROVADO |
+| BE-369 | Django | advocacia.tests.test_permissoes.PerfisDeAcessoAPITestCase.test_secretaria_agenda_compromisso_mas_nao_usa_a_ia — `backend/advocacia/tests/test_permissoes.py` | APROVADO |
+| BE-370 | Django | advocacia.tests.test_permissoes.PerfisDeAcessoAPITestCase.test_so_admin_cadastra_membro — `backend/advocacia/tests/test_permissoes.py` | APROVADO |
+| BE-371 | Django | advocacia.tests.test_permissoes.ProcessoSigilosoAPITestCase.test_outro_advogado_nao_ve_o_processo_nem_o_que_pende_dele — `backend/advocacia/tests/test_permissoes.py` | APROVADO |
+| BE-372 | Django | advocacia.tests.test_permissoes.ProcessoSigilosoAPITestCase.test_relatorio_do_cliente_omite_o_sigiloso_para_quem_nao_pode — `backend/advocacia/tests/test_permissoes.py` | APROVADO |
+| BE-373 | Django | advocacia.tests.test_permissoes.ProcessoSigilosoAPITestCase.test_responsavel_e_administrador_veem — `backend/advocacia/tests/test_permissoes.py` | APROVADO |
+| BE-374 | Django | advocacia.tests.test_pix.BRCodeTestCase.test_crc_do_exemplo_do_manual_do_banco_central — `backend/advocacia/tests/test_pix.py` | APROVADO |
+| BE-375 | Django | advocacia.tests.test_pix.BRCodeTestCase.test_descricao_longa_e_cortada_para_caber_no_campo — `backend/advocacia/tests/test_pix.py` | APROVADO |
+| BE-376 | Django | advocacia.tests.test_pix.BRCodeTestCase.test_normaliza_a_chave_sem_validar_documento — `backend/advocacia/tests/test_pix.py` | APROVADO |
+| BE-377 | Django | advocacia.tests.test_pix.BRCodeTestCase.test_payload_tem_valor_destinatario_e_crc_valido — `backend/advocacia/tests/test_pix.py` | APROVADO |
+| BE-378 | Django | advocacia.tests.test_pix.BRCodeTestCase.test_sem_chave_ou_sem_cidade_explica_o_que_falta — `backend/advocacia/tests/test_pix.py` | APROVADO |
+| BE-379 | Django | advocacia.tests.test_pix.PixDaParcelaAPITestCase.test_chave_sem_tipo_e_recusada — `backend/advocacia/tests/test_pix.py` | APROVADO |
+| BE-380 | Django | advocacia.tests.test_pix.PixDaParcelaAPITestCase.test_gera_qr_code_e_copia_e_cola_da_parcela — `backend/advocacia/tests/test_pix.py` | APROVADO |
+| BE-381 | Django | advocacia.tests.test_pix.PixDaParcelaAPITestCase.test_parcela_de_processo_sigiloso_nao_aparece_para_quem_nao_ve — `backend/advocacia/tests/test_pix.py` | APROVADO |
+| BE-382 | Django | advocacia.tests.test_pix.PixDaParcelaAPITestCase.test_parcela_paga_nao_gera_pix — `backend/advocacia/tests/test_pix.py` | APROVADO |
+| BE-383 | Django | advocacia.tests.test_pix.PixDaParcelaAPITestCase.test_perfil_sem_financeiro_nao_acessa — `backend/advocacia/tests/test_pix.py` | APROVADO |
+| BE-384 | Django | advocacia.tests.test_pix.PixDaParcelaAPITestCase.test_sem_chave_cadastrada_explica_onde_configurar — `backend/advocacia/tests/test_pix.py` | APROVADO |
+| BE-385 | Django | advocacia.tests.test_pix.PixDaParcelaAPITestCase.test_simulacao_exige_permissao_e_escritorio_correto — `backend/advocacia/tests/test_pix.py` | APROVADO |
+| BE-386 | Django | advocacia.tests.test_pix.PixDaParcelaAPITestCase.test_simulacao_recusa_codigo_real_e_modo_invalido — `backend/advocacia/tests/test_pix.py` | APROVADO |
+| BE-387 | Django | advocacia.tests.test_pix.PixDaParcelaAPITestCase.test_simulacao_repetida_nao_altera_parcela_real — `backend/advocacia/tests/test_pix.py` | APROVADO |
+| BE-388 | Django | advocacia.tests.test_pix.PixDaParcelaAPITestCase.test_teste_funciona_sem_chave_e_nao_contem_dados_bancarios — `backend/advocacia/tests/test_pix.py` | APROVADO |
+| BE-389 | Django | advocacia.tests.test_planos.PlanosAPITestCase.test_cadastrar_processo_ja_arquivado_nao_esbarra_no_limite — `backend/advocacia/tests/test_planos.py` | APROVADO |
+| BE-390 | Django | advocacia.tests.test_planos.PlanosAPITestCase.test_catalogo_e_publico_e_o_primeiro_plano_e_gratuito — `backend/advocacia/tests/test_planos.py` | APROVADO |
+| BE-391 | Django | advocacia.tests.test_planos.PlanosAPITestCase.test_catalogo_funciona_mesmo_com_token_vencido_no_navegador — `backend/advocacia/tests/test_planos.py` | APROVADO |
+| BE-392 | Django | advocacia.tests.test_planos.PlanosAPITestCase.test_consulta_manual_ao_datajud_continua_no_gratuito — `backend/advocacia/tests/test_planos.py` | APROVADO |
+| BE-393 | Django | advocacia.tests.test_planos.PlanosAPITestCase.test_desarquivar_acima_do_limite_e_recusado — `backend/advocacia/tests/test_planos.py` | APROVADO |
+| BE-394 | Django | advocacia.tests.test_planos.PlanosAPITestCase.test_escritorio_novo_comeca_no_gratuito_sem_pagar — `backend/advocacia/tests/test_planos.py` | APROVADO |
+| BE-395 | Django | advocacia.tests.test_planos.PlanosAPITestCase.test_gratuito_recusa_novo_advogado_acima_do_limite — `backend/advocacia/tests/test_planos.py` | APROVADO |
+| BE-396 | Django | advocacia.tests.test_planos.PlanosAPITestCase.test_gratuito_recusa_o_quarto_usuario_sem_apagar_ninguem — `backend/advocacia/tests/test_planos.py` | APROVADO |
+| BE-397 | Django | advocacia.tests.test_planos.PlanosAPITestCase.test_gratuito_recusa_processo_acima_de_30_ativos — `backend/advocacia/tests/test_planos.py` | APROVADO |
+| BE-398 | Django | advocacia.tests.test_planos.PlanosAPITestCase.test_ia_fica_no_profissional_e_nao_chama_a_openai_no_gratuito — `backend/advocacia/tests/test_planos.py` | APROVADO |
+| BE-399 | Django | advocacia.tests.test_planos.PlanosAPITestCase.test_intimacoes_do_djen_ficam_nos_planos_pagos — `backend/advocacia/tests/test_planos.py` | APROVADO |
+| BE-400 | Django | advocacia.tests.test_planos.PlanosAPITestCase.test_pix_teste_de_assinatura_nao_contrata_nem_altera_limites — `backend/advocacia/tests/test_planos.py` | APROVADO |
+| BE-401 | Django | advocacia.tests.test_planos.PlanosAPITestCase.test_pix_teste_exige_login_e_plano_valido — `backend/advocacia/tests/test_planos.py` | APROVADO |
+| BE-402 | Django | advocacia.tests.test_planos.PlanosAPITestCase.test_pix_teste_recusa_codigo_de_outro_escritorio_ou_plano — `backend/advocacia/tests/test_planos.py` | APROVADO |
+| BE-403 | Django | advocacia.tests.test_planos.PlanosAPITestCase.test_plano_pago_dentro_da_validade_vale — `backend/advocacia/tests/test_planos.py` | APROVADO |
+| BE-404 | Django | advocacia.tests.test_planos.PlanosAPITestCase.test_plano_pago_libera_mais_usuarios — `backend/advocacia/tests/test_planos.py` | APROVADO |
+| BE-405 | Django | advocacia.tests.test_planos.PlanosAPITestCase.test_plano_pago_vencido_vale_como_gratuito — `backend/advocacia/tests/test_planos.py` | APROVADO |
+| BE-406 | Django | advocacia.tests.test_planos.PlanosAPITestCase.test_processo_arquivado_nao_conta_no_limite — `backend/advocacia/tests/test_planos.py` | APROVADO |
+| BE-407 | Django | advocacia.tests.test_planos.PlanosAPITestCase.test_profissional_nao_tem_limite_de_processos — `backend/advocacia/tests/test_planos.py` | APROVADO |
+| BE-408 | Django | advocacia.tests.test_planos.PlanosAPITestCase.test_reativar_usuario_respeita_o_limite_mas_desativar_sempre_pode — `backend/advocacia/tests/test_planos.py` | APROVADO |
+| BE-409 | Django | advocacia.tests.test_planos.PlanosAPITestCase.test_resumo_ao_cliente_no_gratuito_usa_o_modelo_sem_ia — `backend/advocacia/tests/test_planos.py` | APROVADO |
+| BE-410 | Django | advocacia.tests.test_planos.PlanosAPITestCase.test_rotina_do_djen_pula_escritorio_gratuito — `backend/advocacia/tests/test_planos.py` | APROVADO |
+| BE-411 | Django | advocacia.tests.test_planos.PlanosAPITestCase.test_sincronizacao_automatica_do_datajud_pula_escritorio_gratuito — `backend/advocacia/tests/test_planos.py` | APROVADO |
+| BE-412 | Django | advocacia.tests.test_planos.PlanosAPITestCase.test_situacao_mostra_plano_uso_e_limites — `backend/advocacia/tests/test_planos.py` | APROVADO |
+| BE-413 | Django | advocacia.tests.test_planos.PlanosAPITestCase.test_usuario_de_outro_escritorio_ve_so_o_proprio_plano — `backend/advocacia/tests/test_planos.py` | APROVADO |
+| BE-414 | Django | advocacia.tests.test_popular_demo.PopularDemonstracaoTestCase.test_cria_um_escritorio_completo_e_utilizavel — `backend/advocacia/tests/test_popular_demo.py` | APROVADO |
+| BE-415 | Django | advocacia.tests.test_popular_demo.PopularDemonstracaoTestCase.test_nao_duplica_e_recria_quando_pedido — `backend/advocacia/tests/test_popular_demo.py` | APROVADO |
+| BE-416 | Django | advocacia.tests.test_processos.DownloadAutenticadoAPITestCase.test_admin_baixa_documento_de_identidade_de_qualquer_usuario_do_escritorio — `backend/advocacia/tests/test_processos.py` | APROVADO |
+| BE-417 | Django | advocacia.tests.test_processos.DownloadAutenticadoAPITestCase.test_advogado_baixa_o_proprio_documento_de_identidade — `backend/advocacia/tests/test_processos.py` | APROVADO |
+| BE-418 | Django | advocacia.tests.test_processos.DownloadAutenticadoAPITestCase.test_advogado_nao_baixa_documento_de_identidade_de_outro_advogado — `backend/advocacia/tests/test_processos.py` | APROVADO |
+| BE-419 | Django | advocacia.tests.test_processos.DownloadAutenticadoAPITestCase.test_download_de_documento_de_outro_escritorio_e_404 — `backend/advocacia/tests/test_processos.py` | APROVADO |
+| BE-420 | Django | advocacia.tests.test_processos.DownloadAutenticadoAPITestCase.test_download_de_documento_do_proprio_escritorio_funciona — `backend/advocacia/tests/test_processos.py` | APROVADO |
+| BE-421 | Django | advocacia.tests.test_processos.DownloadAutenticadoAPITestCase.test_download_de_documento_sem_autenticacao_e_negado — `backend/advocacia/tests/test_processos.py` | APROVADO |
+| BE-422 | Django | advocacia.tests.test_processos.DownloadAutenticadoAPITestCase.test_download_do_documento_de_identidade_de_cliente_de_outro_escritorio_e_404 — `backend/advocacia/tests/test_processos.py` | APROVADO |
+| BE-423 | Django | advocacia.tests.test_processos.DownloadAutenticadoAPITestCase.test_download_do_documento_de_identidade_do_cliente_funciona — `backend/advocacia/tests/test_processos.py` | APROVADO |
+| BE-424 | Django | advocacia.tests.test_processos.DownloadAutenticadoAPITestCase.test_serializer_de_cliente_nao_expoe_url_mas_avisa_que_ha_documento — `backend/advocacia/tests/test_processos.py` | APROVADO |
+| BE-425 | Django | advocacia.tests.test_processos.DownloadAutenticadoAPITestCase.test_serializer_de_documento_nao_expoe_url_do_arquivo — `backend/advocacia/tests/test_processos.py` | APROVADO |
+| BE-426 | Django | advocacia.tests.test_processos.FichaDoProcessoAPITestCase.test_ficha_de_processo_vazio_traz_listas_vazias_e_sem_contrato — `backend/advocacia/tests/test_processos.py` | APROVADO |
+| BE-427 | Django | advocacia.tests.test_processos.FichaDoProcessoAPITestCase.test_ficha_exige_autenticacao — `backend/advocacia/tests/test_processos.py` | APROVADO |
+| BE-428 | Django | advocacia.tests.test_processos.FichaDoProcessoAPITestCase.test_ficha_expoe_a_origem_da_movimentacao — `backend/advocacia/tests/test_processos.py` | APROVADO |
+| BE-429 | Django | advocacia.tests.test_processos.FichaDoProcessoAPITestCase.test_ficha_nao_alcanca_processo_de_outro_escritorio — `backend/advocacia/tests/test_processos.py` | APROVADO |
+| BE-430 | Django | advocacia.tests.test_processos.FichaDoProcessoAPITestCase.test_ficha_reune_todos_os_blocos_do_processo — `backend/advocacia/tests/test_processos.py` | APROVADO |
+| BE-431 | Django | advocacia.tests.test_processos.FichaDoProcessoAPITestCase.test_processo_serializado_traz_data_de_sincronizacao_com_datajud — `backend/advocacia/tests/test_processos.py` | APROVADO |
+| BE-432 | Django | advocacia.tests.test_processos.MovimentacaoCriadoPorAPITestCase.test_movimentacao_registra_o_usuario_que_criou — `backend/advocacia/tests/test_processos.py` | APROVADO |
+| BE-433 | Django | advocacia.tests.test_processos.MovimentacaoManualAPITestCase.test_exclui_movimentacao_lancada_manualmente — `backend/advocacia/tests/test_processos.py` | APROVADO |
+| BE-434 | Django | advocacia.tests.test_processos.MovimentacaoManualAPITestCase.test_movimentacao_criada_pela_api_nasce_com_origem_manual — `backend/advocacia/tests/test_processos.py` | APROVADO |
+| BE-435 | Django | advocacia.tests.test_processos.MovimentacaoManualAPITestCase.test_nao_exclui_movimentacao_importada_do_datajud — `backend/advocacia/tests/test_processos.py` | APROVADO |
+| BE-436 | Django | advocacia.tests.test_processos.ProcessosAPITestCase.test_criar_processo — `backend/advocacia/tests/test_processos.py` | APROVADO |
+| BE-437 | Django | advocacia.tests.test_processos.ProcessosAPITestCase.test_criar_processo_com_dados_juridicos_adicionais — `backend/advocacia/tests/test_processos.py` | APROVADO |
+| BE-438 | Django | advocacia.tests.test_processos.ProcessosAPITestCase.test_criar_processo_com_numero_duplicado_retorna_erro_especifico — `backend/advocacia/tests/test_processos.py` | APROVADO |
+| BE-439 | Django | advocacia.tests.test_processos.ProcessosAPITestCase.test_editar_processo_para_numero_de_outro_retorna_erro_especifico — `backend/advocacia/tests/test_processos.py` | APROVADO |
+| BE-440 | Django | advocacia.tests.test_processos.ProcessosAPITestCase.test_percentual_honorarios_sucumbencia_zero_e_rejeitado — `backend/advocacia/tests/test_processos.py` | APROVADO |
+| BE-441 | Django | advocacia.tests.test_processos.ProcessosAPITestCase.test_processo_sem_dados_juridicos_adicionais_tem_estimativa_nula — `backend/advocacia/tests/test_processos.py` | APROVADO |
+| BE-442 | Django | advocacia.tests.test_processos.ProcessosAPITestCase.test_valor_da_causa_zero_e_rejeitado — `backend/advocacia/tests/test_processos.py` | APROVADO |
+| BE-443 | Django | advocacia.tests.test_processos.ProximoPrazoDoProcessoAPITestCase.test_com_varios_prazos_traz_o_mais_proximo — `backend/advocacia/tests/test_processos.py` | APROVADO |
+| BE-444 | Django | advocacia.tests.test_processos.ProximoPrazoDoProcessoAPITestCase.test_compromisso_nao_e_confundido_com_prazo — `backend/advocacia/tests/test_processos.py` | APROVADO |
+| BE-445 | Django | advocacia.tests.test_processos.ProximoPrazoDoProcessoAPITestCase.test_prazo_cumprido_nao_conta_como_proximo_prazo — `backend/advocacia/tests/test_processos.py` | APROVADO |
+| BE-446 | Django | advocacia.tests.test_processos.ProximoPrazoDoProcessoAPITestCase.test_prazo_futuro_aparece_e_nao_esta_atrasado — `backend/advocacia/tests/test_processos.py` | APROVADO |
+| BE-447 | Django | advocacia.tests.test_processos.ProximoPrazoDoProcessoAPITestCase.test_prazo_vencido_aparece_como_atrasado — `backend/advocacia/tests/test_processos.py` | APROVADO |
+| BE-448 | Django | advocacia.tests.test_processos.ProximoPrazoDoProcessoAPITestCase.test_processo_recem_criado_tambem_traz_proximo_prazo — `backend/advocacia/tests/test_processos.py` | APROVADO |
+| BE-449 | Django | advocacia.tests.test_processos.ProximoPrazoDoProcessoAPITestCase.test_processo_sem_prazo_nao_tem_proximo_prazo — `backend/advocacia/tests/test_processos.py` | APROVADO |
+| BE-450 | Django | advocacia.tests.test_push.NotificacoesPushAPITestCase.test_cancelar_remove_so_o_aparelho_da_pessoa — `backend/advocacia/tests/test_push.py` | APROVADO |
+| BE-451 | Django | advocacia.tests.test_push.NotificacoesPushAPITestCase.test_inscreve_e_a_mensagem_chega_cifrada_e_assinada — `backend/advocacia/tests/test_push.py` | APROVADO |
+| BE-452 | Django | advocacia.tests.test_push.NotificacoesPushAPITestCase.test_inscricao_expirada_e_apagada — `backend/advocacia/tests/test_push.py` | APROVADO |
+| BE-453 | Django | advocacia.tests.test_push.NotificacoesPushAPITestCase.test_inscricao_sem_https_ou_sem_chaves_e_recusada — `backend/advocacia/tests/test_push.py` | APROVADO |
+| BE-454 | Django | advocacia.tests.test_push.NotificacoesPushAPITestCase.test_mesmo_aparelho_passa_para_quem_entrou_nele — `backend/advocacia/tests/test_push.py` | APROVADO |
+| BE-455 | Django | advocacia.tests.test_push.NotificacoesPushAPITestCase.test_situacao_traz_a_chave_publica — `backend/advocacia/tests/test_push.py` | APROVADO |
+| BE-456 | Django | advocacia.tests.test_push.NotificacoesPushAPITestCase.test_tarefa_atribuida_avisa_o_responsavel_no_celular — `backend/advocacia/tests/test_push.py` | APROVADO |
+| BE-457 | Django | advocacia.tests.test_push.NotificacoesPushAPITestCase.test_testar_sem_aparelho_explica — `backend/advocacia/tests/test_push.py` | APROVADO |
+| BE-458 | Django | advocacia.tests.test_push.PushDesligadoAPITestCase.test_comando_gera_par_de_chaves — `backend/advocacia/tests/test_push.py` | APROVADO |
+| BE-459 | Django | advocacia.tests.test_push.PushDesligadoAPITestCase.test_sem_chaves_o_sistema_avisa_e_nao_tenta_enviar — `backend/advocacia/tests/test_push.py` | APROVADO |
+| BE-460 | Django | advocacia.tests.test_rascunhos.RascunhoFormularioAPITestCase.test_cria_e_atualiza_o_mesmo_rascunho — `backend/advocacia/tests/test_rascunhos.py` | APROVADO |
+| BE-461 | Django | advocacia.tests.test_rascunhos.RascunhoFormularioAPITestCase.test_rascunho_e_privado_ate_no_mesmo_escritorio — `backend/advocacia/tests/test_rascunhos.py` | APROVADO |
+| BE-462 | Django | advocacia.tests.test_rascunhos.RascunhoFormularioAPITestCase.test_recusa_chave_fora_do_formato_seguro — `backend/advocacia/tests/test_rascunhos.py` | APROVADO |
+| BE-463 | Django | advocacia.tests.test_rascunhos.RascunhoFormularioAPITestCase.test_recusa_conteudo_que_nao_seja_objeto — `backend/advocacia/tests/test_rascunhos.py` | APROVADO |
+| BE-464 | Django | advocacia.tests.test_rascunhos.RascunhoFormularioAPITestCase.test_recusa_rascunho_maior_que_64_kb — `backend/advocacia/tests/test_rascunhos.py` | APROVADO |
+| BE-465 | Django | advocacia.tests.test_rascunhos.RascunhoFormularioAPITestCase.test_usuario_pode_excluir_o_proprio_rascunho — `backend/advocacia/tests/test_rascunhos.py` | APROVADO |
+| BE-466 | Django | advocacia.tests.test_relatorios.ExportacaoCSVSeguraAPITestCase.test_exportacao_de_clientes_neutraliza_nome_com_formula — `backend/advocacia/tests/test_relatorios.py` | APROVADO |
+| BE-467 | Django | advocacia.tests.test_relatorios.ExportacaoCSVSeguraAPITestCase.test_exportacao_de_processos_neutraliza_titulo_com_formula — `backend/advocacia/tests/test_relatorios.py` | APROVADO |
+| BE-468 | Django | advocacia.tests.test_relatorios.RelatorioFinanceiroAPITestCase.test_cliente_sem_lancamentos_tem_resumo_zerado — `backend/advocacia/tests/test_relatorios.py` | APROVADO |
+| BE-469 | Django | advocacia.tests.test_relatorios.RelatorioFinanceiroAPITestCase.test_email_do_relatorio_de_cliente_lista_o_financeiro — `backend/advocacia/tests/test_relatorios.py` | APROVADO |
+| BE-470 | Django | advocacia.tests.test_relatorios.RelatorioFinanceiroAPITestCase.test_email_do_relatorio_de_processo_lista_o_financeiro — `backend/advocacia/tests/test_relatorios.py` | APROVADO |
+| BE-471 | Django | advocacia.tests.test_relatorios.RelatorioFinanceiroAPITestCase.test_hora_sem_valor_hora_nao_entra_no_valor_a_cobrar — `backend/advocacia/tests/test_relatorios.py` | APROVADO |
+| BE-472 | Django | advocacia.tests.test_relatorios.RelatorioFinanceiroAPITestCase.test_relatorio_do_cliente_traz_contratos_horas_e_despesas — `backend/advocacia/tests/test_relatorios.py` | APROVADO |
+| BE-473 | Django | advocacia.tests.test_relatorios.RelatorioFinanceiroAPITestCase.test_relatorio_do_processo_tambem_traz_o_financeiro — `backend/advocacia/tests/test_relatorios.py` | APROVADO |
+| BE-474 | Django | advocacia.tests.test_relatorios.RelatorioFinanceiroAPITestCase.test_relatorio_nao_soma_dados_de_outro_cliente — `backend/advocacia/tests/test_relatorios.py` | APROVADO |
+| BE-475 | Django | advocacia.tests.test_relatorios.RelatorioFinanceiroAPITestCase.test_resumo_do_cliente_consolida_os_valores — `backend/advocacia/tests/test_relatorios.py` | APROVADO |
+| BE-476 | Django | advocacia.tests.test_resumo_cliente.ResumoParaClienteAPITestCase.test_com_ia_manda_so_o_minimo_e_devolve_o_texto_dela — `backend/advocacia/tests/test_resumo_cliente.py` | APROVADO |
+| BE-477 | Django | advocacia.tests.test_resumo_cliente.ResumoParaClienteAPITestCase.test_processo_sigiloso_de_outro_advogado_nao_e_acessivel — `backend/advocacia/tests/test_resumo_cliente.py` | APROVADO |
+| BE-478 | Django | advocacia.tests.test_resumo_cliente.ResumoParaClienteAPITestCase.test_se_a_ia_falha_cai_no_modelo — `backend/advocacia/tests/test_resumo_cliente.py` | APROVADO |
+| BE-479 | Django | advocacia.tests.test_resumo_cliente.ResumoParaClienteAPITestCase.test_secretaria_sem_acesso_a_ia_recebe_o_modelo — `backend/advocacia/tests/test_resumo_cliente.py` | APROVADO |
+| BE-480 | Django | advocacia.tests.test_resumo_cliente.ResumoParaClienteAPITestCase.test_sem_ia_configurada_usa_o_modelo_em_linguagem_simples — `backend/advocacia/tests/test_resumo_cliente.py` | APROVADO |
+| BE-481 | Django | advocacia.tests.test_resumo_cliente.ResumoParaClienteAPITestCase.test_traduz_os_andamentos_mais_comuns — `backend/advocacia/tests/test_resumo_cliente.py` | APROVADO |
+| BE-482 | Django | advocacia.tests.test_robustez_entradas.RobustezEntradasAPITests.test_assistente_recusa_estrutura_invalida_antes_de_chamar_provedor — `backend/advocacia/tests/test_robustez_entradas.py` | APROVADO |
+| BE-483 | Django | advocacia.tests.test_robustez_entradas.RobustezEntradasAPITests.test_calculadora_recusa_dias_fracionarios_booleanos_e_estouro_de_data — `backend/advocacia/tests/test_robustez_entradas.py` | APROVADO |
+| BE-484 | Django | advocacia.tests.test_robustez_entradas.RobustezEntradasAPITests.test_configuracao_invalida_nao_salva_parcialmente_o_escritorio — `backend/advocacia/tests/test_robustez_entradas.py` | APROVADO |
+| BE-485 | Django | advocacia.tests.test_robustez_entradas.RobustezEntradasAPITests.test_configuracoes_recusam_nome_maior_que_a_coluna_sem_erro_interno — `backend/advocacia/tests/test_robustez_entradas.py` | APROVADO |
+| BE-486 | Django | advocacia.tests.test_robustez_entradas.RobustezEntradasAPITests.test_corpos_json_nao_objeto_sao_recusados_nas_operacoes_customizadas — `backend/advocacia/tests/test_robustez_entradas.py` | APROVADO |
+| BE-487 | Django | advocacia.tests.test_robustez_entradas.RobustezEntradasAPITests.test_dados_pessoais_com_tipos_invalidos_sao_recusados — `backend/advocacia/tests/test_robustez_entradas.py` | APROVADO |
+| BE-488 | Django | advocacia.tests.test_robustez_entradas.RobustezEntradasAPITests.test_intimacoes_recusam_filtro_de_processo_invalido — `backend/advocacia/tests/test_robustez_entradas.py` | APROVADO |
+| BE-489 | Django | advocacia.tests.test_robustez_entradas.RobustezEntradasAPITests.test_login_com_tipos_invalidos_nao_gera_erro_interno — `backend/advocacia/tests/test_robustez_entradas.py` | APROVADO |
+| BE-490 | Django | advocacia.tests.test_robustez_entradas.RobustezEntradasAPITests.test_modelo_nao_mistura_cliente_com_processo_de_outra_pessoa — `backend/advocacia/tests/test_robustez_entradas.py` | APROVADO |
+| BE-491 | Django | advocacia.tests.test_robustez_entradas.RobustezEntradasAPITests.test_modelos_recusam_identificadores_malformados_sem_erro_interno — `backend/advocacia/tests/test_robustez_entradas.py` | APROVADO |
+| BE-492 | Django | advocacia.tests.test_robustez_entradas.RobustezEntradasAPITests.test_recuperacao_e_tokens_recusam_tipos_invalidos — `backend/advocacia/tests/test_robustez_entradas.py` | APROVADO |
+| BE-493 | Django | advocacia.tests.test_tarefas.TarefaAPITestCase.test_alta_prioridade_vem_antes_de_media_e_baixa — `backend/advocacia/tests/test_tarefas.py` | APROVADO |
+| BE-494 | Django | advocacia.tests.test_tarefas.TarefaAPITestCase.test_aviso_respeita_a_preferencia_do_responsavel — `backend/advocacia/tests/test_tarefas.py` | APROVADO |
+| BE-495 | Django | advocacia.tests.test_tarefas.TarefaAPITestCase.test_concluir_tarefa_grava_a_data_de_conclusao — `backend/advocacia/tests/test_tarefas.py` | APROVADO |
+| BE-496 | Django | advocacia.tests.test_tarefas.TarefaAPITestCase.test_criar_tarefa_registra_quem_atribuiu — `backend/advocacia/tests/test_tarefas.py` | APROVADO |
+| BE-497 | Django | advocacia.tests.test_tarefas.TarefaAPITestCase.test_editar_sem_trocar_responsavel_nao_reenvia_aviso — `backend/advocacia/tests/test_tarefas.py` | APROVADO |
+| BE-498 | Django | advocacia.tests.test_tarefas.TarefaAPITestCase.test_entre_tarefas_de_mesma_prioridade_vence_o_prazo_mais_proximo — `backend/advocacia/tests/test_tarefas.py` | APROVADO |
+| BE-499 | Django | advocacia.tests.test_tarefas.TarefaAPITestCase.test_filtro_abertas_deixa_de_fora_concluidas_e_canceladas — `backend/advocacia/tests/test_tarefas.py` | APROVADO |
+| BE-500 | Django | advocacia.tests.test_tarefas.TarefaAPITestCase.test_filtro_responsavel_eu_traz_so_as_minhas — `backend/advocacia/tests/test_tarefas.py` | APROVADO |
+| BE-501 | Django | advocacia.tests.test_tarefas.TarefaAPITestCase.test_nao_atribui_tarefa_a_usuario_inativo — `backend/advocacia/tests/test_tarefas.py` | APROVADO |
+| BE-502 | Django | advocacia.tests.test_tarefas.TarefaAPITestCase.test_quem_se_atribui_uma_tarefa_nao_recebe_aviso_de_si_mesmo — `backend/advocacia/tests/test_tarefas.py` | APROVADO |
+| BE-503 | Django | advocacia.tests.test_tarefas.TarefaAPITestCase.test_reabrir_tarefa_limpa_a_data_de_conclusao — `backend/advocacia/tests/test_tarefas.py` | APROVADO |
+| BE-504 | Django | advocacia.tests.test_tarefas.TarefaAPITestCase.test_responsavel_de_outro_escritorio_e_recusado — `backend/advocacia/tests/test_tarefas.py` | APROVADO |
+| BE-505 | Django | advocacia.tests.test_tarefas.TarefaAPITestCase.test_responsavel_e_avisado_por_email — `backend/advocacia/tests/test_tarefas.py` | APROVADO |
+| BE-506 | Django | advocacia.tests.test_tarefas.TarefaAPITestCase.test_tarefa_com_prazo_vencido_aparece_como_atrasada — `backend/advocacia/tests/test_tarefas.py` | APROVADO |
+| BE-507 | Django | advocacia.tests.test_tarefas.TarefaAPITestCase.test_tarefa_concluida_nao_conta_como_atrasada — `backend/advocacia/tests/test_tarefas.py` | APROVADO |
+| BE-508 | Django | advocacia.tests.test_tarefas.TarefaAPITestCase.test_tarefa_de_outro_escritorio_nao_aparece — `backend/advocacia/tests/test_tarefas.py` | APROVADO |
+| BE-509 | Django | advocacia.tests.test_tarefas.TarefaAPITestCase.test_tarefa_encerrada_vai_para_o_fim_da_lista — `backend/advocacia/tests/test_tarefas.py` | APROVADO |
+| BE-510 | Django | advocacia.tests.test_tarefas.TarefaAPITestCase.test_tarefa_pode_existir_sem_processo — `backend/advocacia/tests/test_tarefas.py` | APROVADO |
+| BE-511 | Django | advocacia.tests.test_tarefas.TarefaAPITestCase.test_tarefa_pode_ser_vinculada_a_um_processo — `backend/advocacia/tests/test_tarefas.py` | APROVADO |
+| BE-512 | Django | advocacia.tests.test_tarefas.TarefaAPITestCase.test_tarefa_sem_prazo_nunca_esta_atrasada — `backend/advocacia/tests/test_tarefas.py` | APROVADO |
+| BE-513 | Django | advocacia.tests.test_tarefas.TarefaAPITestCase.test_titulo_em_branco_e_recusado — `backend/advocacia/tests/test_tarefas.py` | APROVADO |
+| BE-514 | Django | advocacia.tests.test_tarefas.TarefaAPITestCase.test_trocar_o_responsavel_avisa_o_novo — `backend/advocacia/tests/test_tarefas.py` | APROVADO |
+| BE-515 | Django | advocacia.tests.test_validacoes.ModelosTestCase.test_cliente_nao_permite_cpf_duplicado_no_mesmo_escritorio — `backend/advocacia/tests/test_validacoes.py` | APROVADO |
+| BE-516 | Django | advocacia.tests.test_validacoes.ModelosTestCase.test_mesmo_cpf_e_permitido_em_escritorios_diferentes — `backend/advocacia/tests/test_validacoes.py` | APROVADO |
+| BE-517 | Django | advocacia.tests.test_validacoes.ModelosTestCase.test_str_do_escritorio_retorna_o_nome — `backend/advocacia/tests/test_validacoes.py` | APROVADO |
+| BE-518 | Django | advocacia.tests.test_validacoes.ModelosTestCase.test_usuario_e_criado_com_valores_padrao_esperados — `backend/advocacia/tests/test_validacoes.py` | APROVADO |
+| BE-519 | Django | advocacia.tests.test_validacoes.PaginacaoAPITestCase.test_listagem_retorna_envelope_paginado — `backend/advocacia/tests/test_validacoes.py` | APROVADO |
+| BE-520 | Django | advocacia.tests.test_validacoes.PaginacaoAPITestCase.test_page_size_customizado_e_respeitado — `backend/advocacia/tests/test_validacoes.py` | APROVADO |
+| BE-521 | Django | advocacia.tests.test_validacoes.ValidacaoDeDocumentosAPITestCase.test_advogado_com_oab_sem_uf_e_rejeitado — `backend/advocacia/tests/test_validacoes.py` | APROVADO |
+| BE-522 | Django | advocacia.tests.test_validacoes.ValidacaoDeDocumentosAPITestCase.test_advogado_com_oab_valida_e_aceito — `backend/advocacia/tests/test_validacoes.py` | APROVADO |
+| BE-523 | Django | advocacia.tests.test_validacoes.ValidacaoDeDocumentosAPITestCase.test_advogado_com_senha_fraca_e_rejeitado — `backend/advocacia/tests/test_validacoes.py` | APROVADO |
+| BE-524 | Django | advocacia.tests.test_validacoes.ValidacaoDeDocumentosAPITestCase.test_cliente_com_cpf_incompleto_e_rejeitado — `backend/advocacia/tests/test_validacoes.py` | APROVADO |
+| BE-525 | Django | advocacia.tests.test_validacoes.ValidacaoDeDocumentosAPITestCase.test_cliente_com_rg_curto_demais_e_rejeitado — `backend/advocacia/tests/test_validacoes.py` | APROVADO |
+| BE-526 | Django | advocacia.tests.test_validacoes.ValidacaoDeDocumentosAPITestCase.test_cliente_com_telefone_sem_ddd_e_rejeitado — `backend/advocacia/tests/test_validacoes.py` | APROVADO |
+| BE-527 | Django | advocacia.tests.test_validacoes.ValidadoresDeUploadTestCase.test_documento_acima_de_10mb_levanta_erro — `backend/advocacia/tests/test_validacoes.py` | APROVADO |
+| BE-528 | Django | advocacia.tests.test_validacoes.ValidadoresDeUploadTestCase.test_documento_dentro_do_limite_nao_levanta_erro — `backend/advocacia/tests/test_validacoes.py` | APROVADO |
+| BE-529 | Django | advocacia.tests.test_validacoes.ValidadoresDeUploadTestCase.test_docx_com_assinatura_correta_passa — `backend/advocacia/tests/test_validacoes.py` | APROVADO |
+| BE-530 | Django | advocacia.tests.test_validacoes.ValidadoresDeUploadTestCase.test_executavel_renomeado_para_pdf_e_recusado — `backend/advocacia/tests/test_validacoes.py` | APROVADO |
+| BE-531 | Django | advocacia.tests.test_validacoes.ValidadoresDeUploadTestCase.test_imagem_acima_de_5mb_levanta_erro — `backend/advocacia/tests/test_validacoes.py` | APROVADO |
+| BE-532 | Django | advocacia.tests.test_validacoes.ValidadoresDeUploadTestCase.test_imagem_dentro_do_limite_nao_levanta_erro — `backend/advocacia/tests/test_validacoes.py` | APROVADO |
+| BE-533 | Django | advocacia.tests.test_validacoes.ValidadoresDeUploadTestCase.test_jpeg_com_assinatura_correta_passa — `backend/advocacia/tests/test_validacoes.py` | APROVADO |
+| BE-534 | Django | advocacia.tests.test_validacoes.ValidadoresDeUploadTestCase.test_pdf_com_assinatura_correta_passa — `backend/advocacia/tests/test_validacoes.py` | APROVADO |
+| BE-535 | Django | advocacia.tests.test_validacoes.ValidadoresDeUploadTestCase.test_png_com_assinatura_correta_passa — `backend/advocacia/tests/test_validacoes.py` | APROVADO |
+| BE-536 | Django | advocacia.tests.test_validacoes.ValidadoresDeUploadTestCase.test_riff_que_nao_e_webp_e_recusado — `backend/advocacia/tests/test_validacoes.py` | APROVADO |
+| BE-537 | Django | advocacia.tests.test_validacoes.ValidadoresDeUploadTestCase.test_texto_renomeado_para_jpg_e_recusado — `backend/advocacia/tests/test_validacoes.py` | APROVADO |
+| BE-538 | Django | advocacia.tests.test_validacoes.ValidadoresDeUploadTestCase.test_validador_devolve_o_ponteiro_do_arquivo_para_o_inicio — `backend/advocacia/tests/test_validacoes.py` | APROVADO |
+| BE-539 | Django | advocacia.tests.test_validacoes.ValidadoresDeUploadTestCase.test_webp_com_assinatura_correta_passa — `backend/advocacia/tests/test_validacoes.py` | APROVADO |
+| BE-540 | Django | advocacia.tests.test_validacoes.ValidarEmailRealTestCase.test_cnpj_aceita_ambos_formatos_e_exige_dois_digitos_finais — `backend/advocacia/tests/test_validacoes.py` | APROVADO |
+| BE-541 | Django | advocacia.tests.test_validacoes.ValidarEmailRealTestCase.test_dominio_descartavel_levanta_erro — `backend/advocacia/tests/test_validacoes.py` | APROVADO |
+| BE-542 | Django | advocacia.tests.test_validacoes.ValidarEmailRealTestCase.test_dominio_sem_registro_mx_levanta_erro — `backend/advocacia/tests/test_validacoes.py` | APROVADO |
+| BE-543 | Django | advocacia.tests.test_validacoes.ValidarEmailRealTestCase.test_email_com_dominio_valido_e_aceito — `backend/advocacia/tests/test_validacoes.py` | APROVADO |
+| BE-544 | Django | advocacia.tests.test_validacoes.ValidarEmailRealTestCase.test_email_vazio_levanta_erro — `backend/advocacia/tests/test_validacoes.py` | APROVADO |
+| BE-545 | Django | advocacia.tests.test_validacoes.ValidarEmailRealTestCase.test_formato_invalido_levanta_erro — `backend/advocacia/tests/test_validacoes.py` | APROVADO |
+| BE-546 | Django | advocacia.tests.test_deploy.ConfiguracaoPilotoTests.test_health_reporta_banco_disponivel — `backend/advocacia/tests/test_deploy.py` | APROVADO |
+| BE-547 | Django | advocacia.tests.test_deploy.ConfiguracaoPilotoTests.test_health_reporta_banco_indisponivel — `backend/advocacia/tests/test_deploy.py` | APROVADO |
+| BE-548 | Django | advocacia.tests.test_deploy.ConfiguracaoPilotoTests.test_senha_padrao_da_demo_e_recusada_em_producao — `backend/advocacia/tests/test_deploy.py` | APROVADO |
+| BE-549 | Django | advocacia.tests.test_deploy.ConfiguracaoPilotoTests.test_url_da_foto_passa_pela_api_autenticada — `backend/advocacia/tests/test_deploy.py` | APROVADO |
+| BE-550 | Django | advocacia.tests.test_downloads.DownloadTipoArquivoTests.test_pdf_com_titulo_sem_extensao_mantem_tipo_e_conteudo — `backend/advocacia/tests/test_downloads.py` | APROVADO |
+| FE-001 | Jest | dashboard reúne alertas, tarefas e documentos e abre o cadastro de cliente — `frontend/src/components/dashboard/__tests__/DashboardFluxos.test.jsx` | APROVADO |
+| FE-002 | Jest | agenda e falha na abertura de documento mantêm feedback visível — `frontend/src/components/dashboard/__tests__/DashboardFluxos.test.jsx` | APROVADO |
+| FE-003 | Jest | sem sessão redireciona ao login e atualização e tema acionam os controles corretos — `frontend/src/components/dashboard/__tests__/DashboardFluxos.test.jsx` | APROVADO |
+| FE-004 | Jest | salva dados pessoais e comunica uma falha sem apagar a edição — `frontend/src/components/panels/__tests__/ConfigFluxos.test.jsx` | APROVADO |
+| FE-005 | Jest | rejeita foto grande, salva foto válida e revoga a prévia ao sair — `frontend/src/components/panels/__tests__/ConfigFluxos.test.jsx` | APROVADO |
+| FE-006 | Jest | troca de senha exige requisitos e atualiza os tokens após sucesso — `frontend/src/components/panels/__tests__/ConfigFluxos.test.jsx` | APROVADO |
+| FE-007 | Jest | ativa e desativa segundo fator somente com o código e a senha exigidos — `frontend/src/components/panels/__tests__/ConfigFluxos.test.jsx` | APROVADO |
+| FE-008 | Jest | dados do escritório e PIX usam respostas do servidor e mostram validação — `frontend/src/components/panels/__tests__/ConfigFluxos.test.jsx` | APROVADO |
+| FE-009 | Jest | aparência aplica densidade e tema globalmente e informa falha de persistência — `frontend/src/components/panels/__tests__/ConfigFluxos.test.jsx` | APROVADO |
+| FE-010 | Jest | notificações permitem inscrição e cancelamento do aparelho e preferências — `frontend/src/components/panels/__tests__/ConfigFluxos.test.jsx` | APROVADO |
+| FE-011 | Jest | dados administrativos exigem confirmação e exportação relata erro — `frontend/src/components/panels/__tests__/ConfigFluxos.test.jsx` | APROVADO |
+| FE-012 | Jest | relatório sugere destinatário, distingue download e recusa e-mail vazio — `frontend/src/components/panels/__tests__/ConfigFluxos.test.jsx` | APROVADO |
+| FE-013 | Jest | auditoria mostra antes e depois e faturamento deixa explícita a cobrança manual — `frontend/src/components/panels/__tests__/ConfigFluxos.test.jsx` | APROVADO |
+| FE-014 | Jest | useRecurso começa carregando e entrega os dados quando a API responde — `frontend/src/hooks/__tests__/useRecurso.test.js` | APROVADO |
+| FE-015 | Jest | useRecurso não busca nada enquanto estiver inativo — `frontend/src/hooks/__tests__/useRecurso.test.js` | APROVADO |
+| FE-016 | Jest | useRecurso refaz a consulta quando uma das chaves muda — `frontend/src/hooks/__tests__/useRecurso.test.js` | APROVADO |
+| FE-017 | Jest | useRecurso resposta atrasada de uma consulta antiga não sobrescreve a atual — `frontend/src/hooks/__tests__/useRecurso.test.js` | APROVADO |
+| FE-018 | Jest | useRecurso em caso de erro, guarda a mensagem e mantém os dados anteriores — `frontend/src/hooks/__tests__/useRecurso.test.js` | APROVADO |
+| FE-019 | Jest | useRecurso recarregar busca de novo mesmo sem mudar as chaves — `frontend/src/hooks/__tests__/useRecurso.test.js` | APROVADO |
+| FE-020 | Jest | useListaPaginada carrega a primeira página e informa o total do servidor — `frontend/src/hooks/__tests__/useRecurso.test.js` | APROVADO |
+| FE-021 | Jest | useListaPaginada carregarMais junta as páginas seguintes até acabar — `frontend/src/hooks/__tests__/useRecurso.test.js` | APROVADO |
+| FE-022 | Jest | useListaPaginada ao trocar o filtro, descarta as páginas extras do filtro anterior — `frontend/src/hooks/__tests__/useRecurso.test.js` | APROVADO |
+| FE-023 | Jest | useListaPaginada aceita resposta sem paginação (lista simples) — `frontend/src/hooks/__tests__/useRecurso.test.js` | APROVADO |
+| FE-024 | Jest | filtros distinguem minhas tarefas, escritório e histórico — `frontend/src/components/panels/__tests__/TarefasFluxos.test.jsx` | APROVADO |
+| FE-025 | Jest | cria tarefa sem processo ou prazo e oferece só responsáveis ativos — `frontend/src/components/panels/__tests__/TarefasFluxos.test.jsx` | APROVADO |
+| FE-026 | Jest | erro no cadastro preserva o título e erro na conclusão fica visível — `frontend/src/components/panels/__tests__/TarefasFluxos.test.jsx` | APROVADO |
+| FE-027 | Jest | cancelar exclusão mantém a tarefa e uma tarefa concluída pode ser reaberta — `frontend/src/components/panels/__tests__/TarefasFluxos.test.jsx` | APROVADO |
+| FE-028 | Jest | cadastro físico envia consentimento, dados opcionais e anexos sem perder o vínculo — `frontend/src/components/panels/__tests__/ClientesFluxos.test.jsx` | APROVADO |
+| FE-029 | Jest | consulta CNPJ preenche vazios, preserva edição manual e omite dados físicos — `frontend/src/components/panels/__tests__/ClientesFluxos.test.jsx` | APROVADO |
+| FE-030 | Jest | CEP preenche endereço e falha no cadastro conserva a edição — `frontend/src/components/panels/__tests__/ClientesFluxos.test.jsx` | APROVADO |
+| FE-031 | Jest | edita o cliente existente e permite cancelar sem gravar — `frontend/src/components/panels/__tests__/ClientesFluxos.test.jsx` | APROVADO |
+| FE-032 | Jest | LGPD e exclusão respeitam a confirmação antes da operação — `frontend/src/components/panels/__tests__/ClientesFluxos.test.jsx` | APROVADO |
+| FE-033 | Jest | calcula prazo com feriado, mostra a regra aplicada e salva a data e vínculo — `frontend/src/components/panels/__tests__/AgendaFluxos.test.jsx` | APROVADO |
+| FE-034 | Jest | editar evento mantém o horário de Brasília e permite corrigir título — `frontend/src/components/panels/__tests__/AgendaFluxos.test.jsx` | APROVADO |
+| FE-035 | Jest | falha ao calcular não apaga o formulário e falha ao salvar é apresentada — `frontend/src/components/panels/__tests__/AgendaFluxos.test.jsx` | APROVADO |
+| FE-036 | Jest | cumprimento e exclusão cancelada mantêm controle sobre o evento — `frontend/src/components/panels/__tests__/AgendaFluxos.test.jsx` | APROVADO |
+| FE-037 | Jest | cadastra processo com vínculos numéricos e mostra validações sem perder o título — `frontend/src/components/panels/__tests__/ProcessosFluxos.test.jsx` | APROVADO |
+| FE-038 | Jest | consulta DataJud mostra importações e trata indisponibilidade sem fabricar retorno — `frontend/src/components/panels/__tests__/ProcessosFluxos.test.jsx` | APROVADO |
+| FE-039 | Jest | salva filtros, limpa a consulta e cancela exclusão — `frontend/src/components/panels/__tests__/ProcessosFluxos.test.jsx` | APROVADO |
+| FE-040 | Jest | falha ao alternar status aparece na tela e permite nova tentativa — `frontend/src/components/panels/__tests__/ProcessosFluxos.test.jsx` | APROVADO |
+| FE-041 | Jest | cria modelo com exemplo e edita um modelo existente — `frontend/src/components/panels/__tests__/ModelosFluxos.test.jsx` | APROVADO |
+| FE-042 | Jest | geração exige uma origem e imprime texto literal, sem executar HTML do modelo — `frontend/src/components/panels/__tests__/ModelosFluxos.test.jsx` | APROVADO |
+| FE-043 | Jest | erro na geração aparece e exclusão só acontece após confirmação — `frontend/src/components/panels/__tests__/ModelosFluxos.test.jsx` | APROVADO |
+| FE-044 | Jest | RotulosAutomaticos — tabelas copia o cabeçalho de cada coluna para o data-label da célula — `frontend/src/components/shell/__tests__/RotulosAutomaticos.test.js` | APROVADO |
+| FE-045 | Jest | RotulosAutomaticos — tabelas linha que ocupa a tabela inteira (vazio, carregando) fica sem rótulo — `frontend/src/components/shell/__tests__/RotulosAutomaticos.test.js` | APROVADO |
+| FE-046 | Jest | RotulosAutomaticos — tabelas rotula também as linhas que aparecem depois — `frontend/src/components/shell/__tests__/RotulosAutomaticos.test.js` | APROVADO |
+| FE-047 | Jest | RotulosAutomaticos — formulários liga o label ao campo do mesmo bloco — `frontend/src/components/shell/__tests__/RotulosAutomaticos.test.js` | APROVADO |
+| FE-048 | Jest | RotulosAutomaticos — formulários respeita o id que o campo já tem — `frontend/src/components/shell/__tests__/RotulosAutomaticos.test.js` | APROVADO |
+| FE-049 | Jest | RotulosAutomaticos — formulários não mexe em label que já envolve o campo — `frontend/src/components/shell/__tests__/RotulosAutomaticos.test.js` | APROVADO |
+| FE-050 | Jest | RotulosAutomaticos — formulários mostra e associa a orientação de campos complexos — `frontend/src/components/shell/__tests__/RotulosAutomaticos.test.js` | APROVADO |
+| FE-051 | Jest | RotulosAutomaticos — formulários identifica visualmente campos obrigatórios sem duplicar o marcador — `frontend/src/components/shell/__tests__/RotulosAutomaticos.test.js` | APROVADO |
+| FE-052 | Jest | RotulosAutomaticos — formulários explica o erro junto ao campo e move o foco para ele — `frontend/src/components/shell/__tests__/RotulosAutomaticos.test.js` | APROVADO |
+| FE-053 | Jest | RotulosAutomaticos — formulários remove a mensagem quando o valor fica válido — `frontend/src/components/shell/__tests__/RotulosAutomaticos.test.js` | APROVADO |
+| FE-054 | Jest | RotulosAutomaticos — formulários preserva o erro retornado pela API até o formulário limpar o estado — `frontend/src/components/shell/__tests__/RotulosAutomaticos.test.js` | APROVADO |
+| FE-055 | Jest | RotulosAutomaticos — formulários associa automaticamente erros da API ao campo com o mesmo name — `frontend/src/components/shell/__tests__/RotulosAutomaticos.test.js` | APROVADO |
+| FE-056 | Jest | RotulosAutomaticos — formulários permite voltar uma etapa que preserva os dados sem pedir descarte — `frontend/src/components/shell/__tests__/RotulosAutomaticos.test.js` | APROVADO |
+| FE-057 | Jest | RotulosAutomaticos — formulários buscar na ajuda não exige descartar alterações ao fechar — `frontend/src/components/shell/__tests__/RotulosAutomaticos.test.js` | APROVADO |
+| FE-058 | Jest | RotulosAutomaticos — formulários busca não aciona aviso ao sair da página — `frontend/src/components/shell/__tests__/RotulosAutomaticos.test.js` | APROVADO |
+| FE-059 | Jest | RotulosAutomaticos — formulários edição sem elemento form continua protegida — `frontend/src/components/shell/__tests__/RotulosAutomaticos.test.js` | APROVADO |
+| FE-060 | Jest | RotulosAutomaticos — formulários avisa antes de cancelar um formulário com alterações — `frontend/src/components/shell/__tests__/RotulosAutomaticos.test.js` | APROVADO |
+| FE-061 | Jest | envia arquivo e vínculo corretos, atualiza a lista e descarta o rascunho — `frontend/src/components/panels/__tests__/DocumentosFluxos.test.jsx` | APROVADO |
+| FE-062 | Jest | exige arquivo e preserva os campos quando o servidor recusa o envio — `frontend/src/components/panels/__tests__/DocumentosFluxos.test.jsx` | APROVADO |
+| FE-063 | Jest | abertura com erro informa a falha; exclusão exige confirmação e permite cancelar — `frontend/src/components/panels/__tests__/DocumentosFluxos.test.jsx` | APROVADO |
+| FE-064 | Jest | perfil de consulta não recebe ações de inclusão e exclusão — `frontend/src/components/panels/__tests__/DocumentosFluxos.test.jsx` | APROVADO |
+| FE-065 | Jest | apontamento converte horas e minutos e rejeita tempo zero — `frontend/src/components/panels/__tests__/HorasFluxos.test.jsx` | APROVADO |
+| FE-066 | Jest | erro no apontamento preserva os dados digitados — `frontend/src/components/panels/__tests__/HorasFluxos.test.jsx` | APROVADO |
+| FE-067 | Jest | lança despesa e mostra total e reembolso pendente — `frontend/src/components/panels/__tests__/HorasFluxos.test.jsx` | APROVADO |
+| FE-068 | Jest | falha no reembolso aparece na tela e permite nova tentativa — `frontend/src/components/panels/__tests__/HorasFluxos.test.jsx` | APROVADO |
+| FE-069 | Jest | exclusão de horas exige confirmação e relata recusa do servidor — `frontend/src/components/panels/__tests__/HorasFluxos.test.jsx` | APROVADO |
+| FE-070 | Jest | useRascunhoFormulario restaura o rascunho privado vindo do servidor — `frontend/src/hooks/__tests__/useRascunhoFormulario.test.js` | APROVADO |
+| FE-071 | Jest | useRascunhoFormulario salva alterações no servidor depois do intervalo — `frontend/src/hooks/__tests__/useRascunhoFormulario.test.js` | APROVADO |
+| FE-072 | Jest | useRascunhoFormulario descarta o rascunho após o cadastro definitivo — `frontend/src/hooks/__tests__/useRascunhoFormulario.test.js` | APROVADO |
+| FE-073 | Jest | useRascunhoFormulario rascunho atrasado não sobrescreve o que a pessoa já digitou — `frontend/src/hooks/__tests__/useRascunhoFormulario.test.js` | APROVADO |
+| FE-074 | Jest | useRascunhoFormulario aguarda gravação em andamento antes de descartar o rascunho — `frontend/src/hooks/__tests__/useRascunhoFormulario.test.js` | APROVADO |
+| FE-075 | Jest | cadastro do escritório preenchido pelo CNPJ preenche nome, telefone, endereço, cidade, UF e CEP com os dados da Receita — `frontend/src/components/forms/__tests__/RegisterFormCnpj.test.js` | APROVADO |
+| FE-076 | Jest | cadastro do escritório preenchido pelo CNPJ não sobrescreve o que a pessoa já digitou — `frontend/src/components/forms/__tests__/RegisterFormCnpj.test.js` | APROVADO |
+| FE-077 | Jest | cadastro do escritório preenchido pelo CNPJ CNPJ não encontrado só avisa; o formulário continua editável — `frontend/src/components/forms/__tests__/RegisterFormCnpj.test.js` | APROVADO |
+| FE-078 | Jest | tour inicial pode ser percorrido, encerrado e marcado como visto por usuário — `frontend/src/components/dashboard/__tests__/PrimeirosPassosFluxos.test.jsx` | APROVADO |
+| FE-079 | Jest | checklist usa dados reais, expande etapas e abre o próximo cadastro — `frontend/src/components/dashboard/__tests__/PrimeirosPassosFluxos.test.jsx` | APROVADO |
+| FE-080 | Jest | configuração concluída não repete apresentação nem checklist — `frontend/src/components/dashboard/__tests__/PrimeirosPassosFluxos.test.jsx` | APROVADO |
+| FE-081 | Jest | falha na baixa aparece para a pessoa e permite tentar novamente — `frontend/src/components/panels/__tests__/ContratosPanel.test.jsx` | APROVADO |
+| FE-082 | Jest | baixa pendente impede repetição e atualiza contrato e dashboard ao concluir — `frontend/src/components/panels/__tests__/ContratosPanel.test.jsx` | APROVADO |
+| FE-083 | Jest | cria link privado, copia e permite cancelar sua substituição — `frontend/src/components/panels/__tests__/AgendaSincronizarFluxos.test.jsx` | APROVADO |
+| FE-084 | Jest | falhas de cópia e exportação são informadas; assinatura pode ser desligada — `frontend/src/components/panels/__tests__/AgendaSincronizarFluxos.test.jsx` | APROVADO |
+| FE-085 | Jest | AppSidebar fora da dashboard pré-carrega a dashboard e navega antes de abrir um painel — `frontend/src/components/shell/__tests__/AppSidebar.test.jsx` | APROVADO |
+| FE-086 | Jest | AppSidebar fora da dashboard na dashboard abre o painel sem navegar — `frontend/src/components/shell/__tests__/AppSidebar.test.jsx` | APROVADO |
+| FE-087 | Jest | ConfirmacaoContext resolve true ao confirmar e fecha a janela — `frontend/src/contexts/__tests__/ConfirmacaoContext.test.js` | APROVADO |
+| FE-088 | Jest | ConfirmacaoContext Esc e Cancelar resolvem false — `frontend/src/contexts/__tests__/ConfirmacaoContext.test.js` | APROVADO |
+| FE-089 | Jest | ConfirmacaoContext em ação destrutiva o foco começa no Cancelar — `frontend/src/contexts/__tests__/ConfirmacaoContext.test.js` | APROVADO |
+| FE-090 | Jest | descreverData feriado anual mostra só dia e mês — `frontend/src/components/panels/__tests__/AgendaFeriados.test.js` | APROVADO |
+| FE-091 | Jest | AgendaFeriados lista os feriados cadastrados — `frontend/src/components/panels/__tests__/AgendaFeriados.test.js` | APROVADO |
+| FE-092 | Jest | AgendaFeriados sem feriados, avisa — `frontend/src/components/panels/__tests__/AgendaFeriados.test.js` | APROVADO |
+| FE-093 | Jest | AgendaFeriados cadastra um feriado novo e recarrega — `frontend/src/components/panels/__tests__/AgendaFeriados.test.js` | APROVADO |
+| FE-094 | Jest | AgendaFeriados perfil que só consulta não vê o formulário nem o excluir — `frontend/src/components/panels/__tests__/AgendaFeriados.test.js` | APROVADO |
+| FE-095 | Jest | LoginForm sem duas etapas, entra direto com a senha — `frontend/src/components/forms/__tests__/LoginForm.test.js` | APROVADO |
+| FE-096 | Jest | LoginForm com duas etapas, pede o código e só então abre a sessão — `frontend/src/components/forms/__tests__/LoginForm.test.js` | APROVADO |
+| FE-097 | Jest | LoginForm código errado mostra o erro e limpa o campo — `frontend/src/components/forms/__tests__/LoginForm.test.js` | APROVADO |
+| FE-098 | Jest | LoginForm dá para voltar e entrar com outra conta — `frontend/src/components/forms/__tests__/LoginForm.test.js` | APROVADO |
+| FE-099 | Jest | LoginForm avisa quando o servidor demora para responder — `frontend/src/components/forms/__tests__/LoginForm.test.js` | APROVADO |
+| FE-100 | Jest | login não envia senha na URL se o JavaScript falhar — `frontend/src/components/forms/__tests__/LoginForm.test.js` | APROVADO |
+| FE-101 | Jest | permite iniciar um novo cadastro mesmo após abrir a edição — `frontend/src/components/panels/__tests__/AdvogadosPanel.test.jsx` | APROVADO |
+| FE-102 | Jest | ResumoParaCliente mostra o texto, diz de onde veio e envia a versão editada — `frontend/src/components/panels/__tests__/ResumoParaClienteComponente.test.js` | APROVADO |
+| FE-103 | Jest | ResumoParaCliente sem telefone, não oferece WhatsApp e explica — `frontend/src/components/panels/__tests__/ResumoParaClienteComponente.test.js` | APROVADO |
+| FE-104 | Jest | ResumoParaCliente gerar de novo pede outro texto à API — `frontend/src/components/panels/__tests__/ResumoParaClienteComponente.test.js` | APROVADO |
+| FE-105 | Jest | mensagem vazia não envia; resposta mantém histórico sem incluir a saudação — `frontend/src/components/assistente/__tests__/AssistenteChatFluxos.test.jsx` | APROVADO |
+| FE-106 | Jest | envio pendente bloqueia repetição e falha devolve foco sem fabricar resposta — `frontend/src/components/assistente/__tests__/AssistenteChatFluxos.test.jsx` | APROVADO |
+| FE-107 | Jest | explica as etapas e atualiza o progresso dos obrigatórios — `frontend/src/components/panels/__tests__/ProcessoForm.test.jsx` | APROVADO |
+| FE-108 | Jest | associa o erro da API ao campo e o limpa quando o usuário corrige — `frontend/src/components/panels/__tests__/ProcessoForm.test.jsx` | APROVADO |
+| FE-109 | Jest | IntimacoesLista mostra só as não lidas por padrão, com o prazo estimado sinalizado — `frontend/src/components/panels/__tests__/IntimacoesListaComponente.test.js` | APROVADO |
+| FE-110 | Jest | IntimacoesLista texto longo abre com 'Ler tudo' — `frontend/src/components/panels/__tests__/IntimacoesListaComponente.test.js` | APROVADO |
+| FE-111 | Jest | IntimacoesLista buscar no DJEN avisa o resultado e marcar como lida grava — `frontend/src/components/panels/__tests__/IntimacoesListaComponente.test.js` | APROVADO |
+| FE-112 | Jest | IntimacoesLista quem só consulta não busca nem marca como lida — `frontend/src/components/panels/__tests__/IntimacoesListaComponente.test.js` | APROVADO |
+| FE-113 | Jest | recuperação remove espaços do e-mail e informa sucesso sem expor cadastro — `frontend/src/components/forms/__tests__/RecuperacaoEConfirmacao.test.jsx` | APROVADO |
+| FE-114 | Jest | falha de rede na recuperação libera nova tentativa e mantém o e-mail — `frontend/src/components/forms/__tests__/RecuperacaoEConfirmacao.test.jsx` | APROVADO |
+| FE-115 | Jest | redefinição sem token orienta pedir outro link — `frontend/src/components/forms/__tests__/RecuperacaoEConfirmacao.test.jsx` | APROVADO |
+| FE-116 | Jest | redefinição recusa senha fraca e confirmação divergente antes de chamar a API — `frontend/src/components/forms/__tests__/RecuperacaoEConfirmacao.test.jsx` | APROVADO |
+| FE-117 | Jest | redefinição válida redireciona somente após sucesso e respeita token expirado — `frontend/src/components/forms/__tests__/RecuperacaoEConfirmacao.test.jsx` | APROVADO |
+| FE-118 | Jest | confirmação de e-mail apresenta erro e sucesso reais da API — `frontend/src/components/forms/__tests__/RecuperacaoEConfirmacao.test.jsx` | APROVADO |
+| FE-119 | Jest | confirmação sem token não faz requisição e uma resposta tardia não atualiza componente desmontado — `frontend/src/components/forms/__tests__/RecuperacaoEConfirmacao.test.jsx` | APROVADO |
+| FE-120 | Jest | NotificationBell expõe quantidade, gravidade e detalhes dos alertas — `frontend/src/components/shell/__tests__/NotificationBell.test.jsx` | APROVADO |
+| FE-121 | Jest | NotificationBell fecha com Escape e devolve o foco ao sino — `frontend/src/components/shell/__tests__/NotificationBell.test.jsx` | APROVADO |
+| FE-122 | Jest | NotificationBell abre a agenda completa pelo rodapé — `frontend/src/components/shell/__tests__/NotificationBell.test.jsx` | APROVADO |
+| FE-123 | Jest | TarefasQuadro distribui os cartões nas colunas com a contagem — `frontend/src/components/panels/__tests__/TarefasQuadroComponente.test.js` | APROVADO |
+| FE-124 | Jest | TarefasQuadro a seta move o cartão na hora e grava na API — `frontend/src/components/panels/__tests__/TarefasQuadroComponente.test.js` | APROVADO |
+| FE-125 | Jest | TarefasQuadro se a API recusa, o cartão volta e o erro aparece — `frontend/src/components/panels/__tests__/TarefasQuadroComponente.test.js` | APROVADO |
+| FE-126 | Jest | TarefasQuadro sem permissão de editar, não há setas nem arrastar — `frontend/src/components/panels/__tests__/TarefasQuadroComponente.test.js` | APROVADO |
+| FE-127 | Jest | TarefasQuadro filtro 'Só as minhas' consulta só as do usuário — `frontend/src/components/panels/__tests__/TarefasQuadroComponente.test.js` | APROVADO |
+| FE-128 | Jest | precoDoPlano o plano sem preço aparece como grátis — `frontend/src/components/planos/__tests__/Planos.test.js` | APROVADO |
+| FE-129 | Jest | CartoesDePlanos na página inicial destaca o primeiro plano pago e mostra todos — `frontend/src/components/planos/__tests__/Planos.test.js` | APROVADO |
+| FE-130 | Jest | PlanosPanel mostra o plano atual e o uso dos limites — `frontend/src/components/planos/__tests__/Planos.test.js` | APROVADO |
+| FE-131 | Jest | PlanosPanel os planos acima do atual levam ao contato comercial — `frontend/src/components/planos/__tests__/Planos.test.js` | APROVADO |
+| FE-132 | Jest | PlanosPanel sem contato comercial orienta a falar com o administrador — `frontend/src/components/planos/__tests__/Planos.test.js` | APROVADO |
+| FE-133 | Jest | PlanosPanel avisa quando o plano pago venceu — `frontend/src/components/planos/__tests__/Planos.test.js` | APROVADO |
+| FE-134 | Jest | PlanosPanel plano ilimitado não mostra barra — `frontend/src/components/planos/__tests__/Planos.test.js` | APROVADO |
+| FE-135 | Jest | secretaria abre a ficha com resumo nulo e sem blocos não autorizados — `frontend/src/components/panels/__tests__/FichaProcesso.test.jsx` | APROVADO |
+| FE-136 | Jest | estagiario vê horas e despesas permitidas sem contrato nem resumo financeiro — `frontend/src/components/panels/__tests__/FichaProcesso.test.jsx` | APROVADO |
+| FE-137 | Jest | administrador continua vendo o resumo e o contrato — `frontend/src/components/panels/__tests__/FichaProcesso.test.jsx` | APROVADO |
+| FE-138 | Jest | Janela é um diálogo com título e recebe o foco ao abrir — `frontend/src/components/ui/__tests__/Janela.test.js` | APROVADO |
+| FE-139 | Jest | Janela fecha no Esc, no X e no fundo — `frontend/src/components/ui/__tests__/Janela.test.js` | APROVADO |
+| FE-140 | Jest | Janela devolve o foco a quem abriu — `frontend/src/components/ui/__tests__/Janela.test.js` | APROVADO |
+| FE-141 | Jest | administrador pode desativar e excluir outro usuário, mas não a própria conta — `frontend/src/components/panels/__tests__/EquipeSection.test.jsx` | APROVADO |
+| FE-142 | Jest | cancelar a confirmação não exclui o usuário — `frontend/src/components/panels/__tests__/EquipeSection.test.jsx` | APROVADO |
+| FE-143 | Jest | inativo não altera a rolagem de outra janela — `frontend/src/hooks/__tests__/useBloqueioRolagem.test.js` | APROVADO |
+| FE-144 | Jest | bloqueia html e body e restaura os eixos e prioridades anteriores — `frontend/src/hooks/__tests__/useBloqueioRolagem.test.js` | APROVADO |
+| FE-145 | Jest | fechar uma de duas janelas não libera o documento — `frontend/src/hooks/__tests__/useBloqueioRolagem.test.js` | APROVADO |
+| FE-146 | Jest | ativa e desativa conforme o estado da janela — `frontend/src/hooks/__tests__/useBloqueioRolagem.test.js` | APROVADO |
+| FE-147 | Jest | não deixa bloqueios pendurados no StrictMode — `frontend/src/hooks/__tests__/useBloqueioRolagem.test.js` | APROVADO |
+| FE-148 | Jest | ReceitaDespesas sem movimento nos seis meses mostra o estado vazio, não um gráfico zerado — `frontend/src/components/dashboard/__tests__/ReceitaDespesas.test.js` | APROVADO |
+| FE-149 | Jest | ReceitaDespesas resume o período com recebido, despesas e saldo — `frontend/src/components/dashboard/__tests__/ReceitaDespesas.test.js` | APROVADO |
+| FE-150 | Jest | ReceitaDespesas oferece a mesma informação em tabela, para quem não enxerga o gráfico — `frontend/src/components/dashboard/__tests__/ReceitaDespesas.test.js` | APROVADO |
+| FE-151 | Jest | requisições concorrentes com token expirado compartilham uma renovação — `frontend/src/services/__tests__/sessao-e-arquivos.test.js` | APROVADO |
+| FE-152 | Jest | renovação rejeitada por outra aba tenta o refresh mais recente — `frontend/src/services/__tests__/sessao-e-arquivos.test.js` | APROVADO |
+| FE-153 | Jest | falha na renovação mantém a recusa e não inventa uma sessão válida — `frontend/src/services/__tests__/sessao-e-arquivos.test.js` | APROVADO |
+| FE-154 | Jest | sessão mestre renova seus próprios tokens e não usa a sessão do escritório — `frontend/src/services/__tests__/sessao-e-arquivos.test.js` | APROVADO |
+| FE-155 | Jest | multipart preserva arquivo e deixa o navegador definir o Content-Type — `frontend/src/services/__tests__/sessao-e-arquivos.test.js` | APROVADO |
+| FE-156 | Jest | validações aninhadas avisam os campos e resposta sem JSON usa mensagem de erro — `frontend/src/services/__tests__/sessao-e-arquivos.test.js` | APROVADO |
+| FE-157 | Jest | foto protegida é buscada com autenticação renovada e rejeita endereço fora da rota — `frontend/src/services/__tests__/sessao-e-arquivos.test.js` | APROVADO |
+| FE-158 | Jest | download falho conserva mensagem da API; arquivo válido libera o objeto temporário — `frontend/src/services/__tests__/sessao-e-arquivos.test.js` | APROVADO |
+| FE-159 | Jest | paginação reúne todas as páginas e propaga falha em página posterior — `frontend/src/services/__tests__/sessao-e-arquivos.test.js` | APROVADO |
+| FE-160 | Jest | rascunho ausente é normalizado e logout remove só as chaves da sessão correspondente — `frontend/src/services/__tests__/sessao-e-arquivos.test.js` | APROVADO |
+| FE-161 | Jest | situacaoDoDia feriado nacional dentro do recesso — `frontend/src/components/dashboard/__tests__/MiniCalendar.test.js` | APROVADO |
+| FE-162 | Jest | situacaoDoDia feriado local e dia comum — `frontend/src/components/dashboard/__tests__/MiniCalendar.test.js` | APROVADO |
+| FE-163 | Jest | situacaoDoDia sem dados da API não marca nada — `frontend/src/components/dashboard/__tests__/MiniCalendar.test.js` | APROVADO |
+| FE-164 | Jest | MiniCalendar marca o feriado e mostra o nome ao clicar no dia — `frontend/src/components/dashboard/__tests__/MiniCalendar.test.js` | APROVADO |
+| FE-165 | Jest | Avatar busca foto protegida com a API e libera o blob ao desmontar — `frontend/src/components/ui/__tests__/Avatar.test.jsx` | APROVADO |
+| FE-166 | Jest | Avatar mostra inicial enquanto não há foto — `frontend/src/components/ui/__tests__/Avatar.test.jsx` | APROVADO |
+| FE-167 | Jest | conteúdo da ajuda toda seção tem título, resumo e ao menos um tópico — `frontend/src/lib/__tests__/ajuda.test.js` | APROVADO |
+| FE-168 | Jest | conteúdo da ajuda os identificadores não se repetem — `frontend/src/lib/__tests__/ajuda.test.js` | APROVADO |
+| FE-169 | Jest | conteúdo da ajuda todo painel citado existe de verdade — `frontend/src/lib/__tests__/ajuda.test.js` | APROVADO |
+| FE-170 | Jest | conteúdo da ajuda os painéis da barra lateral com conteúdo próprio estão cobertos — `frontend/src/lib/__tests__/ajuda.test.js` | APROVADO |
+| FE-171 | Jest | secaoDoPainel encontra a seção do painel aberto — `frontend/src/lib/__tests__/ajuda.test.js` | APROVADO |
+| FE-172 | Jest | secaoDoPainel sem painel aberto, não força nenhuma seção — `frontend/src/lib/__tests__/ajuda.test.js` | APROVADO |
+| FE-173 | Jest | secaoDaAjuda aceita tanto o id da seção quanto o nome do painel — `frontend/src/lib/__tests__/ajuda.test.js` | APROVADO |
+| FE-174 | Jest | secaoDaAjuda usa a visão geral quando o assunto não existe — `frontend/src/lib/__tests__/ajuda.test.js` | APROVADO |
+| FE-175 | Jest | buscarNaAjuda busca vazia devolve tudo — `frontend/src/lib/__tests__/ajuda.test.js` | APROVADO |
+| FE-176 | Jest | buscarNaAjuda acha pelo texto de um tópico, não só pelo título — `frontend/src/lib/__tests__/ajuda.test.js` | APROVADO |
+| FE-177 | Jest | buscarNaAjuda devolve só os tópicos que casam, para a leitura ir direto ao ponto — `frontend/src/lib/__tests__/ajuda.test.js` | APROVADO |
+| FE-178 | Jest | buscarNaAjuda quando o termo casa com o título da seção, mantém todos os tópicos — `frontend/src/lib/__tests__/ajuda.test.js` | APROVADO |
+| FE-179 | Jest | buscarNaAjuda ignora maiúsculas e minúsculas — `frontend/src/lib/__tests__/ajuda.test.js` | APROVADO |
+| FE-180 | Jest | buscarNaAjuda termo sem correspondência devolve lista vazia — `frontend/src/lib/__tests__/ajuda.test.js` | APROVADO |
+| FE-181 | Jest | buscarNaAjuda não altera o conteúdo original — `frontend/src/lib/__tests__/ajuda.test.js` | APROVADO |
+| FE-182 | Jest | consulta inicial atrasada não reverte uma preferência escolhida pelo usuário — `frontend/src/contexts/__tests__/PreferencesContext.test.jsx` | APROVADO |
+| FE-183 | Jest | no Gratuito informa o plano exigido antes de oferecer o formulário — `frontend/src/components/assistente/__tests__/AcessoAssistente.test.js` | APROVADO |
+| FE-184 | Jest | o Profissional com recurso IA pode abrir o chat — `frontend/src/components/assistente/__tests__/AcessoAssistente.test.js` | APROVADO |
+| FE-185 | Jest | não exibe o chat antes da confirmação do plano — `frontend/src/components/assistente/__tests__/AcessoAssistente.test.js` | APROVADO |
+| FE-186 | Jest | falha na consulta oferece nova tentativa sem liberar o chat — `frontend/src/components/assistente/__tests__/AcessoAssistente.test.js` | APROVADO |
+| FE-187 | Jest | descreverPrazo mostra dias, tipo e vencimento — `frontend/src/components/panels/__tests__/IntimacoesLista.test.js` | APROVADO |
+| FE-188 | Jest | descreverPrazo avisa quando o prazo foi estimado — `frontend/src/components/panels/__tests__/IntimacoesLista.test.js` | APROVADO |
+| FE-189 | Jest | descreverPrazo sem prazo, nada — `frontend/src/components/panels/__tests__/IntimacoesLista.test.js` | APROVADO |
+| FE-190 | Jest | resolverApiUrl usa o proxy de mesma origem nos domínios da Vercel — `frontend/src/services/__tests__/api.test.js` | APROVADO |
+| FE-191 | Jest | resolverApiUrl preserva a API configurada fora da Vercel — `frontend/src/services/__tests__/api.test.js` | APROVADO |
+| FE-192 | Jest | erros de validação da API normaliza mensagens por campo e ignora erros gerais — `frontend/src/services/__tests__/api.test.js` | APROVADO |
+| FE-193 | Jest | erros de validação da API mantém mensagem, status e campos no erro lançado — `frontend/src/services/__tests__/api.test.js` | APROVADO |
+| FE-194 | Jest | normalizarLista retorna a própria lista quando os dados já são um array — `frontend/src/services/__tests__/api.test.js` | APROVADO |
+| FE-195 | Jest | normalizarLista extrai 'results' de uma resposta paginada — `frontend/src/services/__tests__/api.test.js` | APROVADO |
+| FE-196 | Jest | normalizarLista retorna lista vazia para dados inválidos — `frontend/src/services/__tests__/api.test.js` | APROVADO |
+| FE-197 | Jest | getUsuarioLogado retorna null em ambiente sem 'window' (SSR) — `frontend/src/services/__tests__/api.test.js` | APROVADO |
+| FE-198 | Jest | buildQuery retorna string vazia sem parâmetros — `frontend/src/services/__tests__/api.test.js` | APROVADO |
+| FE-199 | Jest | buildQuery monta a query string a partir dos parâmetros informados — `frontend/src/services/__tests__/api.test.js` | APROVADO |
+| FE-200 | Jest | buildQuery ignora valores undefined, null ou vazios — `frontend/src/services/__tests__/api.test.js` | APROVADO |
+| FE-201 | Jest | redefinição de senha solicitarRedefinicaoSenha faz POST para o endpoint correto — `frontend/src/services/__tests__/api.test.js` | APROVADO |
+| FE-202 | Jest | redefinição de senha redefinirSenha faz POST com token e senhas para o endpoint correto — `frontend/src/services/__tests__/api.test.js` | APROVADO |
+| FE-203 | Jest | auditoria getAuditoria consulta o endpoint de auditoria do escritório — `frontend/src/services/__tests__/api.test.js` | APROVADO |
+| FE-204 | Jest | auditoria getMasterAuditoria consulta o endpoint de auditoria da plataforma — `frontend/src/services/__tests__/api.test.js` | APROVADO |
+| FE-205 | Jest | renovação automática do access token expirado ao receber 401, renova o access token e repete a requisição original — `frontend/src/services/__tests__/api.test.js` | APROVADO |
+| FE-206 | Jest | renovação automática do access token expirado se a renovação falhar, propaga o erro original em vez de travar — `frontend/src/services/__tests__/api.test.js` | APROVADO |
+| FE-207 | Jest | renovação automática do access token expirado guarda o refresh novo quando o backend faz a rotação — `frontend/src/services/__tests__/api.test.js` | APROVADO |
+| FE-208 | Jest | renovação automática do access token expirado várias chamadas com 401 ao mesmo tempo compartilham uma única renovação — `frontend/src/services/__tests__/api.test.js` | APROVADO |
+| FE-209 | Jest | renovação automática do access token expirado se outra aba já rotacionou o refresh, tenta de novo com o refresh atual — `frontend/src/services/__tests__/api.test.js` | APROVADO |
+| FE-210 | Jest | revogação do refresh token no logout logout envia o refresh token pra revogação e limpa o localStorage — `frontend/src/services/__tests__/api.test.js` | APROVADO |
+| FE-211 | Jest | revogação do refresh token no logout logout sem refresh token guardado não chama a API — `frontend/src/services/__tests__/api.test.js` | APROVADO |
+| FE-212 | Jest | revogação do refresh token no logout masterLogout envia o master_refresh pra revogação e limpa o localStorage — `frontend/src/services/__tests__/api.test.js` | APROVADO |
+| FE-213 | Jest | calcularPrazo consulta o endpoint de cálculo de prazo com os parâmetros corretos — `frontend/src/services/__tests__/api.test.js` | APROVADO |
+| FE-214 | Jest | calcularPrazo assume dias_uteis=true quando não informado — `frontend/src/services/__tests__/api.test.js` | APROVADO |
+| FE-215 | Jest | apontamento de horas e despesas getApontamentos monta a query só com os filtros preenchidos — `frontend/src/services/__tests__/api.test.js` | APROVADO |
+| FE-216 | Jest | apontamento de horas e despesas getApontamentos sem filtros não acrescenta '?' — `frontend/src/services/__tests__/api.test.js` | APROVADO |
+| FE-217 | Jest | apontamento de horas e despesas createApontamento envia o corpo em JSON — `frontend/src/services/__tests__/api.test.js` | APROVADO |
+| FE-218 | Jest | apontamento de horas e despesas getDespesas repassa os filtros booleanos — `frontend/src/services/__tests__/api.test.js` | APROVADO |
+| FE-219 | Jest | tempo de uso do sistema registrarAtividade faz POST no endpoint de atividade — `frontend/src/services/__tests__/api.test.js` | APROVADO |
+| FE-220 | Jest | tempo de uso do sistema getTempoDeUso repassa o mês quando informado — `frontend/src/services/__tests__/api.test.js` | APROVADO |
+| FE-221 | Jest | tempo de uso do sistema getTempoDeUso sem mês consulta o padrão do servidor — `frontend/src/services/__tests__/api.test.js` | APROVADO |
+| FE-222 | Jest | modelos de documento getVariaveisDocumento consulta o catálogo de variáveis — `frontend/src/services/__tests__/api.test.js` | APROVADO |
+| FE-223 | Jest | modelos de documento gerarDocumento envia o processo e deixa o cliente nulo — `frontend/src/services/__tests__/api.test.js` | APROVADO |
+| FE-224 | Jest | modelos de documento gerarDocumento envia o cliente e deixa o processo nulo — `frontend/src/services/__tests__/api.test.js` | APROVADO |
+| FE-225 | Jest | modelos de documento createModeloDocumento envia o conteúdo em JSON — `frontend/src/services/__tests__/api.test.js` | APROVADO |
+| FE-226 | Jest | consulta ao DataJud consultarDataJud faz POST no endpoint do processo — `frontend/src/services/__tests__/api.test.js` | APROVADO |
+| FE-227 | Jest | ficha do processo getFichaProcesso consulta o endpoint de ficha do processo — `frontend/src/services/__tests__/api.test.js` | APROVADO |
+| FE-228 | Jest | gerarHtmlRelatorioCliente mostra contratos, horas e despesas do cliente — `frontend/src/utils/__tests__/relatorio.test.js` | APROVADO |
+| FE-229 | Jest | gerarHtmlRelatorioCliente formata os totais em reais — `frontend/src/utils/__tests__/relatorio.test.js` | APROVADO |
+| FE-230 | Jest | gerarHtmlRelatorioCliente não desloca datas sem hora para o dia anterior — `frontend/src/utils/__tests__/relatorio.test.js` | APROVADO |
+| FE-231 | Jest | gerarHtmlRelatorioCliente marca hora de cortesia em vez de mostrar valor — `frontend/src/utils/__tests__/relatorio.test.js` | APROVADO |
+| FE-232 | Jest | gerarHtmlRelatorioCliente avisa quando não há nada lançado — `frontend/src/utils/__tests__/relatorio.test.js` | APROVADO |
+| FE-233 | Jest | gerarHtmlRelatorioCliente escapa conteúdo vindo do usuário — `frontend/src/utils/__tests__/relatorio.test.js` | APROVADO |
+| FE-234 | Jest | gerarHtmlRelatorioProcesso mostra o bloco financeiro do processo — `frontend/src/utils/__tests__/relatorio.test.js` | APROVADO |
+| FE-235 | Jest | gerarHtmlRelatorioProcesso omite a coluna de processo, que repetiria o mesmo número — `frontend/src/utils/__tests__/relatorio.test.js` | APROVADO |
+| FE-236 | Jest | gerarHtmlRelatorioProcesso mantém a coluna de processo no relatório do cliente — `frontend/src/utils/__tests__/relatorio.test.js` | APROVADO |
+| FE-237 | Jest | limparTelefone remove tudo que não é dígito — `frontend/src/utils/__tests__/whatsapp.test.js` | APROVADO |
+| FE-238 | Jest | limparTelefone retorna string vazia para valores nulos/indefinidos — `frontend/src/utils/__tests__/whatsapp.test.js` | APROVADO |
+| FE-239 | Jest | construirLinkWhatsApp adiciona o prefixo 55 para números com DDD (11 dígitos) — `frontend/src/utils/__tests__/whatsapp.test.js` | APROVADO |
+| FE-240 | Jest | construirLinkWhatsApp não duplica o código do país quando o número já é longo — `frontend/src/utils/__tests__/whatsapp.test.js` | APROVADO |
+| FE-241 | Jest | construirLinkWhatsApp retorna null quando o telefone está vazio — `frontend/src/utils/__tests__/whatsapp.test.js` | APROVADO |
+| FE-242 | Jest | montarMensagemCliente monta a mensagem com os dados do cliente — `frontend/src/utils/__tests__/whatsapp.test.js` | APROVADO |
+| FE-243 | Jest | montarMensagemCliente usa travessão para campos ausentes e trata cliente inativo — `frontend/src/utils/__tests__/whatsapp.test.js` | APROVADO |
+| FE-244 | Jest | montarMensagemCliente mostra CNPJ em vez de CPF para cliente pessoa jurídica — `frontend/src/utils/__tests__/whatsapp.test.js` | APROVADO |
+| FE-245 | Jest | montarMensagemProcesso traduz o status 'Concluido' para 'Concluído' — `frontend/src/utils/__tests__/whatsapp.test.js` | APROVADO |
+| FE-246 | Jest | montarMensagemProcesso omite advogado responsável quando não informado — `frontend/src/utils/__tests__/whatsapp.test.js` | APROVADO |
+| FE-247 | Jest | mostra o progresso e identifica os itens concluídos — `frontend/src/components/ui/__tests__/ProgressoFormulario.test.jsx` | APROVADO |
+| FE-248 | Jest | usePermissoes segue a matriz gravada no login — `frontend/src/hooks/__tests__/usePermissoes.test.js` | APROVADO |
+| FE-249 | Jest | usePermissoes sem permissões gravadas deixa a decisão para a API — `frontend/src/hooks/__tests__/usePermissoes.test.js` | APROVADO |
+| FE-250 | Jest | usePermissoes acompanha a troca de perfil sem recarregar a página — `frontend/src/hooks/__tests__/usePermissoes.test.js` | APROVADO |
+| FE-251 | Jest | abertura de arquivos após uma consulta autenticada reserva a aba no clique, antes de aguardar a resposta da API — `frontend/src/services/__tests__/abertura-arquivos.test.js` | APROVADO |
+| FE-252 | Jest | abertura de arquivos após uma consulta autenticada com popups bloqueados, baixa o documento sem perder o conteúdo — `frontend/src/services/__tests__/abertura-arquivos.test.js` | APROVADO |
+| FE-253 | Jest | abertura de arquivos após uma consulta autenticada erro de autorização fecha a aba vazia e não disponibiliza arquivo — `frontend/src/services/__tests__/abertura-arquivos.test.js` | APROVADO |
+| FE-254 | Jest | abertura de arquivos após uma consulta autenticada não deixa aba vazia quando a rede falha — `frontend/src/services/__tests__/abertura-arquivos.test.js` | APROVADO |
+| FE-255 | Jest | abertura de arquivos após uma consulta autenticada relatório reserva a janela antes de consultar seus dados — `frontend/src/services/__tests__/abertura-arquivos.test.js` | APROVADO |
+| FE-256 | Jest | abertura de arquivos após uma consulta autenticada relatório pode ser salvo quando o navegador impede novas abas — `frontend/src/services/__tests__/abertura-arquivos.test.js` | APROVADO |
+| FE-257 | Jest | cobertura dos grupos cobre as oito áreas com conteúdo pesquisável — `frontend/src/lib/__tests__/busca.test.js` | APROVADO |
+| FE-258 | Jest | cobertura dos grupos todo grupo aponta para um painel que existe — `frontend/src/lib/__tests__/busca.test.js` | APROVADO |
+| FE-259 | Jest | cobertura dos grupos as chaves não se repetem — `frontend/src/lib/__tests__/busca.test.js` | APROVADO |
+| FE-260 | Jest | agruparResultados o mínimo de letras para buscar é dois — `frontend/src/lib/__tests__/busca.test.js` | APROVADO |
+| FE-261 | Jest | agruparResultados mantém a ordem das áreas definida em GRUPOS_BUSCA — `frontend/src/lib/__tests__/busca.test.js` | APROVADO |
+| FE-262 | Jest | agruparResultados área sem resultado não aparece na lista — `frontend/src/lib/__tests__/busca.test.js` | APROVADO |
+| FE-263 | Jest | agruparResultados resposta vazia ou ausente não quebra — `frontend/src/lib/__tests__/busca.test.js` | APROVADO |
+| FE-264 | Jest | agruparResultados limita a quatro resultados por grupo — `frontend/src/lib/__tests__/busca.test.js` | APROVADO |
+| FE-265 | Jest | agruparResultados o título e o detalhe de cada resultado saem do próprio grupo — `frontend/src/lib/__tests__/busca.test.js` | APROVADO |
+| FE-266 | Jest | agruparResultados cliente pessoa jurídica mostra o CNPJ como detalhe — `frontend/src/lib/__tests__/busca.test.js` | APROVADO |
+| FE-267 | Jest | contarResultados soma os itens de todos os grupos — `frontend/src/lib/__tests__/busca.test.js` | APROVADO |
+| FE-268 | Jest | código de demonstração nunca vira mensagem de cobrança — `frontend/src/components/panels/__tests__/PixDaParcela.test.js` | APROVADO |
+| FE-269 | Jest | mensagem do WhatsApp leva valor, vencimento e o copia e cola — `frontend/src/components/panels/__tests__/PixDaParcela.test.js` | APROVADO |
+| FE-270 | Jest | agruparPorColuna separa por situação e deixa cancelada fora do quadro — `frontend/src/components/panels/__tests__/TarefasQuadro.test.js` | APROVADO |
+| FE-271 | Jest | agruparPorColuna o cartão muda de coluna antes da API responder — `frontend/src/components/panels/__tests__/TarefasQuadro.test.js` | APROVADO |
+| FE-272 | Jest | service worker registra os ciclos de vida e os eventos de notificação — `frontend/src/lib/__tests__/service-worker.test.js` | APROVADO |
+| FE-273 | Jest | service worker nunca intercepta chamadas de API — `frontend/src/lib/__tests__/service-worker.test.js` | APROVADO |
+| FE-274 | Jest | service worker nem mesmo uma navegação para /api/ é servida do cache — `frontend/src/lib/__tests__/service-worker.test.js` | APROVADO |
+| FE-275 | Jest | service worker deixa passar requisição para outra origem — `frontend/src/lib/__tests__/service-worker.test.js` | APROVADO |
+| FE-276 | Jest | service worker ignora tudo que não seja GET — `frontend/src/lib/__tests__/service-worker.test.js` | APROVADO |
+| FE-277 | Jest | service worker assume os estáticos versionados do build — `frontend/src/lib/__tests__/service-worker.test.js` | APROVADO |
+| FE-278 | Jest | service worker assume a navegação para poder mostrar a tela de offline — `frontend/src/lib/__tests__/service-worker.test.js` | APROVADO |
+| FE-279 | Jest | service worker mostra a notificação push com título, texto e destino — `frontend/src/lib/__tests__/service-worker.test.js` | APROVADO |
+| FE-280 | Jest | service worker clique na notificação abre o sistema quando não há aba aberta — `frontend/src/lib/__tests__/service-worker.test.js` | APROVADO |
+| FE-281 | Jest | formatarCPF organiza os dígitos em ###.###.###-## — `frontend/src/utils/__tests__/mascaras.test.js` | APROVADO |
+| FE-282 | Jest | formatarCPF ignora caracteres não numéricos e limita a 11 dígitos — `frontend/src/utils/__tests__/mascaras.test.js` | APROVADO |
+| FE-283 | Jest | formatarCPF formata progressivamente enquanto o usuário digita — `frontend/src/utils/__tests__/mascaras.test.js` | APROVADO |
+| FE-284 | Jest | formatarCNPJ preserva letras em maiúsculas e permite digitação parcial — `frontend/src/utils/__tests__/mascaras.test.js` | APROVADO |
+| FE-285 | Jest | formatarCNPJ organiza os dígitos em ##.###.###/####-## — `frontend/src/utils/__tests__/mascaras.test.js` | APROVADO |
+| FE-286 | Jest | formatarCNPJ limita a 14 dígitos — `frontend/src/utils/__tests__/mascaras.test.js` | APROVADO |
+| FE-287 | Jest | formatarTelefone formata celular (11 dígitos) com hífen após o 5º dígito — `frontend/src/utils/__tests__/mascaras.test.js` | APROVADO |
+| FE-288 | Jest | formatarTelefone formata fixo (10 dígitos) com hífen após o 4º dígito — `frontend/src/utils/__tests__/mascaras.test.js` | APROVADO |
+| FE-289 | Jest | formatarTelefone limita a 11 dígitos — `frontend/src/utils/__tests__/mascaras.test.js` | APROVADO |
+| FE-290 | Jest | formatarRG organiza os dígitos em XX.XXX.XXX — `frontend/src/utils/__tests__/mascaras.test.js` | APROVADO |
+| FE-291 | Jest | formatarRG aceita X maiúsculo ou minúsculo como dígito verificador final — `frontend/src/utils/__tests__/mascaras.test.js` | APROVADO |
+| FE-292 | Jest | formatarRG limita a 8 dígitos além do dígito verificador — `frontend/src/utils/__tests__/mascaras.test.js` | APROVADO |
+| FE-293 | Jest | formatarOAB organiza número e UF no formato número/UF — `frontend/src/utils/__tests__/mascaras.test.js` | APROVADO |
+| FE-294 | Jest | formatarOAB mantém só os números enquanto a UF não é digitada — `frontend/src/utils/__tests__/mascaras.test.js` | APROVADO |
+| FE-295 | Jest | formatarOAB limita o número a 6 dígitos e a UF a 2 letras — `frontend/src/utils/__tests__/mascaras.test.js` | APROVADO |
+| FE-296 | Jest | formatarCEP organiza os dígitos em #####-### — `frontend/src/utils/__tests__/mascaras.test.js` | APROVADO |
+| FE-297 | Jest | formatarCEP ignora caracteres não numéricos e limita a 8 dígitos — `frontend/src/utils/__tests__/mascaras.test.js` | APROVADO |
+| FE-298 | Jest | capitalizarNome deixa os nomes legíveis e mantém as siglas societárias — `frontend/src/utils/__tests__/cnpj.test.js` | APROVADO |
+| FE-299 | Jest | interpretarEmpresa converte a resposta do BrasilAPI para os campos do formulário — `frontend/src/utils/__tests__/cnpj.test.js` | APROVADO |
+| FE-300 | Jest | interpretarEmpresa não repete o tipo quando o logradouro já começa com ele, e trata s/n — `frontend/src/utils/__tests__/cnpj.test.js` | APROVADO |
+| FE-301 | Jest | interpretarEmpresa campos ausentes viram texto vazio; sem razão social não há empresa — `frontend/src/utils/__tests__/cnpj.test.js` | APROVADO |
+| FE-302 | Jest | buscarEmpresaPorCnpj consulta CNPJ alfanumérico sem apagar letras — `frontend/src/utils/__tests__/cnpj.test.js` | APROVADO |
+| FE-303 | Jest | buscarEmpresaPorCnpj não chama a API com CNPJ incompleto — `frontend/src/utils/__tests__/cnpj.test.js` | APROVADO |
+| FE-304 | Jest | buscarEmpresaPorCnpj consulta o BrasilAPI só com os dígitos — `frontend/src/utils/__tests__/cnpj.test.js` | APROVADO |
+| FE-305 | Jest | buscarEmpresaPorCnpj CNPJ não encontrado, erro de rede ou resposta inválida devolvem null sem quebrar — `frontend/src/utils/__tests__/cnpj.test.js` | APROVADO |
+| FE-306 | Jest | enderecoDaEmpresa e avisoDaEmpresa monta a linha de endereço — `frontend/src/utils/__tests__/cnpj.test.js` | APROVADO |
+| FE-307 | Jest | enderecoDaEmpresa e avisoDaEmpresa avisa quando não encontrou e quando a situação não é ativa, sem impedir nada — `frontend/src/utils/__tests__/cnpj.test.js` | APROVADO |
+| FE-308 | Jest | explica de onde veio o texto, no singular e no plural — `frontend/src/components/panels/__tests__/ResumoParaCliente.test.js` | APROVADO |
+| FE-309 | Jest | getSaudacao às 6 horas retorna 'Bom dia' — `frontend/src/utils/__tests__/greeting.test.js` | APROVADO |
+| FE-310 | Jest | getSaudacao às 11 horas retorna 'Bom dia' — `frontend/src/utils/__tests__/greeting.test.js` | APROVADO |
+| FE-311 | Jest | getSaudacao às 12 horas retorna 'Boa tarde' — `frontend/src/utils/__tests__/greeting.test.js` | APROVADO |
+| FE-312 | Jest | getSaudacao às 17 horas retorna 'Boa tarde' — `frontend/src/utils/__tests__/greeting.test.js` | APROVADO |
+| FE-313 | Jest | getSaudacao às 18 horas retorna 'Boa noite' — `frontend/src/utils/__tests__/greeting.test.js` | APROVADO |
+| FE-314 | Jest | getSaudacao às 23 horas retorna 'Boa noite' — `frontend/src/utils/__tests__/greeting.test.js` | APROVADO |
+| FE-315 | Jest | getSaudacao às 3 horas retorna 'Boa noite' — `frontend/src/utils/__tests__/greeting.test.js` | APROVADO |
+| FE-316 | Jest | getSaudacaoCompleta usa apenas o primeiro nome — `frontend/src/utils/__tests__/greeting.test.js` | APROVADO |
+| FE-317 | Jest | getSaudacaoCompleta retorna só a saudação quando não há nome — `frontend/src/utils/__tests__/greeting.test.js` | APROVADO |
+| FE-318 | Jest | IDIOMAS_SUPORTADOS inclui português, inglês e espanhol — `frontend/src/lib/__tests__/i18n.test.js` | APROVADO |
+| FE-319 | Jest | traduzir retorna a tradução correta para cada idioma suportado — `frontend/src/lib/__tests__/i18n.test.js` | APROVADO |
+| FE-320 | Jest | traduzir recai para pt-BR quando o idioma não é suportado — `frontend/src/lib/__tests__/i18n.test.js` | APROVADO |
+| FE-321 | Jest | traduzir recai para a própria chave quando ela não existe em nenhum dicionário — `frontend/src/lib/__tests__/i18n.test.js` | APROVADO |
+| FE-322 | Jest | traduzir a aba de auditoria está traduzida em todos os idiomas suportados — `frontend/src/lib/__tests__/i18n.test.js` | APROVADO |
+| FE-323 | Jest | alertas da agenda explica hoje, amanhã e vencimento sem depender de cor — `frontend/src/lib/__tests__/alertasAgenda.test.js` | APROVADO |
+| FE-324 | Jest | alertas da agenda prioriza prazo fatal vencido e remove o que foi cumprido — `frontend/src/lib/__tests__/alertasAgenda.test.js` | APROVADO |
+| FE-325 | Jest | alertas da agenda pode limitar a lista a prazos dentro da janela escolhida — `frontend/src/lib/__tests__/alertasAgenda.test.js` | APROVADO |
+| FE-326 | Jest | REQUISITOS_SENHA tem os 4 requisitos esperados — `frontend/src/utils/__tests__/senha.test.js` | APROVADO |
+| FE-327 | Jest | senhaAtendeRequisitos rejeita senha vazia — `frontend/src/utils/__tests__/senha.test.js` | APROVADO |
+| FE-328 | Jest | senhaAtendeRequisitos rejeita senha sem maiúscula — `frontend/src/utils/__tests__/senha.test.js` | APROVADO |
+| FE-329 | Jest | senhaAtendeRequisitos rejeita senha sem número — `frontend/src/utils/__tests__/senha.test.js` | APROVADO |
+| FE-330 | Jest | senhaAtendeRequisitos rejeita senha sem caractere especial — `frontend/src/utils/__tests__/senha.test.js` | APROVADO |
+| FE-331 | Jest | senhaAtendeRequisitos rejeita senha com menos de 8 caracteres — `frontend/src/utils/__tests__/senha.test.js` | APROVADO |
+| FE-332 | Jest | senhaAtendeRequisitos aceita senha que atende todos os requisitos — `frontend/src/utils/__tests__/senha.test.js` | APROVADO |
+| FE-333 | Jest | formatarMoeda formata número e texto no padrão brasileiro — `frontend/src/utils/__tests__/formato.test.js` | APROVADO |
+| FE-334 | Jest | formatarMoeda zero é um valor, não uma ausência — `frontend/src/utils/__tests__/formato.test.js` | APROVADO |
+| FE-335 | Jest | formatarMoeda devolve travessão quando não há valor — `frontend/src/utils/__tests__/formato.test.js` | APROVADO |
+| FE-336 | Jest | formatarHoras converte minutos em horas e minutos — `frontend/src/utils/__tests__/formato.test.js` | APROVADO |
+| FE-337 | Jest | formatarHoras trata ausência de valor como zero — `frontend/src/utils/__tests__/formato.test.js` | APROVADO |
+| FE-338 | Jest | data de formulário usa o dia local na virada UTC — `frontend/src/utils/__tests__/formato.test.js` | APROVADO |
+| FE-339 | Jest | buscarEnderecoPorCep retorna null sem chamar a API quando o CEP não tem 8 dígitos — `frontend/src/utils/__tests__/cep.test.js` | APROVADO |
+| FE-340 | Jest | buscarEnderecoPorCep retorna o endereço formatado a partir da resposta da API — `frontend/src/utils/__tests__/cep.test.js` | APROVADO |
+| FE-341 | Jest | buscarEnderecoPorCep retorna null quando a API informa CEP inexistente — `frontend/src/utils/__tests__/cep.test.js` | APROVADO |
+| FE-342 | Jest | buscarEnderecoPorCep retorna null quando a requisição falha — `frontend/src/utils/__tests__/cep.test.js` | APROVADO |
+| FE-343 | Jest | montarEnderecoCompleto junta logradouro e bairro separados por vírgula — `frontend/src/utils/__tests__/cep.test.js` | APROVADO |
+| FE-344 | Jest | montarEnderecoCompleto omite partes vazias — `frontend/src/utils/__tests__/cep.test.js` | APROVADO |
+| FE-345 | Jest | status do processo cobre os quatro status do modelo — `frontend/src/lib/__tests__/statusProcesso.test.js` | APROVADO |
+| FE-346 | Jest | status do processo acentua Concluído, que no banco é gravado sem acento — `frontend/src/lib/__tests__/statusProcesso.test.js` | APROVADO |
+| FE-347 | Jest | status do processo cada status tem um selo próprio — nenhum par se confunde — `frontend/src/lib/__tests__/statusProcesso.test.js` | APROVADO |
+| FE-348 | Jest | status do processo a cor vem da identidade do status, não da posição na lista — `frontend/src/lib/__tests__/statusProcesso.test.js` | APROVADO |
+| FE-349 | Jest | status do processo cada tema tem sua própria cor, validada contra o fundo dele — `frontend/src/lib/__tests__/statusProcesso.test.js` | APROVADO |
+| FE-350 | Jest | status do processo status desconhecido não quebra nem rouba a cor de outro — `frontend/src/lib/__tests__/statusProcesso.test.js` | APROVADO |
+| FE-351 | Jest | status do processo a ordem mantém verde e ameixa longe do âmbar — `frontend/src/lib/__tests__/statusProcesso.test.js` | APROVADO |
+| FE-352 | Jest | onboarding calcula o progresso a partir dos dados reais do escritório — `frontend/src/lib/__tests__/onboarding.test.js` | APROVADO |
+| FE-353 | Jest | onboarding orienta a cadastrar cliente antes do processo — `frontend/src/lib/__tests__/onboarding.test.js` | APROVADO |
+| FE-354 | Jest | onboarding não oferece etapas que o perfil não pode criar — `frontend/src/lib/__tests__/onboarding.test.js` | APROVADO |
+| FE-355 | Jest | onboarding identifica um escritório sem dados operacionais — `frontend/src/lib/__tests__/onboarding.test.js` | APROVADO |
+| FE-356 | Jest | converte a chave pública VAPID (base64url) para bytes — `frontend/src/utils/__tests__/push.test.js` | APROVADO |
 | E2E-001 | Playwright | baixa a agenda em .ics com o prazo fatal — `frontend/e2e/agenda.spec.js` | APROVADO |
-| E2E-002 | Playwright | sem sessão, dashboard redireciona para login — `frontend/e2e/auditoria.spec.js` | APROVADO |
-| E2E-003 | Playwright | logout encerra a navegação autenticada — `frontend/e2e/auditoria.spec.js` | APROVADO |
-| E2E-004 | Playwright | ficha respeita o acesso financeiro de estagiario — `frontend/e2e/auditoria.spec.js` | APROVADO |
-| E2E-005 | Playwright | ficha respeita o acesso financeiro de secretaria — `frontend/e2e/auditoria.spec.js` | APROVADO |
-| E2E-006 | Playwright | falha simulada de clientes aparece e recupera ao reabrir — `frontend/e2e/auditoria.spec.js` | APROVADO |
-| E2E-007 | Playwright | rascunho atrasado preserva a digitação de um evento novo — `frontend/e2e/auditoria.spec.js` | APROVADO |
-| E2E-008 | Playwright | horas e despesas iniciam com o dia de São Paulo na virada UTC — `frontend/e2e/auditoria.spec.js` | APROVADO |
-| E2E-009 | Playwright | sem JavaScript, senha de login não é enviada na URL — `frontend/e2e/auditoria.spec.js` | APROVADO |
-| E2E-010 | Playwright | cadastra um cliente e encontra na busca — `frontend/e2e/clientes.spec.js` | APROVADO |
-| E2E-011 | Playwright | cadastro avança por etapas, conserva os dados e aceita CNPJ com letras — `frontend/e2e/evolucao.spec.js` | APROVADO |
-| E2E-012 | Playwright | busca abre diretamente o cliente escolhido — `frontend/e2e/evolucao.spec.js` | APROVADO |
-| E2E-013 | Playwright | menu recolhido e densidade sobrevivem ao recarregamento sem cortar controles — `frontend/e2e/evolucao.spec.js` | APROVADO |
-| E2E-014 | Playwright | advogado confere uma intimação e a revisão fica identificada — `frontend/e2e/evolucao.spec.js` | APROVADO |
-| E2E-015 | Playwright | gera o PIX copia e cola de uma parcela pendente — `frontend/e2e/financeiro.spec.js` | APROVADO |
-| E2E-016 | Playwright | Pix de teste confirma honorários sem dar baixa na parcela — `frontend/e2e/financeiro.spec.js` | APROVADO |
-| E2E-017 | Playwright | Pix de teste dos planos confirma sem ativar assinatura — `frontend/e2e/financeiro.spec.js` | APROVADO |
-| E2E-018 | Playwright | senha errada mostra o erro e não entra — `frontend/e2e/login.spec.js` | APROVADO |
-| E2E-019 | Playwright | entra e chega na dashboard sem violações de acessibilidade — `frontend/e2e/login.spec.js` | APROVADO |
-| E2E-020 | Playwright | a tela de login também passa na checagem de acessibilidade — `frontend/e2e/login.spec.js` | APROVADO |
-| E2E-021 | Playwright | navega de Compromissos para o Assistente IA sem ficar preso — `frontend/e2e/navegacao.spec.js` | APROVADO |
-| E2E-022 | Playwright | estagiário não vê o financeiro nem o processo sigiloso — `frontend/e2e/perfis.spec.js` | APROVADO |
-| E2E-023 | Playwright | administrador vê o sigiloso com o selo de segredo de justiça — `frontend/e2e/perfis.spec.js` | APROVADO |
-| E2E-024 | Playwright | foto é salva separadamente e continua disponível após recarregar — `frontend/e2e/preferencias.spec.js` | APROVADO |
-| E2E-025 | Playwright | modo compacto reduz visivelmente as linhas e mantém a escolha — `frontend/e2e/preferencias.spec.js` | APROVADO |
-| E2E-026 | Playwright | orienta o cadastro, mostra o progresso e explica campos obrigatórios — `frontend/e2e/processos.spec.js` | APROVADO |
-| E2E-027 | Playwright | abre a ficha do processo e gera a atualização para o cliente — `frontend/e2e/processos.spec.js` | APROVADO |
-| E2E-028 | Playwright | dashboard cabe em notebook com escala de 125% — `frontend/e2e/responsividade.spec.js` | APROVADO |
-| E2E-029 | Playwright | painel bloqueia a dashboard ao fundo e devolve sua posição ao fechar — `frontend/e2e/rolagem.spec.js` | APROVADO |
-| E2E-030 | Playwright | só o conteúdo do painel rola e fechar a ajuda não libera a página de trás — `frontend/e2e/rolagem.spec.js` | APROVADO |
-| E2E-031 | Playwright | move um cartão no quadro Kanban e volta — `frontend/e2e/tarefas.spec.js` | APROVADO |
-| E2E-032 | Playwright | no celular, o menu abre em gaveta e a lista cabe na tela — `frontend/e2e/celular.spec.js` | APROVADO |
-| E2E-033 | Playwright | telas principais cabem no celular e mantêm os controles acessíveis — `frontend/e2e/celular.spec.js` | APROVADO |
-| E2E-034 | Playwright | gaveta e painel mantêm a dashboard parada no celular — `frontend/e2e/celular.spec.js` | APROVADO |
-
-## Complemento de 28/10/2026 — navegação da dashboard
-
-Os casos E2E-001–034 acima foram reexecutados e passaram. Acrescentaram-se os
-casos abaixo em `frontend/e2e/preferencias.spec.js`; ambos passaram após a
-correção A13, totalizando 36 cenários na rodada atual. O catálogo JSON da
-rodada original continua histórico. Evidência atual:
-[regressao-dashboard-2026-10-28.json](evidencias/regressao-dashboard-2026-10-28.json).
-
-| ID | Runner | Cenário | Resultado |
-|---|---|---|---|
-| E2E-035 | Playwright computador | Compromissos mantém densidade compact e menu expandido durante a navegação | APROVADO |
-| E2E-036 | Playwright computador | Compromissos mantém densidade comfortable e menu recolhido durante a navegação | APROVADO |
+| E2E-002 | Playwright | documento autenticado reserva aba antes de concluir uma transferência lenta — `frontend/e2e/arquivos.spec.js` | APROVADO |
+| E2E-003 | Playwright | relatório completo abre após receber os dados sem depender de popup tardio — `frontend/e2e/arquivos.spec.js` | APROVADO |
+| E2E-004 | Playwright | sem sessão, dashboard redireciona para login — `frontend/e2e/auditoria.spec.js` | APROVADO |
+| E2E-005 | Playwright | logout encerra a navegação autenticada — `frontend/e2e/auditoria.spec.js` | APROVADO |
+| E2E-006 | Playwright | ficha respeita o acesso financeiro de estagiario — `frontend/e2e/auditoria.spec.js` | APROVADO |
+| E2E-007 | Playwright | ficha respeita o acesso financeiro de secretaria — `frontend/e2e/auditoria.spec.js` | APROVADO |
+| E2E-008 | Playwright | falha simulada de clientes aparece e recupera ao reabrir — `frontend/e2e/auditoria.spec.js` | APROVADO |
+| E2E-009 | Playwright | rascunho atrasado preserva a digitação de um evento novo — `frontend/e2e/auditoria.spec.js` | APROVADO |
+| E2E-010 | Playwright | horas e despesas iniciam com o dia de São Paulo na virada UTC — `frontend/e2e/auditoria.spec.js` | APROVADO |
+| E2E-011 | Playwright | sem JavaScript, senha de login não é enviada na URL — `frontend/e2e/auditoria.spec.js` | APROVADO |
+| E2E-012 | Playwright | login com duas etapas exige o código e abre a sessão pelo formulário real — `frontend/e2e/autenticacao-completa.spec.js` | APROVADO |
+| E2E-013 | Playwright | cadastra um cliente e encontra na busca — `frontend/e2e/clientes.spec.js` | APROVADO |
+| E2E-014 | Playwright | cadastro avança por etapas, conserva os dados e aceita CNPJ com letras — `frontend/e2e/evolucao.spec.js` | APROVADO |
+| E2E-015 | Playwright | busca abre diretamente o cliente escolhido — `frontend/e2e/evolucao.spec.js` | APROVADO |
+| E2E-016 | Playwright | menu recolhido e densidade sobrevivem ao recarregamento sem cortar controles — `frontend/e2e/evolucao.spec.js` | APROVADO |
+| E2E-017 | Playwright | advogado confere uma intimação e a revisão fica identificada — `frontend/e2e/evolucao.spec.js` | APROVADO |
+| E2E-018 | Playwright | gera o PIX copia e cola de uma parcela pendente — `frontend/e2e/financeiro.spec.js` | APROVADO |
+| E2E-019 | Playwright | Pix de teste confirma honorários sem dar baixa na parcela — `frontend/e2e/financeiro.spec.js` | APROVADO |
+| E2E-020 | Playwright | Pix de teste dos planos confirma sem ativar assinatura — `frontend/e2e/financeiro.spec.js` | APROVADO |
+| E2E-021 | Playwright | foto autenticada chega intacta pelo proxy da interface — `frontend/e2e/fotos-proxy.spec.js` | APROVADO |
+| E2E-022 | Playwright | todas as áreas do administrador abrem com conteúdo, formulários rotulados e navegação por teclado — `frontend/e2e/geral.spec.js` | APROVADO |
+| E2E-023 | Playwright | falha ao registrar pagamento é visível, pode ser repetida e mantém a parcela pendente — `frontend/e2e/geral.spec.js` | APROVADO |
+| E2E-024 | Playwright | agenda grava data e hora locais e reabre a edição sem deslocar o horário — `frontend/e2e/geral.spec.js` | APROVADO |
+| E2E-025 | Playwright | configurações mantêm o foco no diálogo e devolvem ao menu ao fechar com Escape — `frontend/e2e/geral.spec.js` | APROVADO |
+| E2E-026 | Playwright | senha errada mostra o erro e não entra — `frontend/e2e/login.spec.js` | APROVADO |
+| E2E-027 | Playwright | entra e chega na dashboard sem violações de acessibilidade — `frontend/e2e/login.spec.js` | APROVADO |
+| E2E-028 | Playwright | a tela de login também passa na checagem de acessibilidade — `frontend/e2e/login.spec.js` | APROVADO |
+| E2E-029 | Playwright | navega de Compromissos para o Assistente IA sem ficar preso — `frontend/e2e/navegacao.spec.js` | APROVADO |
+| E2E-030 | Playwright | estagiário não vê o financeiro nem o processo sigiloso — `frontend/e2e/perfis.spec.js` | APROVADO |
+| E2E-031 | Playwright | administrador vê o sigiloso com o selo de segredo de justiça — `frontend/e2e/perfis.spec.js` | APROVADO |
+| E2E-032 | Playwright | foto é salva separadamente e continua disponível após recarregar — `frontend/e2e/preferencias.spec.js` | APROVADO |
+| E2E-033 | Playwright | modo compacto reduz visivelmente as linhas e mantém a escolha — `frontend/e2e/preferencias.spec.js` | APROVADO |
+| E2E-034 | Playwright | Compromissos mantém densidade compact e menu expandido durante a navegação — `frontend/e2e/preferencias.spec.js` | APROVADO |
+| E2E-035 | Playwright | Compromissos mantém densidade comfortable e menu recolhido durante a navegação — `frontend/e2e/preferencias.spec.js` | APROVADO |
+| E2E-036 | Playwright | orienta o cadastro, mostra o progresso e explica campos obrigatórios — `frontend/e2e/processos.spec.js` | APROVADO |
+| E2E-037 | Playwright | abre a ficha do processo e gera a atualização para o cliente — `frontend/e2e/processos.spec.js` | APROVADO |
+| E2E-038 | Playwright | PWA mostra a página offline e não armazena respostas privadas no cache — `frontend/e2e/pwa.spec.js` | APROVADO |
+| E2E-039 | Playwright | dashboard cabe em notebook com escala de 125% — `frontend/e2e/responsividade.spec.js` | APROVADO |
+| E2E-040 | Playwright | painel bloqueia a dashboard ao fundo e devolve sua posição ao fechar — `frontend/e2e/rolagem.spec.js` | APROVADO |
+| E2E-041 | Playwright | só o conteúdo do painel rola e fechar a ajuda não libera a página de trás — `frontend/e2e/rolagem.spec.js` | APROVADO |
+| E2E-042 | Playwright | move um cartão no quadro Kanban e volta — `frontend/e2e/tarefas.spec.js` | APROVADO |
+| E2E-043 | Playwright | no celular, o menu abre em gaveta e a lista cabe na tela — `frontend/e2e/celular.spec.js` | APROVADO |
+| E2E-044 | Playwright | telas principais cabem no celular e mantêm os controles acessíveis — `frontend/e2e/celular.spec.js` | APROVADO |
+| E2E-045 | Playwright | gaveta e painel mantêm a dashboard parada no celular — `frontend/e2e/celular.spec.js` | APROVADO |

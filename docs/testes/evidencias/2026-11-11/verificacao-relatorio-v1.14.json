@@ -1,0 +1,74 @@
+{
+  "tipo": "conferencia_relatorio_independente_com_evidencias_de_testes_executados_separadamente",
+  "data_conferencia": "2026-11-11",
+  "data_metricas": "2026-11-11",
+  "grupo": "TDS-2026-038",
+  "versao_relatorio": "1.14",
+  "testes_referencia": {
+    "data": "2026-11-11",
+    "ambiente": "local",
+    "django": 550,
+    "jest": 356,
+    "playwright": 45,
+    "total": 951
+  },
+  "cobertura_referencia": {
+    "data": "2026-11-11",
+    "backend_linhas": "91,85%",
+    "backend_ramos": "79,75%",
+    "frontend_linhas": "72,22%",
+    "frontend_ramos": "61,55%",
+    "frontend_instrucoes": "70,67%",
+    "frontend_funcoes": "58,17%"
+  },
+  "paginas_relatorio": {
+    "contexto_c1": [
+      53
+    ],
+    "containers_c2": [
+      54
+    ],
+    "componentes_c3": [
+      54
+    ],
+    "implantacao": [
+      63
+    ],
+    "autenticacao_totp": [
+      27
+    ],
+    "calculo_cadastro_prazo": [
+      28
+    ],
+    "metricas_consolidadas": [
+      59
+    ],
+    "ampliacao_frontend": [
+      60
+    ]
+  },
+  "titulos_cores_explicitas": [
+    "000000"
+  ],
+  "diagramas_no_docx": "seis PNGs conferidos por SHA-256",
+  "sumario": "64/64 entradas do Word correspondem ao mapeamento de páginas do PDF renderizado",
+  "guia": "arquivo independente; métricas sincronizadas; não anexado ao relatório",
+  "video": "gravacao_e_submissao_nao_verificadas",
+  "orbita": "envio_dos_arquivos_atuais_nao_verificado",
+  "arquivos": {
+    "docs/tcc/TDS-2026-038_Relatorio_Tecnico_v1.14.pdf": {
+      "sha256": "308377398a301c073af845054f084afa3ff0b15d09e702b36c300061c6f7bae2",
+      "bytes": 5669355,
+      "paginas": 67
+    },
+    "docs/tcc/TDS-2026-038_Relatorio_Tecnico_v1.14.docx": {
+      "sha256": "c17e7e9b3f554fc272412c4dec405a46f92e4c98879698f31b5f8fa3b6d7585b",
+      "bytes": 7535795
+    },
+    "docs/Guia-de-Funcionalidades-LexNexo.pdf": {
+      "sha256": "8a0ed23301a1efb0708cdfd956da060e08c416dfa9c9cb7dc60c8a231b64b0ca",
+      "bytes": 4026601,
+      "paginas": 66
+    }
+  }
+}

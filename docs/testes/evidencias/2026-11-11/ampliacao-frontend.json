@@ -1,0 +1,53 @@
+{
+  "data_local": "2026-11-11",
+  "ambiente": "local_isolado",
+  "novos_casos_jest": 66,
+  "novas_suites_jest": 14,
+  "baseline": {
+    "casos_jest": 290,
+    "suites_jest": 49,
+    "linhas_cobertas": 1756,
+    "linhas_total": 4617,
+    "cobertura_linhas_pct": 38.03
+  },
+  "resultado": {
+    "casos_jest": 356,
+    "suites_jest": 63,
+    "linhas_cobertas": 3339,
+    "linhas_total": 4623,
+    "cobertura_linhas_pct": 72.22
+  },
+  "escopo_inalterado": "src/**/*.{js,jsx}; testes e fixtures não são código de produção; sem somar Playwright",
+  "meta_linhas_pct": 70,
+  "gate": "Coleta padrão e mínimo de 70% de linhas em frontend/jest.config.mjs; CI existente executa npm test -- --ci. A alteração do workflow foi descartada porque o OAuth não possui escopo workflow; nenhum workflow remoto foi alterado.",
+  "regressoes": [
+    {
+      "id": "A31",
+      "cenario": "falha ao alternar status aparece na tela e permite nova tentativa",
+      "antes": "REPROVADO: erro sem tratamento e sem mensagem na interface",
+      "depois": "APROVADO",
+      "arquivo": "frontend/src/components/panels/__tests__/ProcessosFluxos.test.jsx"
+    },
+    {
+      "id": "A32",
+      "cenario": "reembolso recusado mostra mensagem e permite nova tentativa",
+      "antes": "REPROVADO: erro sem tratamento e sem mensagem na interface",
+      "depois": "APROVADO",
+      "arquivo": "frontend/src/components/panels/__tests__/HorasFluxos.test.jsx"
+    },
+    {
+      "id": "A33",
+      "cenario": "envio pendente bloqueia repetição e falha devolve foco sem fabricar resposta",
+      "antes": "REPROVADO: campo habilitado não recebia foco ao encerrar envio",
+      "depois": "APROVADO",
+      "arquivo": "frontend/src/components/assistente/__tests__/AssistenteChatFluxos.test.jsx"
+    }
+  ],
+  "falhas_de_preparacao": "Ajustadas fixtures de CEP, labels, roteador prefetch, clone e título esperado; não classificadas como defeitos do produto.",
+  "producao": "Não houve criação, exclusão ou anonimização de dados na conta publicada nesta rodada; práticos de 09/11 mantêm a data original.",
+  "commit_codigo": "11a128a82df0b7ee3815a0166336bab03dc2205f",
+  "verificacao_comando_ci": {
+    "comando": "npm test -- --ci --runInBand --coverageReporters=json-summary",
+    "resultado": "356 casos aprovados, 63 suítes, coleta automática de cobertura e limite ativo"
+  }
+}

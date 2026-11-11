@@ -1,5 +1,62 @@
 # Relatório de validação do LexNexo
 
+## Reteste integrado de 11/11/2026 — TDS-2026-038
+
+**951 testes aprovados: 550 Django + 356 Jest + 45 Playwright**, sem falhas ou
+casos ignorados na rodada local final. Os 45 Playwright incluem 44 cenários de
+navegador (41 desktop e três móveis) e uma integração HTTP/proxy sem UI.
+Passaram lint sem avisos, build, check Django, detecção de migrations faltantes,
+OpenAPI sem avisos e aplicação integral das migrations em PostgreSQL isolado.
+
+| Métrica | Antes (09/11) | Atual (11/11) | Meta / resultado |
+|---|---|---|---|
+| Testes Jest | 290 / 49 suítes | 356 / 63 suítes | 66 casos novos |
+| Linhas frontend | 1756/4617 = 38,03% | 3339/4623 = 72,22% | 70%, ATINGIDA |
+| Instruções frontend | — | 3641/5152 = 70,67% | Informativa |
+| Funções frontend | — | 847/1456 = 58,17% | Informativa |
+| Ramos frontend | 34,02% | 2141/3478 = 61,55% | Informativa |
+| Linhas backend | 4497/4896 = 91,85% | 4497/4896 = 91,85% | 80%, ATINGIDA |
+| Ramos backend | 831/1042 = 79,75% | 831/1042 = 79,75% | Informativa |
+
+O escopo frontend continua **todo `src/**/*.{js,jsx}`**, incluindo arquivos ainda
+sem casos. Não foram excluídos componentes para cumprir a meta e não se somou
+Playwright à cobertura Jest. As seis linhas adicionais decorrem dos tratamentos
+de erro. Cobertura de linhas não é porcentagem de funcionalidades prontas e não
+prova ausência de defeitos. Funções, ramos, módulos específicos e combinações de
+estado continuam como oportunidades de melhoria.
+
+A coleta é padrão em `jest.config.mjs`, com `coverageThreshold.global.lines=70`.
+Assim, `npm test`, `npm run test:coverage` e o comando existente do CI
+`npm test -- --ci` verificam a mesma meta. O comando do CI foi conferido localmente
+com 356 aprovações. O workflow remoto não foi alterado; suas alterações locais de
+outro trabalho foram preservadas fora do commit.
+
+Os novos cenários cobrem painéis, formulários de acesso, sessão e arquivos,
+dashboard, preferências, onboarding e assistente, conferindo payloads, relações,
+erros, cancelamentos e novas tentativas. As regressões A31–A33 falharam antes e
+passaram após as correções de feedback de status/reembolso e foco no assistente.
+São testes de componentes reais com fronteiras HTTP e serviços externos simulados.
+
+Fonte: [execuções](evidencias/2026-11-11/execucoes.json),
+[catálogo dos 951 casos](evidencias/2026-11-11/inventario-e-casos.md),
+[cobertura frontend](evidencias/2026-11-11/cobertura-frontend.json),
+[cobertura backend](evidencias/2026-11-11/cobertura-backend.json),
+[ampliação e regressões](evidencias/2026-11-11/ampliacao-frontend.json) e
+[métricas únicas](evidencias/metricas-atuais.json).
+Código registrado em `11a128a`, com mensagem em português. O [CI 43113561017](https://github.com/guimunhoz13/TCCrepository/actions/runs/43113561017)
+aprovou os quatro jobs e os mesmos 951 casos. A cobertura de linhas foi 72,22%
+também no CI; ramos ficaram em 61,58% nessa execução remota e 61,55% localmente,
+medidas próprias. A Vercel publicou o frontend; assets do alias público e do deploy
+foram idênticos, e site/health responderam 200. [Evidência remota](evidencias/2026-11-11/ci-publicacao.json).
+Não se iniciou publicação manual do backend, cujo código não mudou nesta rodada.
+
+O relatório v1.14 é entregue separadamente do guia. Os testes práticos de produção
+de 09/11 mantêm essa data; nenhum registro publicado foi apagado nesta rodada.
+Permanecem as ressalvas operacionais de integrações, ferramentas de desenvolvimento,
+ACL/RLS completa, recuperação em nuvem, Safari real e usabilidade com profissionais.
+Vídeo e submissão cabem aos integrantes. As seções abaixo são histórico datado.
+
+
 <!-- auditoria-2026-11-09:inicio -->
 
 ## Auditoria final de 09/11/2026 — TDS-2026-038

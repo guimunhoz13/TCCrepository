@@ -1,5 +1,22 @@
 # Arquitetura, API e operação do LexNexo
 
+## Referência atual de 11/11/2026
+
+A rodada local atual aprovou **951 casos: 550 Django, 356 Jest e 45 Playwright**.
+A cobertura frontend passou de 38,03% para **72,22% de linhas**, superando 70%,
+com o mesmo escopo `src/**/*.{js,jsx}` e 66 novos casos Jest. Backend: 91,85%.
+O mínimo de 70% é exigido pela configuração Jest usada também pelo CI.
+[Resultados e limites atuais](RELATORIO_VALIDACAO.md),
+[métricas únicas](evidencias/metricas-atuais.json),
+[catálogo atual](evidencias/2026-11-11/inventario-e-casos.md) e
+[regressões A31–A33](evidencias/2026-11-11/ampliacao-frontend.json).
+
+Não houve nova rodada prática na conta publicada em 11/11: a conferência de
+09/11 mantém seus resultados e registros preservados. O relatório técnico v1.14
+é independente do guia; vídeo e submissão cabem aos integrantes.
+Os blocos datados abaixo são histórico e não substituem a referência acima.
+
+
 <!-- auditoria-2026-11-09:inicio -->
 
 ## Auditoria final de 09/11/2026 — TDS-2026-038

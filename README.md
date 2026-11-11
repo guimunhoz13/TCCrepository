@@ -2,29 +2,32 @@
 
 <!-- auditoria-2026-11-09:inicio -->
 
-## Entrega documental revisada em 11/11/2026
+## Entrega revisada em 11/11/2026
 
-Grupo **TDS-2026-038**. [Relatório técnico v1.13 PDF](docs/tcc/TDS-2026-038_Relatorio_Tecnico_v1.13.pdf),
-[Word](docs/tcc/TDS-2026-038_Relatorio_Tecnico_v1.13.docx) e
-[manual ilustrado](docs/Guia-de-Funcionalidades-LexNexo.pdf).
+Grupo **TDS-2026-038**. [Relatório técnico v1.14 PDF](docs/tcc/TDS-2026-038_Relatorio_Tecnico_v1.14.pdf)
+e [Word editável](docs/tcc/TDS-2026-038_Relatorio_Tecnico_v1.14.docx), **sem o guia anexado**.
+O [manual ilustrado](docs/Guia-de-Funcionalidades-LexNexo.pdf) é independente.
+[Tratamento do parecer](docs/tcc/CONFERENCIA_DOCUMENTAL_2026-11-11.md).
 
-Conferência documental de 11/11: [tratamento do parecer](docs/tcc/CONFERENCIA_DOCUMENTAL_2026-11-11.md).
-O [PDF de submissão](docs/tcc/TDS-2026-038_Entrega_Documental_v1.13.pdf) reúne relatório e manual.
-Os resultados abaixo mantêm a data de execução de 09/11/2026.
+**951 testes locais aprovados** em 11/11: 550 Django, 356 Jest e 45 Playwright.
+Cobertura de linhas: **91,85% backend / 72,22% frontend**, superando a meta de 70%
+da interface. O [CI remoto](https://github.com/guimunhoz13/TCCrepository/actions/runs/43113561017)
+aprovou os mesmos 951 casos; frontend publicado na Vercel. Foram acrescentados 66 testes Jest e corrigidos três comportamentos
+de erro/foco. A configuração Jest passou a exigir o mínimo de 70% também no CI,
+com o mesmo escopo JS/JSX de src. [Resultados e evidências](docs/testes/RELATORIO_VALIDACAO.md).
 
-**885 casos automatizados**, 91,85%/38,03% de cobertura de linhas backend/frontend;
-sete achados corrigidos e publicados. Na conta publicada, 37 de 38 verificações
-práticas aprovadas, uma inspeção visual bloqueada, 15 registros principais novos
-mantidos e cinco anexos preservados. [Relatório e limites](docs/testes/RELATORIO_VALIDACAO.md).
-[Publicação Vercel/Render](docs/testes/PUBLICACAO-2026-11-09.md).
-O vídeo permanece a gravar; o [roteiro atualizado](docs/tcc/ROTEIRO_VIDEO_PREBANCA_2026.md)
-mantém Guilherme no frontend/demonstração e João no backend/banco.
+A conferência prática publicada mantém a data de **09/11**: 37/38 verificações,
+uma inspeção visual bloqueada, 15 registros principais novos mantidos e cinco
+anexos preservados. [Registro da publicação anterior](docs/testes/PUBLICACAO-2026-11-09.md).
+Testes locais, CI e produção têm evidências separadas; não se somam as rodadas.
+O vídeo permanece com os integrantes; o [roteiro](docs/tcc/ROTEIRO_VIDEO_PREBANCA_2026.md)
+distribui frontend/demonstração a Guilherme e backend/banco a João.
 
 As seções datadas anteriores são histórico e não substituem esta referência.
 
 <!-- auditoria-2026-11-09:fim -->
 
-## Entrega atual do grupo TDS-2026-038
+## Histórico da entrega de 05/11/2026
 
 Revisão de **05/11/2026**: [relatório técnico v1.11 em PDF](docs/tcc/TDS-2026-038_Relatorio_Tecnico_v1.11.pdf) e
 [Word editável](docs/tcc/TDS-2026-038_Relatorio_Tecnico_v1.11.docx).
@@ -40,7 +43,7 @@ de validação e a resposta ao parecer para separar implementação, teste e pub
 
 <!-- auditoria-2026-11-04:inicio -->
 
-## Auditoria e documentação atuais de novembro de 2026
+## Histórico da auditoria de 04/11/2026
 
 Rodada de 03/11 e reteste integral de 04/11: **535 Django, 282 Jest e 37
 Playwright, total 854 casos aprovados**; cobertura de linhas **91,49% backend

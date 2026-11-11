@@ -1,0 +1,26 @@
+{
+  "data_local": "2026-11-11",
+  "grupo": "TDS-2026-038",
+  "resultado_local": "951 casos aprovados; 550 Django, 356 Jest e 45 Playwright",
+  "resultado_ci": "951 casos aprovados em 43113561017; quatro jobs aprovados",
+  "cobertura_linhas_frontend_pct": 72.22,
+  "meta_linhas_frontend_pct": 70,
+  "meta_atingida": true,
+  "novos_casos_jest": 66,
+  "regressoes_corrigidas": [
+    "A31",
+    "A32",
+    "A33"
+  ],
+  "relatorio": "docs/tcc/TDS-2026-038_Relatorio_Tecnico_v1.14.docx e PDF; guia independente",
+  "dados_publicados": "sem criação/exclusão/anonimização nesta rodada; práticos de 09/11 preservados",
+  "fontes": [
+    "execucoes.json",
+    "casos-executados.json",
+    "cobertura-frontend.json",
+    "cobertura-backend.json",
+    "ampliacao-frontend.json",
+    "ci-publicacao.json",
+    "verificacao-relatorio-v1.14.json"
+  ]
+}

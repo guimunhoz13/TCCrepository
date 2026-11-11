@@ -1,82 +1,79 @@
 # Conferência documental do grupo TDS-2026-038
 
-Conferência local em 11/11/2026, comparando o parecer de 03/11/2026 fornecido pelo
-proprietário com os arquivos entregáveis. As correções documentais obrigatórias
-do parecer estão atendidas na revisão 1.13. A gravação e o envio do vídeo não
-foram verificados nesta conferência. A nota de 81/100 pertence ao revisor e não
-foi recalculada.
+Revisão 1.14 de 11/11/2026 do relatório Word enviado pelo proprietário, comparada
+com o parecer de 03/11/2026. Foram corrigidos os pontos documentais e a lacuna
+de cobertura do frontend. O relatório é entregue **sem o guia anexado**.
+A nota de 81/100 e o parecer do revisor não foram recalculados.
 
-Não houve nova execução das suítes nem alteração no sistema. A data dos testes
-continua sendo 09/11/2026. Conferir a documentação não comprova que sua versão
-atual já foi anexada ao Órbita; o texto recebido mostra uma entrega de 03/11.
+Nesta atualização houve execução real das suítes: **951 casos locais aprovados**,
+550 Django + 356 Jest + 45 Playwright. O frontend atingiu **72,22% de linhas**,
+frente à meta de 70%, sem reduzir o escopo da medição. Os testes práticos de
+produção preservam a data de 09/11 e seus registros; não houve exclusões.
 
 ## Arquivos para entrega
 
-- [PDF conjunto de relatório e manual](TDS-2026-038_Entrega_Documental_v1.13.pdf):
-  132 páginas, com marcadores para os dois documentos.
-- [Relatório técnico v1.13 PDF](TDS-2026-038_Relatorio_Tecnico_v1.13.pdf): 66 páginas.
-- [Relatório técnico v1.13 Word](TDS-2026-038_Relatorio_Tecnico_v1.13.docx): editável.
-- [Manual ilustrado](../Guia-de-Funcionalidades-LexNexo.pdf): 66 páginas, com
-  capturas originais datadas e adendo da auditoria de 09/11.
+- [Relatório técnico v1.14 PDF](TDS-2026-038_Relatorio_Tecnico_v1.14.pdf): 67 páginas.
+- [Relatório técnico v1.14 Word](TDS-2026-038_Relatorio_Tecnico_v1.14.docx): editável.
 
-O PDF conjunto mantém a ordem e o texto de todas as páginas dos dois PDFs
-originais. O Word corresponde ao relatório técnico, sem incorporar o manual.
-Não usar as versões antigas com grupo 39 ou RT v1 na nova submissão.
+O manual ilustrado foi sincronizado com a mesma fonte de métricas e permanece
+como arquivo independente. O PDF conjunto v1.13 é histórico e não constitui
+a entrega atual solicitada. O original recebido foi preservado. Não usar os
+arquivos antigos com grupo 39 nem a revisão RT v1 na nova submissão.
 
 ## Conferência dos itens do parecer
 
-As páginas abaixo são as do relatório individual, salvo indicação do manual.
+Páginas do relatório técnico individual renderizado.
 
-| Item do parecer | Evidência conferida | Situação documental |
+| Item do parecer | Evidência conferida | Situação |
 |---|---|---|
-| Identificação | Capa com TDS-2026-038, integrantes e orientadores | Atendida |
+| Identificação | Capa: TDS-2026-038, nomes completos dos integrantes e orientadores | Atendida |
 | C1 separado | Seção 7.1, Figura 42, página 53 | Atendida |
 | C2 separado | Seção 7.2, Figura 43, página 54 | Atendida |
-| C3 e implantação separados | Figura 44 na página 54; Figura 45 na página 62 | Atendida |
-| Contagens iguais no relatório e guia | Tabela datada na página 59 do RT e página física 62 do manual | Atendida |
-| Provedor de IA nomeado | OpenAI; configuração por OPENAI_MODEL e limites de validação, página 62 | Atendida |
-| Sequência de autenticação e TOTP | Figuras 3 e 4, página 27 | Atendida |
-| Sequência de prazo | Figura 5, página 28 | Atendida |
-| Segregação e armazenamento | Esquema compartilhado, escritorio_id, API/perfis, RLS de fotos e armazenamento S3, página 62 | Atendida |
-| Contingências de integrações | Preenchimento e lançamentos manuais; indisponibilidade de IA e mensagens, páginas 62–63 | Atendida |
-| RF52 | Continua adiado no backlog; não apresentado como entregue | Atendida |
-| Cobertura e melhoria | 91,85% backend / 38,03% frontend; meta frontend de 70% explicitamente pendente | Atendida como registro de limitação |
-| Usabilidade com profissionais | Ausência de estudo declarada; plano mantido nos trabalhos futuros | Atendida como registro de limitação |
-| Identidade e apresentação | LexNexo; títulos e subtítulos do RT em preto; 64 entradas do sumário conferidas | Atendida |
-| Vídeo e demonstrações externas | Roteiros e slides prontos; gravação, montagem e entrega não comprovadas | Pendente de evidência dos integrantes |
+| C3 e implantação separados | Figura 44, página 54; Figura 45, página 63 | Atendida |
+| Contagens consistentes | Tabela datada na página 59 e fonte única compartilhada com o manual independente | Atendida |
+| Provedor IA | OpenAI, OPENAI_MODEL e limites operacionais, página 63 | Atendida |
+| Autenticação e TOTP | Figuras 3 e 4, página 27 | Atendida |
+| Cálculo e cadastro de prazo | Figura 5, página 28 | Atendida |
+| Segregação e armazenamento | Esquema compartilhado, escritorio_id, API/perfis, RLS de fotos e S3, página 63 | Atendida |
+| Contingências externas | Preenchimento e lançamentos manuais, falhas de IA/mensagens, páginas 63–64 | Atendida |
+| RF52 | Adiado no backlog, sem declaração de implementação | Mantida |
+| RF40 | Justificativa da restrição de processos sob segredo de justiça acrescentada à conclusão | Atendida |
+| Cobertura frontend | 3339/4623 linhas, 72,22%; 66 novos casos Jest e mínimo de 70% ativo, páginas 60–61 | Meta atingida |
+| Evidência dos testes | 550 Django + 356 Jest + 45 Playwright; execução integrada de 11/11 e catálogo com 951 casos | Atendida |
+| Defeitos da interface | A31–A33 reproduzidos e corrigidos; feedback de status/reembolso e foco no assistente, página 61 | Corrigidos e retestados |
+| Usabilidade com profissionais | Ausência de estudo declarada e plano mantido nos trabalhos futuros | Limitação explícita |
+| Identidade e apresentação | LexNexo, títulos pretos, 64 entradas do sumário recalculadas | Atendida |
+| Vídeo | Roteiros e slides existentes; gravação e submissão a cargo dos integrantes | Pendente de evidência |
 
-## Ajustes desta conferência
+## Mudanças e verificações
 
-1. Corrigida uma frase da seção 7.9 que ainda descrevia 38 cenários de navegador.
-   Agora são 44 cenários de navegador e um HTTP/proxy, total 45 Playwright. O
-   valor vem da mesma fonte JSON da tabela; não foi criada uma execução nova.
-2. Corrigida a nota do diagrama de implantação que ainda dizia que o bucket
-   ativo não havia sido comprovado. O modo S3 foi confirmado em 09/11; ACL
-   completa e recuperação em nuvem continuam sem comprovação operacional.
-3. Atualizados capa, metadados, referência do manual e links da entrega para a
-   revisão 1.13. As versões anteriores foram preservadas como histórico.
-4. Reunidos relatório e manual num único PDF para a submissão documental.
+O relatório atualiza resumo, resultados, limitações, conclusão, capa e referências,
+sem transformar dados históricos em execuções novas. A cobertura de 38,03% de
+09/11 aparece somente como comparação datada. O escopo permanece todo src JS/JSX;
+a cobertura Playwright não é adicionada à Jest. Funções (58,17%) e ramos (61,55%)
+continuam com oportunidades de melhoria, embora a meta de linhas esteja atingida.
 
-## Métricas e limites que permanecem
+A configuração Jest coleta cobertura por padrão e exige pelo menos 70% de linhas,
+com o mesmo comando já usado no CI. O teste desse comando aprovou 356 casos. O CI remoto 43113561017 aprovou os quatro jobs e os mesmos 951 casos; a Vercel publicou o frontend 11a128a.
+Não foi necessário alterar o workflow remoto; mudanças locais de outro trabalho
+foram preservadas. Os novos commits são escritos em português, sem reescrever
+o histórico publicado.
 
-Referência única: 550 Django + 290 Jest + 45 Playwright = **885 casos**, executados
-em 09/11/2026. As rodadas locais, CI e repetições de navegador não são somadas.
-Os números históricos de 843 e 712 mencionados no parecer não são os resultados
-atuais. A cobertura de 38,03% mede linhas percorridas pela suíte Jest, e não a
-porcentagem de funcionalidades prontas.
+A verificação de conteúdo conferiu os seis diagramas por SHA-256 no Word,
+métricas dos runners, identificação do grupo, nomes, ausência de LexOffice e
+cores dos estilos de títulos. A renderização conferiu sumário, imagens, tabelas,
+paginação e continuidade do texto. O [registro reproduzível](../testes/evidencias/2026-11-11/verificacao-relatorio-v1.14.json)
+contém hashes e páginas. A [validação do sistema](../testes/RELATORIO_VALIDACAO.md)
+apresenta os testes e seus limites de forma separada da conferência documental.
 
-Continuam com limites próprios: entrega real de e-mail/push, IA paga em operação,
-agendador em produção, recuperação integral em nuvem, Safari real e estudo com
-profissionais. Geração/simulação PIX não comprova recebimento bancário. Nenhuma
-dessas pendências foi convertida em aprovação apenas por revisar o texto.
+## Evidências que cabem aos integrantes
 
-O vídeo deve seguir o roteiro de até 20 minutos, com fala até 19:45: Guilherme
-apresenta frontend e demonstração; João apresenta backend, banco e testes.
-Integrações devem ser demonstradas realmente ou identificadas como indisponíveis.
-O roteiro não substitui a gravação. Bloqueio por tentativas, recuperação de senha
-e anonimização devem usar a base local preparada, preservando a conta publicada.
-
-O [registro de verificação](../testes/evidencias/2026-11-11/verificacao-documental.json)
-contém hashes, páginas e conferências de conteúdo. O sumário do RT teve 64/64
-entradas localizadas. Foram renderizados e revistos o RT e o manual; nenhum teste
-do produto foi contabilizado nesta revisão documental.
+O vídeo deve demonstrar interação real, indicar o ambiente e respeitar o plano
+3/3/6/5/3 minutos, com Guilherme em frontend/demonstração e João em backend/banco.
+Gravação, montagem e envio ao Órbita não foram comprovados por esta atualização.
+As correções documentais não certificam integrações externas: recebimento de
+SMTP/push, IA paga em operação, agendador, ACL/RLS integral, recuperação em nuvem,
+Safari real e avaliação com profissionais conservam as ressalvas registradas.
+Geração de QR code PIX não comprova recebimento bancário. Bloqueio por tentativas,
+recuperação e anonimização devem usar a base de demonstração adequada, preservando
+os dados publicados conforme solicitado pelo proprietário.

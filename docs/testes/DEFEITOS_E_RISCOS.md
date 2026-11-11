@@ -1,5 +1,26 @@
 # Defeitos e riscos da auditoria
 
+## Correções e cobertura de 11/11/2026
+
+| ID | Gravidade | Defeito reproduzido | Correção e reteste |
+|---|---|---|---|
+| A31 | MÉDIA | Erro ao alternar status de processo sem tratamento nem mensagem | Capturar rejeição, mostrar erro e permitir nova tentativa; regressão Jest falhou antes e passou depois |
+| A32 | MÉDIA | Erro ao marcar despesa como reembolsada sem tratamento nem mensagem | Capturar rejeição, mostrar erro e permitir nova tentativa; regressão Jest falhou antes e passou depois |
+| A33 | BAIXA | Assistente tentava focar textarea ainda desabilitado no DOM | Focar após renderização com carregando=false; regressão verifica foco após erro |
+
+A lacuna de cobertura global de linhas do frontend foi corrigida: **72,22%**,
+contra meta de 70%, mantendo todo src JS/JSX no denominador. Foram acrescentados
+66 testes (356 Jest em 63 suítes); a rodada integrada aprovou 951 casos.
+O mínimo de 70% é exigido pela configuração Jest usada localmente e no CI.
+[Antes/depois e limites](evidencias/2026-11-11/ampliacao-frontend.json),
+[validação completa](RELATORIO_VALIDACAO.md).
+
+Atingir a meta não elimina lacunas por função/ramo, nem os riscos externos já
+registrados. Ferramentas npm, operação externa e recuperação em nuvem conservam
+as ressalvas da última inspeção; não foram declaradas resolvidas por esta ampliação.
+Nenhum dado da conta publicada foi excluído. As seções abaixo são histórico.
+
+
 <!-- auditoria-2026-11-09:inicio -->
 
 ## Achados finais de 09/11/2026

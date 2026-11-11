@@ -1,0 +1,66 @@
+{
+  "data_local": "2026-11-11",
+  "timezone": "America/Sao_Paulo",
+  "commit_codigo": "11a128a82df0b7ee3815a0166336bab03dc2205f",
+  "ci": {
+    "id": 43113561017,
+    "url": "https://github.com/guimunhoz13/TCCrepository/actions/runs/43113561017",
+    "resultado": "success",
+    "jobs": [
+      {
+        "nome": "Frontend (Next.js)",
+        "resultado": "success"
+      },
+      {
+        "nome": "E2E (Playwright)",
+        "resultado": "success"
+      },
+      {
+        "nome": "Imagem Docker Compose (HTTP)",
+        "resultado": "success"
+      },
+      {
+        "nome": "Backend (Django)",
+        "resultado": "success"
+      }
+    ],
+    "django": 550,
+    "jest": 356,
+    "playwright": 45,
+    "total": 951,
+    "resumos_runner": [
+      "All files          |   70.67 |    61.58 |   58.17 |   72.22 |                   ",
+      "Test Suites: 63 passed, 63 total",
+      "Tests:       356 passed, 356 total",
+      "  45 passed (2.1m)",
+      "Ran 550 tests in 19.332s"
+    ],
+    "frontend_cobertura": {
+      "linhas_pct": 72.22,
+      "instrucoes_pct": 70.67,
+      "funcoes_pct": 58.17,
+      "ramos_pct": 61.58
+    },
+    "observacao": "Ramos: 61,55% local e 61,58% CI, medidas próprias; linhas iguais em 72,22%. Rodadas não somadas.",
+    "dependencias": {
+      "python": "pip-audit sem vulnerabilidades conhecidas no CI de 11/11",
+      "npm_ferramentas": "26 alertas, três baixos e 23 moderados; nenhum alto/crítico; não corrigidos nesta ampliação"
+    }
+  },
+  "vercel": {
+    "deployment_github": 7722961554,
+    "estado": "success",
+    "deployment_url": "https://lexnexo-2oivtj2ws-zeldation.vercel.app",
+    "alias": "https://lexnexo.vercel.app",
+    "http_site": 200,
+    "http_health": 200,
+    "health": {
+      "status": "ok",
+      "service": "LexNexo"
+    },
+    "assets_alias_e_deployment_identicos": true,
+    "observacao": "Saúde e disponibilidade pontuais; não equivalem a auditoria operacional contínua."
+  },
+  "render": "Nenhum código backend alterado nesta rodada; não se iniciou publicação manual. Registro de 09/11 preservado.",
+  "dados_publicados": "Nenhuma exclusão, anonimização, alteração de credenciais ou criação de registros nesta atualização."
+}

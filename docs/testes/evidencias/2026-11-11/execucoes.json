@@ -1,0 +1,100 @@
+{
+  "commit_base": "fba0663fcde28833c86d0736b738cdc66914b234",
+  "data_local": "2026-11-11",
+  "timezone": "America/Sao_Paulo",
+  "backend": {
+    "testes": 550,
+    "resumo": [
+      "Ran 550 tests in 56.194s",
+      "OK"
+    ]
+  },
+  "jest": {
+    "numPassedTests": 356,
+    "numFailedTests": 0,
+    "numTotalTestSuites": 63,
+    "startTime": 1794436392361
+  },
+  "playwright": {
+    "startTime": "2026-11-11T22:33:38.343Z",
+    "duration": 177343.31,
+    "expected": 45,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "comandos": [
+    {
+      "id": "initdb",
+      "exit_code": 0,
+      "duracao_segundos": 2
+    },
+    {
+      "id": "pip-check",
+      "exit_code": 0,
+      "duracao_segundos": 1
+    },
+    {
+      "id": "check",
+      "exit_code": 0,
+      "duracao_segundos": 2
+    },
+    {
+      "id": "migrations",
+      "exit_code": 0,
+      "duracao_segundos": 0
+    },
+    {
+      "id": "backend",
+      "exit_code": 0,
+      "duracao_segundos": 64
+    },
+    {
+      "id": "cobertura-backend",
+      "exit_code": 0,
+      "duracao_segundos": 0
+    },
+    {
+      "id": "openapi",
+      "exit_code": 0,
+      "duracao_segundos": 1
+    },
+    {
+      "id": "migrate",
+      "exit_code": 0,
+      "duracao_segundos": 5
+    },
+    {
+      "id": "seed",
+      "exit_code": 0,
+      "duracao_segundos": 2
+    },
+    {
+      "id": "npm-ci",
+      "exit_code": 0,
+      "duracao_segundos": 48
+    },
+    {
+      "id": "lint",
+      "exit_code": 0,
+      "duracao_segundos": 12
+    },
+    {
+      "id": "jest",
+      "exit_code": 0,
+      "duracao_segundos": 18
+    },
+    {
+      "id": "build",
+      "exit_code": 0,
+      "duracao_segundos": 6
+    },
+    {
+      "id": "e2e",
+      "exit_code": 0,
+      "duracao_segundos": 179
+    }
+  ],
+  "commit_codigo": "11a128a82df0b7ee3815a0166336bab03dc2205f",
+  "estado_execucao": "Código desta rodada testado no working tree a partir de commit_base e registrado posteriormente em commit_codigo; alterações locais alheias preservadas."
+}

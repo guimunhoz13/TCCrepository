@@ -1,6 +1,6 @@
 {
-  "atualizado_em": "2026-11-09",
-  "fonte_atual": "2026-11-09/execucoes.json",
+  "atualizado_em": "2026-11-11",
+  "fonte_atual": "2026-11-11/execucoes.json",
   "rodadas": [
     {
       "data": "2026-10-27",
@@ -73,14 +73,33 @@
       "jest": 290,
       "playwright": 45,
       "total": 885
+    },
+    {
+      "data": "2026-11-11",
+      "ambiente": "CI",
+      "django": 550,
+      "jest": 356,
+      "playwright": 45,
+      "total": 951,
+      "fonte": "2026-11-11/ci-publicacao.json"
+    },
+    {
+      "data": "2026-11-11",
+      "ambiente": "local",
+      "django": 550,
+      "jest": 356,
+      "playwright": 45,
+      "total": 951
     }
   ],
   "cobertura": {
-    "data": "2026-11-09",
+    "data": "2026-11-11",
     "backend_linhas": "91,85%",
     "backend_ramos": "79,75%",
-    "frontend_linhas": "38,03%",
-    "frontend_ramos": "34,02%"
+    "frontend_linhas": "72,22%",
+    "frontend_ramos": "61,55%",
+    "frontend_instrucoes": "70,67%",
+    "frontend_funcoes": "58,17%"
   },
   "escopo_playwright_atual": {
     "navegador": 44,

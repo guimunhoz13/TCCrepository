@@ -1,20 +1,26 @@
 # Resposta técnica ao parecer de revisão
 
-## Conferência documental de 11/11/2026
+## Atualização e testes de 11/11/2026
 
-A entrega vigente é o relatório **v1.13**, acompanhado do manual e do
-[PDF conjunto de submissão](TDS-2026-038_Entrega_Documental_v1.13.pdf).
-A [conferência atual](CONFERENCIA_DOCUMENTAL_2026-11-11.md) verifica os itens do
-parecer de 03/11 nos arquivos efetivamente renderizados. A descrição da suíte
-Playwright foi corrigida de 38 para 44 cenários de navegador mais um HTTP/proxy.
-A tabela já estava correta: 550 Django + 290 Jest + 45 Playwright = 885 em 09/11.
-Não houve nova execução de testes nesta revisão documental.
+A entrega vigente é o [relatório v1.14 PDF](TDS-2026-038_Relatorio_Tecnico_v1.14.pdf)
+e seu [Word editável](TDS-2026-038_Relatorio_Tecnico_v1.14.docx), sem o guia anexado.
+A [conferência atual](CONFERENCIA_DOCUMENTAL_2026-11-11.md) relaciona os pontos do
+parecer aos arquivos renderizados: C1, C2, C3, implantação, sequências de
+TOTP/prazo, OpenAI, segregação, contingências, backlog e métricas datadas.
 
-As seções de 04, 05 e 09/11 abaixo são históricas. A indicação antiga de vídeo
-com 10 a 15 minutos foi substituída pelo plano do professor de até 20 minutos,
-com blocos 3/3/6/5/3 e fala até 19:45. O roteiro e os slides estão prontos;
-gravação, montagem e submissão não foram comprovadas nesta conferência local.
-Não se afirma que os arquivos atuais já estejam enviados ao Órbita.
+A meta frontend foi efetivamente corrigida: **72,22% de linhas**, frente a 70%,
+com 66 novos casos Jest e o mesmo escopo de código. Passaram **550 Django,
+356 Jest e 45 Playwright = 951 casos** em 11/11. Três defeitos de erro/foco foram
+reproduzidos e corrigidos com regressões. O CI passa a aplicar a meta pela
+configuração Jest, sem alterar o workflow. [Validação](../testes/RELATORIO_VALIDACAO.md).
+O manual independente usa a mesma fonte única, sem incorporar capturas antigas
+como evidências novas. Os testes práticos publicados continuam datados de 09/11.
+
+O vídeo obrigatório permanece com os integrantes. O plano segue até 20 minutos,
+com blocos 3/3/6/5/3 e fala até 19:45; Guilherme apresenta frontend/demonstração e
+João backend/banco. Gravação e submissão não foram comprovadas. A nota 81/100 do
+revisor não foi recalculada. Integrações e limites operacionais não são apresentados
+como resolvidos apenas pela melhora de cobertura. As seções abaixo são históricas.
 
 <!-- auditoria-2026-11-09:inicio -->
 
